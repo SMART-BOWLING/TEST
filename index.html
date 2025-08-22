@@ -568,533 +568,636 @@ header {
       </div>
     </div>
 
-    <script>
-      // Функция для показа/скрытия индикатора загрузки
-      function showLoader(show) {
-        document.getElementById('loader').style.display = show ? 'flex' : 'none';
+
+        
+  </style>
+</head>
+<body>
+<!-- Индикатор загрузки -->
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
+</div>
+
+<!-- Шапка (измененная) -->
+<header>
+  <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+  <div class="site-name">SKYMALL</div>
+  <div class="menu-button" onclick="toggleDropdown()">
+    <div></div><div></div><div></div>
+  </div>
+  <div class="dropdown" id="dropdownMenu">
+    <a href="#">
+      <i class="fas fa-screwdriver-wrench"></i> ОБСЛУЖИВАНИЕ
+    </a>
+    <a href="https://docs.google.com/spreadsheets/d/1mlFtD_LZ2Uh73UiAo-dOapjvLQCIjNvmENEJyRHhb9s/edit?usp=sharing">
+      <i class="fas fa-exclamation-triangle"></i> СБОИ PS
+    </a>
+  </div>
+</header>
+
+<!-- Блок авторизации -->
+<div id="login">
+  <h2>Вход на сайт</h2>
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
+
+<!-- Контент для авторизованных -->
+<div id="content" style="display:none">
+  <div class="top-controls">
+    <div class="select-wrapper">
+      <select id="sortSelect" title="Фильтр">
+        <option value="all">Все детали</option>
+        <option value="popular">Пос. взят. за 30 дней</option>
+        <option value="mostPopular">Популярные</option>
+        <option value="sortByQty">Остатки</option>
+      </select>
+    </div>
+    
+    <button id="btnSearch" class="btn-top"><i class="fas fa-search"></i> Поиск</button>
+   <button id="btnReset" class="btn-top"><i class="fas fa-sync-alt"></i> Сбросить</button>
+    <button onclick="window.open('https://script.google.com/macros/s/AKfycbyXGtubHygKnygpEN6K2KWtrhfu4fWr0hKwuVf10JNvYjEF6VOj8wgKuSxc105wk0KE/exec', '_blank')" class="btn-top"><i class="fas fa-book"></i> Мануалы</button>
+    <button id="btnAddPart" class="btn-top"><i class="fas fa-plus-circle"></i> Добавить деталь</button>
+  </div>
+
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
+
+  <!-- Модальное окно добавления детали -->
+  <div id="addPartModal" class="add-part-modal">
+    <div class="add-part-container">
+      <div class="add-part-close" id="addPartClose">×</div>
+      <div class="add-part-header">
+        <h2>Добавить деталь</h2>
+      </div>
+      <form id="addPartForm" class="add-part-form">
+        <div class="add-part-form-content">
+          <div class="add-part-form-group">
+            <label for="partNumber">Номер детали</label>
+            <input type="text" id="partNumber" placeholder="000-000-000" required>
+          </div>
+
+          <div class="add-part-form-group">
+            <label for="partQty">Количество</label>
+            <input type="number" id="partQty" min="1" value="" required>
+          </div>
+
+          <div class="add-part-form-group">
+            <label for="partPhoto">Фотография</label>
+            <input type="file" id="partPhoto" accept="image/*" required>
+          </div>
+
+          <button type="submit" id="submit-part-btn">Отправить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Функция для показа/скрытия индикатора загрузки
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
+
+  // Функция для выпадающего меню
+  function toggleDropdown() {
+    const menu = document.getElementById("dropdownMenu");
+    menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+  }
+
+  // Настройки авторизации
+  const allowedEmails = ["vadiksss900@gmail.com", "sergey99belov@gmail.com"];
+
+  // Обработчик ответа от Google
+  function handleCredentialResponse(response) {
+    showLoader(true);
+    try {
+      const data = parseJwt(response.credential);
+      const email = data.email;
+
+      if (allowedEmails.includes(email)) {
+        localStorage.setItem("userEmail", email);
+        location.reload();
+      } else {
+        alert("Доступ запрещён для: " + email);
       }
+    } finally {
+      showLoader(false);
+    }
+  }
 
-      // Функция для выпадающего меню
-      function toggleDropdown() {
-        const menu = document.getElementById("dropdownMenu");
-        menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+  // Проверка авторизации при загрузке страницы
+  window.onload = () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail && allowedEmails.includes(userEmail)) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("content").style.display = "block";
+      initApp();
+    }
+  };
+
+  // Функция для разбора JWT токена
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+  }
+
+  // Глобальный объект для пагинации
+  const pagination = {
+    prevPage: function() {},
+    nextPage: function() {}
+  };
+
+  // Функции для работы с модальным окном добавления детали
+  function openAddPartModal() {
+    document.getElementById('addPartModal').style.display = 'flex';
+    document.getElementById('partNumber').focus();
+  }
+
+  function closeAddPartModal() {
+    document.getElementById('addPartModal').style.display = 'none';
+    document.getElementById('addPartForm').reset();
+  }
+
+  // Инициализация приложения
+  function initApp() {
+    const API_URL = "https://script.google.com/macros/s/AKfycbxzTW0YNaqwWRVJYigldz9ABPl6ZpBDpgLBMe3BHJBzeE54vxoFduASCBWvKHhokH0eEg/exec";
+    const ADD_PART_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf5Nnw0eNCToUgFF2MnMNXqcxlxkEUOHsF2qCz66RYzBnmzFSlrBTHjBAK1LFOcVDyRQ/exec';
+
+    let allEntries = [];
+    let currentEntries = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const cardsPerPage = 5;
+
+    // Инициализация событий для модального окна добавления детали
+    document.getElementById('btnAddPart').addEventListener('click', openAddPartModal);
+    document.getElementById('addPartClose').addEventListener('click', closeAddPartModal);
+    document.getElementById('addPartModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('addPartModal')) {
+        closeAddPartModal();
       }
+    });
 
-      // Настройки авторизации
-      const allowedEmails = ["vadiksss900@gmail.com", "sergey99belov@gmail.com"];
-
-      // Обработчик ответа от Google
-      function handleCredentialResponse(response) {
-        showLoader(true);
+    // Обработчик отправки формы добавления детали
+    document.getElementById('addPartForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const number = document.getElementById('partNumber').value.trim();
+      const qty = document.getElementById('partQty').value;
+      const fileInput = document.getElementById('partPhoto');
+      
+      if (!number || !qty || fileInput.files.length === 0) {
+        alert('Заполните все поля и выберите фото.');
+        return;
+      }
+      
+      // Блокируем кнопку и показываем индикатор загрузки
+      const submitBtn = document.getElementById('submit-part-btn');
+      submitBtn.disabled = true;
+      showLoader(true);
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = async function(evt) {
+        const dataUrl = evt.target.result;
+        const parts = dataUrl.split(',');
+        const mimeType = parts[0].match(/data:(.*);base64/)[1];
+        const base64 = parts[1];
+        
         try {
-          const data = parseJwt(response.credential);
-          const email = data.email;
-
-          if (allowedEmails.includes(email)) {
-            localStorage.setItem("userEmail", email);
-            location.reload();
-          } else {
-            alert("Доступ запрещён для: " + email);
-          }
-        } finally {
-          showLoader(false);
-        }
-      }
-
-      // Проверка авторизации при загрузке страницы
-      window.onload = () => {
-        const userEmail = localStorage.getItem("userEmail");
-        if (userEmail && allowedEmails.includes(userEmail)) {
-          document.getElementById("login").style.display = "none";
-          document.getElementById("content").style.display = "block";
-          initApp();
-        }
-      };
-
-      // Функция для разбора JWT токена
-      function parseJwt(token) {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        return JSON.parse(jsonPayload);
-      }
-
-      // Глобальный объект для пагинации
-      const pagination = {
-        prevPage: function() {},
-        nextPage: function() {}
-      };
-
-      // Функции для работы с модальным окном добавления детали
-      function openAddPartModal() {
-        document.getElementById('addPartModal').style.display = 'flex';
-        document.getElementById('partNumber').focus();
-      }
-
-      function closeAddPartModal() {
-        document.getElementById('addPartModal').style.display = 'none';
-        document.getElementById('addPartForm').reset();
-      }
-
-      // Инициализация приложения
-      function initApp() {
-        const API_URL = "https://script.google.com/macros/s/AKfycbxzTW0YNaqwWRVJYigldz9ABPl6ZpBDpgLBMe3BHJBzeE54vxoFduASCBWvKHhokH0eEg/exec";
-        const ADD_PART_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf5Nnw0eNCToUgFF2MnMNXqcxlxkEUOHsF2qCz66RYzBnmzFSlrBTHjBAK1LFOcVDyRQ/exec';
-
-        let allEntries = [];
-        let currentEntries = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        const cardsPerPage = 5;
-
-        // Инициализация событий для модального окна добавления детали
-        document.getElementById('btnAddPart').addEventListener('click', openAddPartModal);
-        document.getElementById('addPartClose').addEventListener('click', closeAddPartModal);
-        document.getElementById('addPartModal').addEventListener('click', (e) => {
-          if (e.target === document.getElementById('addPartModal')) {
-            closeAddPartModal();
-          }
-        });
-
-        // Обработчик отправки формы добавления детали
-        document.getElementById('addPartForm').addEventListener('submit', async function(e) {
-          e.preventDefault();
-          
-          const number = document.getElementById('partNumber').value.trim();
-          const qty = document.getElementById('partQty').value;
-          const fileInput = document.getElementById('partPhoto');
-          
-          if (!number || !qty || fileInput.files.length === 0) {
-            alert('Заполните все поля и выберите фото.');
-            return;
-          }
-          
-          // Блокируем кнопку и показываем индикатор загрузки
-          const submitBtn = document.getElementById('submit-part-btn');
-          submitBtn.disabled = true;
-          showLoader(true);
-          
-          const file = fileInput.files[0];
-          const reader = new FileReader();
-          
-          reader.onload = async function(evt) {
-            const dataUrl = evt.target.result;
-            const parts = dataUrl.split(',');
-            const mimeType = parts[0].match(/data:(.*);base64/)[1];
-            const base64 = parts[1];
-            
-            try {
-              // Отправляем данные на сервер Google Apps Script
-              const response = await fetch(ADD_PART_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  number: number,
-                  qty: qty,
-                  mimeType: mimeType,
-                  base64: base64,
-                  name: file.name
-                })
-              });
-              
-              // Скрываем индикатор загрузки
-              showLoader(false);
-              submitBtn.disabled = false;
-              
-              // Показываем сообщение об успехе
-              alert('✅ Данные отправлены!');
-              document.getElementById('addPartForm').reset();
-              closeAddPartModal();
-              
-              // Перезагружаем данные
-              await loadData();
-            } catch (error) {
-              // Скрываем индикатор загрузки в случае ошибки
-              showLoader(false);
-              submitBtn.disabled = false;
-              
-              console.error('Ошибка:', error);
-              alert('❌ Произошла ошибка при отправке данных.');
-            }
-          };
-          
-          reader.onerror = function() {
-            // Скрываем индикатор загрузки в случае ошибки чтения файла
-            showLoader(false);
-            submitBtn.disabled = false;
-            alert('❌ Ошибка при чтении файла.');
-          };
-          
-          reader.readAsDataURL(file);
-        });
-
-        // Основные функции приложения
-        async function getEntries() {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=getEntries`);
-            return await res.json();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        async function updateQuantity(partNumber, delta) {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
-            return await res.json();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        async function deleteEntry(rowIndex) {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
-            return await res.json();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        async function getHistory(partNumber) {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
-            return await res.text();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        async function getPopularEntries() {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=getPopularEntries`);
-            return await res.json();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        async function getMostPopularEntries() {
-          showLoader(true);
-          try {
-            const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
-            return await res.json();
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        function createCard(entry) {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.dataset.row = entry.rowIndex;
-          div.dataset.partNumber = entry.partNumber.toLowerCase();
-
-          const media = document.createElement('div');
-          media.className = 'media-block';
-
-          if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
-            const iframe = document.createElement('iframe');
-            iframe.src = entry.fileUrl;
-            media.appendChild(iframe);
-          } else if (entry.fileUrl) {
-            const img = document.createElement('img');
-            img.src = entry.fileUrl;
-            media.appendChild(img);
-          }
-
-          const overlay = document.createElement('div');
-          overlay.className = 'img-overlay';
-          media.appendChild(overlay);
-
-          const rem = document.createElement('div');
-          rem.className = 'icon remove';
-          rem.textContent = 'Х';
-          media.append(rem);
-
-          div.append(media);
-
-          const controls = document.createElement('div');
-          controls.className = 'controls';
-
-          const pill = document.createElement('div');
-          pill.className = 'pill';
-          pill.textContent = entry.partNumber;
-
-          const qtyInput = document.createElement('input');
-          qtyInput.type = 'text';
-          qtyInput.value = entry.quantity;
-          qtyInput.readOnly = true;
-
-          const btnAdd = document.createElement('button');
-          btnAdd.className = 'btn btn-add';
-          btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> ДОБАВИТЬ';
-
-          const btnInfo = document.createElement('button');
-          btnInfo.className = 'btn btn-info';
-          btnInfo.innerHTML = '<i class="fas fa-history"></i> ИСТОРИЯ';
-
-          const btnTake = document.createElement('button');
-          btnTake.className = 'btn btn-take';
-          btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> ВЗЯТЬ';
-
-          controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
-          div.append(controls);
-
-          rem.onclick = async () => {
-            if (confirm('Удалить эту запись?')) {
-              await deleteEntry(entry.rowIndex);
-              allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
-              currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
-              updateTotalPages();
-              if (currentPage > totalPages) currentPage = totalPages;
-              renderPage(currentPage);
-            }
-          };
-
-          btnAdd.onclick = async () => {
-            const deltaStr = prompt('Введите число для добавления:');
-            const delta = Number(deltaStr);
-            if (deltaStr !== null && !isNaN(delta)) {
-              const res = await updateQuantity(entry.partNumber, delta);
-              if (res.status === 'success') {
-                qtyInput.value = res.quantity;
-                entry.quantity = res.quantity;
-              } else {
-                alert(res.message);
-              }
-            }
-          };
-
-          btnTake.onclick = async () => {
-            const deltaStr = prompt('Введите число для вычитания:');
-            const delta = Number(deltaStr);
-            if (deltaStr !== null && !isNaN(delta)) {
-              const res = await updateQuantity(entry.partNumber, -delta);
-              if (res.status === 'success') {
-                qtyInput.value = res.quantity;
-                entry.quantity = res.quantity;
-              } else {
-                alert(res.message);
-              }
-            }
-          };
-
-          btnInfo.onclick = async () => {
-            const hist = await getHistory(entry.partNumber);
-            document.getElementById('modalContent').textContent = hist;
-            document.getElementById('modalOverlay').style.display = 'flex';
-          };
-
-          return div;
-        }
-
-        function updateTotalPages() {
-          totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
-          console.log('Updated total pages:', totalPages);
-        }
-
-        function renderPage(page) {
-          console.log(`Rendering page ${page} of ${totalPages}`);
-          
-          const container = document.getElementById('cardsContainer');
-          if (!container) {
-            console.error('Cards container not found!');
-            return;
-          }
-          
-          container.innerHTML = '';
-
-          const start = (page - 1) * cardsPerPage;
-          const end = start + cardsPerPage;
-          const pageData = currentEntries.slice(start, end);
-
-          if (pageData.length === 0) {
-            container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
-            return;
-          }
-
-          pageData.forEach(entry => {
-            const card = createCard(entry);
-            container.appendChild(card);
+          // Отправляем данные на сервер Google Apps Script
+          const response = await fetch(ADD_PART_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              number: number,
+              qty: qty,
+              mimeType: mimeType,
+              base64: base64,
+              name: file.name
+            })
           });
-
-          renderPageNumbers();
-          updatePaginationControls();
-          window.scrollTo(0, 0);
+          
+          // Скрываем индикатор загрузки
+          showLoader(false);
+          submitBtn.disabled = false;
+          
+          // Показываем сообщение об успехе
+          alert('✅ Данные отправлены!');
+          document.getElementById('addPartForm').reset();
+          closeAddPartModal();
+          
+          // Перезагружаем данные
+          await loadData();
+        } catch (error) {
+          // Скрываем индикатор загрузки в случае ошибки
+          showLoader(false);
+          submitBtn.disabled = false;
+          
+          console.error('Ошибка:', error);
+          alert('❌ Произошла ошибка при отправке данных.');
         }
+      };
+      
+      reader.onerror = function() {
+        // Скрываем индикатор загрузки в случае ошибки чтения файла
+        showLoader(false);
+        submitBtn.disabled = false;
+        alert('❌ Ошибка при чтении файла.');
+      };
+      
+      reader.readAsDataURL(file);
+    });
 
-        function renderPageNumbers() {
-          const pageContainer = document.getElementById('pageNumbers');
-          if (!pageContainer) {
-            console.error('Page numbers container not found!');
-            return;
-          }
-          
-          pageContainer.innerHTML = '';
-          
-          const maxVisiblePages = 5;
-          let startPage = Math.max(currentPage - 2, 1);
-          let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
-          
-          if (startPage > 1) {
-            addPageButton(1);
-            if (startPage > 2) {
-              addDots();
-            }
-          }
-          
-          for (let i = startPage; i <= endPage; i++) {
-            addPageButton(i);
-          }
-          
-          if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-              addDots();
-            }
-            addPageButton(totalPages);
-          }
-          
-          function addPageButton(page) {
-            const btn = document.createElement('button');
-            btn.textContent = page;
-            if (page === currentPage) {
-              btn.classList.add('active');
-            }
-            btn.onclick = () => goToPage(page);
-            pageContainer.appendChild(btn);
-          }
-          
-          function addDots() {
-            const dots = document.createElement('span');
-            dots.textContent = '...';
-            dots.style.padding = '0 10px';
-            pageContainer.appendChild(dots);
-          }
-        }
+    // Основные функции приложения
+    async function getEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
 
-        function goToPage(page) {
-          if (page < 1 || page > totalPages) return;
-          
-          currentPage = page;
-          renderPage(currentPage);
-          updatePaginationControls();
-        }
+    async function updateQuantity(partNumber, delta) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
 
-        // Обновляем глобальные функции пагинации
-        pagination.nextPage = function() {
-          if (currentPage < totalPages) {
-            goToPage(currentPage + 1);
-          }
-        };
+    async function deleteEntry(rowIndex) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
 
-        pagination.prevPage = function() {
-          if (currentPage > 1) {
-            goToPage(currentPage - 1);
-          }
-        };
+    async function getHistory(partNumber) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+        return await res.text();
+      } finally {
+        showLoader(false);
+      }
+    }
 
-        function updatePaginationControls() {
-          const prevBtn = document.getElementById('prevBtn');
-          const nextBtn = document.getElementById('nextBtn');
-          
-          if (prevBtn) prevBtn.disabled = currentPage <= 1;
-          if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-        }
+    async function getPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
 
-        function resetSearch() {
-          currentEntries = [...allEntries];
+    async function getMostPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function createCard(entry) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.row = entry.rowIndex;
+      div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+      const media = document.createElement('div');
+      media.className = 'media-block';
+
+      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else if (entry.fileUrl) {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        media.appendChild(img);
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'img-overlay';
+      media.appendChild(overlay);
+
+      const rem = document.createElement('div');
+      rem.className = 'icon remove';
+      rem.textContent = 'Х';
+      media.append(rem);
+
+      div.append(media);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = entry.partNumber;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'text';
+      qtyInput.value = entry.quantity;
+      qtyInput.readOnly = true;
+
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn btn-add';
+      btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> ДОБАВИТЬ';
+
+      const btnInfo = document.createElement('button');
+      btnInfo.className = 'btn btn-info';
+      btnInfo.innerHTML = '<i class="fas fa-history"></i> ИСТОРИЯ';
+
+      const btnTake = document.createElement('button');
+      btnTake.className = 'btn btn-take';
+      btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> ВЗЯТЬ';
+
+      controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+      div.append(controls);
+
+      rem.onclick = async () => {
+        if (confirm('Удалить эту запись?')) {
+          await deleteEntry(entry.rowIndex);
+          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
           updateTotalPages();
-          currentPage = 1;
+          if (currentPage > totalPages) currentPage = totalPages;
           renderPage(currentPage);
-          document.getElementById('sortSelect').value = 'all';
         }
+      };
 
-        // Инициализация событий
-        document.getElementById('btnSearch')?.addEventListener('click', () => {
-          const term = prompt('Введите номер детали для поиска:');
-          if (term !== null) {
-            const searchTerm = term.toLowerCase().trim();
-            currentEntries = searchTerm.length === 0 
-              ? [...allEntries] 
-              : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
-            updateTotalPages();
-            currentPage = 1;
-            renderPage(currentPage);
-            document.getElementById('sortSelect').value = 'all';
+      btnAdd.onclick = async () => {
+        const deltaStr = prompt('Введите число для добавления:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
           }
-        });
-    document.getElementById('btnReset')?.addEventListener('click', () => {
+        }
+      };
+
+      btnTake.onclick = async () => {
+        const deltaStr = prompt('Введите число для вычитания:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, -delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnInfo.onclick = async () => {
+        const hist = await getHistory(entry.partNumber);
+        document.getElementById('modalContent').textContent = hist;
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      return div;
+    }
+
+    function updateTotalPages() {
+      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+      console.log('Updated total pages:', totalPages);
+    }
+
+    function renderPage(page) {
+      console.log(`Rendering page ${page} of ${totalPages}`);
+      
+      const container = document.getElementById('cardsContainer');
+      if (!container) {
+        console.error('Cards container not found!');
+        return;
+      }
+      
+      container.innerHTML = '';
+
+      const start = (page - 1) * cardsPerPage;
+      const end = start + cardsPerPage;
+      const pageData = currentEntries.slice(start, end);
+
+      if (pageData.length === 0) {
+        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+        return;
+      }
+
+      pageData.forEach(entry => {
+        const card = createCard(entry);
+        container.appendChild(card);
+      });
+
+      renderPageNumbers();
+      updatePaginationControls();
+      window.scrollTo(0, 0);
+    }
+
+    function renderPageNumbers() {
+      const pageContainer = document.getElementById('pageNumbers');
+      if (!pageContainer) {
+        console.error('Page numbers container not found!');
+        return;
+      }
+      
+      pageContainer.innerHTML = '';
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(currentPage - 2, 1);
+      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+      
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addDots();
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          addDots();
+        }
+        addPageButton(totalPages);
+      }
+      
+      function addPageButton(page) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) {
+          btn.classList.add('active');
+        }
+        btn.onclick = () => goToPage(page);
+        pageContainer.appendChild(btn);
+      }
+      
+      function addDots() {
+        const dots = document.createElement('span');
+        dots.textContent = '...';
+        dots.style.padding = '0 10px';
+        pageContainer.appendChild(dots);
+      }
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      renderPage(currentPage);
+      updatePaginationControls();
+    }
+
+    // Обновляем глобальные функции пагинации
+    pagination.nextPage = function() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    };
+
+    pagination.prevPage = function() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    };
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function resetSearch() {
       currentEntries = [...allEntries];
       updateTotalPages();
       currentPage = 1;
       renderPage(currentPage);
       document.getElementById('sortSelect').value = 'all';
-    });
-        document.getElementById('sortSelect')?.addEventListener('change', async function() {
-          showLoader(true);
-          try {
-            if (this.value === 'all') {
-              currentEntries = [...allEntries];
-            } else if (this.value === 'popular') {
-              currentEntries = await getPopularEntries();
-              if (currentEntries && currentEntries[0]?.lastChangeDate) {
-                currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
-              }
-            } else if (this.value === 'mostPopular') {
-              currentEntries = await getMostPopularEntries();
-              if (!currentEntries?.length) {
-                alert('Нет данных для сортировки "всё время"');
-                return;
-              }
-            } else if (this.value === 'sortByQty') {
-              currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
-            }
-            
-            updateTotalPages();
-            currentPage = 1;
-            renderPage(currentPage);
-          } finally {
-            showLoader(false);
-          }
-        });
+    }
 
-        document.getElementById('modalClose')?.addEventListener('click', () => {
-          document.getElementById('modalOverlay').style.display = 'none';
-        });
-
-        document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
-          if (e.target === document.getElementById('modalOverlay')) {
-            document.getElementById('modalOverlay').style.display = 'none';
-          }
-        });
-
-        // Загрузка данных
-        async function loadData() {
-          showLoader(true);
-          try {
-            allEntries = await getEntries();
-            currentEntries = [...allEntries];
-            updateTotalPages();
-            renderPage(currentPage);
-          } finally {
-            showLoader(false);
-          }
-        }
-
-        loadData();
+    // Инициализация событий
+    document.getElementById('btnSearch')?.addEventListener('click', () => {
+      const term = prompt('Введите номер детали для поиска:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById('sortSelect').value = 'all';
       }
-    </script>
-  </body>
+    });
+document.getElementById('btnReset')?.addEventListener('click', () => {
+  currentEntries = [...allEntries];
+  updateTotalPages();
+  currentPage = 1;
+  renderPage(currentPage);
+  document.getElementById('sortSelect').value = 'all';
+});
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
+          }
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+        }
+        
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    // Загрузка данных
+    async function loadData() {
+      showLoader(true);
+      try {
+        allEntries = await getEntries();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    loadData();
+  }
+</script>
+</body>
 </html>
