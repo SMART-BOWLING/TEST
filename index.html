@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест Bowling AI помощника</title>
+    <title>Bowling AI помощник</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,6 +39,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            margin: 5px;
         }
         button:hover {
             background: #0056b3;
@@ -49,6 +50,7 @@
             background: #f8f9fa;
             border-radius: 5px;
             border-left: 4px solid #007bff;
+            white-space: pre-wrap;
         }
         .loading {
             color: #666;
@@ -59,6 +61,11 @@
             background: #f8d7da;
             border-left-color: #dc3545;
         }
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
         .url-display {
             margin: 10px 0;
             padding: 10px;
@@ -66,40 +73,42 @@
             border-radius: 5px;
             font-family: monospace;
             word-break: break-all;
+            font-size: 12px;
+        }
+        .examples {
+            margin: 15px 0;
+        }
+        .examples button {
+            background: #6c757d;
+            padding: 5px 10px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎳 Тест Bowling AI помощника</h1>
+        <h1>🎳 Bowling AI помощник</h1>
         
         <div class="url-display">
-            <strong>GAS URL:</strong> <span id="gas-url">https://script.google.com/macros/s/ВАШ_ID/exec</span>
+            <strong>GAS URL:</strong> <span id="gas-url"></span>
         </div>
 
         <div class="input-group">
             <input type="text" id="question-input" placeholder="Введите ваш вопрос..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendQuestion()">Отправить</button>
+            <button onclick="sendQuestion()">Отправить вопрос</button>
+            <button onclick="testConnection()" style="background: #28a745;">Проверить подключение</button>
+        </div>
+
+        <div class="examples">
+            <strong>Примеры вопросов:</strong>
+            <button onclick="setExample('как ремонтировать шаровозврат?')">Шаровозврат</button>
+            <button onclick="setExample('пинспоттер не работает')">Пинспоттер</button>
+            <button onclick="setExample('какое масло использовать?')">Масло</button>
+            <button onclick="setExample('коды ошибок оборудования')">Ошибки</button>
         </div>
 
         <div id="response" class="response">
-            <p>Здесь появится ответ от AI...</p>
-        </div>
-
-        <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 5px;">
-            <h3>Примеры вопросов для теста:</h3>
-            <ul>
-                <li>"как ремонтировать шаровозврат?"</li>
-                <li>"что делать если пинспоттер не работает?"</li>
-            
-                <li>"какое масло использовать?"</li>
-                <li>"ошибки оборудования"</li>
-            </ul>
-        </div>
-
-        <div style="margin-top: 20px; text-align: center;">
-            <button onclick="testConnection()" style="background: #28a745;">Проверить подключение</button>
-            <button onclick="openGasUrl()" style="background: #6c757d;">Открыть GAS URL</button>
+            <p>Готов к работе. Задайте вопрос или проверьте подключение.</p>
         </div>
     </div>
 
@@ -119,7 +128,7 @@
                 return;
             }
 
-            showResponse('Отправляем запрос...', 'loading');
+            showResponse('Отправляем запрос к AI...', 'loading');
 
             // Данные для отправки
             const requestData = {
@@ -130,68 +139,65 @@
                 }
             };
 
-            // Создаем форму для обхода CORS
-            sendViaForm(requestData);
+            // Отправляем POST запрос
+            fetch(GAS_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.answer) {
+                    showResponse(data.answer, 'success');
+                } else if (data.status === "error") {
+                    showResponse('Ошибка: ' + data.message, 'error');
+                } else {
+                    showResponse('Неизвестный формат ответа: ' + JSON.stringify(data), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showResponse(`Ошибка соединения: ${error.message}\n\nПопробуйте:\n1. Проверить URL GAS скрипта\n2. Убедиться что скрипт развернут как "Все пользователи"\n3. Проверить консоль браузера (F12) для деталей`, 'error');
+            });
         }
 
-        // Альтернативный метод отправки через форму
-        function sendViaForm(data) {
-            // Создаем скрытую форму
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = GAS_URL;
-            form.style.display = 'none';
-            
-            // Добавляем данные
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'data';
-            input.value = JSON.stringify(data);
-            form.appendChild(input);
-            
-            // Добавляем форму на страницу и отправляем
-            document.body.appendChild(form);
-            
-            // Показываем уведомление о ручной отправке
-            showResponse('Запрос отправлен. Проверьте консоль браузера (F12) для результатов.', 'loading');
-            
-            // Отправляем форму
-            form.submit();
-        }
-
-        // Метод с использованием JSONP для GET запросов
         function testConnection() {
             showResponse('Проверяем подключение к GAS...', 'loading');
             
-            // Создаем script тег для JSONP
-            const script = document.createElement('script');
-            script.src = GAS_URL + '?callback=handleResponse';
-            
-            // Обработчик ответа
-            window.handleResponse = function(data) {
-                showResponse('✅ Подключение успешно! GAS отвечает: ' + data.message, 'success');
-                document.body.removeChild(script);
-                delete window.handleResponse;
-            };
-            
-            // Обработчик ошибки
-            script.onerror = function() {
-                showResponse('❌ Не удалось подключиться к GAS. Проверьте URL и настройки CORS.', 'error');
-                document.body.removeChild(script);
-            };
-            
-            document.body.appendChild(script);
+            // Простой GET запрос для проверки
+            fetch(GAS_URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showResponse('✅ Подключение успешно!\n' + JSON.stringify(data, null, 2), 'success');
+            })
+            .catch(error => {
+                showResponse('❌ Ошибка подключения: ' + error.message, 'error');
+            });
         }
 
         function showResponse(message, type = 'success') {
             const responseDiv = document.getElementById('response');
-            responseDiv.innerHTML = `<p><strong>${type === 'error' ? '❌ Ошибка' : type === 'loading' ? '⏳ Загрузка...' : '✅ Ответ'}:</strong> ${message}</p>`;
+            responseDiv.innerHTML = `<p>${message}</p>`;
             
             responseDiv.className = 'response';
             if (type === 'error') {
                 responseDiv.classList.add('error');
             } else if (type === 'loading') {
                 responseDiv.classList.add('loading');
+            } else if (type === 'success') {
+                responseDiv.classList.add('success');
             }
         }
 
@@ -201,26 +207,26 @@
             }
         }
 
-        function openGasUrl() {
-            window.open(GAS_URL, '_blank');
+        function setExample(question) {
+            document.getElementById('question-input').value = question;
         }
 
-        // Проверяем URL при загрузке
+        // Автопроверка при загрузке
         window.addEventListener('load', function() {
             console.log('GAS URL:', GAS_URL);
             
             // Проверяем валидность URL
             if (!GAS_URL.includes('script.google.com')) {
-                showResponse('❌ Неверный GAS URL. Убедитесь, что URL начинается с https://script.google.com/', 'error');
+                showResponse('❌ Неверный GAS URL. Должен начинаться с https://script.google.com/', 'error');
                 return;
             }
             
             if (GAS_URL.includes('ВАШ_ID')) {
-                showResponse('❌ Замените "ВАШ_ID" на настоящий ID вашего GAS скрипта!', 'error');
+                showResponse('❌ Замените "ВАШ_ID" в коде на настоящий ID вашего GAS скрипта!', 'error');
                 return;
             }
             
-            showResponse('Нажмите "Проверить подключение" для теста', 'success');
+            showResponse('Нажмите "Проверить подключение" для теста соединения', 'success');
         });
     </script>
 </body>
