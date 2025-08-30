@@ -2,35 +2,33 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>ДЕТАЛИ SKYMALL</title>
    <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    /* Стиль для области статус-бара на iOS */
+    /* Стили для статус-бара на iOS */
+    body {
+      margin: 0;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      background: #d1d5da;
+      font-family: Arial, sans-serif;
+    }
+    
+    /* Псевдоэлемент для закрашивания области статус-бара */
     body::before {
       content: '';
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
+      right: 0;
       height: env(safe-area-inset-top);
-      background-color: #1f2937;
-      z-index: 9998; /* Ниже чем у шапки и авторизации */
-    }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #d1d5da;
-      font-family: Arial, sans-serif;
-      /* Учет безопасных областей на iPhone с "челкой" */
-      padding-top: calc(20px + env(safe-area-inset-top));
-      padding-left: calc(20px + env(safe-area-inset-left));
-      padding-right: calc(20px + env(safe-area-inset-right));
-      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      background-color: #1f2937; /* Тот же цвет, что и у header */
+      z-index: 1001;
     }
 
     header {
@@ -41,7 +39,7 @@
       justify-content: space-between;
       padding: 10px 30px;
       position: fixed;
-      top: env(safe-area-inset-top); /* Учет безопасной области */
+      top: env(safe-area-inset-top); /* Учитываем безопасную зону */
       left: 0;
       right: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -84,7 +82,7 @@
       display: none;
       flex-direction: column;
       position: absolute;
-      top: 170px;
+      top: calc(140px + env(safe-area-inset-top));
       right: 30px;
       background-color: #1f2937;
       border: 2px solid #444;
@@ -126,7 +124,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 10000; /* Выше чем у статус-бара */
+      z-index: 10000;
       padding: 20px;
     }
     
@@ -138,7 +136,7 @@
     #content {
       display: none;
       width: 100%;
-      margin-top: calc(170px + env(safe-area-inset-top)); /* Учет безопасной области */
+      margin-top: calc(170px + env(safe-area-inset-top));
     }
 
     .top-controls {
@@ -744,7 +742,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 10001; /* Выше чем у авторизации */
+      z-index: 99999;
       display: none;
     }
 
@@ -760,12 +758,6 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-
-    /* Стили для кнопки входа через Google */
-    .g_id_signin {
-      z-index: 10001; /* Убедимся, что кнопка поверх всего */
-      position: relative;
     }
   </style>
 </head>
@@ -800,7 +792,7 @@
        data-callback="handleCredentialResponse"
        data-auto_prompt="false">
   </div>
-  <div class="g_id_signin" data-type="standard" data-theme="filled_blue"></div>
+  <div class="g_id_signin" data-type="standard"></div>
 </div>
 
 <!-- Контент для авторизованных -->
@@ -878,26 +870,18 @@
       document.getElementById("login").style.display = "none";
       document.getElementById("content").style.display = "block";
       initApp();
-    } else {
-      // Показываем блок авторизации, если пользователь не авторизован
-      document.getElementById("login").style.display = "flex";
     }
   };
 
   // Функция для разбора JWT токена
   function parseJwt(token) {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
 
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      console.error("Error parsing JWT:", e);
-      return {};
-    }
+    return JSON.parse(jsonPayload);
   }
 
   // Глобальный объект для пагинации
@@ -940,7 +924,7 @@
     async function deleteEntry(rowIndex) {
       showLoader(true);
       try {
-        const res = await fetch(`${API_URL?action=deleteEntry&rowIndex=${rowIndex}`);
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
         return await res.json();
       } finally {
         showLoader(false);
@@ -1187,9 +1171,12 @@
 
     function updateTotalPages() {
       totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+      console.log('Updated total pages:', totalPages);
     }
 
     function renderPage(page) {
+      console.log(`Rendering page ${page} of ${totalPages}`);
+      
       const container = document.getElementById('cardsContainer');
       if (!container) {
         console.error('Cards container not found!');
