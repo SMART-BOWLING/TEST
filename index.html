@@ -341,12 +341,8 @@
       align-items: center;
       margin-top: 15px;
       gap: 10px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       user-select: none;
-      overflow-x: auto;
-      white-space: nowrap;
-      width: 100%;
-      padding-bottom: 5px;
     }
 
     .pagination button {
@@ -362,7 +358,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      flex-shrink: 0;
     }
 
     .pagination button:hover:not(:disabled) {
@@ -387,8 +382,7 @@
       gap: 6px;
       align-items: center;
       justify-content: center;
-      flex-wrap: nowrap;
-      flex-shrink: 0;
+      flex-wrap: wrap;
     }
 
     .page-numbers button {
@@ -401,7 +395,6 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      flex-shrink: 0;
     }
 
     .page-numbers button:hover {
@@ -415,12 +408,10 @@
       transform: scale(1.05);
     }
 
-    .page-info {
+    .ellipsis {
       color: #1a2f40;
       font-weight: 700;
-      font-size: 14px;
-      padding: 0 8px;
-      flex-shrink: 0;
+      padding: 0 5px;
     }
 
     .highlight {
@@ -519,12 +510,9 @@
     </table>
 
     <div class="pagination">
-      <button onclick="goToFirstPage()" id="firstBtn" disabled><i class="fas fa-fast-backward"></i></button>
-      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i></button>
-      <div class="page-info" id="pageInfo">Страница 1 из 1</div>
+      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
       <div class="page-numbers" id="pageNumbers"></div>
-      <button onclick="nextPage()" id="nextBtn"><i class="fas fa-arrow-right"></i></button>
-      <button onclick="goToLastPage()" id="lastBtn"><i class="fas fa-fast-forward"></i></button>
+      <button onclick="nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
     </div>
   </div>
 
@@ -757,12 +745,8 @@
 
       applyHighlight();
       renderPageNumbers();
-      updatePageInfo();
-      
-      document.getElementById("firstBtn").disabled = currentPage === 1;
       document.getElementById("prevBtn").disabled = currentPage === 1;
       document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
-      document.getElementById("lastBtn").disabled = currentPage * rowsPerPage >= fullData.length;
     }
 
     function validateAndSend(rowNumber) {
@@ -812,35 +796,56 @@
       const pageContainer = document.getElementById("pageNumbers");
       pageContainer.innerHTML = "";
       const totalPages = Math.ceil(fullData.length / rowsPerPage);
-      let startPage = Math.max(currentPage - 2, 1);
-      let endPage = Math.min(startPage + 4, totalPages);
-      if (endPage - startPage < 4) {
-        startPage = Math.max(endPage - 4, 1);
-      }
-      for (let i = startPage; i <= endPage; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        if (i === currentPage) btn.classList.add("active");
-        btn.onclick = () => {
-          currentPage = i;
-          renderPage(currentPage);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-        pageContainer.appendChild(btn);
+      
+      if (totalPages <= 1) return;
+      
+      // Всегда показываем первую страницу
+      addPageButton(1, pageContainer);
+      
+      if (totalPages > 1) {
+        // Добавляем многоточие после первой страницы, если нужно
+        if (currentPage > 3) {
+          const ellipsis = document.createElement("span");
+          ellipsis.className = "ellipsis";
+          ellipsis.textContent = "...";
+          pageContainer.appendChild(ellipsis);
+        }
+        
+        // Показываем страницы вокруг текущей
+        const startPage = Math.max(2, currentPage - 1);
+        const endPage = Math.min(totalPages - 1, currentPage + 1);
+        
+        for (let i = startPage; i <= endPage; i++) {
+          if (i !== 1 && i !== totalPages) {
+            addPageButton(i, pageContainer);
+          }
+        }
+        
+        // Добавляем многоточие перед последней страницей, если нужно
+        if (currentPage < totalPages - 2) {
+          const ellipsis = document.createElement("span");
+          ellipsis.className = "ellipsis";
+          ellipsis.textContent = "...";
+          pageContainer.appendChild(ellipsis);
+        }
+        
+        // Всегда показываем последнюю страницу
+        if (totalPages > 1) {
+          addPageButton(totalPages, pageContainer);
+        }
       }
     }
 
-    function updatePageInfo() {
-      const totalPages = Math.ceil(fullData.length / rowsPerPage);
-      document.getElementById("pageInfo").textContent = `Страница ${currentPage} из ${totalPages}`;
-    }
-
-    function goToFirstPage() {
-      if (currentPage > 1) {
-        currentPage = 1;
+    function addPageButton(pageNumber, container) {
+      const btn = document.createElement("button");
+      btn.textContent = pageNumber;
+      if (pageNumber === currentPage) btn.classList.add("active");
+      btn.onclick = () => {
+        currentPage = pageNumber;
         renderPage(currentPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      };
+      container.appendChild(btn);
     }
 
     function prevPage() {
@@ -854,15 +859,6 @@
     function nextPage() {
       if (currentPage * rowsPerPage < fullData.length) {
         currentPage++;
-        renderPage(currentPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-
-    function goToLastPage() {
-      const totalPages = Math.ceil(fullData.length / rowsPerPage);
-      if (currentPage < totalPages) {
-        currentPage = totalPages;
         renderPage(currentPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
