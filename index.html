@@ -341,8 +341,12 @@
       align-items: center;
       margin-top: 15px;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       user-select: none;
+      overflow-x: auto;
+      white-space: nowrap;
+      width: 100%;
+      padding-bottom: 5px;
     }
 
     .pagination button {
@@ -358,6 +362,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-shrink: 0;
     }
 
     .pagination button:hover:not(:disabled) {
@@ -382,7 +387,8 @@
       gap: 6px;
       align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
     }
 
     .page-numbers button {
@@ -395,6 +401,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex-shrink: 0;
     }
 
     .page-numbers button:hover {
@@ -406,6 +413,14 @@
     .page-numbers button.active {
       background: linear-gradient(to bottom, #1f2937, #0d1520);
       transform: scale(1.05);
+    }
+
+    .page-info {
+      color: #1a2f40;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 0 8px;
+      flex-shrink: 0;
     }
 
     .highlight {
@@ -504,9 +519,12 @@
     </table>
 
     <div class="pagination">
-      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+      <button onclick="goToFirstPage()" id="firstBtn" disabled><i class="fas fa-fast-backward"></i></button>
+      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i></button>
+      <div class="page-info" id="pageInfo">Страница 1 из 1</div>
       <div class="page-numbers" id="pageNumbers"></div>
-      <button onclick="nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+      <button onclick="nextPage()" id="nextBtn"><i class="fas fa-arrow-right"></i></button>
+      <button onclick="goToLastPage()" id="lastBtn"><i class="fas fa-fast-forward"></i></button>
     </div>
   </div>
 
@@ -739,8 +757,12 @@
 
       applyHighlight();
       renderPageNumbers();
+      updatePageInfo();
+      
+      document.getElementById("firstBtn").disabled = currentPage === 1;
       document.getElementById("prevBtn").disabled = currentPage === 1;
       document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
+      document.getElementById("lastBtn").disabled = currentPage * rowsPerPage >= fullData.length;
     }
 
     function validateAndSend(rowNumber) {
@@ -808,6 +830,19 @@
       }
     }
 
+    function updatePageInfo() {
+      const totalPages = Math.ceil(fullData.length / rowsPerPage);
+      document.getElementById("pageInfo").textContent = `Страница ${currentPage} из ${totalPages}`;
+    }
+
+    function goToFirstPage() {
+      if (currentPage > 1) {
+        currentPage = 1;
+        renderPage(currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
     function prevPage() {
       if (currentPage > 1) {
         currentPage--;
@@ -819,6 +854,15 @@
     function nextPage() {
       if (currentPage * rowsPerPage < fullData.length) {
         currentPage++;
+        renderPage(currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function goToLastPage() {
+      const totalPages = Math.ceil(fullData.length / rowsPerPage);
+      if (currentPage < totalPages) {
+        currentPage = totalPages;
         renderPage(currentPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
