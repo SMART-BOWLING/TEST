@@ -103,8 +103,8 @@
       overflow: hidden;
       z-index: 1001;
       min-width: 150px;
-      margin-top: 25px; /* Опускаем ниже */
-      width: 90%; /* Увеличиваем ширину на 10% */
+      margin-top: 25px;
+      width: 90%;
     }
 
     .site-name-dropdown a {
@@ -116,7 +116,7 @@
       display: flex;
       align-items: center;
       white-space: nowrap;
-      justify-content: center; /* Выравниваем текст по центру */
+      justify-content: center;
     }
 
     .site-name-dropdown a:hover {
@@ -341,8 +341,11 @@
       align-items: center;
       margin-top: 15px;
       gap: 10px;
-      flex-wrap: wrap;
       user-select: none;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      width: 100%;
+      padding: 5px 0;
     }
 
     .pagination button {
@@ -358,6 +361,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .pagination button:hover:not(:disabled) {
@@ -383,6 +388,7 @@
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
     .page-numbers button {
@@ -526,16 +532,13 @@
     let activeSearchColumn = null;
     let activeSearchText = "";
 
-    // Проверяем авторизацию при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
       checkAuth();
       
-      // Проверяем параметры URL после возврата с OAuth
       if (window.location.hash) {
         processAuthResponse();
       }
       
-      // Закрываем выпадающие списки при клике вне их области
       document.addEventListener('click', function(e) {
         const siteNameDropdown = document.getElementById('siteNameDropdown');
         const dropdownMenu = document.getElementById('dropdownMenu');
@@ -553,12 +556,10 @@
     function checkAuth() {
       const userEmail = localStorage.getItem('userEmail');
       if (userEmail && allowedEmails.includes(userEmail)) {
-        // Пользователь авторизован
         document.getElementById('login').style.display = 'none';
         document.getElementById('app-content').style.display = 'block';
         loadSheetData();
       } else {
-        // Показываем форму входа
         document.getElementById('login').style.display = 'flex';
       }
     }
@@ -569,7 +570,6 @@
       const scope = encodeURIComponent('email profile');
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
       
-      // Открываем окно аутентификации
       window.open(authUrl, 'GoogleAuth', 'width=500,height=600');
     }
 
@@ -581,13 +581,11 @@
       if (accessToken) {
         showLoader();
         
-        // Получаем данные пользователя
         fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + accessToken)
           .then(response => response.json())
           .then(data => {
             if (data.email && allowedEmails.includes(data.email)) {
               localStorage.setItem('userEmail', data.email);
-              // Убираем hash из URL
               window.location.href = window.location.origin + window.location.pathname;
             } else {
               alert('Доступ запрещен для: ' + data.email);
@@ -608,13 +606,11 @@
       const dropdown = document.getElementById("siteNameDropdown");
       dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
       
-      // Закрываем другой выпадающий список, если он открыт
       const menu = document.getElementById("dropdownMenu");
       if (menu.style.display === "flex") {
         menu.style.display = "none";
       }
       
-      // Останавливаем всплытие события, чтобы не сработал обработчик document.click
       event.stopPropagation();
     }
 
@@ -622,13 +618,11 @@
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
       
-      // Закрываем другой выпадающий список, если он открыт
       const dropdown = document.getElementById("siteNameDropdown");
       if (dropdown.style.display === "block") {
         dropdown.style.display = "none";
       }
       
-      // Останавливаем всплытие события, чтобы не сработал обработчик document.click
       event.stopPropagation();
     }
 
@@ -799,11 +793,9 @@
       
       if (totalPages <= 1) return;
       
-      // Всегда показываем первую страницу
       addPageButton(1, pageContainer);
       
       if (totalPages > 1) {
-        // Добавляем многоточие после первой страницы, если нужно
         if (currentPage > 3) {
           const ellipsis = document.createElement("span");
           ellipsis.className = "ellipsis";
@@ -811,7 +803,6 @@
           pageContainer.appendChild(ellipsis);
         }
         
-        // Показываем страницы вокруг текущей
         const startPage = Math.max(2, currentPage - 1);
         const endPage = Math.min(totalPages - 1, currentPage + 1);
         
@@ -821,7 +812,6 @@
           }
         }
         
-        // Добавляем многоточие перед последней страницей, если нужно
         if (currentPage < totalPages - 2) {
           const ellipsis = document.createElement("span");
           ellipsis.className = "ellipsis";
@@ -829,7 +819,6 @@
           pageContainer.appendChild(ellipsis);
         }
         
-        // Всегда показываем последнюю страницу
         if (totalPages > 1) {
           addPageButton(totalPages, pageContainer);
         }
