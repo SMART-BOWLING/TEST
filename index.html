@@ -671,7 +671,7 @@
         if (index !== -1) fullData[index] = updatedRow;
 
         updateOpenTaskCard(fullData);
-        renderPage(currentPage);
+        updateSingleRow(rowNumber, updatedRow);
       } catch (e) {
         alert('Ошибка при обновлении данных');
         console.error(e);
@@ -681,7 +681,6 @@
     }
 
     function renderPage(page) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       const tableBody = document.getElementById("tableBody");
       tableBody.innerHTML = "";
 
@@ -754,7 +753,73 @@
       }
 
       updateSheet(rowNumber, gSelect.value, iSelect.value);
-      btn.outerHTML = `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`;
+    }
+
+    function updateSingleRow(rowNumber, rowData) {
+      const rows = document.getElementById("tableBody").getElementsByTagName("tr");
+      
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const btn = row.querySelector(`button[id="btn_${rowNumber}"]`);
+        
+        if (btn) {
+          const schemaLink = rowData[2]
+            ? `<a href="${rowData[2]}" target="_blank" class="schema-button">
+                 <i class="fas fa-file-alt"></i>Открыть
+               </a>`
+            : "";
+
+          row.cells[0].innerHTML = rowData[2] ? `
+            <a href="${rowData[2]}" target="_blank" class="schema-button">
+              <i class="fas fa-file-alt"></i>Открыть
+            </a>` : "Нет схемы";
+          
+          row.cells[1].textContent = rowData[1];
+          row.cells[2].textContent = rowData[3];
+          row.cells[3].textContent = rowData[4];
+          
+          if (rowData[6]) {
+            row.cells[4].innerHTML = rowData[6];
+            row.cells[4].id = "";
+          } else {
+            row.cells[4].innerHTML = `
+              <select id="i_${rowData[0]}">
+                <option value="" selected disabled></option>
+                <option value="ЕСТЬ">ЕСТЬ</option>
+                <option value="НЕТ">НЕТ</option>
+              </select>`;
+            row.cells[4].id = `iText_${rowData[0]}`;
+          }
+          
+          if (rowData[5]) {
+            row.cells[5].innerHTML = rowData[5];
+            row.cells[5].id = "";
+          } else {
+            row.cells[5].innerHTML = `
+              <select id="g_${rowData[0]}">
+                <option value="" selected disabled></option>
+                <option value="МЕХАНИК(1)">МЕХАНИК(1)</option>
+                <option value="МЕХАНИК(2)">МЕХАНИК(2)</option>
+              </select>`;
+            row.cells[5].id = `gText_${rowData[0]}`;
+          }
+          
+          const buttonsRow = row.cells[6].querySelector('.buttons-row');
+          buttonsRow.innerHTML = `
+            ${schemaLink}
+            ${rowData[5] && rowData[6]
+              ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
+              : `<button id="btn_${rowData[0]}" onclick="validateAndSend(${rowData[0]});">
+                   <i class="fas fa-paper-plane"></i>Отправить
+                 </button>`}
+          `;
+          
+          break;
+        }
+      }
+      
+      applyHighlight();
+      updateOpenTaskCard(fullData);
     }
 
     function startColumnSearch(columnIndex) {
@@ -793,10 +858,8 @@
       
       if (totalPages <= 1) return;
       
-      // Всегда показываем первую страницу
       addPageButton(1, pageContainer);
       
-      // Добавляем многоточие после первой страницы, если нужно
       if (currentPage > 3 && totalPages > 3) {
         const ellipsis = document.createElement("span");
         ellipsis.className = "ellipsis";
@@ -804,12 +867,10 @@
         pageContainer.appendChild(ellipsis);
       }
       
-      // Показываем текущую страницу, если она не первая и не последняя
       if (currentPage > 1 && currentPage < totalPages) {
         addPageButton(currentPage, pageContainer);
       }
       
-      // Добавляем многоточие перед последней страницей, если нужно
       if (currentPage < totalPages - 2 && totalPages > 3) {
         const ellipsis = document.createElement("span");
         ellipsis.className = "ellipsis";
@@ -817,7 +878,6 @@
         pageContainer.appendChild(ellipsis);
       }
       
-      // Всегда показываем последнюю страницу
       if (totalPages > 1) {
         addPageButton(totalPages, pageContainer);
       }
@@ -830,7 +890,6 @@
       btn.onclick = () => {
         currentPage = pageNumber;
         renderPage(currentPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       };
       container.appendChild(btn);
     }
@@ -839,7 +898,6 @@
       if (currentPage > 1) {
         currentPage--;
         renderPage(currentPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
 
@@ -847,7 +905,6 @@
       if (currentPage * rowsPerPage < fullData.length) {
         currentPage++;
         renderPage(currentPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
 
