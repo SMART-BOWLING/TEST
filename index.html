@@ -847,11 +847,6 @@
       font-size: 20px;
       font-weight: 800;
     }
-
-    /* Стили для скрытия элементов управления */
-    .hidden-controls {
-      display: none !important;
-    }
   </style>
 </head>
 <body>
@@ -897,7 +892,7 @@
 <!-- Контент для авторизованных -->
 <div id="content" style="display:none">
   <div class="top-controls" id="topControls">
-    <div class="select-wrapper" id="filterControl">
+    <div class="select-wrapper">
       <select id="sortSelect" title="Фильтр">
         <option value="all">Все детали</option>
         <option value="popular">Пос. взят. за 30 дней</option>
@@ -1030,11 +1025,8 @@
     let totalPages = 1;
     const cardsPerPage = 5;
 
-    // Скрываем элементы управления для пользователей с ограниченным доступом
-    if (hasLimitedAccess()) {
-      document.getElementById('topControls').classList.add('hidden-controls');
-      document.getElementById('paginationContainer').classList.add('hidden-controls');
-    }
+    // УБРАН КОД, КОТОРЫЙ СКРЫВАЛ КНОПКИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ С ОГРАНИЧЕННЫМ ДОСТУПОМ
+    // Теперь кнопки видны всем пользователям
 
     // Основные функции приложения
     async function getEntries() {
@@ -1475,67 +1467,66 @@
     }
 
     // Инициализация событий
-    if (!hasLimitedAccess()) {
-      document.getElementById('btnSearch')?.addEventListener('click', () => {
-        const term = prompt('Введите номер детали для поиска:');
-        if (term !== null) {
-          const searchTerm = term.toLowerCase().trim();
-          currentEntries = searchTerm.length === 0 
-            ? [...allEntries] 
-            : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
-          updateTotalPages();
-          currentPage = 1;
-          renderPage(currentPage);
-          document.getElementById('sortSelect').value = 'all';
-        }
-      });
-
-      document.getElementById('btnReset')?.addEventListener('click', () => {
-        currentEntries = [...allEntries];
+    // Для пользователей с ограниченным доступом оставляем функционал кнопок
+    document.getElementById('btnSearch')?.addEventListener('click', () => {
+      const term = prompt('Введите номер детали для поиска:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
         updateTotalPages();
         currentPage = 1;
         renderPage(currentPage);
         document.getElementById('sortSelect').value = 'all';
-      });
+      }
+    });
 
-      document.getElementById('sortSelect')?.addEventListener('change', async function() {
-        showLoader(true);
-        try {
-          if (this.value === 'all') {
-            currentEntries = [...allEntries];
-          } else if (this.value === 'popular') {
-            currentEntries = await getPopularEntries();
-            if (currentEntries && currentEntries[0]?.lastChangeDate) {
-              currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
-            }
-          } else if (this.value === 'mostPopular') {
-            currentEntries = await getMostPopularEntries();
-            if (!currentEntries?.length) {
-              alert('Нет данных для сортировки "всё время"');
-              return;
-            }
-          } else if (this.value === 'sortByQty') {
-            currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+    document.getElementById('btnReset')?.addEventListener('click', () => {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    });
+
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
           }
-          
-          updateTotalPages();
-          currentPage = 1;
-          renderPage(currentPage);
-        } finally {
-          showLoader(false);
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
         }
-      });
+        
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
 
-      document.getElementById('modalClose')?.addEventListener('click', () => {
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
         document.getElementById('modalOverlay').style.display = 'none';
-      });
-
-      document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modalOverlay')) {
-          document.getElementById('modalOverlay').style.display = 'none';
-        }
-      });
-    }
+      }
+    });
 
     // Загрузка данных
     async function loadData() {
