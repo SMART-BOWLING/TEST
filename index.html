@@ -797,56 +797,56 @@
       display: none;
     }
     
-    .limited-access .part-name-container {
-      justify-content: center;
-      padding: 12px;
-    }
-    
-    .limited-access .part-name-text {
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    
-    .limited-access .part-info-row {
+    .limited-access .part-info-container {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: stretch;
       margin: 12px 0;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    
-    .limited-access .part-info-item {
-      flex: 1;
-      padding: 16px 20px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      gap: 12px;
       min-height: 60px;
     }
     
+    .limited-access .part-info-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      min-height: 50px;
+      flex-shrink: 0;
+    }
+    
     .limited-access .part-number {
-      background: #1a2f40;
+      background: linear-gradient(135deg, #1a2f40, #0d1a26);
       color: white;
+      min-width: 140px;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .limited-access .part-name {
-      background: #ffffff;
+      background: linear-gradient(135deg, #ffffff, #f8f9fa);
       color: #1a2f40;
-      border-left: 2px solid #f0f2f5;
-      border-right: 2px solid #f0f2f5;
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     .limited-access .part-quantity {
-      background: #dc143c;
+      background: linear-gradient(135deg, #dc143c, #b01030);
       color: white;
-      font-size: 24px;
+      min-width: 60px;
+      max-width: 80px;
+      font-size: 20px;
+      font-weight: 800;
     }
   </style>
 </head>
@@ -966,7 +966,7 @@
 
   // Настройки авторизации
   const allowedEmails = ["vadiksss900@gmail.com", "sashavolobuev123890@gmail.com"];
-  const limitedAccessEmails = ["nikoshina16@gmail.com"]; // Эмейлы с ограниченным доступом
+  const limitedAccessEmails = ["bowlingblock.b@gmail.com"]; // Эмейлы с ограниченным доступом
 
   // Обработчик ответе от Google
   function handleCredentialResponse(response) {
@@ -1060,7 +1060,7 @@
     async function updateQuantityWithName(partNumber, delta, name) {
       showLoader(true);
       try {
-        const res = await fetch(`${API_URL}?action=updateQuantityWithName&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}&name=${encodeURIComponent(name)}`);
+        const res = await fetch(`${API_URL?action=updateQuantityWithName&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}&name=${encodeURIComponent(name)}`);
         return await res.json();
       } finally {
         showLoader(false);
@@ -1124,7 +1124,7 @@
       div.dataset.row = entry.rowIndex;
       div.dataset.partNumber = entry.partNumber.toLowerCase();
 
-      // Добавляем класс для ограниченного доступа, если нужно
+      // Добавляем класс для ограниченного доступ, если нужно
       if (hasLimitedAccess()) {
         div.classList.add('limited-access');
       }
@@ -1169,8 +1169,8 @@
 
       // Для пользователей с ограниченным доступом создаем красивую строку с информацией
       if (hasLimitedAccess()) {
-        const partInfoRow = document.createElement('div');
-        partInfoRow.className = 'part-info-row';
+        const partInfoContainer = document.createElement('div');
+        partInfoContainer.className = 'part-info-container';
         
         const partNumberItem = document.createElement('div');
         partNumberItem.className = 'part-info-item part-number';
@@ -1184,11 +1184,11 @@
         partQuantityItem.className = 'part-info-item part-quantity';
         partQuantityItem.textContent = entry.quantity;
         
-        partInfoRow.appendChild(partNumberItem);
-        partInfoRow.appendChild(partNameItem);
-        partInfoRow.appendChild(partQuantityItem);
+        partInfoContainer.appendChild(partNumberItem);
+        partInfoContainer.appendChild(partNameItem);
+        partInfoContainer.appendChild(partQuantityItem);
         
-        div.appendChild(partInfoRow);
+        div.appendChild(partInfoContainer);
       } else {
         // Для обычных пользователей оставляем стандартный вид
         const partNameContainer = document.createElement('div');
@@ -1489,7 +1489,7 @@
     // Инициализация событий
     if (!hasLimitedAccess()) {
       document.getElementById('btnSearch')?.addEventListener('click', () => {
-        const term = prompt('Введите номер детали для поиска:');
+        const term = prompt('Введите номер детали для поича:');
         if (term !== null) {
           const searchTerm = term.toLowerCase().trim();
           currentEntries = searchTerm.length === 0 
@@ -1542,7 +1542,7 @@
         document.getElementById('modalOverlay').style.display = 'none';
       });
 
-      document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      document.getElementById('modalOverlay')?.addEventListener('click', (e) {
         if (e.target === document.getElementById('modalOverlay')) {
           document.getElementById('modalOverlay').style.display = 'none';
         }
