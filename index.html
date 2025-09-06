@@ -808,31 +808,45 @@
       font-weight: bold;
     }
     
-    .limited-access .part-number-info {
+    .limited-access .part-info-row {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      gap: 15px;
       margin: 12px 0;
-      padding: 12px;
       background: #ffffff;
       border-radius: 16px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .limited-access .part-info-item {
+      flex: 1;
+      padding: 16px 20px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60px;
     }
     
     .limited-access .part-number {
-      font-size: 20px;
-      font-weight: bold;
+      background: #1a2f40;
+      color: white;
+    }
+    
+    .limited-access .part-name {
+      background: #ffffff;
       color: #1a2f40;
+      border-left: 2px solid #f0f2f5;
+      border-right: 2px solid #f0f2f5;
     }
     
     .limited-access .part-quantity {
-      font-size: 20px;
-      font-weight: bold;
-      color: #dc143c;
-      padding: 8px 16px;
-      background: #f8f9fa;
-      border-radius: 12px;
+      background: #dc143c;
+      color: white;
+      font-size: 24px;
     }
   </style>
 </head>
@@ -922,7 +936,7 @@
 </div>
 
 <script>
-  // Функция для показа/скрытия индикатора загрузки
+  // Функция для показа/скрытия индикатор загрузки
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
@@ -952,7 +966,7 @@
 
   // Настройки авторизации
   const allowedEmails = ["vadiksss900@gmail.com", "sashavolobuev123890@gmail.com"];
-  const limitedAccessEmails = ["nikoshina16@gmail.com"]; // Эмейлы с ограниченным доступом
+  const limitedAccessEmails = ["bowlingblock.b@gmail.com"]; // Эмейлы с ограниченным доступом
 
   // Обработчик ответе от Google
   function handleCredentialResponse(response) {
@@ -1153,41 +1167,44 @@
 
       div.append(media);
 
-      // Добавляем блок с названием детали
-      const partNameContainer = document.createElement('div');
-      partNameContainer.className = 'part-name-container';
-      partNameContainer.dataset.partNumber = entry.partNumber;
-      
-      const partNameText = document.createElement('div');
-      partNameText.className = 'part-name-text';
-      partNameText.textContent = entry.partName || 'Название детали';
-      
-      partNameContainer.appendChild(partNameText);
-      
-      // Для пользователей с ограниченным доступом добавляем информацию о номере и количестве
+      // Для пользователей с ограниченным доступом создаем красивую строку с информацией
       if (hasLimitedAccess()) {
-        const partNumberInfo = document.createElement('div');
-        partNumberInfo.className = 'part-number-info';
+        const partInfoRow = document.createElement('div');
+        partInfoRow.className = 'part-info-row';
         
-        const partNumberSpan = document.createElement('span');
-        partNumberSpan.className = 'part-number';
-        partNumberSpan.textContent = entry.partNumber;
+        const partNumberItem = document.createElement('div');
+        partNumberItem.className = 'part-info-item part-number';
+        partNumberItem.textContent = entry.partNumber;
         
-        const partQuantitySpan = document.createElement('span');
-        partQuantitySpan.className = 'part-quantity';
-        partQuantitySpan.textContent = `Количество: ${entry.quantity}`;
+        const partNameItem = document.createElement('div');
+        partNameItem.className = 'part-info-item part-name';
+        partNameItem.textContent = entry.partName || 'Название детали';
         
-        partNumberInfo.appendChild(partNumberSpan);
-        partNumberInfo.appendChild(partQuantitySpan);
+        const partQuantityItem = document.createElement('div');
+        partQuantityItem.className = 'part-info-item part-quantity';
+        partQuantityItem.textContent = entry.quantity;
         
-        div.appendChild(partNumberInfo);
+        partInfoRow.appendChild(partNumberItem);
+        partInfoRow.appendChild(partNameItem);
+        partInfoRow.appendChild(partQuantityItem);
+        
+        div.appendChild(partInfoRow);
       } else {
-        // Для обычных пользователей добавляем кнопку редактирования
+        // Для обычных пользователей оставляем стандартный вид
+        const partNameContainer = document.createElement('div');
+        partNameContainer.className = 'part-name-container';
+        partNameContainer.dataset.partNumber = entry.partNumber;
+        
+        const partNameText = document.createElement('div');
+        partNameText.className = 'part-name-text';
+        partNameText.textContent = entry.partName || 'Название детали';
+        
         const editButton = document.createElement('button');
         editButton.className = 'part-name-edit-btn';
         editButton.innerHTML = '<i class="fas fa-edit"></i>';
         editButton.title = 'Редактировать название';
         
+        partNameContainer.appendChild(partNameText);
         partNameContainer.appendChild(editButton);
 
         // Обработчик клика для кнопки редактирования
@@ -1263,12 +1280,9 @@
             // Не завершаем редактирование при потере фокуса
           });
         });
-      }
 
-      div.append(partNameContainer);
+        div.append(partNameContainer);
 
-      // Для обычных пользователей добавляем элементы управления
-      if (!hasLimitedAccess()) {
         const controls = document.createElement('div');
         controls.className = 'controls';
 
