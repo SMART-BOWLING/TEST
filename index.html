@@ -1,10 +1,387 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <!-- остальной код без изменений -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SMB SKYMALL</title>
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* остальные стили без изменений */
-    
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    #login {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .google-btn {
+      background: #4285F4;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .google-btn:hover {
+      background: #3367D6;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background-color: #f4f6f9;
+      color: #1a2f40;
+      font-size: clamp(10px, 3vw, 14px);
+      font-weight: 700;
+    }
+
+    header {
+      background-color: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      user-select: none;
+      z-index: 1000;
+    }
+
+    .logo img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 0;
+      transform: translateY(4px);
+    }
+
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .site-name-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      border: 1px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 1001;
+      min-width: 150px;
+      margin-top: 25px;
+      width: 90%;
+    }
+
+    .site-name-dropdown a {
+      padding: 10px 15px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      justify-content: center;
+    }
+
+    .site-name-dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .menu-button {
+      width: 30px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 20px;
+    }
+
+    .menu-button div {
+      height: 4px;
+      background-color: white;
+      border-radius: 2px;
+    }
+
+    .dropdown {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 70px;
+      right: 15px;
+      background-color: #1f2937;
+      border: 1px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 9999;
+      min-width: 150px;
+    }
+
+    .dropdown a {
+      padding: 10px 15px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .icon-space {
+      margin-right: 6px;
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+   .task-summary-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #fff;
+      color: #000;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 16px;
+      margin: 80px auto 0px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      width: 84%;
+      max-width: 500px;
+    }
+
+    #app-content {
+      width: 96%;
+      max-width: 500px;
+      margin: 20px auto 40px;
+      padding: 0px 5px 10px 5px;
+      box-sizing: border-box;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      overflow-x: auto;
+    }
+
+    table, thead, tbody, th, td, tr {
+      display: block;
+      width: 100%;
+    }
+
+    thead tr {
+      display: none;
+    }
+
+    tbody tr {
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 12px;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: white;
+    }
+
+    tbody tr:hover {
+      background-color: white;
+    }
+
+    tbody td:nth-child(1) {
+      display: none;
+    }
+
+    tbody td {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-bottom: 1px solid #ddd;
+      font-weight: 700;
+      text-align: left;
+      white-space: normal;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
+    tbody td:last-child {
+      padding-right: 0;
+      border-bottom: none;
+    }
+
+    tbody td::before {
+      content: attr(data-label);
+      font-weight: 700;
+      color: #1a2f40;
+      flex-basis: 40%;
+      max-width: 40%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    tbody td[data-label="ОТПРАВИТЬ"]::before {
+      content: none !important;
+    }
+
+    select, button, .schema-button {
+      font-size: 13px;
+      padding: 5px 8px;
+      font-weight: 700;
+    }
+
+    tbody tr > td:last-child {
+      padding: 0;
+      border: none;
+    }
+
+    tbody tr > td:last-child .buttons-row {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 10px;
+      gap: 10px;
+    }
+
+    tbody tr > td:last-child .buttons-row .schema-button,
+    tbody tr > td:last-child .buttons-row button {
+      flex: 1;
+      max-width: 48%;
+      padding: 8px 10px;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    tbody tr > td:last-child .buttons-row span.sent-text {
+      flex: 1;
+      max-width: 48%;
+      padding: 8px 10px;
+      font-weight: 700;
+      color: #444;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .schema-button {
+      background-color: #1a2f40;
+      color: white;
+      padding: 4px 6px;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      background-color: #dc143c;
+      color: white;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #a90e2e;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+      gap: 10px;
+      user-select: none;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      width: 100%;
+      padding: 5px 0;
+    }
+
+    .pagination button {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .pagination button:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
     .page-numbers {
       display: flex;
       gap: 6px;
@@ -13,14 +390,402 @@
       flex-wrap: nowrap;
       flex-shrink: 0;
     }
+
+    .page-numbers button {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .page-numbers button:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+
+    .page-numbers button.active {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      transform: scale(1.05);
+    }
+
+    .ellipsis {
+      color: #1a2f40;
+      font-weight: 700;
+      padding: 0 5px;
+    }
+
+    .highlight {
+      background-color: #dc143c !important;
+      color: white !important;
+    }
+    
+    .schema-button i,
+    .sent-text i,
+    button i {
+      margin-right: 6px;
+    }
+
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .loader {
+      width: 25px;
+      height: 25px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
-  <!-- остальной код без изменений -->
-  
+  <div id="login">
+    <h2>Вход на сайт</h2>
+    <button class="google-btn" onclick="googleAuth()">
+      <i class="fab fa-google"></i> Войти через Google
+    </button>
+  </div>
+
+  <div id="loader" class="loader-container" style="display: none;">
+    <div class="loader"></div>
+  </div>
+
+  <header>
+    <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+    <div class="site-name" onclick="toggleSiteNameDropdown()">
+      SKYMALL
+      <div class="site-name-dropdown" id="siteNameDropdown">
+        <a href="https://smart-bowling.github.io/SMB-BB/" class="dropdown-button">
+          <span>BLOCKBUSTER</span>
+        </a>
+      </div>
+    </div>
+    <div class="menu-button" onclick="toggleDropdown()">
+      <div></div><div></div><div></div>
+    </div>
+    <div class="dropdown" id="dropdownMenu">
+      <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">
+        <span class="icon-space"><i class="fas fa-cube"></i></span>ДЕТАЛИ
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1ZQUBD4jX7x3BLEMHj0CYSYZrr_2Zjq-_C5pYO8IFPnA/edit?usp=sharing">
+        <span class="icon-space"><i class="fas fa-exclamation-triangle"></i></span>СБОИ PS
+      </a>
+    </div>
+  </header>
+
+  <div class="task-summary-card">
+    <div>Открытых задач</div>
+    <div id="openTaskCount">0</div>
+  </div>
+
+  <div id="app-content" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="startColumnSearch(0)">ЗАДАЧА</th>
+          <th onclick="startColumnSearch(1)">МАШИНА</th>
+          <th onclick="startColumnSearch(2)">ОТКРЫТА</th>
+          <th onclick="startColumnSearch(3)">ЗАКРЫТА</th>
+          <th onclick="startColumnSearch(4)">ВЫПОЛНИЛ</th>
+          <th onclick="startColumnSearch(5)">ПОЛОМКА</th>
+          <th>ОТПРАВИТЬ</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="pagination">
+      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+      <div class="page-numbers" id="pageNumbers"></div>
+      <button onclick="nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+    </div>
+  </div>
+
   <script>
-    // остальной код без изменений
-    
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyB588wg_q1ouNVjuHQzQqM0I096g4VNK_SUs1WcmliKDu5lMhZfklX5JZjodiyZC59qA/exec';
+    const allowedEmails = ["vadiksss900@gmail.com", "sergey99belov@gmail.com"];
+
+    let fullData = [];
+    let currentPage = 1;
+    const rowsPerPage = 20;
+    let activeSearchColumn = null;
+    let activeSearchText = "";
+
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuth();
+      
+      if (window.location.hash) {
+        processAuthResponse();
+      }
+      
+      document.addEventListener('click', function(e) {
+        const siteNameDropdown = document.getElementById('siteNameDropdown');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        
+        if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
+          siteNameDropdown.style.display = 'none';
+        }
+        
+        if (!e.target.closest('.menu-button') && dropdownMenu.style.display === 'flex') {
+          dropdownMenu.style.display = 'none';
+        }
+      });
+    });
+
+    function checkAuth() {
+      const userEmail = localStorage.getItem('userEmail');
+      if (userEmail && allowedEmails.includes(userEmail)) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app-content').style.display = 'block';
+        loadSheetData();
+      } else {
+        document.getElementById('login').style.display = 'flex';
+      }
+    }
+
+    function googleAuth() {
+      const clientId = '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com';
+      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+      const scope = encodeURIComponent('email profile');
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+      
+      window.open(authUrl, 'GoogleAuth', 'width=500,height=600');
+    }
+
+    function processAuthResponse() {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      
+      if (accessToken) {
+        showLoader();
+        
+        fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + accessToken)
+          .then(response => response.json())
+          .then(data => {
+            if (data.email && allowedEmails.includes(data.email)) {
+              localStorage.setItem('userEmail', data.email);
+              window.location.href = window.location.origin + window.location.pathname;
+            } else {
+              alert('Доступ запрещен для: ' + data.email);
+              localStorage.removeItem('userEmail');
+            }
+          })
+          .catch(error => {
+            console.error('Ошибка получения данных:', error);
+            alert('Ошибка авторизации');
+          })
+          .finally(() => {
+            hideLoader();
+          });
+      }
+    }
+
+    function toggleSiteNameDropdown() {
+      const dropdown = document.getElementById("siteNameDropdown");
+      dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+      
+      const menu = document.getElementById("dropdownMenu");
+      if (menu.style.display === "flex") {
+        menu.style.display = "none";
+      }
+      
+      event.stopPropagation();
+    }
+
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+      
+      const dropdown = document.getElementById("siteNameDropdown");
+      if (dropdown.style.display === "block") {
+        dropdown.style.display = "none";
+      }
+      
+      event.stopPropagation();
+    }
+
+    function showLoader() {
+      document.getElementById("loader").style.display = "flex";
+    }
+
+    function hideLoader() {
+      document.getElementById("loader").style.display = "none";
+    }
+
+    async function loadSheetData() {
+      showLoader();
+      try {
+        const response = await fetch(`${GAS_URL}?action=getData`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        fullData = await response.json();
+        updateOpenTaskCard(fullData);
+        if (fullData.length === 0) {
+          document.getElementById("tableBody").innerHTML = "<tr><td colspan='7'>Нет задач</td></tr>";
+          return;
+        }
+        renderPage(currentPage);
+      } catch (e) {
+        document.getElementById("tableBody").innerHTML = "<tr><td colspan='7'>Ошибка загрузки данных</td></tr>";
+        console.error(e);
+      } finally {
+        hideLoader();
+      }
+    }
+
+    async function updateSheet(rowNumber, doneByValue, breakdownValue) {
+      showLoader();
+      try {
+        const params = new URLSearchParams({
+          action: 'update',
+          rowNumber,
+          doneByValue,
+          breakdownValue
+        });
+        const response = await fetch(`${GAS_URL}?${params.toString()}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const updatedRow = await response.json();
+
+        const index = fullData.findIndex(row => row[0] === rowNumber);
+        if (index !== -1) fullData[index] = updatedRow;
+
+        updateOpenTaskCard(fullData);
+        renderPage(currentPage);
+      } catch (e) {
+        alert('Ошибка при обновлении данных');
+        console.error(e);
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function renderPage(page) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const tableBody = document.getElementById("tableBody");
+      tableBody.innerHTML = "";
+
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const pageData = fullData.slice(start, end);
+
+      pageData.forEach((row) => {
+        const tr = document.createElement("tr");
+        const schemaLink = row[2]
+          ? `<a href="${row[2]}" target="_blank" class="schema-button">
+               <i class="fas fa-file-alt"></i>Открыть
+             </a>`
+          : "";
+
+        tr.innerHTML = `
+          <td data-label="ЗАДАЧА">${row[2] ? `
+            <a href="${row[2]}" target="_blank" class="schema-button">
+              <i class="fas fa-file-alt"></i>Открыть
+            </a>` : "Нет схемы"}
+          </td>
+          <td data-label="МАШИНА">${row[1]}</td>
+          <td data-label="ОТКРЫТА">${row[3]}</td>
+          <td data-label="ЗАКРЫТА">${row[4]}</td>
+          ${row[6]
+            ? `<td data-label="ПОЛОМКА">${row[6]}</td>`
+            : `<td data-label="ПОЛОМКА" id="iText_${row[0]}">
+                <select id="i_${row[0]}">
+                  <option value="" selected disabled></option>
+                  <option value="ЕСТЬ">ЕСТЬ</option>
+                  <option value="НЕТ">НЕТ</option>
+                </select>
+              </td>`}
+          ${row[5]
+            ? `<td data-label="ВЫПОЛНИЛ">${row[5]}</td>`
+            : `<td data-label="ВЫПОЛНИЛ" id="gText_${row[0]}">
+                <select id="g_${row[0]}">
+                  <option value="" selected disabled></option>
+                  <option value="МЕХАНИК(1)">МЕХАНИК(1)</option>
+                  <option value="МЕХАНИК(2)">МЕХАНИК(2)</option>
+                </select>
+              </td>`}
+          <td data-label="ОТПРАВИТЬ">
+            <div class="buttons-row">
+              ${schemaLink}
+              ${row[5] && row[6]
+                ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
+                : `<button id="btn_${row[0]}" onclick="validateAndSend(${row[0]});">
+                     <i class="fas fa-paper-plane"></i>Отправить
+                   </button>`}
+            </div>
+          </td>`;
+        tableBody.appendChild(tr);
+      });
+
+      applyHighlight();
+      renderPageNumbers();
+      document.getElementById("prevBtn").disabled = currentPage === 1;
+      document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
+    }
+
+    function validateAndSend(rowNumber) {
+      const gSelect = document.getElementById(`g_${rowNumber}`);
+      const iSelect = document.getElementById(`i_${rowNumber}`);
+      const btn = document.getElementById(`btn_${rowNumber}`);
+
+      if (!gSelect || !iSelect || !gSelect.value || !iSelect.value) {
+        alert("Заполните все формы!");
+        return;
+      }
+
+      updateSheet(rowNumber, gSelect.value, iSelect.value);
+      btn.outerHTML = `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`;
+    }
+
+    function startColumnSearch(columnIndex) {
+      const searchText = prompt("Введите текст для поиска:");
+      if (searchText === null || searchText.trim() === "") {
+        activeSearchColumn = null;
+        activeSearchText = "";
+      } else {
+        activeSearchColumn = columnIndex;
+        activeSearchText = searchText.trim().toLowerCase();
+      }
+      renderPage(currentPage);
+    }
+
+    function applyHighlight() {
+      if (activeSearchColumn === null || activeSearchText === "") return;
+      const rows = document.getElementById("tableBody").getElementsByTagName("tr");
+      for (let row of rows) {
+        const cells = row.getElementsByTagName("td");
+        if (cells.length > activeSearchColumn) {
+          const cell = cells[activeSearchColumn];
+          const text = cell.textContent || cell.innerText;
+          if (text.toLowerCase().includes(activeSearchText)) {
+            cell.classList.add("highlight");
+          } else {
+            cell.classList.remove("highlight");
+          }
+        }
+      }
+    }
+
     function renderPageNumbers() {
       const pageContainer = document.getElementById("pageNumbers");
       pageContainer.innerHTML = "";
@@ -82,8 +847,27 @@
       };
       container.appendChild(btn);
     }
-    
-    // остальной код без изменений
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage(currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function nextPage() {
+      if (currentPage * rowsPerPage < fullData.length) {
+        currentPage++;
+        renderPage(currentPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function updateOpenTaskCard(data) {
+      const openCount = data.filter(row => !row[5] || !row[6]).length;
+      document.getElementById("openTaskCount").textContent = openCount;
+    }
   </script>
 </body>
 </html>
