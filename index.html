@@ -31,8 +31,6 @@
       flex: 1;
       overflow: hidden;
       position: relative;
-      transform-origin: center center;
-      transition: transform 0.3s ease;
     }
 
     .table-wrapper {
@@ -52,7 +50,8 @@
       background-color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-radius: 12px;
-      transform-origin: center center;
+      transform-origin: 0 0;
+      transition: transform 0.3s ease;
     }
 
     td, th {
@@ -327,7 +326,7 @@
   <div class="container">
     <div id="status" class="status-message">Выберите дату для загрузки данных</div>
     
-    <div class="table-container" id="table-container">
+    <div class="table-container">
       <div class="table-wrapper" id="table-wrapper">
         <table id="main-table">
           <thead>
@@ -369,7 +368,7 @@
           tableBody = document.getElementById('table-body'),
           datePicker = document.getElementById('date-picker'),
           statusEl = document.getElementById('status'),
-          tableContainer = document.getElementById('table-container'),
+          tableElement = document.getElementById('main-table'),
           tableWrapper = document.getElementById('table-wrapper'),
           zoomInBtn = document.getElementById('zoom-in'),
           zoomOutBtn = document.getElementById('zoom-out'),
@@ -387,10 +386,10 @@
     const maxScale = 2.0;
     const scaleStep = 0.1;
 
-    // Функции масштабирования
+    // Функции масштабирования ТАБЛИЦЫ
     function setZoom(scale) {
       currentScale = Math.max(minScale, Math.min(maxScale, scale));
-      tableContainer.style.transform = `scale(${currentScale})`;
+      tableElement.style.transform = `scale(${currentScale})`;
       zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
       
       // Сохраняем масштаб в localStorage
@@ -409,7 +408,7 @@
       setZoom(1.0);
     }
 
-    // Обработка жестов щипка
+    // Обработка жестов щипка для ТАБЛИЦЫ
     function setupPinchToZoom() {
       let initialDistance = null;
       let initialScale = 1;
@@ -421,16 +420,16 @@
         );
       }
 
-      tableWrapper.addEventListener('touchstart', (e) => {
+      tableElement.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
           e.preventDefault();
           initialDistance = getDistance(e);
           initialScale = currentScale;
-          tableContainer.classList.add('zooming');
+          tableElement.classList.add('zooming');
         }
       });
 
-      tableWrapper.addEventListener('touchmove', (e) => {
+      tableElement.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && initialDistance !== null) {
           e.preventDefault();
           const currentDistance = getDistance(e);
@@ -439,18 +438,18 @@
         }
       });
 
-      tableWrapper.addEventListener('touchend', (e) => {
+      tableElement.addEventListener('touchend', (e) => {
         if (e.touches.length < 2) {
           initialDistance = null;
           setTimeout(() => {
-            tableContainer.classList.remove('zooming');
+            tableElement.classList.remove('zooming');
           }, 100);
         }
       });
 
-      // Двойной тап для масштабирования
+      // Двойной тап для масштабирования ТАБЛИЦЫ
       let lastTap = 0;
-      tableWrapper.addEventListener('touchend', (e) => {
+      tableElement.addEventListener('touchend', (e) => {
         if (e.touches.length === 0) {
           const currentTime = new Date().getTime();
           const tapLength = currentTime - lastTap;
@@ -463,6 +462,13 @@
             }
           }
           lastTap = currentTime;
+        }
+      });
+
+      // Предотвращаем скролл страницы при масштабировании таблицы
+      tableElement.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
         }
       });
     }
@@ -714,7 +720,7 @@
       buildHeaders();
       buildBody();
       
-      // Настройка масштабирования
+      // Настройка масштабирования ТАБЛИЦЫ
       zoomInBtn.addEventListener('click', zoomIn);
       zoomOutBtn.addEventListener('click', zoomOut);
       resetZoomBtn.addEventListener('click', resetZoom);
