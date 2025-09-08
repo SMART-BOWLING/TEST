@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Данные по дате – 16 таблиц</title>
   <style>
-    /* Стиль для принудительного альбомного режима */
+    /* Стиль для принудительного альбомного режима (поворот в другую сторону) */
     @media screen and (max-width: 768px) and (orientation: portrait) {
       html {
-        transform: rotate(-90deg);
-        transform-origin: left top;
+        transform: rotate(90deg);
+        transform-origin: right top;
         width: 100vh;
         height: 100vw;
         overflow-x: hidden;
         position: absolute;
-        top: 100%;
-        left: 0;
+        top: 0;
+        right: 0;
+        zoom: 0.85; /* Чуть отдаляем для полного размещения */
       }
       
       body {
@@ -23,6 +24,11 @@
         height: 100vw;
         overflow: auto;
         position: fixed;
+        padding: 15px;
+      }
+      
+      .table-wrapper {
+        max-height: 90vh;
       }
     }
 
@@ -48,7 +54,7 @@
     table {
       border-collapse: collapse;
       width: 100%;
-      table-layout: auto; /* Изменено с fixed на auto */
+      table-layout: auto;
       background-color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-radius: 12px;
@@ -86,7 +92,7 @@
       z-index: 3;
       background-color: #dc143c;
       color: white;
-      width: 50px; /* Фиксированная ширина */
+      width: 50px;
       min-width: 50px;
       max-width: 50px;
     }
@@ -96,7 +102,7 @@
       z-index: 5;
       background-color: #2c3e50;
       color: white;
-      width: 120px; /* Фиксированная ширина */
+      width: 120px;
       min-width: 120px;
       max-width: 120px;
       overflow: hidden;
@@ -125,7 +131,7 @@
       line-height: 1;
       vertical-align: middle;
       border: 1px solid #e0e0e0;
-      width: auto; /* Автоматическая ширина */
+      width: auto;
     }
     #time-row th div {
       display: flex;
@@ -245,27 +251,27 @@
       
       #main-table th:nth-child(1),
       #main-table td:nth-child(1) {
-        width: 40px; /* Уменьшенная ширина для мобильных */
+        width: 40px;
         min-width: 40px;
         max-width: 40px;
       }
       
       #main-table th:nth-child(2),
       #main-table td:nth-child(2) {
-        left: 40px; /* Соответствует новой ширине первого столбца */
-        width: 100px; /* Уменьшенная ширина для мобильных */
+        left: 40px;
+        width: 100px;
         min-width: 100px;
         max-width: 100px;
       }
       
       td, th {
-        font-size: 12px; /* Уменьшенный размер шрифта */
+        font-size: 12px;
         height: 25px;
       }
       
       #time-row th .hour,
       #time-row th .minute {
-        font-size: 10px; /* Уменьшенный размер шрифта для времени */
+        font-size: 10px;
       }
       
       .toggle-btn {
@@ -275,32 +281,41 @@
       }
     }
 
-    /* Стиль для полноэкранного режима */
-    .fullscreen-button {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #dc143c;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      font-size: 24px;
-      cursor: pointer;
-      z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    /* Стиль для кнопки поворота экрана */
+    .rotate-notice {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
     }
-
-    @media (max-width: 768px) {
-      .fullscreen-button {
-        display: block;
+    
+    .rotate-notice span {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) and (orientation: portrait) {
+      .rotate-notice {
+        display: flex;
       }
     }
   </style>
 </head>
 <body>
+  <div class="rotate-notice">
+    <span>Поверните устройство в альбомный режим</span>
+    <div>↻</div>
+  </div>
+  
   <div id="status" class="status-message">Выберите дату для загрузки данных</div>
   
   <div class="table-wrapper">
@@ -323,8 +338,6 @@
     </table>
   </div>
 
-  <button class="fullscreen-button" id="fullscreen-btn">⛶</button>
-
   <script>
     // Конфигурация
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJcg8Ov4_-ijxTLQxJDjm2-IKCmI8l0AAsDo4sMeU-avSQp3F_E54gyB7f26z_KaE0FA/exec';
@@ -337,23 +350,24 @@
           tableBody = document.getElementById('table-body'),
           datePicker = document.getElementById('date-picker'),
           statusEl = document.getElementById('status'),
-          fullscreenBtn = document.getElementById('fullscreen-btn');
+          rotateNotice = document.querySelector('.rotate-notice');
 
     // Данные
     const allGroups = [], allDataCells = [];
     let isLoading = false;
-    const fetchControllers = new Map(); // Для управления запросами
+    const fetchControllers = new Map();
 
-    // Функция для переключения полноэкранного режима
-    function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.error(`Ошибка при включении полноэкранного режима: ${err.message}`);
-        });
+    // Проверка ориентации и скрытие уведомления
+    function checkOrientation() {
+      if (window.innerWidth > window.innerHeight) {
+        // Альбомный режим
+        rotateNotice.style.display = 'none';
+        document.body.style.transform = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+        // Портретный режим - показываем уведомление
+        rotateNotice.style.display = 'flex';
       }
     }
 
@@ -480,7 +494,6 @@
 
     // Очистка данных таблицы
     function clearRows() {
-      // Отменяем все текущие запросы
       fetchControllers.forEach(controller => controller.abort());
       fetchControllers.clear();
       
@@ -544,7 +557,6 @@
       const promises = [];
       
       try {
-        // Создаем промисы для всех дорожек
         for (let idx = 0; idx < allDataCells.length; idx++) {
           promises.push(
             loadLaneData(idx, selectedDate)
@@ -583,7 +595,6 @@
           );
         }
         
-        // Ждем завершения всех запросов
         await Promise.allSettled(promises);
         
         overallTotal.textContent = formatMinutes(sumAll);
@@ -608,7 +619,10 @@
       buildBody();
       
       datePicker.addEventListener('change', loadData);
-      fullscreenBtn.addEventListener('click', toggleFullScreen);
+      
+      // Слушатель изменения ориентации
+      window.addEventListener('orientationchange', checkOrientation);
+      window.addEventListener('resize', checkOrientation);
       
       document.addEventListener('mouseover', function(e) {
         if (e.target.tagName === 'TD') {
@@ -648,11 +662,8 @@
       // Автоматическая загрузка данных при инициализации
       setTimeout(loadData, 500);
       
-      // Принудительный альбомный режим на мобильных
-      if (window.innerWidth < 768 && window.matchMedia("(orientation: portrait)").matches) {
-        document.body.style.width = '100vh';
-        document.body.style.height = '100vw';
-      }
+      // Проверяем ориентацию при загрузке
+      checkOrientation();
     }
 
     // Запуск инициализации при загрузке страницы
