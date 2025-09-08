@@ -2,10 +2,30 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-orientations" content="landscape">
   <title>Данные по дате – 16 таблиц</title>
   <style>
     /* Принудительная ориентация альбомная для мобильных */
     @media (max-width: 768px) and (orientation: portrait) {
+      body:before {
+        content: "Пожалуйста, поверните устройство в альбомный режим";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #2c3e50;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 18px;
+        text-align: center;
+        z-index: 9999;
+      }
+      
       html, body {
         transform: rotate(90deg);
         transform-origin: left top;
@@ -18,12 +38,20 @@
       }
     }
 
+    /* Скрываем сообщение о повороте в альбомном режиме */
+    @media (max-width: 768px) and (orientation: landscape) {
+      body:before {
+        display: none !important;
+      }
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f4f6fa;
       margin: 0;
       padding: 20px;
       color: #333;
+      -webkit-text-size-adjust: 100%;
     }
 
     .table-wrapper {
@@ -38,7 +66,7 @@
     table {
       border-collapse: collapse;
       width: 100%;
-      table-layout: auto; /* Изменено с fixed на auto */
+      table-layout: auto;
       background-color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
       border-radius: 12px;
@@ -76,7 +104,7 @@
       z-index: 3;
       background-color: #dc143c;
       color: white;
-      width: 50px; /* Фиксированная ширина */
+      width: 50px;
       min-width: 50px;
       max-width: 50px;
     }
@@ -86,7 +114,7 @@
       z-index: 5;
       background-color: #2c3e50;
       color: white;
-      width: 120px; /* Фиксированная ширина */
+      width: 120px;
       min-width: 120px;
       max-width: 120px;
       overflow: hidden;
@@ -115,7 +143,7 @@
       line-height: 1;
       vertical-align: middle;
       border: 1px solid #e0e0e0;
-      width: auto; /* Автоматическая ширина */
+      width: auto;
     }
     #time-row th div {
       display: flex;
@@ -235,33 +263,44 @@
       
       #main-table th:nth-child(1),
       #main-table td:nth-child(1) {
-        width: 40px; /* Уменьшенная ширина для мобильных */
+        width: 40px;
         min-width: 40px;
         max-width: 40px;
       }
       
       #main-table th:nth-child(2),
       #main-table td:nth-child(2) {
-        left: 40px; /* Соответствует новой ширине первого столбца */
-        width: 100px; /* Уменьшенная ширина для мобильных */
+        left: 40px;
+        width: 100px;
         min-width: 100px;
         max-width: 100px;
       }
       
       td, th {
-        font-size: 12px; /* Уменьшенный размер шрифта */
+        font-size: 12px;
         height: 25px;
       }
       
       #time-row th .hour,
       #time-row th .minute {
-        font-size: 10px; /* Уменьшенный размер шрифта для времени */
+        font-size: 10px;
       }
       
       .toggle-btn {
         font-size: 12px;
         height: 25px;
         line-height: 22px;
+      }
+    }
+
+    /* Дополнительные стили для iOS */
+    @supports (-webkit-touch-callout: none) {
+      .table-wrapper {
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      #date-picker {
+        min-height: 44px; /* Минимальная высота для удобного касания на iOS */
       }
     }
   </style>
@@ -305,7 +344,36 @@
     // Данные
     const allGroups = [], allDataCells = [];
     let isLoading = false;
-    const fetchControllers = new Map(); // Для управления запросами
+    const fetchControllers = new Map();
+
+    // Определяем iOS устройство
+    function isIOS() {
+      return [
+        'iPad Simulator',
+        'iPhone Simulator',
+        'iPod Simulator',
+        'iPad',
+        'iPhone',
+        'iPod'
+      ].includes(navigator.platform) || 
+      (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    }
+
+    // Принудительный ландшафтный режим для iOS
+    function forceLandscape() {
+      if (isIOS() && window.innerHeight > window.innerWidth) {
+        alert('Пожалуйста, поверните устройство в альбомный режим для лучшего отображения');
+        
+        // Попытка принудительного поворота (работает не всегда)
+        try {
+          screen.orientation.lock('landscape').catch(() => {
+            console.log('Не удалось заблокировать ориентацию');
+          });
+        } catch (e) {
+          console.log('API ориентации не поддерживается');
+        }
+      }
+    }
 
     // Форматирование минут в читаемый вид
     function formatMinutes(mins) {
@@ -430,7 +498,6 @@
 
     // Очистка данных таблицы
     function clearRows() {
-      // Отменяем все текущие запросы
       fetchControllers.forEach(controller => controller.abort());
       fetchControllers.clear();
       
@@ -494,7 +561,6 @@
       const promises = [];
       
       try {
-        // Создаем промисы для всех дорожек
         for (let idx = 0; idx < allDataCells.length; idx++) {
           promises.push(
             loadLaneData(idx, selectedDate)
@@ -533,7 +599,6 @@
           );
         }
         
-        // Ждем завершения всех запросов
         await Promise.allSettled(promises);
         
         overallTotal.textContent = formatMinutes(sumAll);
@@ -593,6 +658,13 @@
       document.getElementById('logo-wrapper').addEventListener('click', () => {
         datePicker.click();
       });
+      
+      // Проверяем ориентацию на iOS
+      if (isIOS()) {
+        forceLandscape();
+        // Слушаем изменения ориентации
+        window.addEventListener('resize', forceLandscape);
+      }
       
       // Автоматическая загрузка данных при инициализации
       setTimeout(loadData, 500);
