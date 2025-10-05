@@ -342,14 +342,10 @@
       object-fit: cover;
       border: none;
       z-index: 0;
-      /* Оптимизация загрузки изображений */
-      loading: lazy;
-      fetchpriority: low;
     }
 
-    /* Специальные стили для критических изображений */
-    .logo img,
-    .critical-image {
+    /* ОПТИМИЗАЦИЯ: Высокий приоритет для изображений карточек */
+    .media-block img {
       loading: eager;
       fetchpriority: high;
     }
@@ -802,31 +798,13 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Стили для оптимизированных изображений */
-    .image-placeholder {
-      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-size: 16px;
-    }
-
-    /* Оптимизация для мобильных устройств */
-    @media (max-width: 768px) {
-      .media-block img,
-      .media-block iframe {
-        loading: lazy;
-        fetchpriority: low;
-      }
-      
-      .top-controls {
-        flex-wrap: wrap;
-      }
-      
-      .card {
-        padding: 12px;
-      }
+    /* ОПТИМИЗАЦИЯ: Предзагрузка первых изображений */
+    .preload-image {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -838,9 +816,7 @@
 
 <!-- Шапка -->
 <header>
-  <div class="logo">
-    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" class="critical-image" width="100" height="100">
-  </div>
+  <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
   <div class="site-name">
     <div class="site-name-dropdown" onclick="toggleSitesDropdown(event)">
       SKYMALL
@@ -924,49 +900,6 @@
 </div>
 
 <script>
-  // Функция для предзагрузки критических изображений
-  function preloadCriticalImages() {
-    const criticalImages = [
-      'https://i.postimg.cc/dtSpKx0W/1.png',
-      'https://i.postimg.cc/wjGzSY92/1.png'
-    ];
-    
-    criticalImages.forEach(src => {
-      const img = new Image();
-      img.src = src;
-      img.loading = 'eager';
-      img.fetchPriority = 'high';
-    });
-  }
-
-  // Функция для создания оптимизированного изображения
-  function createOptimizedImage(src, alt, className = '') {
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = alt || 'Изображение детали';
-    img.loading = 'lazy';
-    img.fetchPriority = 'low';
-    if (className) img.className = className;
-    
-    // Добавляем обработчики для улучшения UX
-    img.onload = function() {
-      this.style.opacity = '1';
-    };
-    
-    img.onerror = function() {
-      this.style.display = 'none';
-      const placeholder = document.createElement('div');
-      placeholder.className = 'image-placeholder';
-      placeholder.textContent = 'Изображение не загружено';
-      this.parentNode.appendChild(placeholder);
-    };
-    
-    img.style.opacity = '0';
-    img.style.transition = 'opacity 0.3s ease';
-    
-    return img;
-  }
-
   // Функция для показа/скрытия индикатора загрузки
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
@@ -1018,9 +951,6 @@
 
   // Проверка авторизации при загрузке страницы
   window.onload = () => {
-    // Предзагружаем критические изображения
-    preloadCriticalImages();
-    
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail && allowedEmails.includes(userEmail)) {
       document.getElementById("login").style.display = "none";
@@ -1055,6 +985,20 @@
     let currentPage = 1;
     let totalPages = 1;
     const cardsPerPage = 5;
+
+    // ОПТИМИЗАЦИЯ: Функция для предзагрузки изображений текущей страницы
+    function preloadPageImages(entries) {
+      entries.forEach(entry => {
+        if (entry.fileUrl && !entry.fileUrl.includes('/preview')) {
+          const img = new Image();
+          img.src = entry.fileUrl;
+          img.loading = 'eager';
+          img.fetchPriority = 'high';
+          img.className = 'preload-image';
+          document.body.appendChild(img);
+        }
+      });
+    }
 
     // Основные функции приложения
     async function getEntries() {
@@ -1140,23 +1084,17 @@
       if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
         const iframe = document.createElement('iframe');
         iframe.src = entry.fileUrl;
-        iframe.loading = 'lazy';
+        iframe.loading = 'eager'; // ОПТИМИЗАЦИЯ: Высокий приоритет для iframe
         media.appendChild(iframe);
       } else if (entry.fileUrl) {
-        // Используем оптимизированную функцию для создания изображений
-        const img = createOptimizedImage(entry.fileUrl, entry.partName || entry.partNumber);
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.alt = entry.partName || entry.partNumber;
+        // ОПТИМИЗАЦИЯ: Высокий приоритет для изображений карточек
+        img.loading = 'eager';
+        img.fetchPriority = 'high';
+        img.style.opacity = '1'; // Убираем анимацию для скорости
         media.appendChild(img);
-      } else {
-        // Заглушка если нет изображения
-        const placeholder = document.createElement('div');
-        placeholder.className = 'image-placeholder';
-        placeholder.textContent = 'Нет изображения';
-        placeholder.style.position = 'absolute';
-        placeholder.style.top = '0';
-        placeholder.style.left = '0';
-        placeholder.style.width = '100%';
-        placeholder.style.height = '100%';
-        media.appendChild(placeholder);
       }
 
       const overlay = document.createElement('div');
@@ -1361,6 +1299,9 @@
         container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
         return;
       }
+
+      // ОПТИМИЗАЦИЯ: Предзагружаем изображения ДО отрисовки карточек
+      preloadPageImages(pageData);
 
       pageData.forEach(entry => {
         const card = createCard(entry);
