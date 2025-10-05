@@ -2,667 +2,141 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>БРОНИ БИЛЬЯРД</title>
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png" />
+  <title>ДЕТАЛИ SKYMALL</title>
+   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
- <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    :root {
-      --cell-size: 50px;
-      --main-color: #1e3a8a;
-      --highlight-color: #ef4444;
-      --highlight-bg: #ef4444; 
-      --confirmed-color: #16a34a;
-      --rejected-color: #b91c1c;
-      --background-color: #f8fafc;
-      --card-color: #e0f2fe;
-      --blue-color: #2563eb;   /* насыщенный синий */
---red-color: #ef4444;    /* ярко-красный */
---green-color: #22c55e;  /* ярко-зеленый */
-    }
-
-    @media (max-width: 768px) {
-      :root { 
-        --cell-size: calc((100vw - 20px) / 13); 
-      }
-      
-      table {
-        width: auto !important;
-        margin: 0 auto;
-      }
-      
-      td, th {
-        aspect-ratio: 1;
-        width: var(--cell-size) !important;
-        height: var(--cell-size) !important;
-        min-width: auto !important;
-        max-width: none !important;
-      }
-      
-      body {
-        padding: 5px;
-      }
-      
-      .table-container {
-        padding: 0;
-        width: 100%;
-      }
-      
-      #controls {
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 0 5px;
-        box-sizing: border-box;
-      }
-      
-      #dateInput {
-        flex: 1;
-        margin: 5px 0;
-      }
-      
-      .booking-button {
-        flex: 1;
-        margin: 5px 0;
-      }
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--background-color);
-      padding: 10px;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .table-container {
+    /* Стили для выпадающего списка SKYMALL */
+    .site-name-dropdown {
       position: relative;
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: auto;
-      margin: 0 auto;
-      display: flex;
-      justify-content: center;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    table {
-      border-collapse: separate;
-      border-spacing: 2px 0;
-      table-layout: fixed;
-      max-width: 100vw;
-      user-select: none;
-      touch-action: manipulation;
-      margin: 0 auto;
-      background: white;
-      border-radius: 10px;
-    }
-
-    thead th {
-      position: sticky;
-      top: 0;
-      color: white;
-      z-index: 2;
-      transition: background-color 0.2s, color 0.2s;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    /* Цвета для заголовков столбцов */
-    thead th:nth-child(1),
-    thead th:nth-child(2),
-    thead th:nth-child(3),
-    thead th:nth-child(5),
-    thead th:nth-child(6) {
-      background: linear-gradient(to right, #1e3c72, #2a5298);
-    }
-
-    thead th:nth-child(4) {
-      background: linear-gradient(to right, #1e3c72, #2a5298);
-    }
-
-    thead th:nth-child(7),
-    thead th:nth-child(8),
-    thead th:nth-child(9),
-    thead th:nth-child(10),
-    thead th:nth-child(11),
-    thead th:nth-child(12) {
-     background: linear-gradient(to right, #1e3c72, #2a5298);
-    }
-
-    th, td {
-      width: var(--cell-size);
-      height: var(--cell-size);
-      border: 1px solid #e2e8f0;
-      text-align: center;
-      vertical-align: middle;
-      box-sizing: border-box;
-      background: white;
-      font-size: 12px;
-      position: relative;
-    }
-
-    th.time-col, .time-right {
-      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
-      color: white;
-      font-weight: bold;
+      display: inline-block;
       cursor: pointer;
     }
-
-    /* Цвета для ячеек столбцов */
-    td.slot[data-lane="0"],
-    td.slot[data-lane="1"],
-    td.slot[data-lane="2"],
-    td.slot[data-lane="4"],
-    td.slot[data-lane="5"] {
-      background-color: rgba(167, 199, 231, 0.7);
-    }
-
-    td.slot[data-lane="3"] {
-      background-color: rgba(181, 228, 140, 0.7);
-    }
-
-    td.slot[data-lane="6"],
-    td.slot[data-lane="7"],
-    td.slot[data-lane="8"],
-    td.slot[data-lane="9"],
-    td.slot[data-lane="10"],
-    td.slot[data-lane="11"] {
-      background-color: rgba(248, 173, 157, 0.7);
-    }
-
-    /* Подсветка заголовков выбранных столбцов */
-    th.highlight-header {
-      background: var(--highlight-bg) !important;
-      color: white !important;
-    }
-
-    /* Вертикальные красные линии при выборе столбца */
-    td.vertical-line::before,
-    td.vertical-line::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background-color: var(--highlight-color);
-      z-index: 10;
-    }
-    td.vertical-line::before { left: 0; }
-    td.vertical-line::after  { right: 0; }
-
-    td.slot { 
-      cursor: pointer; 
-      transition: all 0.2s ease;
+    
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-size: 48px;
+      font-weight: bold;
+      color: white;
+      position: relative;
     }
     
-    td.slot:hover {
-      background-color: #f0f9ff;
+    /* Увеличиваем надпись SKYMALL в 2 раза */
+    .site-name-dropdown .site-name {
+      font-size: 96px; /* Увеличение в 2 раза */
+      margin-bottom: 20px; /* Отступ снизу для визуального разделения */
     }
-
-    td.selected {
-      background: var(--highlight-bg) !important; /* Убрали градиент */
-      border: none !important;
-      z-index: 1;
-      color: #7f1d1d;
-      font-weight: 500;
+    
+    .dropdown-sites {
+      display: none;
+      position: absolute;
+      top: calc(100% + 50px); /* Опускаем ниже шапки */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      border: 2px solid #444;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 1001;
+      min-width: 300px;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
+    
+.dropdown-sites a {
+  display: block;
+  padding: 20px 100px;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+  transition: background 0.3s;
+  text-align: center;
 
-    td.selected.rounded-top {
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-      z-index: 1;
-    }
-
-    td.selected.rounded-bottom {
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
-      z-index: 1;
-    }
-
-    td.start-time-chosen {
-      background: radial-gradient(circle, #fee2e2, #f87171) !important;
-      border: 2px solid var(--highlight-color) !important;
-      z-index: 2;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-    }
-
-#cardsContainer {
-  margin: 20px auto 10px; /* авто по бокам */
-  padding: 0; /* убрать padding */
-  max-width: 100vw;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  box-sizing: border-box;
+  white-space: nowrap; /* 🚫 запрещаем перенос */
 }
 
-    .booking-card {
-      position: relative;
-      background: var(--card-color);
-      border: 1px solid var(--main-color);
-      border-radius: 12px;
-      padding: 12px 45px 12px 15px;
-      color: var(--main-color);
-      font-weight: 600;
-      font-size: 14px;
-      white-space: nowrap;
-      user-select: none;
-      box-shadow: 0 3px 8px rgba(30, 58, 138, 0.15);
-      transition: transform 0.2s;
-    }
     
-    .booking-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(30, 58, 138, 0.2);
-    }
-    
-    .booking-card .close-btn {
-      position: absolute;
-      top: 0;
-      right: 0;
-      transform: translate(50%, -50%);
-      color: var(--main-color);
-      background: white;
-      border: 1px solid var(--main-color);
-      border-radius: 50%;
-      font-weight: bold;
-      font-size: 18px;
-      line-height: 1;
-      cursor: pointer;
-      user-select: none;
-      padding: 6px 10px;
-      box-shadow: 0 0 8px rgba(30, 58, 138, 0.3);
-      transition: all 0.2s ease;
-    }
-    .booking-card .close-btn:hover {
-      background-color: var(--main-color);
-      color: white;
-      transform: translate(50%, -50%) scale(1.1);
+    .dropdown-sites a:hover {
+      background-color: #374151;
     }
 
-    .booking-button {
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
+    header {
+      background-color: #1f2937;
       color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2);
-      transition: all 0.3s ease;
-      letter-spacing: 0.5px;
-    }
-    .booking-button:hover { 
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(30, 58, 138, 0.3);
-    }
-    .booking-button:active {
-      transform: translateY(1px);
-      box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
-    }
-    
-    /* Стиль для нажатой кнопки */
-    .booking-button.pressed {
-      background: var(--highlight-bg);
-      transform: translateY(1px);
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-    }
-
-    #modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #00000066;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #modal > div {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-    #modal h3 { 
-      margin-top: 0; 
-      color: var(--main-color);
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    #modal label { 
-      display: block; 
-      margin-bottom: 15px; 
-      color: #334155;
-      font-weight: 500;
-    }
-    #modal input, #modal textarea {
-      width: 100%;
-      padding: 10px 12px;
-      box-sizing: border-box;
-      margin-top: 6px;
-      font-size: 16px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      transition: border 0.3s;
-    }
-    #modal input:focus, #modal textarea:focus {
-      outline: none;
-      border-color: var(--main-color);
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
-    }
-    #modal textarea { 
-      resize: vertical; 
-      min-height: 80px;
-    }
-    #modal button {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    #modal button:first-of-type {
-      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
-      color: white;
-      box-shadow: 0 3px 6px rgba(30, 58, 138, 0.2);
-    }
-    #modal button:first-of-type:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 10px rgba(30, 58, 138, 0.3);
-    }
-    #modal button:last-of-type {
-      margin-left: 10px;
-      background: #f1f5f9;
-      color: #64748b;
-    }
-    #modal button:last-of-type:hover {
-      background: #e2e8f0;
-    }
-
-    #controls {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    #dateInput {
-      padding: 12px 20px;
-      font-size: 16px;
-      background: white;
-      color: #334155;
-      border: 2px solid var(--main-color);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-weight: 500;
-      box-shadow: 0 2px 5px rgba(30, 58, 138, 0.1);
-    }
-    #dateInput:hover { 
-      background: #f8fafc; 
-      box-shadow: 0 3px 8px rgba(30, 58, 138, 0.15);
-    }
-    #dateInput:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
-    }
-    #dateInput::-webkit-calendar-picker-indicator {
-      filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(202deg) brightness(104%) contrast(97%);
-      cursor: pointer;
-    }
-
-    .image-popup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.8);
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
-    }
-    .image-popup .popup-content {
-      position: relative;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 90vw;
-      max-height: 90vh;
-      overflow: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    }
-    .image-popup .popup-content img {
-      width: 100%; height: auto; border-radius: 8px;
-    }
-    .image-popup .close-popup {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: var(--main-color);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 35px; height: 35px; font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 0 8px rgba(0,0,0,0.4);
-      transition: all 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
-    }
-    .image-popup .close-popup:hover {
-      transform: scale(1.1);
-      background: var(--highlight-color);
-    }
-
-    /* Слой для ползунков существующих броней */
-    #slidersContainer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 5;
-    }
-    .existing-slider {
-      position: absolute;
-      background: var(--main-color);
-      border: none;
-      color: white;
-      border-radius: 6px;
-      pointer-events: auto;
-      box-sizing: border-box;
-      cursor: pointer;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 2px 4px;
-      user-select: none;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      transition: transform 0.2s;
-    }
-    
-    .existing-slider:hover {
-      transform: scale(1.02);
-      z-index: 10;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-
-    /* Стили для разных статусов брони */
-    .existing-slider.confirmed {
-      background: var(--confirmed-color); /* Убрали градиент */
-    }
-    .existing-slider.rejected {
-      background: var(--rejected-color); /* Убрали градиент */
-    }
-
-    /* Модальное окно информации о брони */
-    .booking-info-popup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.6);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    .booking-info-popup .popup-content {
-      position: relative;
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 90vw;
-      width: 400px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-    }
-
-    .booking-info-popup .close-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: var(--main-color);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px; 
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .booking-info-popup .close-btn:hover {
-      background: var(--highlight-color);
-      transform: scale(1.1);
-    }
-
-    .booking-info-popup h3 {
-      margin-top: 0;
-      color: var(--main-color);
-      text-align: center;
-      font-size: 1.5rem;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e2e8f0;
-      margin-bottom: 20px;
-    }
-    .booking-info-popup .info-row {
-      margin-bottom: 15px;
-      display: flex;
       justify-content: space-between;
-    }
-    .booking-info-popup .info-label {
-      font-weight: 600;
-      color: var(--main-color);
-      min-width: 120px;
-    }
-    .booking-info-popup .info-value {
-      text-align: right;
-      flex-grow: 1;
-    }
-    
-    /* Стили для кнопок подтверждения брони */
-    .confirmation-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 25px;
-      gap: 15px;
-    }
-    .confirmation-buttons button {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      flex: 1;
-      transition: all 0.2s;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    }
-    .confirm-yes {
-      background: var(--confirmed-color); /* Убрали градиент */
-      color: white;
-    }
-    .confirm-yes:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 10px rgba(22, 163, 74, 0.3);
-    }
-    .confirm-no {
-      background: var(--rejected-color); /* Убрали градиент */
-      color: white;
-    }
-    .confirm-no:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 10px rgba(185, 28, 28, 0.3);
-    }
-    
-    /* Стили для кнопки удаления */
-    .delete-btn {
-      background: linear-gradient(145deg, #475569, #334155);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      margin-top: 20px;
-      width: 100%;
-      transition: all 0.3s;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    }
-    .delete-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 12px rgba(0,0,0,0.2);
-      background: var(--highlight-bg); /* Убрали градиент */
-    }
-    
-    /* Анимация загрузки */
-    .loading-overlay {
+      padding: 10px 30px;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      user-select: none;
+      z-index: 1000;
+      height: 140px;
     }
-    
-    .loading-spinner {
-      width: 50px;
+
+    .logo img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 0;
+    }
+
+    .menu-button {
+      width: 70px;
       height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid var(--main-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+
+    .menu-button div {
+      height: 8px;
+      background-color: white;
+      border-radius: 4px;
     }
-    
+
+    .dropdown {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 170px;
+      right: 30px;
+      background-color: #1f2937;
+      border: 2px solid #444;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 9999;
+      min-width: 350px;
+    }
+
+    .dropdown a {
+      padding: 25px 30px;
+      font-size: 34px;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .icon-space {
+      margin-right: 16px;
+      width: 40px;
+      text-align: center;
+      font-size: 24px;
+    }
+
     /* Стили для авторизации */
     #login {
       position: fixed;
@@ -680,154 +154,878 @@
     }
     
     #login h2 {
-      color: var(--main-color);
+      color: #1a2f40;
       margin-bottom: 20px;
     }
     
     #content {
       display: none;
       width: 100%;
+      margin-top: 170px;
     }
-    
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #d1d5da;
+      font-family: Arial, sans-serif;
+    }
+
+    .top-controls {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between; 
+      gap: 8px;
+      max-width: 900px;
+      margin: 0 auto 20px;
+      align-items: center;
+      padding-bottom: 8px;
+      box-sizing: border-box;
+      overflow-x: auto;
+    }
+
+    .top-controls .btn-top {
+      height: 56px;
+      font-size: 18px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-grow: 1;
+      min-width: 90px;
+      max-width: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 0 16px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .top-controls button.btn-top {
+      background: linear-gradient(to bottom, #1a2f40, #0d1a26);
+      color: #fff;
+    }
+
+    .top-controls button.btn-top:hover {
+      background: linear-gradient(to bottom, #223a51, #0f2233);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .select-wrapper {
+      position: relative;
+      min-width: 120px;
+      max-width: 150px;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .select-wrapper select {
+      width: 100%;
+      height: 100%;
+      padding: 0 45px 0 16px;
+      border: none;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: transparent;
+      font-weight: 600;
+      font-size: 18px;
+      cursor: pointer;
+      appearance: none;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .select-wrapper::before {
+      content: "\f0b0 Фильтр";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 90%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 18px;
+      font-family: "Font Awesome 6 Free", Arial, sans-serif;
+      pointer-events: none;
+      gap: 8px;
+    }
+
+    .select-wrapper::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      transform: translateY(-50%);
+      color: #fff;
+      pointer-events: none;
+      transition: transform 0.3s ease;
+    }
+
+    .select-wrapper:hover::after {
+      color: #ffccd5;
+    }
+
+    .select-wrapper.active::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .select-wrapper select option {
+      padding: 12px 16px;
+      background: #1a2f40;
+      color: #fff;
+      transition: background 0.2s ease;
+    }
+
+    .select-wrapper select option:hover {
+      background: #223a51 !important;
+    }
+
+    .select-wrapper select option:checked {
+      background: #dc143c;
+      color: white;
+      font-weight: bold;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: #f0f2f5;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+
+    .media-block {
+      position: relative;
+      width: 100%;
+      padding-top: 75%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .media-block img,
+    .media-block iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+      z-index: 0;
+      /* Оптимизация загрузки изображений */
+      loading: lazy;
+      fetchpriority: low;
+    }
+
+    /* Специальные стили для критических изображений */
+    .logo img,
+    .critical-image {
+      loading: eager;
+      fetchpriority: high;
+    }
+
+    .media-block .img-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 1;
+    }
+
+    .media-block .icon {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 28px;
+      color: #fff;
+      z-index: 2;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .media-block .icon:hover {
+      background: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .remove {
+      top: 8px;
+      right: 8px;
+    }
+
+    /* Стили для названия детали */
+    .part-name-container {
+      display: flex;
+      align-items: center;
+      margin: 12px 0;
+      padding: 0 12px;
+      background: #ffffff;
+      border-radius: 16px;
+      min-height: 60px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .part-name-container.editing {
+      padding: 0 8px;
+    }
+
+    .part-name-text {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: left;
+      padding: 16px 0;
+      cursor: default;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .part-name-input {
+      flex: 1;
+      height: 52px;
+      border: 2px solid #dc143c;
+      border-radius: 12px;
+      outline: none;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 0 12px;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .part-name-edit-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-edit-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
+    }
+
+    .part-name-save-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a3648;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-save-btn:hover {
+      background: #34ce57;
+      transform: scale(1.05);
+    }
+
+    .part-name-cancel-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-cancel-btn:hover {
+      background: #5a6268;
+      transform: scale(1.05);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 8px;
+      padding: 10px 0;
+    }
+
+   .pill {
+  background: #fff;
+  border-radius: 20px;
+  padding: 0 20px; /* убираем вертикальный padding */
+  font-size: 20px;
+  font-weight: bold;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  height: 60px; /* фиксированная высота */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box; /* важно: padding включается в height */
+}
+
+    .controls input {
+      width: 60px;
+      height: 60px;
+      padding: 0 12px;
+      border: none;
+      border-radius: 16px;
+      text-align: center;
+      background: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .controls input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
+    }
+
+    .btn {
+      height: 60px;
+      padding: 0 24px;
+      border: none;
+      border-radius: 16px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-add {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: #fff;
+      min-width: 140px;
+    }
+
+    .btn-add:hover {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+    }
+
+    .btn-info {
+      background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+      color: #000;
+      min-width: 60px;
+      justify-content: center;
+    }
+
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+    }
+
+    .btn-take {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: #fff;
+      min-width: 140px;
+    }
+
+    .btn-take:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 80vw;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: auto;
+      z-index: 10000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalAppear {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 40px;
+      font-weight: bold;
+      color: #dc143c;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1a2f40;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    .modal pre {
+      white-space: pre-wrap;
+      font-size: 26px;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #dc143c;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 50px 0; /* Увеличил отступы сверху и снизу */
+      gap: 10px;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 900px;
+      margin: 50px auto; /* Автоматические отступы по бокам и 50px сверху/снизу */
+    }
+
+    .pagination button {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 18px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      min-width: 140px;
+      height: 60px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .pagination button:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .pagination button i {
+      font-size: 24px;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .page-numbers button {
+      min-width: 40px;
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border-radius: 16px;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button {
+      margin: 0 6px;
+    }
+
+    .page-numbers button:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .page-numbers button.active {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      transform: scale(1.1);
+    }
+
+    .no-data {
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #666;
+    }
+
+    /* Стили для индикатора загрузки */
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      display: none;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Стили для оптимизированных изображений */
+    .image-placeholder {
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 16px;
+    }
+
+    /* Оптимизация для мобильных устройств */
+    @media (max-width: 768px) {
+      .media-block img,
+      .media-block iframe {
+        loading: lazy;
+        fetchpriority: low;
+      }
+      
+      .top-controls {
+        flex-wrap: wrap;
+      }
+      
+      .card {
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body>
-
-  <!-- Блок авторизации -->
-  <div id="login">
-    <h2>Вход на сайт</h2>
-<div id="g_id_onload"
-     data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse"
-     data-auto_prompt="false">
+<!-- Индикатор загрузки -->
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
 </div>
-    <div class="g_id_signin" data-type="standard"></div>
+
+<!-- Шапка -->
+<header>
+  <div class="logo">
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" class="critical-image" width="100" height="100">
   </div>
-
-  <!-- Контент для авторизованных -->
-  <div id="content" style="display:none">
-
-    <div class="table-container">
-      <table id="bookingTable">
-        <thead>
-          <tr>
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
-            <th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
-            <th class="time-col">
-              <button id="openImage" style="padding:5px 10px; border:1px solid var(--main-color);
-                background:var(--main-color); color:white; border-radius:5px; cursor:pointer;">
-                СТОЛЫ
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-      <div id="slidersContainer"></div>
-    </div>
-
-    <div id="cardsContainer"></div>
-
-    <div id="controls">
-      <input type="date" id="dateInput" />
-      <button class="booking-button" onclick="openModal()">ЗАБРОНИРОВАТЬ</button>
-    </div>
-
-    <div id="modal">
-      <div>
-        <h3>Введите данные</h3>
-        <label>Имя:<br><input id="nameInput" autocomplete="off"></label>
-        <label>Телефон:<br><input id="phoneInput" type="tel" inputmode="tel" autocomplete="tel"></label>
-        <label>Комментарий:<br><textarea id="commentInput"></textarea></label>
-        <div style="text-align: right;">
-          <button onclick="submitForm()">ЗАБРОНИРОВАТЬ</button>
-          <button onclick="closeModal()">ОТМЕНА</button>
-        </div>
+  <div class="site-name">
+    <div class="site-name-dropdown" onclick="toggleSitesDropdown(event)">
+      SKYMALL
+      <div class="dropdown-sites" id="sitesDropdown">
+        <a href="https://smart-bowling.github.io/PARTS-BB/">BLOCKBUSTER</a>
+        <a href="https://smart-bowling.github.io/PARTS-KH/">LUCKY STRIKE KH</a>
       </div>
     </div>
+  </div>
+  <div class="menu-button" onclick="toggleDropdown()">
+    <div></div><div></div><div></div>
+  </div>
+  <div class="dropdown" id="dropdownMenu">
+    <a href="https://smart-bowling.github.io/MANUALS-HTML/">
+      <i class="fas fa-book"></i> МАНУАЛЫ
+    <a href="https://smart-bowling.github.io/SMB-SKYMALL/">
+      <i class="fas fa-screwdriver-wrench"></i> ОБСЛУЖИВАНИЕ
+    </a>
+    <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/">
+      <i class="fas fa-exclamation-triangle"></i> STOP LANE
+    </a>
+  </div>
+</header>
 
-    <div id="imagePopup" class="image-popup">
-      <div class="popup-content">
-        <button class="close-popup" onclick="closeImagePopup()">&times;</button>
-        <img src="https://i.postimg.cc/52ZDKDDw/55.png" />
-      </div>
-    </div>
+<!-- Блок авторизации -->
+<div id="login">
+  <h2>Вход на сайт</h2>
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
 
-    <!-- Модальное окно информации о брони -->
-    <div id="bookingInfoPopup" class="booking-info-popup">
-      <div class="popup-content">
-        <button class="close-btn" onclick="closeBookingInfoPopup()">&times;</button>
-        <h3>Информация о бронировании</h3>
-        <div class="info-row">
-          <span class="info-label">Стол:</span> <span id="info-table" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Дата:</span> <span id="info-date" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Время:</span> <span id="info-time" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Имя:</span> <span id="info-name" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Телефон:</span> <span id="info-phone" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Комментарий:</span> <span id="info-comment" class="info-value"></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Посещение состоялось?</span>
-          <span id="info-confirmed" class="info-value"></span>
-        </div>
-        <div class="confirmation-buttons">
-          <button class="confirm-yes" onclick="confirmBooking(true)">Да</button>
-          <button class="confirm-no" onclick="confirmBooking(false)">Нет</button>
-        </div>
-        <button class="delete-btn" onclick="deleteBooking()">УДАЛИТЬ БРОНЬ</button>
-      </div>
+<!-- Контент для авторизованных -->
+<div id="content" style="display:none">
+  <div class="top-controls">
+    <div class="select-wrapper">
+      <select id="sortSelect" title="Фильтр">
+        <option value="all">Все детали</option>
+        <option value="popular">Пос. взят. за 30 дней</option>
+        <option value="mostPopular">Популярные</option>
+        <option value="sortByQty">Остатки</option>
+      </select>
     </div>
     
-    <!-- Оверлей загрузки -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-      <div class="loading-spinner"></div>
-    </div>
+  <button id="btnSearch" class="btn-top">
+    <i class="fas fa-search"></i> Поиск
+  </button>
+
+  <button id="btnReset" class="btn-top">
+    <i class="fas fa-sync-alt"></i> Сбросить
+  </button>
+
+<button onclick="window.location.href='https://smart-bowling.github.io/PARTS-STORE/'" class="btn-top">
+  <i class="fas fa-store"></i> Магазин
+</button>
+    
+  <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-SKYMALL/', '_blank')" class="btn-top">
+    <i class="fas fa-plus-circle"></i> Добавить деталь
+  </button>
+</div>
+
+
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
   </div>
 
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
+</div>
+
 <script>
+  // Функция для предзагрузки критических изображений
+  function preloadCriticalImages() {
+    const criticalImages = [
+      'https://i.postimg.cc/dtSpKx0W/1.png',
+      'https://i.postimg.cc/wjGzSY92/1.png'
+    ];
+    
+    criticalImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.loading = 'eager';
+      img.fetchPriority = 'high';
+    });
+  }
+
+  // Функция для создания оптимизированного изображения
+  function createOptimizedImage(src, alt, className = '') {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = alt || 'Изображение детали';
+    img.loading = 'lazy';
+    img.fetchPriority = 'low';
+    if (className) img.className = className;
+    
+    // Добавляем обработчики для улучшения UX
+    img.onload = function() {
+      this.style.opacity = '1';
+    };
+    
+    img.onerror = function() {
+      this.style.display = 'none';
+      const placeholder = document.createElement('div');
+      placeholder.className = 'image-placeholder';
+      placeholder.textContent = 'Изображение не загружено';
+      this.parentNode.appendChild(placeholder);
+    };
+    
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.3s ease';
+    
+    return img;
+  }
+
+  // Функция для показа/скрытия индикатора загрузки
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
+
+  // Функция для выпадающего меню
+  function toggleDropdown() {
+    const menu = document.getElementById("dropdownMenu");
+    menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+  }
+
+  // Функция для выпадающего списка сайтов
+  function toggleSitesDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById("sitesDropdown");
+    dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+  }
+
+  // Закрытие выпадающего списка при клике вне его
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById("sitesDropdown");
+    const siteName = document.querySelector('.site-name-dropdown');
+    
+    if (dropdown.style.display === 'block' && !siteName.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+
   // Настройки авторизации
- const allowedEmails = [
-  "vadiksss900@gmail.com",
-  "sergey99belov@gmail.com", 
-  "popadinecvasil3@gmail.com", 
-  "info.luckystrike.kh@gmail.com", 
-  "sashavolobuev123890@gmail.com", 
-  "dimockalukienko@gmail.com", 
-  "shatrava.o@gmail.com", 
-  "Craftmax30@gmail.com", 
-  "bowlingblock.b@gmail.com"
-];
+  const allowedEmails = ["vadiksss900@gmail.com", "mesacevda1986@gmail.com", "boddahotkidach@gmail.com"];
 
-  // Обработчик ответа от Google
+  // Обработчик ответе от Google
   function handleCredentialResponse(response) {
-    const data = parseJwt(response.credential);
-    const email = data.email;
+    showLoader(true);
+    try {
+      const data = parseJwt(response.credential);
+      const email = data.email;
 
-    if (allowedEmails.includes(email)) {
-      localStorage.setItem("userEmail", email);
-      location.reload();
-    } else {
-      alert("Доступ запрещён для: " + email);
+      if (allowedEmails.includes(email)) {
+        localStorage.setItem("userEmail", email);
+        location.reload();
+      } else {
+        alert("Доступ запрещён для: " + email);
+      }
+    } finally {
+      showLoader(false);
     }
   }
 
-
   // Проверка авторизации при загрузке страницы
   window.onload = () => {
+    // Предзагружаем критические изображения
+    preloadCriticalImages();
+    
     const userEmail = localStorage.getItem("userEmail");
     if (userEmail && allowedEmails.includes(userEmail)) {
       document.getElementById("login").style.display = "none";
       document.getElementById("content").style.display = "block";
+      initApp();
     }
   };
 
@@ -842,454 +1040,500 @@
     return JSON.parse(jsonPayload);
   }
 
-  // JavaScript код с изменениями
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxfRLDGA29FrqKS61HmYN_FUnDwOydeCaEdeW4oc4wyroQzvb4h1OnwQ5HeotIHhcj9/exec";
-
-  // Инициализация календаря
-  const dateInput = document.getElementById('dateInput');
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.min = today;
-  dateInput.value = today;
-
-  // Изменяем время работы до 22:00 включительно
-  const startHour = 11, endHour = 22, lanes = 12;
-  const tableBody = document.getElementById("tableBody"),
-        cardsContainer = document.getElementById("cardsContainer"),
-        slidersContainer = document.getElementById("slidersContainer"),
-        bookingTable = document.getElementById("bookingTable"),
-        tableContainer = document.querySelector(".table-container"),
-        loadingOverlay = document.getElementById("loadingOverlay");
-
-  // Создаем временные слоты с 11:00 до 22:00 включительно
-  const timeSlots = [];
-  for (let h = startHour; h <= endHour; h++) {
-    // Добавляем только 00 для последнего часа (22:00)
-    if (h < endHour) {
-      timeSlots.push({ display: `${h}:00`, key: h });
-      timeSlots.push({ display: `${h}:30`, key: h + 0.5 });
-    } else {
-      timeSlots.push({ display: `${h}:00`, key: h });
-    }
-  }
-
-  // Заполняем таблицу
-  timeSlots.forEach(slot => {
-    const row = document.createElement("tr");
-    for (let lane = 0; lane < lanes; lane++) {
-      const cell = document.createElement("td");
-      cell.className = "slot";
-      cell.dataset.lane = lane;
-      cell.dataset.time = slot.key;
-      cell.dataset.display = slot.display;
-      row.appendChild(cell);
-    }
-    const timeCell = document.createElement("th");
-    timeCell.className = "time-right";
-    timeCell.textContent = slot.display;
-    row.appendChild(timeCell);
-    tableBody.appendChild(row);
-  });
-
-  const intervalsByLane = {};
-  let currentLane = null, currentStart = null;
-  let currentBookingId = null; // Для хранения ID текущей брони
-
-  // --- Работа с визуалом выбора интервалов ---
-  function clearStartTimeHighlight() {
-    document.querySelectorAll('td.start-time-chosen').forEach(c => c.classList.remove('start-time-chosen'));
-  }
-  function clearHeaderHighlight() {
-    document.querySelectorAll('thead th.highlight-header').forEach(th => th.classList.remove('highlight-header'));
-  }
-  function clearVerticalLines() {
-    document.querySelectorAll('td.vertical-line').forEach(td => td.classList.remove('vertical-line'));
-  }
-  function highlightHeader(lane) {
-    clearHeaderHighlight();
-    const headerCells = document.querySelectorAll('thead th');
-    if (lane >= 0 && lane < lanes) headerCells[lane].classList.add('highlight-header');
-  }
-  function highlightColumn(lane) {
-    clearVerticalLines();
-    document.querySelectorAll(`td.slot[data-lane="${lane}"]`).forEach(td => td.classList.add('vertical-line'));
-  }
-  function updateTableSelection() {
-    // Сброс выделений
-    document.querySelectorAll("td.selected").forEach(c => c.classList.remove("selected","rounded-top","rounded-bottom"));
-
-    for (let laneStr in intervalsByLane) {
-      const lane = +laneStr;
-      intervalsByLane[lane].forEach(interval => {
-        const start = Math.min(interval.start, interval.end),
-              end = Math.max(interval.start, interval.end);
-        document.querySelectorAll(`td.slot[data-lane="${lane}"]`).forEach(cell => {
-          const t = parseFloat(cell.dataset.time);
-          if (t >= start && t <= end) cell.classList.add("selected");
-        });
-        const sc = document.querySelector(`td.slot[data-lane="${lane}"][data-time="${start}"]`);
-        const ec = document.querySelector(`td.slot[data-lane="${lane}"][data-time="${end}"]`);
-        if (sc) sc.classList.add("rounded-top");
-        if (ec && end !== start) ec.classList.add("rounded-bottom");
-      });
-    }
-
-    // Рендер карточек выбранных интервалов
-    cardsContainer.innerHTML = "";
-    function fmt(v) {
-      const h = Math.floor(v), m = v % 1 === 0.5 ? "30" : "00";
-      return `${h}:${m}`;
-    }
-    const selDate = dateInput.value.split("-").reverse().join(".");
-    for (let laneStr in intervalsByLane) {
-      const lane = +laneStr;
-      intervalsByLane[lane].forEach((interval, idx) => {
-        const s = Math.min(interval.start, interval.end),
-              e = Math.max(interval.start, interval.end);
-        const card = document.createElement("div");
-        card.className = "booking-card";
-        card.textContent = `Стол № ${lane+1} | ${selDate} | с ${fmt(s)} по ${fmt(e)}`;
-        const btn = document.createElement("button");
-        btn.className = "close-btn";
-        btn.innerHTML = "&times;";
-        btn.onclick = ev => {
-          ev.stopPropagation();
-          intervalsByLane[lane].splice(idx,1);
-          updateTableSelection();
-        };
-        card.appendChild(btn);
-        cardsContainer.appendChild(card);
-      });
-    }
-  }
-
-  // Обработка клика по ячейкам таблицы
-  tableBody.addEventListener("click", e => {
-    if (e.target.classList.contains("slot")) {
-      const lane = +e.target.dataset.lane;
-      if (currentStart === null) {
-        currentLane = lane;
-        clearStartTimeHighlight();
-        highlightHeader(lane);
-        highlightColumn(lane);
-      }
-    }
-    if (e.target.classList.contains("time-right")) {
-      if (currentLane === null) return alert("Сначала выберите столбец.");
-      const txt = e.target.textContent;
-      const time = parseFloat(txt.includes(":30") ? txt.replace(":30",".5") : txt.replace(":00",".0"));
-      if (currentStart === null) {
-        currentStart = time;
-        clearStartTimeHighlight();
-        const sc = document.querySelector(`td.slot[data-lane="${currentLane}"][data-time="${currentStart}"]`);
-        if (sc) sc.classList.add("start-time-chosen");
-      } else {
-        if (time <= currentStart) return alert("Время конца должно быть больше времени начала.");
-        if (!intervalsByLane[currentLane]) intervalsByLane[currentLane] = [];
-        intervalsByLane[currentLane].push({ start: currentStart, end: time });
-        currentLane = null;
-        currentStart = null;
-        clearStartTimeHighlight();
-        clearHeaderHighlight();
-        clearVerticalLines();
-        updateTableSelection();
-      }
-    }
-  });
-
-  // Удаление интервала по двойному клику
-  tableBody.addEventListener("dblclick", e => {
-    if (!e.target.classList.contains("slot")) return;
-    const lane = +e.target.dataset.lane;
-    const time = parseFloat(e.target.dataset.time);
-    if (!intervalsByLane[lane]) return;
-    const idx = intervalsByLane[lane].findIndex(iv => {
-      const s = Math.min(iv.start, iv.end), t = Math.max(iv.start, iv.end);
-      return time >= s && time <= t;
-    });
-    if (idx !== -1) {
-      intervalsByLane[lane].splice(idx, 1);
-      updateTableSelection();
-    }
-  });
-
-  // Модалка брони
-  function openModal() {
-    if (!Object.values(intervalsByLane).some(a => a.length)) {
-      return alert("Сначала выберите время.");
-    }
-    document.getElementById("modal").style.display = "flex";
-    
-    // Добавляем эффект нажатия на кнопку
-    const btn = document.querySelector('.booking-button');
-    btn.classList.add('pressed');
-    setTimeout(() => btn.classList.remove('pressed'), 200);
-  }
-  function closeModal() {
-    document.getElementById("modal").style.display = "none";
-  }
-
-  // Отправка брони на сервер
-  async function submitForm() {
-    const name = document.getElementById("nameInput").value.trim();
-    const phone = document.getElementById("phoneInput").value.trim();
-    const comment = document.getElementById("commentInput").value.trim();
-    const date = dateInput.value;
-    if (!name || !phone) return alert("Введите имя и телефон.");
-    if (!date) return alert("Выберите дату.");
-
-    const bookings = [];
-    for (let lane in intervalsByLane) {
-      intervalsByLane[lane].forEach(iv => {
-        bookings.push({
-          date,
-          tableNumber: +lane + 1,
-          start: iv.start,
-          end: iv.end,
-          name, phone, comment
-        });
-      });
-    }
-    if (!bookings.length) return alert("Нет выбранных интервалов.");
-
-    try {
-      // Показываем анимацию загрузки
-      loadingOverlay.style.display = 'flex';
-      
-      // Отправляем все бронирования
-      await Promise.all(bookings.map(b => {
-        return fetch(GAS_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify({ bookings: [b] })
-        });
-      }));
-      
-      // Скрываем анимацию загрузки
-      loadingOverlay.style.display = 'none';
-      
-      // Очищаем форму
-      closeModal();
-      for (let l in intervalsByLane) intervalsByLane[l] = [];
-      currentLane = currentStart = null;
-      clearStartTimeHighlight();
-      clearHeaderHighlight();
-      clearVerticalLines();
-      updateTableSelection();
-      document.getElementById("nameInput").value = "";
-      document.getElementById("phoneInput").value = "";
-      document.getElementById("commentInput").value = "";
-      
-      // Обновляем существующие брони
-      await loadExisting();
-    } catch (error) {
-      loadingOverlay.style.display = 'none';
-      console.error("Ошибка при отправке бронирования:", error);
-      alert("Произошла ошибка при отправке бронирования");
-    }
-  }
-
-  // Функция для отображения информации о брони
-  function showBookingInfo(booking) {
-    document.getElementById('info-table').textContent = `№${booking.table}`;
-    document.getElementById('info-date').textContent = booking.date.split('-').reverse().join('.');
-    document.getElementById('info-time').textContent = `${formatTime(booking.start)} - ${formatTime(booking.end)}`;
-    document.getElementById('info-name').textContent = booking.name;
-    document.getElementById('info-phone').textContent = booking.phone;
-    document.getElementById('info-comment').textContent = booking.comment || 'нет комментария';
-    document.getElementById('info-confirmed').textContent = booking.confirmed || '';
-    document.getElementById('bookingInfoPopup').style.display = 'flex';
-    currentBookingId = booking.id; // Сохраняем ID брони для подтверждения
-  }
-
-  // Функция для закрытия окна информации
-  function closeBookingInfoPopup() {
-    document.getElementById('bookingInfoPopup').style.display = 'none';
-    currentBookingId = null;
-  }
-
-  // Функция подтверждения брони (да/нет)
-  async function confirmBooking(confirmed) {
-    if (!currentBookingId) return;
-    
-    try {
-      // Показываем анимацию загрузки
-      loadingOverlay.style.display = 'flex';
-      
-      // Отправляем данные на сервер
-      await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ 
-          action: "confirm",
-          id: currentBookingId,
-          confirmed: confirmed
-        })
-      });
-      
-      // Скрываем анимацию загрузки
-      loadingOverlay.style.display = 'none';
-      
-      closeBookingInfoPopup();
-      await loadExisting(); // Обновляем список броней
-    } catch(error) {
-      loadingOverlay.style.display = 'none';
-      console.error("Ошибка при обновлении статуса брони:", error);
-      alert("Произошла ошибка при обновлении статуса брони");
-    }
-  }
-  
-  // Функция удаления брони
-  async function deleteBooking() {
-    if (!currentBookingId) return;
-    
-    if (!confirm("Вы уверены, что хотите удалить эту бронь?")) return;
-    
-    try {
-      // Показываем анимацию загрузки
-      loadingOverlay.style.display = 'flex';
-      
-      // Отправляем запрос на удаление
-      await fetch(GAS_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ 
-          action: "delete",
-          id: currentBookingId
-        })
-      });
-      
-      // Скрываем анимацию загрузки
-      loadingOverlay.style.display = 'none';
-      
-      closeBookingInfoPopup();
-      await loadExisting(); // Обновляем список броней
-    } catch(error) {
-      loadingOverlay.style.display = 'none';
-      console.error("Ошибка при удалении брони:", error);
-      alert("Произошла ошибка при удалении брони");
-    }
-  }
-
-  // Загрузка существующих броней с сервера
-  async function loadExisting() {
-    try {
-      // Показываем анимацию загрузки
-      loadingOverlay.style.display = 'flex';
-      
-      slidersContainer.innerHTML = "";
-      const res = await fetch(GAS_URL + "?action=get&date=" + dateInput.value);
-      const data = await res.json();
-      
-      // Скрываем анимацию загрузки
-      loadingOverlay.style.display = 'none';
-      
-      if (!data.bookings || !data.bookings.length) return;
-
-      // Получаем все ячейки времени (правый столбец)
-      const timeCells = Array.from(document.querySelectorAll('th.time-right'));
-      
-      // Получаем все ячейки таблицы
-      const tableCells = Array.from(document.querySelectorAll('td.slot'));
-      
-      // Получаем позицию контейнера таблиции
-      const containerRect = tableContainer.getBoundingClientRect();
-      const tableRect = bookingTable.getBoundingClientRect();
-      
-      data.bookings.forEach(b => {
-        if (b.date === dateInput.value) {
-          const laneIndex = b.table - 1;
-          const start = parseFloat(b.start);
-          const end = parseFloat(b.end);
-          
-          // Находим индексы временных слотов
-          const startIndex = timeSlots.findIndex(ts => ts.key === start);
-          const endIndex = timeSlots.findIndex(ts => ts.key === end);
-          
-          if (startIndex === -1 || endIndex === -1) return;
-          
-          // Находим ячейку начала брони
-          const startCell = tableCells.find(cell => 
-            parseInt(cell.dataset.lane) === laneIndex && 
-            parseFloat(cell.dataset.time) === start
-          );
-          
-          if (!startCell) return;
-          
-          // Получаем позицию ячейки начала относительно контейнера
-          const startCellRect = startCell.getBoundingClientRect();
-          
-          // Рассчитываем высоту блока брони
-          const startTimeCell = timeCells[startIndex];
-          const endTimeCell = timeCells[endIndex];
-          const height = endTimeCell.offsetTop + endTimeCell.offsetHeight - startTimeCell.offsetTop;
-          
-          // Рассчитываем позицию ползунка относительно контейнера
-          const left = startCellRect.left - containerRect.left;
-          const top = startTimeCell.offsetTop;
-          
-          // Создаем ползунок
-          const slider = document.createElement("div");
-          slider.className = "existing-slider";
-          
-          // Добавляем класс в зависимости от статуса брони
-          if (b.confirmed === "Да") {
-            slider.classList.add("confirmed");
-          } else if (b.confirmed === "Нет") {
-            slider.classList.add("rejected");
-          }
-          
-          slider.style.top = `${top}px`;
-          slider.style.left = `${left}px`;
-          slider.style.width = `${startCellRect.width}px`;
-          slider.style.height = `${height}px`;
-          
-          // Добавляем обработчик клика
-          slider.addEventListener('click', (e) => {
-            e.stopPropagation();
-            showBookingInfo(b);
-          });
-          
-          slidersContainer.appendChild(slider);
-        }
-      });
-    } catch(e) {
-      // Скрываем анимацию загрузки в случае ошибки
-      loadingOverlay.style.display = 'none';
-      console.error("Ошибка загрузки бронирований:", e);
-    }
-  }
-
-  function formatTime(v) {
-    const h = Math.floor(v);
-    const m = v % 1 === 0.5 ? "30" : "00";
-    return `${h}:${m}`;
-  }
-
-  // При изменении даты обновляем брони
-  dateInput.addEventListener('change', async () => {
-    await loadExisting();
-    // Сброс выборов
-    currentLane = currentStart = null;
-    for (let k in intervalsByLane) intervalsByLane[k] = [];
-    clearStartTimeHighlight();
-    clearHeaderHighlight();
-    clearVerticalLines();
-    updateTableSelection();
-  });
-
-  // Инициализация
-  document.addEventListener('DOMContentLoaded', async () => {
-    await loadExisting();
-    updateTableSelection();
-  });
-
-  document.getElementById("openImage").onclick = () => {
-    document.getElementById("imagePopup").style.display = "flex";
+  // Глобальный объект для пагинации
+  const pagination = {
+    prevPage: function() {},
+    nextPage: function() {}
   };
-  function closeImagePopup() {
-    document.getElementById("imagePopup").style.display = "none";
+
+  // Инициализация приложения
+  function initApp() {
+    const API_URL = "https://script.google.com/macros/s/AKfycbxhEaO_tIA9U0-KapMdmPoyNFaMitqKdKZG94duQBfSpLo8MhTfTQJufgoo3EGiRQ/exec";
+
+    let allEntries = [];
+    let currentEntries = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const cardsPerPage = 5;
+
+    // Основные функции приложения
+    async function getEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updateQuantity(partNumber, delta) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function deleteEntry(rowIndex) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getHistory(partNumber) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+        return await res.text();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getMostPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    // Новая функция для обновления названия детали
+    async function updatePartName(partNumber, newName) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function createCard(entry) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.row = entry.rowIndex;
+      div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+      const media = document.createElement('div');
+      media.className = 'media-block';
+
+      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        iframe.loading = 'lazy';
+        media.appendChild(iframe);
+      } else if (entry.fileUrl) {
+        // Используем оптимизированную функцию для создания изображений
+        const img = createOptimizedImage(entry.fileUrl, entry.partName || entry.partNumber);
+        media.appendChild(img);
+      } else {
+        // Заглушка если нет изображения
+        const placeholder = document.createElement('div');
+        placeholder.className = 'image-placeholder';
+        placeholder.textContent = 'Нет изображения';
+        placeholder.style.position = 'absolute';
+        placeholder.style.top = '0';
+        placeholder.style.left = '0';
+        placeholder.style.width = '100%';
+        placeholder.style.height = '100%';
+        media.appendChild(placeholder);
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'img-overlay';
+      media.appendChild(overlay);
+
+      const rem = document.createElement('div');
+      rem.className = 'icon remove';
+      rem.textContent = 'Х';
+      media.append(rem);
+
+      div.append(media);
+
+      // Добавляем блок с названием детали
+      const partNameContainer = document.createElement('div');
+      partNameContainer.className = 'part-name-container';
+      partNameContainer.dataset.partNumber = entry.partNumber;
+      
+      const partNameText = document.createElement('div');
+      partNameText.className = 'part-name-text';
+      partNameText.textContent = entry.partName || 'Название детали';
+      
+      const editButton = document.createElement('button');
+      editButton.className = 'part-name-edit-btn';
+      editButton.innerHTML = '<i class="fas fa-edit"></i>';
+      editButton.title = 'Редактировать название';
+      
+      partNameContainer.appendChild(partNameText);
+      partNameContainer.appendChild(editButton);
+      div.append(partNameContainer);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = entry.partNumber;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'text';
+      qtyInput.value = entry.quantity;
+      qtyInput.readOnly = true;
+
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn btn-add';
+      btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> ДОБАВИТЬ';
+
+      const btnInfo = document.createElement('button');
+      btnInfo.className = 'btn btn-info';
+      btnInfo.innerHTML = '<i class="fas fa-history"></i> ИСТОРИЯ';
+
+      const btnTake = document.createElement('button');
+      btnTake.className = 'btn btn-take';
+      btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> ВЗЯТЬ';
+
+      controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+      div.append(controls);
+
+      // Обработчик клика для кнопки редактирования
+      editButton.addEventListener('click', function() {
+        const partNumber = partNameContainer.dataset.partNumber;
+        const currentName = partNameText.textContent;
+        
+        // Переходим в режим редактирования
+        partNameContainer.classList.add('editing');
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'part-name-input';
+        input.value = currentName;
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'part-name-save-btn';
+        saveButton.innerHTML = '<i class="fas fa-check"></i>';
+        saveButton.title = 'Сохранить';
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'part-name-cancel-btn';
+        cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+        cancelButton.title = 'Отменить';
+        
+        // Заменяем содержимое контейнера
+        partNameText.style.display = 'none';
+        editButton.style.display = 'none';
+        
+        partNameContainer.appendChild(input);
+        partNameContainer.appendChild(saveButton);
+        partNameContainer.appendChild(cancelButton);
+        
+        input.focus();
+        input.select();
+        
+        // Функция завершения редактирования
+        const finishEdit = async (save = false) => {
+          const newName = save ? input.value.trim() : currentName;
+          
+          partNameContainer.classList.remove('editing');
+          input.remove();
+          saveButton.remove();
+          cancelButton.remove();
+          
+          partNameText.style.display = '';
+          editButton.style.display = '';
+          
+          if (save && newName && newName !== currentName) {
+            const res = await updatePartName(partNumber, newName);
+            if (res.status === 'success') {
+              partNameText.textContent = newName;
+              // Обновляем название в массиве записей
+              const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
+              if (updatedEntry) updatedEntry.partName = newName;
+            } else {
+              alert(res.message || 'Ошибка при обновлении названия');
+            }
+          }
+        };
+        
+        // Обработчики для кнопок
+        saveButton.addEventListener('click', () => finishEdit(true));
+        cancelButton.addEventListener('click', () => finishEdit(false));
+        
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            finishEdit(true);
+          }
+        });
+        
+        input.addEventListener('blur', () => {
+          // Не завершаем редактирование при потере фокуса
+        });
+      });
+
+      rem.onclick = async () => {
+        if (confirm('Удалить эту запись?')) {
+          await deleteEntry(entry.rowIndex);
+          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          updateTotalPages();
+          if (currentPage > totalPages) currentPage = totalPages;
+          renderPage(currentPage);
+        }
+      };
+
+      btnAdd.onclick = async () => {
+        const deltaStr = prompt('Введите число для добавления:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnTake.onclick = async () => {
+        const deltaStr = prompt('Введите число для вычитания:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, -delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnInfo.onclick = async () => {
+        const hist = await getHistory(entry.partNumber);
+        document.getElementById('modalContent').textContent = hist;
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      return div;
+    }
+
+    function updateTotalPages() {
+      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+      console.log('Updated total pages:', totalPages);
+    }
+
+    function renderPage(page) {
+      console.log(`Rendering page ${page} of ${totalPages}`);
+      
+      const container = document.getElementById('cardsContainer');
+      if (!container) {
+        console.error('Cards container not found!');
+        return;
+      }
+      
+      container.innerHTML = '';
+
+      const start = (page - 1) * cardsPerPage;
+      const end = start + cardsPerPage;
+      const pageData = currentEntries.slice(start, end);
+
+      if (pageData.length === 0) {
+        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+        return;
+      }
+
+      pageData.forEach(entry => {
+        const card = createCard(entry);
+        container.appendChild(card);
+      });
+
+      renderPageNumbers();
+      updatePaginationControls();
+      window.scrollTo(0, 0);
+    }
+
+    function renderPageNumbers() {
+      const pageContainer = document.getElementById('pageNumbers');
+      if (!pageContainer) {
+        console.error('Page numbers container not found!');
+        return;
+      }
+      
+      pageContainer.innerHTML = '';
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(currentPage - 2, 1);
+      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+      
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addDots();
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          addDots();
+        }
+        addPageButton(totalPages);
+      }
+      
+      function addPageButton(page) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) {
+          btn.classList.add('active');
+        }
+        btn.onclick = () => goToPage(page);
+        pageContainer.appendChild(btn);
+      }
+      
+      function addDots() {
+        const dots = document.createElement('span');
+        dots.textContent = '...';
+        dots.style.padding = '0 10px';
+        pageContainer.appendChild(dots);
+      }
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      renderPage(currentPage);
+      updatePaginationControls();
+    }
+
+    // Обновляем глобальные функции пагинации
+    pagination.nextPage = function() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    };
+
+    pagination.prevPage = function() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    };
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function resetSearch() {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    }
+
+    // Инициализация событий
+    document.getElementById('btnSearch')?.addEventListener('click', () => {
+      const term = prompt('Введите номер детали для поиска:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById('sortSelect').value = 'all';
+      }
+    });
+
+    document.getElementById('btnReset')?.addEventListener('click', () => {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    });
+
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
+          }
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+        }
+        
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    // Загрузка данных
+    async function loadData() {
+      showLoader(true);
+      try {
+        allEntries = await getEntries();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    loadData();
   }
 </script>
-
 </body>
 </html>
