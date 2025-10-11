@@ -3,29 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Редактор новостного квадрата</title>
-    <!-- Подключение шрифтов -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Редактор новостного квадрата - Расширенное управление</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --blur-intensity: blur(20px);
+            --accent-color: #dc143c;
+            --background-color: #dc143c;
+        }
+
         body {
-            margin: 0;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Montserrat', sans-serif;
-            color: #333;
+            padding: 40px 20px;
+            color: #1D1D1F;
         }
-        
+
         .container {
             width: 100%;
             max-width: 1200px;
@@ -35,54 +41,52 @@
             justify-content: center;
             align-items: flex-start;
         }
-        
+
+        /* Стили стекла для всех элементов */
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--blur-intensity);
+            -webkit-backdrop-filter: var(--blur-intensity);
+            box-shadow: var(--glass-shadow);
+        }
+
         .controls-panel {
             flex: 1;
-            min-width: 300px;
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            min-width: 320px;
+            border-radius: 24px;
+            padding: 24px;
         }
-        
+
         .square-container {
             flex: 1;
             min-width: 400px;
             max-width: 500px;
-            margin-bottom: 30px;
             position: relative;
         }
-        
+
         .perfect-square {
             width: 100%;
             height: 0;
             padding-bottom: 100%;
-            background: linear-gradient(145deg, #ffffff, #f0f0f0);
-            border-radius: 20px;
+            border-radius: 32px;
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
         }
-        
-        .perfect-square:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        
+
         .square-image {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 110%;
             display: flex;
             justify-content: center;
             align-items: flex-end;
             overflow: hidden;
         }
-        
+
         .image-stack {
             position: relative;
             width: 100%;
@@ -91,106 +95,120 @@
             justify-content: center;
             align-items: flex-end;
         }
-        
+
         .image-background {
             position: absolute;
-            max-width: 90%;
-            max-height: 75%;
+            max-width: 85%;
+            max-height: 80%;
             object-fit: contain;
-            filter: blur(2px) brightness(0.9);
+            filter: blur(3px) brightness(0.85);
             z-index: 1;
-            transition: all 0.5s ease;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 20px;
+            cursor: move;
         }
-        
+
         .image-foreground {
             position: absolute;
-            max-width: 90%;
-            max-height: 75%;
+            max-width: 85%;
+            max-height: 80%;
             object-fit: contain;
             z-index: 2;
-            filter: drop-shadow(8px 8px 15px rgba(0, 0, 0, 0.3));
-            transition: all 0.5s ease;
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            border-radius: 18px;
+            cursor: move;
         }
-        
+
         .image-foreground:hover {
-            transform: scale(1.03) translateY(-5px);
-            filter: drop-shadow(12px 12px 20px rgba(0, 0, 0, 0.4));
+            transform: scale(1.03) translateY(-8px);
+            filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.3));
         }
-        
-        /* Логотип в правом нижнем углу квадрата */
+
+        /* Логотип в стеклянном стиле */
         .logo-container {
             position: absolute;
-            bottom: 15px;
-            right: 15px;
+            bottom: 20px;
+            left: 20px;
             z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+            border-radius: 18px;
         }
-        
+
         .logo {
-            width: 75px;
+            width: 60px;
             height: auto;
             opacity: 0.9;
-            transition: opacity 0.3s;
+            transition: all 0.3s ease;
         }
-        
+
         .logo:hover {
             opacity: 1;
+            transform: scale(1.05);
         }
-        
+
         .share-buttons {
             display: flex;
-            gap: 15px;
+            gap: 16px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 24px;
         }
-        
+
         .share-btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            border: none;
-            border-radius: 50px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            color: var(--accent-color);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.3);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            letter-spacing: -0.2px;
         }
-        
+
         .share-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(37, 117, 252, 0.4);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 1);
+            color: var(--accent-color);
         }
-        
+
         .message {
-            margin-top: 15px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
+            margin-top: 16px;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.8), rgba(48, 209, 88, 0.8));
             color: white;
-            border-radius: 10px;
+            border-radius: 16px;
             display: none;
             font-weight: 500;
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
-        
+
         .error-message {
-            background: linear-gradient(135deg, #f44336, #d32f2f);
-            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+            background: linear-gradient(135deg, rgba(255, 59, 48, 0.8), rgba(255, 69, 58, 0.8));
         }
-        
+
         .fallback-message {
-            margin-top: 10px;
-            color: #666;
+            margin-top: 12px;
+            color: rgba(255, 255, 255, 0.9);
             font-size: 14px;
             text-align: center;
             display: none;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--blur-intensity);
+            -webkit-backdrop-filter: var(--blur-intensity);
         }
-        
-        /* Стили для текстового редактора */
+
+        /* Текстовый редактор в стеклянном стиле */
         .text-editor {
             position: absolute;
             top: 0;
@@ -203,259 +221,406 @@
             justify-content: center;
             align-items: center;
         }
-        
+
         .editable-text {
             position: absolute;
             top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-weight: 700;
             font-size: 28px;
-            color: #222;
+            color: #1D1D1F;
             pointer-events: auto;
-            padding: 12px 18px;
+            padding: 16px 20px;
             border: 2px dashed transparent;
-            transition: all 0.3s ease;
-            width: 90%;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            width: 85%;
             text-align: center;
             word-break: break-word;
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            line-height: 1.3;
+            letter-spacing: -0.5px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
+
         .editable-text:focus {
             outline: none;
-            border-color: #6a11cb;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 8px 25px rgba(106, 17, 203, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.35);
         }
-        
-        /* Панель управления текстом */
+
+        /* Панель управления в стеклянном стиле */
         .text-controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 16px;
+            margin-bottom: 24px;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 20px;
             width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .control-group {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             gap: 8px;
+            flex: 1;
+            min-width: 120px;
         }
-        
+
         .control-group label {
             font-size: 14px;
-            color: #555;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
+            letter-spacing: -0.2px;
         }
-        
+
         .control-group select, .control-group input {
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
             font-size: 14px;
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.15);
+            width: 100%;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #1D1D1F;
         }
-        
+
         .control-group select:focus, .control-group input:focus {
-            border-color: #6a11cb;
-            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
             outline: none;
+            background: rgba(255, 255, 255, 0.25);
         }
-        
+
         .move-controls {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 16px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .move-row {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
-        
+
         .move-btn {
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
             cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            font-size: 20px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: rgba(255, 255, 255, 0.9);
         }
-        
+
         .move-btn:hover {
-            background: #6a11cb;
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
         }
-        
+
         .position-display {
-            margin-top: 15px;
+            margin-top: 16px;
             font-size: 14px;
-            color: #666;
+            color: rgba(255, 255, 255, 0.9);
             text-align: center;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border-radius: 14px;
             font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .image-controls {
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .url-input {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
             font-size: 14px;
-            font-family: 'Montserrat', sans-serif;
-            margin-bottom: 15px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 16px;
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #1D1D1F;
         }
-        
+
         .url-input:focus {
-            border-color: #6a11cb;
-            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
             outline: none;
+            background: rgba(255, 255, 255, 0.25);
         }
-        
+
         .action-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #ff8c00, #ff6b00);
-            color: white;
-            border: none;
-            border-radius: 8px;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            color: var(--accent-color);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             width: 100%;
-            margin-bottom: 10px;
-            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.3);
+            margin-bottom: 12px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            letter-spacing: -0.2px;
         }
-        
+
         .action-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.4);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 1);
+            color: var(--accent-color);
         }
-        
+
         .action-btn.secondary {
-            background: linear-gradient(135deg, #00b09b, #96c93d);
-            box-shadow: 0 5px 15px rgba(0, 176, 155, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
         }
-        
+
         .action-btn.secondary:hover {
-            box-shadow: 0 8px 20px rgba(0, 176, 155, 0.4);
+            background: rgba(255, 255, 255, 0.9);
         }
-        
+
         .action-btn:disabled {
-            background: #cccccc;
+            background: rgba(142, 142, 147, 0.6);
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
-        
+
         .section-title {
             font-size: 18px;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            letter-spacing: -0.3px;
         }
-        
+
         .info-text {
             font-size: 13px;
-            color: #777;
-            margin-top: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 12px;
             text-align: center;
+            line-height: 1.4;
         }
-        
+
         .loading {
             display: none;
             text-align: center;
-            margin: 10px 0;
+            margin: 12px 0;
         }
-        
+
         .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top: 4px solid #6a11cb;
-            width: 30px;
-            height: 30px;
+            border-top: 3px solid rgba(255, 255, 255, 0.8);
+            width: 32px;
+            height: 32px;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 0 auto 8px;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
         .effect-controls {
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .slider-container {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        
+
         .slider-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
         }
-        
+
         .slider {
             width: 100%;
-            height: 8px;
+            height: 6px;
             -webkit-appearance: none;
-            background: #ddd;
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
             outline: none;
         }
-        
+
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: #6a11cb;
+            background: rgba(255, 255, 255, 0.9);
             cursor: pointer;
+            border: 2px solid var(--accent-color);
         }
-        
+
+        /* Новые элементы управления изображением */
+        .image-position-controls {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .position-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .position-control label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .position-input {
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #1D1D1F;
+            font-size: 14px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .position-input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .layer-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .layer-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .layer-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Заменяем Dynamic Island на редактируемую надпись NEWS */
+        .news-header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 10px 24px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1D1D1F;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: 1px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .news-header:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .news-header:focus {
+            outline: none;
+            background: linear-gradient(135deg, #FFEC8B, #FFD700);
+        }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -465,12 +630,27 @@
                 width: 100%;
             }
         }
+
+        /* Дополнительные стеклянные элементы */
+        .glass-header {
+            text-align: center;
+            margin-bottom: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="controls-panel">
-            <h2 style="text-align: center; margin-bottom: 25px; color: #333;">3D Редактор новостного квадрата</h2>
+        <div class="controls-panel glass">
+            <div class="glass-header">Редактор новостного квадрата</div>
             
             <div class="image-controls">
                 <div class="section-title">Загрузка изображения</div>
@@ -479,9 +659,37 @@
                 <button class="action-btn secondary" id="removeBgBtn">Создать 3D эффект</button>
                 <div class="loading" id="loadingIndicator">
                     <div class="spinner"></div>
-                    <p>Создание 3D эффекта...</p>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin-top: 8px;">Создание 3D эффекта...</p>
                 </div>
                 <p class="info-text">Для создания 3D эффекта используется API Remove.bg</p>
+            </div>
+            
+            <div class="image-position-controls">
+                <div class="section-title">Управление изображениями</div>
+                <div class="layer-controls">
+                    <button class="layer-btn active" id="moveBothBtn">Оба слоя</button>
+                    <button class="layer-btn" id="moveForegroundBtn">Передний план</button>
+                    <button class="layer-btn" id="moveBackgroundBtn">Фон</button>
+                </div>
+                <div class="position-grid">
+                    <div class="position-control">
+                        <label for="posX">Позиция X (%):</label>
+                        <input type="number" id="posX" class="position-input" min="0" max="100" value="50" step="1">
+                    </div>
+                    <div class="position-control">
+                        <label for="posY">Позиция Y (%):</label>
+                        <input type="number" id="posY" class="position-input" min="0" max="100" value="50" step="1">
+                    </div>
+                    <div class="position-control">
+                        <label for="scale">Масштаб (%):</label>
+                        <input type="number" id="scale" class="position-input" min="10" max="200" value="100" step="5">
+                    </div>
+                    <div class="position-control">
+                        <label for="rotation">Поворот (°):</label>
+                        <input type="number" id="rotation" class="position-input" min="-180" max="180" value="0" step="5">
+                    </div>
+                </div>
+                <button class="action-btn secondary" id="resetPositionBtn">Сбросить позицию</button>
             </div>
             
             <div class="effect-controls">
@@ -489,23 +697,23 @@
                 <div class="slider-container">
                     <div class="slider-label">
                         <span>Размытие фона:</span>
-                        <span id="blurValue">2px</span>
+                        <span id="blurValue">3px</span>
                     </div>
-                    <input type="range" min="0" max="10" value="2" class="slider" id="blurSlider">
+                    <input type="range" min="0" max="10" value="3" class="slider" id="blurSlider">
                 </div>
                 <div class="slider-container">
                     <div class="slider-label">
                         <span>Смещение:</span>
-                        <span id="offsetValue">5px</span>
+                        <span id="offsetValue">8px</span>
                     </div>
-                    <input type="range" min="0" max="20" value="5" class="slider" id="offsetSlider">
+                    <input type="range" min="0" max="20" value="8" class="slider" id="offsetSlider">
                 </div>
                 <div class="slider-container">
                     <div class="slider-label">
                         <span>Интенсивность тени:</span>
-                        <span id="shadowValue">15px</span>
+                        <span id="shadowValue">24px</span>
                     </div>
-                    <input type="range" min="0" max="30" value="15" class="slider" id="shadowSlider">
+                    <input type="range" min="0" max="30" value="24" class="slider" id="shadowSlider">
                 </div>
             </div>
             
@@ -514,11 +722,10 @@
                 <div class="control-group">
                     <label for="fontFamily">Шрифт:</label>
                     <select id="fontFamily">
-                        <option value="'Montserrat', sans-serif" selected>Montserrat Bold</option>
+                        <option value="'Inter', sans-serif" selected>Inter Bold</option>
                         <option value="Arial, sans-serif">Arial</option>
                         <option value="'Times New Roman', serif">Times New Roman</option>
                         <option value="'Courier New', monospace">Courier New</option>
-                        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
                     </select>
                 </div>
                 
@@ -529,7 +736,7 @@
                 
                 <div class="control-group">
                     <label for="textColor">Цвет:</label>
-                    <input type="color" id="textColor" value="#222222">
+                    <input type="color" id="textColor" value="#1D1D1F">
                 </div>
             </div>
             
@@ -553,7 +760,10 @@
         </div>
         
         <div class="square-container">
-            <div class="perfect-square">
+            <!-- Заменяем Dynamic Island на редактируемую надпись NEWS -->
+            <div class="news-header" contenteditable="true">NEWS</div>
+
+            <div class="perfect-square glass">
                 <!-- Область для редактирования текста -->
                 <div class="text-editor">
                     <div class="editable-text" contenteditable="true" id="editableText">Ваш заголовок здесь</div>
@@ -566,8 +776,8 @@
                     </div>
                 </div>
                 
-                <!-- Логотип в правом нижнем углу квадрата -->
-                <div class="logo-container">
+                <!-- Логотип в левом нижнем углу квадрата -->
+                <div class="logo-container glass">
                     <img src="https://i.postimg.cc/D09MhBPQ/LOGO.png" alt="Логотип" class="logo">
                 </div>
             </div>
@@ -597,6 +807,16 @@
         const removeBgBtn = document.getElementById('removeBgBtn');
         const loadingIndicator = document.getElementById('loadingIndicator');
         
+        // Новые элементы управления изображением
+        const posXInput = document.getElementById('posX');
+        const posYInput = document.getElementById('posY');
+        const scaleInput = document.getElementById('scale');
+        const rotationInput = document.getElementById('rotation');
+        const moveBothBtn = document.getElementById('moveBothBtn');
+        const moveForegroundBtn = document.getElementById('moveForegroundBtn');
+        const moveBackgroundBtn = document.getElementById('moveBackgroundBtn');
+        const resetPositionBtn = document.getElementById('resetPositionBtn');
+        
         // Слайдеры для эффектов
         const blurSlider = document.getElementById('blurSlider');
         const blurValue = document.getElementById('blurValue');
@@ -617,8 +837,19 @@
             x: 50, // процент от левого края
             y: 20  // процент от верхнего края (над изображением)
         };
-        
-        // API ключ для Remove.bg
+
+        // Позиция изображения
+        let imagePosition = {
+            x: 50,
+            y: 50,
+            scale: 100,
+            rotation: 0
+        };
+
+        // Активный слой для управления
+        let activeLayer = 'both'; // 'both', 'foreground', 'background'
+
+        // API ключ для Remove.bg - ИСПРАВЛЕННАЯ ОШИБКА
         const REMOVE_BG_API_KEY = '7BbMhznXkUX2VnfPVeXgdqNq';
         
         // Обработчики изменения настроек текста
@@ -638,22 +869,25 @@
         blurSlider.addEventListener('input', function() {
             const value = this.value + 'px';
             blurValue.textContent = value;
-            imageBackground.style.filter = `blur(${value}) brightness(0.9)`;
+            imageBackground.style.filter = `blur(${value}) brightness(0.85)`;
         });
         
         offsetSlider.addEventListener('input', function() {
             const value = this.value + 'px';
             offsetValue.textContent = value;
-            imageForeground.style.transform = `translateY(-${value})`;
+            // Сохраняем текущее преобразование и добавляем смещение
+            const currentTransform = imageForeground.style.transform;
+            const baseTransform = currentTransform.replace(/translateY\([^)]*\)/, '');
+            imageForeground.style.transform = `${baseTransform} translateY(-${value})`;
         });
         
         shadowSlider.addEventListener('input', function() {
             const value = this.value + 'px';
             shadowValue.textContent = value;
-            imageForeground.style.filter = `drop-shadow(${value} ${value} 20px rgba(0, 0, 0, 0.3))`;
+            imageForeground.style.filter = `drop-shadow(0 ${value} 32px rgba(0, 0, 0, 0.2))`;
         });
         
-        // Обработчики кнопок перемещения
+        // Обработчики кнопок перемещения текста
         moveUpBtn.addEventListener('click', function() {
             textPosition.y = Math.max(0, textPosition.y - 1);
             updateTextPosition();
@@ -689,7 +923,124 @@
             // Обновляем отображение позиции
             positionDisplay.textContent = `Позиция: X: ${textPosition.x}%, Y: ${textPosition.y}%`;
         }
-        
+
+        // Обработчики управления изображением
+        posXInput.addEventListener('input', updateImagePosition);
+        posYInput.addEventListener('input', updateImagePosition);
+        scaleInput.addEventListener('input', updateImagePosition);
+        rotationInput.addEventListener('input', updateImagePosition);
+
+        function updateImagePosition() {
+            imagePosition.x = parseInt(posXInput.value);
+            imagePosition.y = parseInt(posYInput.value);
+            imagePosition.scale = parseInt(scaleInput.value);
+            imagePosition.rotation = parseInt(rotationInput.value);
+
+            const baseTransform = `translate(-50%, -50%) translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imagePosition.scale / 100}) rotate(${imagePosition.rotation}deg)`;
+            const offsetValue = offsetSlider.value + 'px';
+
+            if (activeLayer === 'both' || activeLayer === 'foreground') {
+                imageForeground.style.transform = `${baseTransform} translateY(-${offsetValue})`;
+            }
+            if (activeLayer === 'both' || activeLayer === 'background') {
+                imageBackground.style.transform = baseTransform;
+            }
+        }
+
+        // Обработчики выбора активного слоя
+        moveBothBtn.addEventListener('click', function() {
+            setActiveLayer('both');
+        });
+
+        moveForegroundBtn.addEventListener('click', function() {
+            setActiveLayer('foreground');
+        });
+
+        moveBackgroundBtn.addEventListener('click', function() {
+            setActiveLayer('background');
+        });
+
+        function setActiveLayer(layer) {
+            activeLayer = layer;
+            
+            // Обновляем активные кнопки
+            moveBothBtn.classList.toggle('active', layer === 'both');
+            moveForegroundBtn.classList.toggle('active', layer === 'foreground');
+            moveBackgroundBtn.classList.toggle('active', layer === 'background');
+            
+            // Обновляем курсоры
+            imageForeground.style.cursor = (layer === 'both' || layer === 'foreground') ? 'move' : 'default';
+            imageBackground.style.cursor = (layer === 'both' || layer === 'background') ? 'move' : 'default';
+            
+            updateImagePosition();
+        }
+
+        // Сброс позиции изображения
+        resetPositionBtn.addEventListener('click', function() {
+            imagePosition = { x: 50, y: 50, scale: 100, rotation: 0 };
+            posXInput.value = imagePosition.x;
+            posYInput.value = imagePosition.y;
+            scaleInput.value = imagePosition.scale;
+            rotationInput.value = imagePosition.rotation;
+            updateImagePosition();
+        });
+
+        // Drag & Drop функциональность для изображений
+        let isDragging = false;
+        let startX, startY;
+        let startImageX, startImageY;
+
+        function startDrag(e) {
+            if ((activeLayer === 'both' || activeLayer === 'foreground') && e.target === imageForeground) {
+                isDragging = true;
+            } else if ((activeLayer === 'both' || activeLayer === 'background') && e.target === imageBackground) {
+                isDragging = true;
+            } else {
+                return;
+            }
+
+            startX = e.clientX || e.touches[0].clientX;
+            startY = e.clientY || e.touches[0].clientY;
+            startImageX = imagePosition.x;
+            startImageY = imagePosition.y;
+
+            e.preventDefault();
+        }
+
+        function doDrag(e) {
+            if (!isDragging) return;
+
+            const currentX = e.clientX || e.touches[0].clientX;
+            const currentY = e.clientY || e.touches[0].clientY;
+
+            const deltaX = ((currentX - startX) / window.innerWidth) * 100;
+            const deltaY = ((currentY - startY) / window.innerHeight) * 100;
+
+            imagePosition.x = Math.max(0, Math.min(100, startImageX + deltaX));
+            imagePosition.y = Math.max(0, Math.min(100, startImageY + deltaY));
+
+            posXInput.value = Math.round(imagePosition.x);
+            posYInput.value = Math.round(imagePosition.y);
+
+            updateImagePosition();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+
+        // Добавляем обработчики событий для drag & drop
+        imageForeground.addEventListener('mousedown', startDrag);
+        imageBackground.addEventListener('mousedown', startDrag);
+        imageForeground.addEventListener('touchstart', startDrag);
+        imageBackground.addEventListener('touchstart', startDrag);
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('touchmove', doDrag);
+
+        document.addEventListener('mouseup', stopDrag);
+        document.addEventListener('touchend', stopDrag);
+
         // Функция загрузки изображения по URL
         loadImageBtn.addEventListener('click', function() {
             const url = imageUrlInput.value.trim();
@@ -700,6 +1051,8 @@
                 
                 imageBackground.onload = function() {
                     showMessage('Изображение успешно загружено!');
+                    // Сбрасываем позицию при загрузке нового изображения
+                    resetPositionBtn.click();
                 };
                 
                 imageBackground.onerror = function() {
@@ -769,6 +1122,7 @@
         
         // Инициализация
         updateTextPosition();
+        setActiveLayer('both');
         
         // Оригинальные функции
         function shareSquare() {
