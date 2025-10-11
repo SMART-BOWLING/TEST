@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ТЫ МОЖЕШЬ СДЕЛАТЬ ТАК, ЧТО БЫ ВСЯ ОБЛАСТЬ КВАДРАТА СКАЧИВАЛАСЬ И ВСЕ ЧТО НА НЕЙ. ПРИ СКАЧИВАНИИ ТАКИЕ ЭФЕКТЫ КАК РАЗМЫТИЕ ФОНА И ОБРЕЗКА ФОТО НЕ СОХРАНЯЮТСЯ В СКАЧИВАНИИ. ДУМАЮ НУЖНО ДЕЛАТЬ СКРИШОТ ЭКРАНА: <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактор новостного квадрата - Расширенное управление</title>
+    <title>Редактор новостного квадрата - Упрощенное управление</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -19,6 +19,7 @@
             --blur-intensity: blur(20px);
             --accent-color: #dc143c;
             --background-color: #dc143c;
+            --square-bg: #e7eaf1; /* Новый цвет фона квадрата */
         }
 
         body {
@@ -34,15 +35,13 @@
 
         .container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 800px;
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
             gap: 30px;
-            justify-content: center;
-            align-items: flex-start;
         }
 
-        /* Стили стекла для всех элементов */
         .glass {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
@@ -51,16 +50,8 @@
             box-shadow: var(--glass-shadow);
         }
 
-        .controls-panel {
-            flex: 1;
-            min-width: 320px;
-            border-radius: 24px;
-            padding: 24px;
-        }
-
         .square-container {
-            flex: 1;
-            min-width: 400px;
+            width: 100%;
             max-width: 500px;
             position: relative;
         }
@@ -69,10 +60,11 @@
             width: 100%;
             height: 0;
             padding-bottom: 100%;
-            border-radius: 32px;
+            border-radius: 0;
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
+            background: var(--square-bg); /* Сплошной цвет фона */
         }
 
         .square-image {
@@ -104,7 +96,7 @@
             filter: blur(3px) brightness(0.85);
             z-index: 1;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            border-radius: 20px;
+            border-radius: 0;
             cursor: move;
         }
 
@@ -116,7 +108,7 @@
             z-index: 2;
             filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            border-radius: 18px;
+            border-radius: 0;
             cursor: move;
         }
 
@@ -125,26 +117,49 @@
             filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.3));
         }
 
-        /* Логотип в стеклянном стиле */
-        .logo-container {
+        .text-editor {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 10;
-            padding: 12px;
-            border-radius: 18px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .logo {
-            width: 60px;
-            height: auto;
-            opacity: 0.9;
-            transition: all 0.3s ease;
+        .editable-text {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 28px;
+            color: #1D1D1F;
+            pointer-events: auto;
+            padding: 16px 20px;
+            border: 2px dashed transparent;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            width: 85%;
+            text-align: center;
+            word-break: break-word;
+            border-radius: 0;
+            line-height: 1.3;
+            letter-spacing: -0.5px;
+            /* Убрана подложка текста */
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
         }
 
-        .logo:hover {
-            opacity: 1;
-            transform: scale(1.05);
+        .editable-text:focus {
+            outline: none;
+            border-color: rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2); /* Легкая подложка только при фокусе */
         }
 
         .share-buttons {
@@ -152,11 +167,13 @@
             gap: 16px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 24px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 500px;
         }
 
         .share-btn {
-            padding: 14px 28px;
+            padding: 16px 32px;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
             color: var(--accent-color);
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -168,6 +185,8 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             letter-spacing: -0.2px;
+            flex: 1;
+            min-width: 200px;
         }
 
         .share-btn:hover {
@@ -208,103 +227,249 @@
             -webkit-backdrop-filter: var(--blur-intensity);
         }
 
-        /* Текстовый редактор в стеклянном стиле */
-        .text-editor {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Стили для выпадающего списка настроек */
+        .settings-container {
             width: 100%;
-            height: 100%;
-            z-index: 20;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            max-width: 500px;
+            margin-top: 20px;
         }
 
-        .editable-text {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-size: 28px;
-            color: #1D1D1F;
-            pointer-events: auto;
+        .settings-selector {
+            width: 100%;
             padding: 16px 20px;
-            border: 2px dashed transparent;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            width: 85%;
-            text-align: center;
-            word-break: break-word;
-            border-radius: 20px;
-            line-height: 1.3;
-            letter-spacing: -0.5px;
-            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #1D1D1F;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 20px;
         }
 
-        .editable-text:focus {
+        .settings-selector:focus {
             outline: none;
             border-color: rgba(255, 255, 255, 0.6);
-            background: rgba(255, 255, 255, 0.35);
+            background-color: rgba(255, 255, 255, 0.25);
         }
 
-        /* Панель управления в стеклянном стиле */
-        .text-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 24px;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            border-radius: 20px;
-            width: 100%;
+        .settings-panel {
+            margin-top: 16px;
+            padding: 24px;
+            border-radius: 16px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            letter-spacing: -0.3px;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            flex: 1;
-            min-width: 120px;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .control-group label {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
-            letter-spacing: -0.2px;
         }
 
-        .control-group select, .control-group input {
+        .control-group input, .control-group select {
             padding: 12px 16px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 14px;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.15);
-            width: 100%;
+            color: #1D1D1F;
+            font-size: 14px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            color: #1D1D1F;
         }
 
-        .control-group select:focus, .control-group input:focus {
-            border-color: rgba(255, 255, 255, 0.6);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        .control-group input:focus, .control-group select:focus {
             outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
             background: rgba(255, 255, 255, 0.25);
+        }
+
+        .action-btn {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            color: var(--accent-color);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            width: 100%;
+            margin-bottom: 12px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 1);
+            color: var(--accent-color);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
+        }
+
+        .action-btn:disabled {
+            background: rgba(142, 142, 147, 0.6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slider-container {
+            margin-bottom: 16px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            border: 2px solid var(--accent-color);
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .position-control {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        .layer-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .layer-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .layer-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Стили для управления позицией изображения стрелками */
+        .image-position-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            margin-bottom: 16px;
+        }
+
+        .image-move-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .image-move-btn {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .image-move-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .image-position-display {
+            margin-top: 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .move-controls {
@@ -313,12 +478,6 @@
             align-items: center;
             gap: 12px;
             margin-top: 16px;
-            padding: 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .move-row {
@@ -362,93 +521,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .image-controls {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .url-input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 14px;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            margin-bottom: 16px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            color: #1D1D1F;
-        }
-
-        .url-input:focus {
-            border-color: rgba(255, 255, 255, 0.6);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-            outline: none;
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .action-btn {
-            padding: 14px 20px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-            color: var(--accent-color);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 14px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            width: 100%;
-            margin-bottom: 12px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            letter-spacing: -0.2px;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 1);
-            color: var(--accent-color);
-        }
-
-        .action-btn.secondary {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
-        }
-
-        .action-btn.secondary:hover {
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .action-btn:disabled {
-            background: rgba(142, 142, 147, 0.6);
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            letter-spacing: -0.3px;
-        }
-
-        .info-text {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-top: 12px;
-            text-align: center;
-            line-height: 1.4;
-        }
-
         .loading {
             display: none;
             text-align: center;
@@ -470,191 +542,55 @@
             100% { transform: rotate(360deg); }
         }
 
-        .effect-controls {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .slider-container {
-            margin-bottom: 16px;
-        }
-
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 600;
-        }
-
-        .slider {
-            width: 100%;
-            height: 6px;
-            -webkit-appearance: none;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
-            outline: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.9);
-            cursor: pointer;
-            border: 2px solid var(--accent-color);
-        }
-
-        /* Новые элементы управления изображением */
-        .image-position-controls {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .position-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .position-control {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .position-control label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 600;
-        }
-
-        .position-input {
-            padding: 10px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.15);
-            color: #1D1D1F;
-            font-size: 14px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .position-input:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.6);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .layer-controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .layer-btn {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.9);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .layer-btn.active {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
-
-        .layer-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Заменяем Dynamic Island на редактируемую надпись NEWS */
-        .news-header {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            padding: 10px 24px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #1D1D1F;
-            font-weight: 800;
-            font-size: 16px;
-            letter-spacing: 1px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
+        .info-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 12px;
             text-align: center;
-        }
-
-        .news-header:hover {
-            transform: translateX(-50%) scale(1.05);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .news-header:focus {
-            outline: none;
-            background: linear-gradient(135deg, #FFEC8B, #FFD700);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .controls-panel, .square-container {
-                width: 100%;
-            }
-        }
-
-        /* Дополнительные стеклянные элементы */
-        .glass-header {
-            text-align: center;
-            margin-bottom: 24px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            padding: 16px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="controls-panel glass">
-            <div class="glass-header">Редактор новостного квадрата</div>
+        <div class="square-container">
+            <div class="perfect-square">
+                <!-- Убрано стеклянное оформление (.glass) -->
+                <div class="text-editor">
+                    <div class="editable-text" contenteditable="true" id="editableText">Ваш заголовок здесь</div>
+                </div>
+                
+                <div class="square-image">
+                    <div class="image-stack">
+                        <img src="https://img-cdn.hltv.org/gallerypicture/-Y3PlTgWpA-QJzDsU2pdTl.jpg?auto=compress&ixlib=java-2.1.0&m=%2Fm.png&mw=828&mx=153&my=3682&q=75&w=6219&s=c5bf44f8f45ca0567dfb97d02bee4a38" alt="Фоновое изображение" class="image-background" id="imageBackground">
+                        <img src="https://img-cdn.hltv.org/gallerypicture/-Y3PlTgWpA-QJzDsU2pdTl.jpg?auto=compress&ixlib=java-2.1.0&m=%2Fm.png&mw=828&mx=153&my=3682&q=75&w=6219&s=c5bf44f8f45ca0567dfb97d02bee4a38" alt="Основное изображение" class="image-foreground" id="imageForeground">
+                    </div>
+                </div>
+            </div>
             
-            <div class="image-controls">
-                <div class="section-title">Загрузка изображения</div>
-                <input type="text" class="url-input" id="imageUrl" placeholder="Вставьте ссылку на изображение">
+            <div class="message" id="message"></div>
+            <div class="fallback-message" id="fallbackMessage">
+                Функция "Поделиться" недоступна в вашем браузере.
+            </div>
+        </div>
+        
+        <div class="settings-container">
+            <select class="settings-selector" id="settingsSelector">
+                <option value="">Выберите настройки</option>
+                <option value="image">Изображение</option>
+                <option value="position">Позиция изображения</option>
+                <option value="effects">3D эффекты</option>
+                <option value="text">Текст</option>
+                <option value="text-position">Позиция текста</option>
+            </select>
+            
+            <!-- Панель настроек изображения -->
+            <div class="settings-panel glass" id="imagePanel">
+                <div class="section-title">Настройки изображения</div>
+                <div class="control-group">
+                    <label for="imageUrl">Ссылка на изображение:</label>
+                    <input type="text" id="imageUrl" placeholder="Вставьте ссылку на изображение">
+                </div>
                 <button class="action-btn" id="loadImageBtn">Загрузить изображение</button>
                 <button class="action-btn secondary" id="removeBgBtn">Создать 3D эффект</button>
                 <div class="loading" id="loadingIndicator">
@@ -664,8 +600,9 @@
                 <p class="info-text">Для создания 3D эффекта используется API Remove.bg</p>
             </div>
             
-            <div class="image-position-controls">
-                <div class="section-title">Управление изображениями</div>
+            <!-- Панель позиции изображения -->
+            <div class="settings-panel glass" id="positionPanel">
+                <div class="section-title">Позиция изображения</div>
                 <div class="layer-controls">
                     <button class="layer-btn active" id="moveBothBtn">Оба слоя</button>
                     <button class="layer-btn" id="moveForegroundBtn">Передний план</button>
@@ -674,25 +611,46 @@
                 <div class="position-grid">
                     <div class="position-control">
                         <label for="posX">Позиция X (%):</label>
-                        <input type="number" id="posX" class="position-input" min="0" max="100" value="50" step="1">
+                        <input type="number" id="posX" min="0" max="100" value="50" step="1">
                     </div>
                     <div class="position-control">
                         <label for="posY">Позиция Y (%):</label>
-                        <input type="number" id="posY" class="position-input" min="0" max="100" value="50" step="1">
+                        <input type="number" id="posY" min="0" max="100" value="50" step="1">
                     </div>
                     <div class="position-control">
                         <label for="scale">Масштаб (%):</label>
-                        <input type="number" id="scale" class="position-input" min="10" max="200" value="100" step="5">
+                        <input type="number" id="scale" min="10" max="200" value="100" step="5">
                     </div>
                     <div class="position-control">
                         <label for="rotation">Поворот (°):</label>
-                        <input type="number" id="rotation" class="position-input" min="-180" max="180" value="0" step="5">
+                        <input type="number" id="rotation" min="-180" max="180" value="0" step="5">
                     </div>
                 </div>
+                
+                <!-- Новые стрелочные кнопки для управления позицией изображения -->
+                <div class="image-position-controls">
+                    <div class="section-title">Точное перемещение (по 1%)</div>
+                    <div class="image-move-row">
+                        <button class="image-move-btn" id="imageMoveUp">↑</button>
+                    </div>
+                    <div class="image-move-row">
+                        <button class="image-move-btn" id="imageMoveLeft">←</button>
+                        <button class="image-move-btn" id="imageMoveCenter">⦿</button>
+                        <button class="image-move-btn" id="imageMoveRight">→</button>
+                    </div>
+                    <div class="image-move-row">
+                        <button class="image-move-btn" id="imageMoveDown">↓</button>
+                    </div>
+                    <div class="image-position-display" id="imagePositionDisplay">
+                        Позиция изображения: X: 50%, Y: 50%
+                    </div>
+                </div>
+                
                 <button class="action-btn secondary" id="resetPositionBtn">Сбросить позицию</button>
             </div>
             
-            <div class="effect-controls">
+            <!-- Панель 3D эффектов -->
+            <div class="settings-panel glass" id="effectsPanel">
                 <div class="section-title">Настройки 3D эффекта</div>
                 <div class="slider-container">
                     <div class="slider-label">
@@ -717,7 +675,8 @@
                 </div>
             </div>
             
-            <div class="text-controls">
+            <!-- Панель текста -->
+            <div class="settings-panel glass" id="textPanel">
                 <div class="section-title">Настройки текста</div>
                 <div class="control-group">
                     <label for="fontFamily">Шрифт:</label>
@@ -728,86 +687,68 @@
                         <option value="'Courier New', monospace">Courier New</option>
                     </select>
                 </div>
-                
                 <div class="control-group">
-                    <label for="fontSize">Размер:</label>
+                    <label for="fontSize">Размер шрифта:</label>
                     <input type="number" id="fontSize" min="10" max="72" value="28">
                 </div>
-                
                 <div class="control-group">
-                    <label for="textColor">Цвет:</label>
+                    <label for="textColor">Цвет текста:</label>
                     <input type="color" id="textColor" value="#1D1D1F">
                 </div>
             </div>
             
-            <div class="move-controls">
+            <!-- Панель позиции текста -->
+            <div class="settings-panel glass" id="textPositionPanel">
                 <div class="section-title">Позиция текста</div>
-                <div class="move-row">
-                    <button class="move-btn" id="moveUp">↑</button>
-                </div>
-                <div class="move-row">
-                    <button class="move-btn" id="moveLeft">←</button>
-                    <button class="move-btn" id="moveCenter">⦿</button>
-                    <button class="move-btn" id="moveRight">→</button>
-                </div>
-                <div class="move-row">
-                    <button class="move-btn" id="moveDown">↓</button>
-                </div>
-                <div class="position-display" id="positionDisplay">
-                    Позиция: X: 50%, Y: 20%
+                <div class="move-controls">
+                    <div class="move-row">
+                        <button class="move-btn" id="moveUp">↑</button>
+                    </div>
+                    <div class="move-row">
+                        <button class="move-btn" id="moveLeft">←</button>
+                        <button class="move-btn" id="moveCenter">⦿</button>
+                        <button class="move-btn" id="moveRight">→</button>
+                    </div>
+                    <div class="move-row">
+                        <button class="move-btn" id="moveDown">↓</button>
+                    </div>
+                    <div class="position-display" id="positionDisplay">
+                        Позиция: X: 50%, Y: 20%
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="square-container">
-            <!-- Заменяем Dynamic Island на редактируемую надпись NEWS -->
-            <div class="news-header" contenteditable="true">NEWS</div>
-
-            <div class="perfect-square glass">
-                <!-- Область для редактирования текста -->
-                <div class="text-editor">
-                    <div class="editable-text" contenteditable="true" id="editableText">Ваш заголовок здесь</div>
-                </div>
-                
-                <div class="square-image">
-                    <div class="image-stack">
-                        <img src="https://img-cdn.hltv.org/gallerypicture/-Y3PlTgWpA-QJzDsU2pdTl.jpg?auto=compress&ixlib=java-2.1.0&m=%2Fm.png&mw=828&mx=153&my=3682&q=75&w=6219&s=c5bf44f8f45ca0567dfb97d02bee4a38" alt="Фоновое изображение" class="image-background" id="imageBackground">
-                        <img src="https://img-cdn.hltv.org/gallerypicture/-Y3PlTgWpA-QJzDsU2pdTl.jpg?auto=compress&ixlib=java-2.1.0&m=%2Fm.png&mw=828&mx=153&my=3682&q=75&w=6219&s=c5bf44f8f45ca0567dfb97d02bee4a38" alt="Основное изображение" class="image-foreground" id="imageForeground">
-                    </div>
-                </div>
-                
-                <!-- Логотип в левом нижнем углу квадрата -->
-                <div class="logo-container glass">
-                    <img src="https://i.postimg.cc/D09MhBPQ/LOGO.png" alt="Логотип" class="logo">
-                </div>
-            </div>
-            
-            <div class="share-buttons">
-                <button class="share-btn" onclick="shareSquare()">Поделиться квадратом</button>
-            </div>
-            
-            <div class="message" id="message"></div>
-            <div class="fallback-message" id="fallbackMessage">
-                Функция "Поделиться" недоступна в вашем браузере.
-            </div>
+        <!-- Кнопки скачивания и публикации перенесены в самый низ -->
+        <div class="share-buttons">
+            <button class="share-btn" id="downloadBtn">Скачать квадрат</button>
+            <button class="share-btn" id="shareBtn">Поделиться квадратом</button>
         </div>
     </div>
 
     <script>
-        // Элементы управления
+        // Основные элементы
         const editableText = document.getElementById('editableText');
-        const fontFamilySelect = document.getElementById('fontFamily');
-        const fontSizeInput = document.getElementById('fontSize');
-        const textColorInput = document.getElementById('textColor');
-        const positionDisplay = document.getElementById('positionDisplay');
         const imageBackground = document.getElementById('imageBackground');
         const imageForeground = document.getElementById('imageForeground');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        
+        // Элементы выпадающего списка
+        const settingsSelector = document.getElementById('settingsSelector');
+        const imagePanel = document.getElementById('imagePanel');
+        const positionPanel = document.getElementById('positionPanel');
+        const effectsPanel = document.getElementById('effectsPanel');
+        const textPanel = document.getElementById('textPanel');
+        const textPositionPanel = document.getElementById('textPositionPanel');
+        
+        // Элементы панели изображения
         const imageUrlInput = document.getElementById('imageUrl');
         const loadImageBtn = document.getElementById('loadImageBtn');
         const removeBgBtn = document.getElementById('removeBgBtn');
         const loadingIndicator = document.getElementById('loadingIndicator');
         
-        // Новые элементы управления изображением
+        // Элементы панели позиции изображения
         const posXInput = document.getElementById('posX');
         const posYInput = document.getElementById('posY');
         const scaleInput = document.getElementById('scale');
@@ -817,7 +758,15 @@
         const moveBackgroundBtn = document.getElementById('moveBackgroundBtn');
         const resetPositionBtn = document.getElementById('resetPositionBtn');
         
-        // Слайдеры для эффектов
+        // Новые элементы для управления позицией изображения стрелками
+        const imageMoveUpBtn = document.getElementById('imageMoveUp');
+        const imageMoveDownBtn = document.getElementById('imageMoveDown');
+        const imageMoveLeftBtn = document.getElementById('imageMoveLeft');
+        const imageMoveRightBtn = document.getElementById('imageMoveRight');
+        const imageMoveCenterBtn = document.getElementById('imageMoveCenter');
+        const imagePositionDisplay = document.getElementById('imagePositionDisplay');
+        
+        // Элементы панели эффектов
         const blurSlider = document.getElementById('blurSlider');
         const blurValue = document.getElementById('blurValue');
         const offsetSlider = document.getElementById('offsetSlider');
@@ -825,34 +774,229 @@
         const shadowSlider = document.getElementById('shadowSlider');
         const shadowValue = document.getElementById('shadowValue');
         
-        // Кнопки перемещения
+        // Элементы панели текста
+        const fontFamilySelect = document.getElementById('fontFamily');
+        const fontSizeInput = document.getElementById('fontSize');
+        const textColorInput = document.getElementById('textColor');
+        
+        // Элементы панели позиции текста
         const moveUpBtn = document.getElementById('moveUp');
         const moveDownBtn = document.getElementById('moveDown');
         const moveLeftBtn = document.getElementById('moveLeft');
         const moveRightBtn = document.getElementById('moveRight');
         const moveCenterBtn = document.getElementById('moveCenter');
+        const positionDisplay = document.getElementById('positionDisplay');
         
-        // Позиция текста
-        let textPosition = {
-            x: 50, // процент от левого края
-            y: 20  // процент от верхнего края (над изображением)
-        };
-
-        // Позиция изображения
-        let imagePosition = {
-            x: 50,
-            y: 50,
-            scale: 100,
-            rotation: 0
-        };
-
-        // Активный слой для управления
-        let activeLayer = 'both'; // 'both', 'foreground', 'background'
-
-        // API ключ для Remove.bg - ИСПРАВЛЕННАЯ ОШИБКА
+        // Переменные состояния
+        let textPosition = { x: 50, y: 20 };
+        let imagePosition = { x: 50, y: 50, scale: 100, rotation: 0 };
+        let activeLayer = 'both';
         const REMOVE_BG_API_KEY = '7BbMhznXkUX2VnfPVeXgdqNq';
         
-        // Обработчики изменения настроек текста
+        // Обработчик выбора настроек
+        settingsSelector.addEventListener('change', function() {
+            // Скрываем все панели
+            imagePanel.classList.remove('active');
+            positionPanel.classList.remove('active');
+            effectsPanel.classList.remove('active');
+            textPanel.classList.remove('active');
+            textPositionPanel.classList.remove('active');
+            
+            // Показываем выбранную панель
+            const selectedValue = this.value;
+            if (selectedValue === 'image') {
+                imagePanel.classList.add('active');
+            } else if (selectedValue === 'position') {
+                positionPanel.classList.add('active');
+            } else if (selectedValue === 'effects') {
+                effectsPanel.classList.add('active');
+            } else if (selectedValue === 'text') {
+                textPanel.classList.add('active');
+            } else if (selectedValue === 'text-position') {
+                textPositionPanel.classList.add('active');
+            }
+        });
+        
+        // Обработчики для панели изображения
+        loadImageBtn.addEventListener('click', function() {
+            const url = imageUrlInput.value.trim();
+            if (url) {
+                imageBackground.src = url;
+                imageForeground.src = url;
+                
+                imageBackground.onload = function() {
+                    showMessage('Изображение успешно загружено!');
+                    resetPositionBtn.click();
+                };
+                
+                imageBackground.onerror = function() {
+                    showMessage('Ошибка загрузки изображения. Проверьте ссылку.', true);
+                };
+            } else {
+                showMessage('Введите ссылку на изображение', true);
+            }
+        });
+        
+        removeBgBtn.addEventListener('click', async function() {
+            const imageUrl = imageUrlInput.value.trim();
+            
+            if (!imageUrl) {
+                showMessage('Сначала введите ссылку на изображение', true);
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            removeBgBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('image_url', imageUrl);
+                
+                const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+                    method: 'POST',
+                    headers: {
+                        'X-Api-Key': REMOVE_BG_API_KEY
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка API: ${response.status} ${response.statusText}`);
+                }
+                
+                const blob = await response.blob();
+                const imageUrlWithoutBg = URL.createObjectURL(blob);
+                imageForeground.src = imageUrlWithoutBg;
+                
+                showMessage('3D эффект успешно создан!');
+            } catch (error) {
+                console.error('Ошибка создания 3D эффекта:', error);
+                showMessage('Ошибка создания 3D эффекта: ' + error.message, true);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                removeBgBtn.disabled = false;
+            }
+        });
+        
+        // Обработчики для панели позиции изображения
+        posXInput.addEventListener('input', updateImagePosition);
+        posYInput.addEventListener('input', updateImagePosition);
+        scaleInput.addEventListener('input', updateImagePosition);
+        rotationInput.addEventListener('input', updateImagePosition);
+
+        function updateImagePosition() {
+            imagePosition.x = parseInt(posXInput.value);
+            imagePosition.y = parseInt(posYInput.value);
+            imagePosition.scale = parseInt(scaleInput.value);
+            imagePosition.rotation = parseInt(rotationInput.value);
+
+            const baseTransform = `translate(-50%, -50%) translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imagePosition.scale / 100}) rotate(${imagePosition.rotation}deg)`;
+            const offsetValue = offsetSlider.value + 'px';
+
+            if (activeLayer === 'both' || activeLayer === 'foreground') {
+                imageForeground.style.transform = `${baseTransform} translateY(-${offsetValue})`;
+            }
+            if (activeLayer === 'both' || activeLayer === 'background') {
+                imageBackground.style.transform = baseTransform;
+            }
+            
+            // Обновляем отображение позиции
+            updateImagePositionDisplay();
+        }
+
+        // Функция обновления отображения позиции изображения
+        function updateImagePositionDisplay() {
+            imagePositionDisplay.textContent = `Позиция изображения: X: ${imagePosition.x}%, Y: ${imagePosition.y}%`;
+        }
+
+        // Обработчики стрелочных кнопок для управления позицией изображения
+        imageMoveUpBtn.addEventListener('click', function() {
+            imagePosition.y = Math.max(0, imagePosition.y - 1);
+            posYInput.value = imagePosition.y;
+            updateImagePosition();
+        });
+        
+        imageMoveDownBtn.addEventListener('click', function() {
+            imagePosition.y = Math.min(100, imagePosition.y + 1);
+            posYInput.value = imagePosition.y;
+            updateImagePosition();
+        });
+        
+        imageMoveLeftBtn.addEventListener('click', function() {
+            imagePosition.x = Math.max(0, imagePosition.x - 1);
+            posXInput.value = imagePosition.x;
+            updateImagePosition();
+        });
+        
+        imageMoveRightBtn.addEventListener('click', function() {
+            imagePosition.x = Math.min(100, imagePosition.x + 1);
+            posXInput.value = imagePosition.x;
+            updateImagePosition();
+        });
+        
+        imageMoveCenterBtn.addEventListener('click', function() {
+            imagePosition.x = 50;
+            imagePosition.y = 50;
+            posXInput.value = imagePosition.x;
+            posYInput.value = imagePosition.y;
+            updateImagePosition();
+        });
+
+        moveBothBtn.addEventListener('click', function() {
+            setActiveLayer('both');
+        });
+
+        moveForegroundBtn.addEventListener('click', function() {
+            setActiveLayer('foreground');
+        });
+
+        moveBackgroundBtn.addEventListener('click', function() {
+            setActiveLayer('background');
+        });
+
+        function setActiveLayer(layer) {
+            activeLayer = layer;
+            moveBothBtn.classList.toggle('active', layer === 'both');
+            moveForegroundBtn.classList.toggle('active', layer === 'foreground');
+            moveBackgroundBtn.classList.toggle('active', layer === 'background');
+            
+            imageForeground.style.cursor = (layer === 'both' || layer === 'foreground') ? 'move' : 'default';
+            imageBackground.style.cursor = (layer === 'both' || layer === 'background') ? 'move' : 'default';
+            
+            updateImagePosition();
+        }
+
+        resetPositionBtn.addEventListener('click', function() {
+            imagePosition = { x: 50, y: 50, scale: 100, rotation: 0 };
+            posXInput.value = imagePosition.x;
+            posYInput.value = imagePosition.y;
+            scaleInput.value = imagePosition.scale;
+            rotationInput.value = imagePosition.rotation;
+            updateImagePosition();
+        });
+        
+        // Обработчики для панели эффектов
+        blurSlider.addEventListener('input', function() {
+            const value = this.value + 'px';
+            blurValue.textContent = value;
+            imageBackground.style.filter = `blur(${value}) brightness(0.85)`;
+        });
+        
+        offsetSlider.addEventListener('input', function() {
+            const value = this.value + 'px';
+            offsetValue.textContent = value;
+            const currentTransform = imageForeground.style.transform;
+            const baseTransform = currentTransform.replace(/translateY\([^)]*\)/, '');
+            imageForeground.style.transform = `${baseTransform} translateY(-${value})`;
+        });
+        
+        shadowSlider.addEventListener('input', function() {
+            const value = this.value + 'px';
+            shadowValue.textContent = value;
+            imageForeground.style.filter = `drop-shadow(0 ${value} 32px rgba(0, 0, 0, 0.2))`;
+        });
+        
+        // Обработчики для панели текста
         fontFamilySelect.addEventListener('change', function() {
             editableText.style.fontFamily = this.value;
         });
@@ -865,29 +1009,7 @@
             editableText.style.color = this.value;
         });
         
-        // Обработчики слайдеров эффектов
-        blurSlider.addEventListener('input', function() {
-            const value = this.value + 'px';
-            blurValue.textContent = value;
-            imageBackground.style.filter = `blur(${value}) brightness(0.85)`;
-        });
-        
-        offsetSlider.addEventListener('input', function() {
-            const value = this.value + 'px';
-            offsetValue.textContent = value;
-            // Сохраняем текущее преобразование и добавляем смещение
-            const currentTransform = imageForeground.style.transform;
-            const baseTransform = currentTransform.replace(/translateY\([^)]*\)/, '');
-            imageForeground.style.transform = `${baseTransform} translateY(-${value})`;
-        });
-        
-        shadowSlider.addEventListener('input', function() {
-            const value = this.value + 'px';
-            shadowValue.textContent = value;
-            imageForeground.style.filter = `drop-shadow(0 ${value} 32px rgba(0, 0, 0, 0.2))`;
-        });
-        
-        // Обработчики кнопок перемещения текста
+        // Обработчики для панели позиции текста
         moveUpBtn.addEventListener('click', function() {
             textPosition.y = Math.max(0, textPosition.y - 1);
             updateTextPosition();
@@ -914,240 +1036,86 @@
             updateTextPosition();
         });
         
-        // Функция обновления позиции текста
         function updateTextPosition() {
             editableText.style.left = textPosition.x + '%';
             editableText.style.top = textPosition.y + '%';
             editableText.style.transform = 'translate(-50%, -50%)';
-            
-            // Обновляем отображение позиции
             positionDisplay.textContent = `Позиция: X: ${textPosition.x}%, Y: ${textPosition.y}%`;
         }
-
-        // Обработчики управления изображением
-        posXInput.addEventListener('input', updateImagePosition);
-        posYInput.addEventListener('input', updateImagePosition);
-        scaleInput.addEventListener('input', updateImagePosition);
-        rotationInput.addEventListener('input', updateImagePosition);
-
-        function updateImagePosition() {
-            imagePosition.x = parseInt(posXInput.value);
-            imagePosition.y = parseInt(posYInput.value);
-            imagePosition.scale = parseInt(scaleInput.value);
-            imagePosition.rotation = parseInt(rotationInput.value);
-
-            const baseTransform = `translate(-50%, -50%) translate(${imagePosition.x}%, ${imagePosition.y}%) scale(${imagePosition.scale / 100}) rotate(${imagePosition.rotation}deg)`;
-            const offsetValue = offsetSlider.value + 'px';
-
-            if (activeLayer === 'both' || activeLayer === 'foreground') {
-                imageForeground.style.transform = `${baseTransform} translateY(-${offsetValue})`;
-            }
-            if (activeLayer === 'both' || activeLayer === 'background') {
-                imageBackground.style.transform = baseTransform;
-            }
-        }
-
-        // Обработчики выбора активного слоя
-        moveBothBtn.addEventListener('click', function() {
-            setActiveLayer('both');
-        });
-
-        moveForegroundBtn.addEventListener('click', function() {
-            setActiveLayer('foreground');
-        });
-
-        moveBackgroundBtn.addEventListener('click', function() {
-            setActiveLayer('background');
-        });
-
-        function setActiveLayer(layer) {
-            activeLayer = layer;
-            
-            // Обновляем активные кнопки
-            moveBothBtn.classList.toggle('active', layer === 'both');
-            moveForegroundBtn.classList.toggle('active', layer === 'foreground');
-            moveBackgroundBtn.classList.toggle('active', layer === 'background');
-            
-            // Обновляем курсоры
-            imageForeground.style.cursor = (layer === 'both' || layer === 'foreground') ? 'move' : 'default';
-            imageBackground.style.cursor = (layer === 'both' || layer === 'background') ? 'move' : 'default';
-            
-            updateImagePosition();
-        }
-
-        // Сброс позиции изображения
-        resetPositionBtn.addEventListener('click', function() {
-            imagePosition = { x: 50, y: 50, scale: 100, rotation: 0 };
-            posXInput.value = imagePosition.x;
-            posYInput.value = imagePosition.y;
-            scaleInput.value = imagePosition.scale;
-            rotationInput.value = imagePosition.rotation;
-            updateImagePosition();
-        });
-
-        // Drag & Drop функциональность для изображений
-        let isDragging = false;
-        let startX, startY;
-        let startImageX, startImageY;
-
-        function startDrag(e) {
-            if ((activeLayer === 'both' || activeLayer === 'foreground') && e.target === imageForeground) {
-                isDragging = true;
-            } else if ((activeLayer === 'both' || activeLayer === 'background') && e.target === imageBackground) {
-                isDragging = true;
-            } else {
-                return;
-            }
-
-            startX = e.clientX || e.touches[0].clientX;
-            startY = e.clientY || e.touches[0].clientY;
-            startImageX = imagePosition.x;
-            startImageY = imagePosition.y;
-
-            e.preventDefault();
-        }
-
-        function doDrag(e) {
-            if (!isDragging) return;
-
-            const currentX = e.clientX || e.touches[0].clientX;
-            const currentY = e.clientY || e.touches[0].clientY;
-
-            const deltaX = ((currentX - startX) / window.innerWidth) * 100;
-            const deltaY = ((currentY - startY) / window.innerHeight) * 100;
-
-            imagePosition.x = Math.max(0, Math.min(100, startImageX + deltaX));
-            imagePosition.y = Math.max(0, Math.min(100, startImageY + deltaY));
-
-            posXInput.value = Math.round(imagePosition.x);
-            posYInput.value = Math.round(imagePosition.y);
-
-            updateImagePosition();
-        }
-
-        function stopDrag() {
-            isDragging = false;
-        }
-
-        // Добавляем обработчики событий для drag & drop
-        imageForeground.addEventListener('mousedown', startDrag);
-        imageBackground.addEventListener('mousedown', startDrag);
-        imageForeground.addEventListener('touchstart', startDrag);
-        imageBackground.addEventListener('touchstart', startDrag);
-
-        document.addEventListener('mousemove', doDrag);
-        document.addEventListener('touchmove', doDrag);
-
-        document.addEventListener('mouseup', stopDrag);
-        document.addEventListener('touchend', stopDrag);
-
-        // Функция загрузки изображения по URL
-        loadImageBtn.addEventListener('click', function() {
-            const url = imageUrlInput.value.trim();
-            if (url) {
-                // Устанавливаем оба изображения одинаковыми (оригинал)
-                imageBackground.src = url;
-                imageForeground.src = url;
-                
-                imageBackground.onload = function() {
-                    showMessage('Изображение успешно загружено!');
-                    // Сбрасываем позицию при загрузке нового изображения
-                    resetPositionBtn.click();
-                };
-                
-                imageBackground.onerror = function() {
-                    showMessage('Ошибка загрузки изображения. Проверьте ссылку.', true);
-                };
-                
-                imageForeground.onload = function() {
-                    // Применяем текущие настройки эффектов к новому изображению
-                    blurSlider.dispatchEvent(new Event('input'));
-                    offsetSlider.dispatchEvent(new Event('input'));
-                    shadowSlider.dispatchEvent(new Event('input'));
-                };
-            } else {
-                showMessage('Введите ссылку на изображение', true);
-            }
-        });
         
-        // Функция создания 3D эффекта с помощью API Remove.bg
-        removeBgBtn.addEventListener('click', async function() {
-            const imageUrl = imageUrlInput.value.trim();
+        // Функции скачивания и публикации
+        downloadBtn.addEventListener('click', function() {
+            const square = document.querySelector('.perfect-square');
             
-            if (!imageUrl) {
-                showMessage('Сначала введите ссылку на изображение', true);
-                return;
-            }
-            
-            // Показываем индикатор загрузки
-            loadingIndicator.style.display = 'block';
-            removeBgBtn.disabled = true;
-            
-            try {
-                // Создаем FormData для отправки на Remove.bg API
-                const formData = new FormData();
-                formData.append('image_url', imageUrl);
-                
-                // Отправляем запрос к API Remove.bg
-                const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-                    method: 'POST',
-                    headers: {
-                        'X-Api-Key': REMOVE_BG_API_KEY
-                    },
-                    body: formData
+            if (typeof html2canvas !== 'undefined') {
+                html2canvas(square, {
+                    backgroundColor: '#e7eaf1', // Указываем цвет фона для сохранения
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'новостной-квадрат.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    showMessage('Квадрат успешно скачан!');
+                }).catch(error => {
+                    console.error('Ошибка при создании изображения:', error);
+                    showMessage('Ошибка при скачивании квадрата', true);
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка API: ${response.status} ${response.statusText}`);
-                }
-                
-                // Получаем изображение без фона
-                const blob = await response.blob();
-                const imageUrlWithoutBg = URL.createObjectURL(blob);
-                
-                // Обновляем только передний план (изображение без фона)
-                // Фоновое изображение остается оригинальным
-                imageForeground.src = imageUrlWithoutBg;
-                
-                showMessage('3D эффект успешно создан!');
-            } catch (error) {
-                console.error('Ошибка создания 3D эффекта:', error);
-                showMessage('Ошибка создания 3D эффекта: ' + error.message, true);
-            } finally {
-                // Скрываем индикатор загрузки
-                loadingIndicator.style.display = 'none';
-                removeBgBtn.disabled = false;
+            } else {
+                showMessage('Библиотека html2canvas не загружена', true);
             }
         });
         
-        // Инициализация
-        updateTextPosition();
-        setActiveLayer('both');
-        
-        // Оригинальные функции
-        function shareSquare() {
-            const shareData = {
-                title: '3D Новостной квадрат',
-                text: 'Посмотри на этот 3D новостной квадрат!',
-                url: window.location.href
-            };
+        shareBtn.addEventListener('click', function() {
+            const square = document.querySelector('.perfect-square');
             
-            if (navigator.share) {
-                navigator.share(shareData)
-                    .then(() => {
-                        console.log('Успешный шаринг');
-                    })
-                    .catch((error) => {
-                        console.log('Шаринг отменен или ошибка:', error);
+            if (typeof html2canvas !== 'undefined') {
+                html2canvas(square, {
+                    backgroundColor: '#e7eaf1', // Указываем цвет фона для сохранения
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                }).then(canvas => {
+                    canvas.toBlob(function(blob) {
+                        const file = new File([blob], 'новостной-квадрат.png', { type: 'image/png' });
+                        
+                        if (navigator.share && navigator.canShare) {
+                            const shareData = {
+                                files: [file],
+                                title: 'Новостной квадрат',
+                                text: 'Посмотрите на мой новостной квадрат!'
+                            };
+                            
+                            if (navigator.canShare(shareData)) {
+                                navigator.share(shareData)
+                                    .then(() => {
+                                        showMessage('Квадрат успешно опубликован!');
+                                    })
+                                    .catch((error) => {
+                                        showMessage('Ошибка при публикации квадрата', true);
+                                    });
+                            } else {
+                                showMessage('Публикация файлов не поддерживается в вашем браузере', true);
+                            }
+                        } else {
+                            showMessage('Функция "Поделиться" недоступна в вашем браузере', true);
+                        }
                     });
+                }).catch(error => {
+                    console.error('Ошибка при создании изображения:', error);
+                    showMessage('Ошибка при публикации квадрата', true);
+                });
             } else {
-                document.getElementById('fallbackMessage').style.display = 'block';
-                setTimeout(() => {
-                    document.getElementById('fallbackMessage').style.display = 'none';
-                }, 3000);
+                showMessage('Библиотека html2canvas не загружена', true);
             }
-        }
+        });
         
+        // Вспомогательные функции
         function showMessage(text, isError = false) {
             const message = document.getElementById('message');
             message.textContent = text;
@@ -1163,6 +1131,14 @@
                 message.style.display = 'none';
             }, 3000);
         }
+        
+        // Инициализация
+        updateTextPosition();
+        setActiveLayer('both');
+        updateImagePositionDisplay();
     </script>
+    
+    <!-- Подключаем библиотеку html2canvas для преобразования в изображение -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
