@@ -1,440 +1,1132 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Добавить задачу</title>
-  <style>
-    :root {
-      --light-bg: #d7dce3;
-      --dark-bg: #1a2f40;
-      --accent: #dc143c;
-      --text-dark: #1a2f40;
-      --text-light: #ffffff;
-      --input-padding: 14px;
-      --border-radius: 8px;
-    }
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      -webkit-tap-highlight-color: transparent;
-    }
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background-color: var(--light-bg);
-      color: var(--text-dark);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-      min-height: 100vh;
-      height: 100vh;
-    }
-    .container {
-      background-color: var(--text-light);
-      border-radius: var(--border-radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      padding: 15px;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      max-height: 96vh;
-    }
-    header {
-      background-color: var(--dark-bg);
-      padding: 12px;
-      border-radius: var(--border-radius);
-      text-align: center;
-      margin: 0 0 15px 0;
-      flex-shrink: 0;
-    }
-    header h1 {
-      font-size: 1.3rem;
-      color: var(--text-light);
-      font-weight: 600;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-      overflow: hidden;
-    }
-    .form-content {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-      overflow: hidden;
-      justify-content: space-between;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    label {
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: #444;
-    }
-    input[type="text"],
-    input[type="date"],
-    input[type="file"] {
-      width: 100%;
-      padding: var(--input-padding);
-      border: 2px solid #ccc;
-      border-radius: var(--border-radius);
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-      min-height: 44px;
-    }
-    input:focus {
-      border-color: var(--accent);
-    }
-    input[type="file"] {
-      padding: 10px;
-      background-color: #f8f9fa;
-    }
-    input[type="file"]::file-selector-button {
-      padding: 8px 12px;
-      background-color: var(--dark-bg);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    button {
-      padding: 14px;
-      background-color: var(--accent);
-      color: var(--text-light);
-      border: none;
-      border-radius: var(--border-radius);
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      min-height: 50px;
-      flex-shrink: 0;
-      margin-top: auto;
-    }
-    button:hover, button:active {
-      background-color: #b0102f;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    
-    /* Стили для индикатора загрузки */
-    .loader {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top: 4px solid var(--accent);
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .loader-text {
-      color: white;
-      margin-top: 12px;
-      font-size: 1rem;
-      text-align: center;
-    }
-    
-    .loader-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Task Manager</title>
+    <style>
+        :root {
+            --light-bg: #d7dce3;
+            --dark-bg: #1a2f40;
+            --accent: #dc143c;
+            --text-dark: #1a2f40;
+            --text-light: #ffffff;
+            --border-radius: 8px;
+            --input-padding: 14px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    /* Медиа-запросы для адаптивности */
-    @media (max-width: 480px) {
-      body {
-        padding: 8px;
-      }
-      
-      .container {
-        padding: 12px;
-        max-height: 98vh;
-      }
-      
-      header {
-        padding: 10px;
-        margin-bottom: 12px;
-      }
-      
-      header h1 {
-        font-size: 1.2rem;
-      }
-      
-      input[type="text"],
-      input[type="date"],
-      input[type="file"] {
-        padding: 12px;
-        font-size: 16px;
-      }
-      
-      button {
-        padding: 12px;
-        font-size: 1rem;
-      }
-      
-      .spinner {
-        width: 35px;
-        height: 35px;
-        border-width: 3px;
-      }
-      
-      .loader-text {
-        font-size: 0.9rem;
-      }
-    }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
 
-    /* Для очень маленьких экранов */
-    @media (max-width: 350px) and (max-height: 650px) {
-      header h1 {
-        font-size: 1.1rem;
-      }
-      
-      input[type="text"],
-      input[type="date"],
-      input[type="file"] {
-        padding: 10px;
-        min-height: 40px;
-      }
-      
-      button {
-        padding: 10px;
-        font-size: 0.95rem;
-        min-height: 45px;
-      }
-      
-      .form-group {
-        gap: 4px;
-      }
-      
-      label {
-        font-size: 0.85rem;
-      }
-    }
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            padding: 10px;
+            line-height: 1.5;
+            min-height: 100vh;
+            height: 100vh;
+        }
 
-    /* Для landscape ориентации */
-    @media (max-height: 500px) and (orientation: landscape) {
-      body {
-        align-items: flex-start;
-        padding-top: 5px;
-        padding-bottom: 5px;
-      }
-      
-      .container {
-        max-height: 98vh;
-        overflow-y: auto;
-      }
-      
-      header {
-        padding: 8px;
-      }
-      
-      header h1 {
-        font-size: 1.1rem;
-      }
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--text-light);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
 
-    /* Для очень высоких экранов */
-    @media (min-height: 800px) {
-      .container {
-        max-height: 90vh;
-      }
-      
-      form {
-        gap: 16px;
-      }
-      
-      .form-group {
-        gap: 8px;
-      }
-    }
-  </style>
+        header {
+            background-color: var(--dark-bg);
+            padding: 12px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: var(--light-bg);
+            padding: 8px;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            background: var(--text-light);
+            border: none;
+            color: var(--text-dark);
+            padding: 12px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn:hover {
+            background-color: #e8ecef;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent);
+            color: var(--text-light);
+            box-shadow: 0 4px 8px rgba(220, 20, 60, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 15px;
+            flex: 1;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e0e4e8;
+            border-radius: var(--border-radius);
+            background: var(--text-light);
+            flex: 1;
+            margin-top: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+            background: var(--text-light);
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: center;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+            border-bottom: 1px solid #e0e4e8;
+        }
+
+        th {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 12px;
+            padding: 14px 10px;
+            border-bottom: 2px solid var(--dark-bg);
+        }
+
+        th:first-child {
+            border-top-left-radius: var(--border-radius);
+        }
+
+        th:last-child {
+            border-top-right-radius: var(--border-radius);
+        }
+
+        td {
+            background: var(--text-light);
+            transition: all 0.2s ease;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:last-child td:first-child {
+            border-bottom-left-radius: var(--border-radius);
+        }
+
+        tr:last-child td:last-child {
+            border-bottom-right-radius: var(--border-radius);
+        }
+
+        /* Обновленные бейджи статусов */
+        .status-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 13px;
+            min-width: 45px;
+            background: transparent;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .status-outline.warning { 
+            border-color: #ff9800; 
+            color: #ff9800; 
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+        .status-outline.success { 
+            border-color: #4caf50; 
+            color: #4caf50; 
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        .status-outline.danger { 
+            border-color: var(--accent); 
+            color: var(--accent); 
+            background-color: rgba(220, 20, 60, 0.1);
+        }
+
+        .status-outline:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Обновленные кнопки открытия ссылок */
+        .open-link-btn {
+            background-color: transparent;
+            color: var(--dark-bg);
+            border: 2px solid var(--dark-bg);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            min-width: 80px;
+        }
+
+        .open-link-btn:hover {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(26, 47, 64, 0.3);
+        }
+
+        .open-link-btn:active {
+            transform: translateY(0);
+        }
+
+        .no-link {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Стили для изображений */
+        .task-image {
+            max-width: 80px;
+            max-height: 60px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            border: 1px solid #e0e4e8;
+        }
+
+        .task-image:hover {
+            transform: scale(1.8);
+            z-index: 10;
+            position: relative;
+        }
+
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            font-size: 18px;
+            text-align: center;
+            font-weight: 600;
+            padding: 12px;
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid #e0e4e8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: var(--accent);
+            background: rgba(220, 20, 60, 0.1);
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+            border: 1px solid var(--accent);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #4caf50;
+            border: 1px solid #45a049;
+        }
+
+        .notification.error {
+            background-color: var(--accent);
+            border: 1px solid #b0102f;
+        }
+
+        /* Обновленная анимация загрузки */
+        .soap-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            background: var(--light-bg);
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .soap-bubble {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(26, 47, 64, 0.2) 0%, rgba(26, 47, 64, 0.05) 100%);
+            box-shadow: 
+                inset 0 0 20px rgba(26, 47, 64, 0.2),
+                0 0 30px rgba(26, 47, 64, 0.1);
+            position: relative;
+            z-index: 2;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .soap-bubble::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(26, 47, 64, 0.3);
+        }
+
+        .soap-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(26, 47, 64, 0.2);
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                box-shadow: 
+                    inset 0 0 20px rgba(26, 47, 64, 0.2),
+                    0 0 30px rgba(26, 47, 64, 0.1);
+            }
+            50% {
+                transform: translateY(-10px) scale(1.05);
+                box-shadow: 
+                    inset 0 0 20px rgba(26, 47, 64, 0.3),
+                    0 0 40px rgba(26, 47, 64, 0.15);
+            }
+        }
+
+        .loading-text {
+            margin-left: 15px;
+            color: var(--text-dark);
+            font-size: 16px;
+            z-index: 2;
+            font-weight: 500;
+        }
+
+        /* Цветные линии только для журнала выполнения */
+        #tab1 tr {
+            position: relative;
+        }
+
+        #tab1 tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 2px 0 0 2px;
+        }
+
+        /* Зеленая линия для выполненных задач */
+        #tab1 .completed::before {
+            background-color: #4caf50;
+        }
+
+        /* Оранжевая линия для невыполненных задач */
+        #tab1 .pending::before {
+            background-color: #ff9800;
+        }
+
+        tr:hover td {
+            background: #f8f9fa;
+        }
+
+        /* Линия разделения между выполненными и невыполненными задачами */
+        .divider-row {
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--dark-bg) 20%, 
+                var(--dark-bg) 80%, 
+                transparent 100%);
+        }
+
+        .divider-row td {
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+
+        /* Обновленные селекты */
+        select {
+            background-color: var(--text-light);
+            color: var(--text-dark);
+            border: 2px solid var(--light-bg);
+            border-radius: 20px;
+            padding: 8px 12px;
+            width: 100%;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--dark-bg);
+            box-shadow: 0 0 0 2px rgba(26, 47, 64, 0.1);
+        }
+
+        select:hover {
+            border-color: var(--dark-bg);
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+            
+            .container {
+                height: 98vh;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                min-width: 100%;
+                margin-bottom: 5px;
+                border-radius: var(--border-radius);
+                padding: 10px;
+            }
+            
+            .tab-content {
+                padding: 10px;
+            }
+            
+            th, td {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+            
+            th {
+                font-size: 11px;
+                padding: 12px 6px;
+            }
+            
+            h2 {
+                font-size: 16px;
+                padding: 10px;
+            }
+            
+            table {
+                min-width: 500px;
+            }
+
+            .status-outline {
+                padding: 6px 10px;
+                font-size: 11px;
+                min-width: 40px;
+            }
+
+            .open-link-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+                min-width: 70px;
+            }
+
+            .notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100%);
+            }
+
+            .notification.show {
+                transform: translateY(0);
+            }
+            
+            /* Убираем цветные линии слева в мобильной версии */
+            #tab1 tr::before {
+                display: none;
+            }
+
+            .soap-loading {
+                padding: 30px 15px;
+            }
+
+            .soap-bubble {
+                width: 40px;
+                height: 40px;
+            }
+
+            .loading-text {
+                font-size: 14px;
+            }
+
+            .task-image {
+                max-width: 60px;
+                max-height: 45px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            th, td {
+                padding: 8px 4px;
+                font-size: 11px;
+            }
+            
+            th {
+                font-size: 10px;
+            }
+            
+            .status-outline {
+                font-size: 10px;
+                padding: 5px 8px;
+                min-width: 35px;
+            }
+            
+            .open-link-btn {
+                padding: 5px 10px;
+                font-size: 10px;
+                min-width: 60px;
+            }
+            
+            table {
+                min-width: 450px;
+            }
+
+            .soap-loading {
+                padding: 20px 10px;
+            }
+
+            .soap-bubble {
+                width: 30px;
+                height: 30px;
+            }
+
+            .loading-text {
+                font-size: 12px;
+                margin-left: 10px;
+            }
+
+            .task-image {
+                max-width: 50px;
+                max-height: 35px;
+            }
+        }
+
+        /* Для landscape ориентации */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .container {
+                height: 98vh;
+            }
+            
+            .tabs {
+                padding: 5px;
+            }
+            
+            .tab-btn {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .tab-content {
+                padding: 8px;
+            }
+            
+            h2 {
+                padding: 8px;
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>ДОБАВИТЬ ЗАДАЧУ</h1>
-    </header>
-    <form id="form">
-      <div class="form-content">
-        <div class="form-group">
-          <label for="taskName">Название задачи</label>
-          <input type="text" id="taskName" placeholder="Введите название задачи" required>
-        </div>
-
-        <div class="form-group">
-          <label for="lastDate">Последняя дата выполнения</label>
-          <input type="date" id="lastDate" required>
-        </div>
-
-        <div class="form-group">
-          <label for="photo">Фотография</label>
-          <input type="file" id="photo" accept="image/*" required>
-        </div>
-
-        <button type="submit" id="submit-btn">Добавить задачу</button>
-      </div>
-    </form>
-  </div>
-  
-  <!-- Индикатор загрузки -->
-  <div class="loader" id="loader">
-    <div class="loader-content">
-      <div class="spinner"></div>
-      <div class="loader-text">Добавление задачи...</div>
+    <div class="notification" id="notification"></div>
+    
+    <!-- Модальное окно для просмотра изображения -->
+    <div class="image-modal" id="imageModal">
+        <span class="close-modal" id="closeModal">&times;</span>
+        <img class="image-modal-content" id="modalImage">
     </div>
-  </div>
 
-  <script>
-    // URL вашего веб-приложения Google Apps Script (ЗАМЕНИТЕ НА АКТУАЛЬНЫЙ)
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4hwYxmtC--20HPwCOXJSH1Exl_WWVQUYldmYsI_N37tSMElAPf5Lp8Zx8zQ5qBKkJaA/exec';
-    
-    // Элементы DOM
-    const form = document.getElementById('form');
-    const submitBtn = document.getElementById('submit-btn');
-    const loader = document.getElementById('loader');
-    
-    // Устанавливаем сегодняшнюю дату по умолчанию
-    window.addEventListener('DOMContentLoaded', () => {
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('lastDate').value = today;
-      document.getElementById('taskName').focus();
-    });
-    
-    // Функция для проверки, помещается ли форма на экране
-    function checkFormFitsScreen() {
-      const formHeight = document.querySelector('.container').offsetHeight;
-      const windowHeight = window.innerHeight;
-      
-      if (formHeight > windowHeight) {
-        document.querySelector('.container').style.padding = '10px';
-        document.querySelector('header').style.padding = '8px';
-        document.querySelector('header').style.marginBottom = '8px';
-        document.querySelectorAll('input').forEach(input => {
-          input.style.padding = '10px';
-          input.style.minHeight = '40px';
-        });
-        document.querySelector('button').style.padding = '10px';
-        document.querySelector('button').style.minHeight = '45px';
-      }
-    }
-    
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const taskName = document.getElementById('taskName').value.trim();
-      const lastDate = document.getElementById('lastDate').value;
-      const fileInput = document.getElementById('photo');
-      
-      if (!taskName || !lastDate || fileInput.files.length === 0) {
-        alert('Заполните все поля и выберите фото.');
-        return;
-      }
-      
-      // Блокируем кнопку и показываем индикатор загрузки
-      submitBtn.disabled = true;
-      loader.style.display = 'flex';
-      
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = async function(evt) {
-        const dataUrl = evt.target.result;
-        const parts = dataUrl.split(',');
-        const mimeType = parts[0].match(/data:(.*);base64/)[1];
-        const base64 = parts[1];
+    <div class="container">
+        <header>
+            <h1>TASK MANAGER</h1>
+        </header>
         
-        try {
-          // Отправляем данные на сервер Google Apps Script
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              taskName: taskName,
-              lastDate: lastDate,
-              mimeType: mimeType,
-              base64: base64,
-              fileName: file.name
-            })
-          });
-          
-          const result = await response.json();
-          
-          // Скрываем индикатор загрузки
-          loader.style.display = 'none';
-          submitBtn.disabled = false;
-          
-          if (result.result === 'success') {
-            alert('✅ Задача успешно добавлена!');
-            document.getElementById('form').reset();
-            // Устанавливаем сегодняшнюю дату снова
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('lastDate').value = today;
-          } else {
-            throw new Error(result.message);
-          }
-        } catch (error) {
-          // Скрываем индикатор загрузки в случае ошибки
-          loader.style.display = 'none';
-          submitBtn.disabled = false;
-          
-          console.error('Ошибка:', error);
-          alert('❌ Произошла ошибка при добавлении задачи: ' + error.message);
-        }
-      };
-      
-      reader.onerror = function() {
-        // Скрываем индикатор загрузки в случае ошибки чтения файла
-        loader.style.display = 'none';
-        submitBtn.disabled = false;
-        alert('❌ Ошибка при чтении файла.');
-      };
-      
-      reader.readAsDataURL(file);
-    });
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="tab1">ЖУРНАЛ ВЫПОЛНЕНИЯ</button>
+            <button class="tab-btn" data-tab="tab2">СПИСОК ЗАДАЧ</button>
+        </div>
+        
+        <div class="tab-content active" id="tab1">
+            <h2>ЖУРНАЛ ВЫПОЛНЕНИЯ</h2>
+            <div class="table-container">
+                <table id="journal-table">
+                    <thead>
+                        <tr>
+                            <th>Ссылка</th>
+                            <th>Задача</th>
+                            <th>Дата появления<br>задачи</th>
+                            <th>Дата<br>выполнения</th>
+                            <th>Выполнил</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journal-body">
+                        <tr>
+                            <td colspan="5">
+                                <div class="soap-loading">
+                                    <div class="soap-bubble"></div>
+                                    <div class="loading-text">Загрузка данных...</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab2">
+            <h2>СПИСОК ЗАДАЧ</h2>
+            <div class="table-container">
+                <table id="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Ссылка</th>
+                            <th>Задача</th>
+                            <th>Последняя дата<br>выполнения</th>
+                            <th>Прошло дней<br>с даты задачи</th>
+                            <th>Периодичность<br>дней выполнения</th>
+                            <th>Остаток дней до<br>следующего цикла</th>
+                            <th>Дата<br>след. цикла</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasks-body">
+                        <tr>
+                            <td colspan="7">
+                                <div class="soap-loading">
+                                    <div class="soap-bubble"></div>
+                                    <div class="loading-text">Загрузка данных...</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-    // Проверяем при изменении размера окна
-    window.addEventListener('resize', checkFormFitsScreen);
-    setTimeout(checkFormFitsScreen, 100);
-  </script>
+    <script>
+        // Конфигурация - ЗАМЕНИТЕ НА ВАШ URL GOOGLE APPS SCRIPT
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbx5-tGhnLwWavAOApJdGfV51jr1JVii4YvOexG-ACx3cmOMK0qiu46mwWi1bNCnRuEe/exec';
+
+        // Переменные для хранения данных и отслеживания состояния загрузки
+        let isInitialLoad = true;
+        let tasksData = null;
+        let journalData = null;
+
+        // НОВАЯ ФУНКЦИЯ: Преобразование ссылки Google Drive в прямую ссылку для просмотра
+        function convertGoogleDriveLink(driveLink) {
+            if (!driveLink) return null;
+            
+            // Если ссылка уже в формате прямого просмотра
+            if (driveLink.includes('drive.google.com/file/d/')) {
+                // Извлекаем ID файла
+                const match = driveLink.match(/\/d\/([^\/]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+            }
+            
+            // Если это уже прямая ссылка
+            if (driveLink.includes('uc?export=view')) {
+                return driveLink;
+            }
+            
+            return null;
+        }
+
+        // НОВАЯ ФУНКЦИЯ: Открытие ссылки в новом окне
+        function openDriveLink(driveLink) {
+            if (!driveLink) return;
+            
+            // Преобразуем ссылку для прямого просмотра
+            const viewLink = convertGoogleDriveLink(driveLink);
+            if (viewLink) {
+                window.open(viewLink, '_blank');
+            } else {
+                // Если не удалось преобразовать, открываем оригинальную ссылку
+                window.open(driveLink, '_blank');
+            }
+        }
+
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+        
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Функция для запросов с обработкой CORS
+        async function makeRequest(url, options = {}) {
+            try {
+                // Для GET запросов добавляем timestamp чтобы избежать кеширования
+                if (!options.method || options.method === 'GET') {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url = `${url}${separator}_=${Date.now()}`;
+                }
+                
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Ошибка запроса:', error);
+                throw error;
+            }
+        }
+
+        // Функции для работы с изображениями
+        function openImageModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = imageUrl;
+            modal.style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'none';
+        }
+
+        // Функции API
+        async function loadTasks() {
+            try {
+                if (tasksData && !isInitialLoad) {
+                    renderTasksTable(tasksData);
+                    return;
+                }
+                
+                const tasksBody = document.getElementById('tasks-body');
+                tasksBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="soap-loading">
+                                <div class="soap-bubble"></div>
+                                <div class="loading-text">Загрузка данных...</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
+                tasksData = tasks;
+                renderTasksTable(tasks);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки задач:', error);
+                const tasksBody = document.getElementById('tasks-body');
+                tasksBody.innerHTML = `<tr><td colspan="7" class="error">Ошибка загрузки: ${error.message}</td></tr>`;
+                showNotification('Ошибка загрузки задач', 'error');
+            }
+        }
+
+        async function loadJournal() {
+            try {
+                if (journalData && !isInitialLoad) {
+                    renderJournalTable(journalData);
+                    return;
+                }
+                
+                const journalBody = document.getElementById('journal-body');
+                journalBody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="soap-loading">
+                                <div class="soap-bubble"></div>
+                                <div class="loading-text">Загрузка данных...</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
+                journalData = journal;
+                renderJournalTable(journal);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                const journalBody = document.getElementById('journal-body');
+                journalBody.innerHTML = `<tr><td colspan="5" class="error">Ошибка загрузки: ${error.message}</td></tr>`;
+                showNotification('Ошибка загрузки журнала', 'error');
+            }
+        }
+
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ: Обработка выбора исполнителя
+        async function completeTask(taskId, executor, rowIndex) {
+            try {
+                console.log('Выполнение задачи:', {taskId, executor, rowIndex});
+                
+                // 1. Записываем имя исполнителя в колонку E
+                const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
+                console.log('URL обновления:', updateUrl);
+                
+                const result = await makeRequest(updateUrl);
+                console.log('Результат обновления:', result);
+                
+                if (result.success) {
+                    // 2. НЕМЕДЛЕННО вызываем функцию для мгновенного обновления даты в листе 1
+                    console.log('Вызываем мгновенное обновление для строки:', rowIndex);
+                    const immediateUpdateResult = await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
+                    console.log('Результат мгновенного обновления:', immediateUpdateResult);
+                    
+                    if (immediateUpdateResult === 'SUCCESS') {
+                        showNotification('Задача выполнена! Данные обновлены мгновенно.', 'success');
+                        
+                        // 3. Обновляем данные
+                        journalData = null;
+                        tasksData = null;
+                        
+                        // 4. Перезагружаем обе таблицы
+                        setTimeout(() => {
+                            loadJournal();
+                            loadTasks();
+                        }, 1000);
+                    } else {
+                        showNotification('Задача выполнена, но обновление даты займет до 1 минуты', 'warning');
+                        // Все равно обновляем данные
+                        setTimeout(() => {
+                            loadJournal();
+                            loadTasks();
+                        }, 1000);
+                    }
+                } else {
+                    showNotification('Ошибка: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка выполнения задачи:', error);
+                showNotification('Ошибка выполнения задачи: ' + error.message, 'error');
+            }
+        }
+
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ: Рендеринг таблицы задач с кнопками ссылок
+        function renderTasksTable(tasks) {
+            const tasksBody = document.getElementById('tasks-body');
+            
+            if (!tasks || tasks.length === 0) {
+                tasksBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="soap-loading">
+                                <div class="soap-bubble"></div>
+                                <div class="loading-text">Нет задач</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tasksBody.innerHTML = tasks.map(task => {
+                // Определяем стиль для статуса
+                let statusClass = 'success';
+                if (task.daysLeft <= 0) {
+                    statusClass = 'danger';
+                } else if (task.daysLeft <= 2) {
+                    statusClass = 'warning';
+                }
+                
+                // Отображаем кнопку для открытия ссылки в первой колонке
+                const linkCell = task.driveLink 
+                    ? `<td><button class="open-link-btn" onclick="openDriveLink('${task.driveLink}')">ОТКРЫТЬ</button></td>`
+                    : '<td class="no-link">—</td>';
+                
+                return `
+                    <tr>
+                        ${linkCell}
+                        <td>${task.task}</td>
+                        <td>${task.lastDate || '-'}</td>
+                        <td>${task.daysPassed}</td>
+                        <td>${task.frequency}</td>
+                        <td><span class="status-outline ${statusClass}">${task.daysLeft}</span></td>
+                        <td>${task.nextDate || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ: Рендеринг журнала с кнопками ссылок
+        function renderJournalTable(journal) {
+            const journalBody = document.getElementById('journal-body');
+            
+            if (!journal || journal.length === 0) {
+                journalBody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="soap-loading">
+                                <div class="soap-bubble"></div>
+                                <div class="loading-text">Нет данных</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Разделяем выполненные и невыполненные задачи
+            const pendingTasks = journal.filter(item => !item.isCompleted);
+            const completedTasks = journal.filter(item => item.isCompleted);
+            
+            let html = '';
+            
+            // Невыполненные задачи (вверху)
+            pendingTasks.forEach((task, index) => {
+                const rowIndex = task.rowIndex || (index + 2);
+                
+                // Отображаем кнопку для открытия ссылки в первой колонке
+                const linkCell = task.driveLink 
+                    ? `<td><button class="open-link-btn" onclick="openDriveLink('${task.driveLink}')">ОТКРЫТЬ</button></td>`
+                    : '<td class="no-link">—</td>';
+                
+                // Используем task.id как идентификатор задачи (это может быть ссылка)
+                const taskIdentifier = task.id || task.driveLink || '';
+                
+                html += `
+                    <tr class="pending">
+                        ${linkCell}
+                        <td>${task.task}</td>
+                        <td>${task.createdDate}</td>
+                        <td>${task.completedDate}</td>
+                        <td>
+                            <select onchange="handleExecutorChange(this, '${taskIdentifier}', ${rowIndex})">
+                                <option value="">-- Выберите --</option>
+                                <option value="Вадим">Вадим</option>
+                                <option value="Иван">Иван</option>
+                                <option value="Мария">Мария</option>
+                                <option value="Алексей">Алексей</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            // Добавляем разделитель если есть обе категории
+            if (pendingTasks.length > 0 && completedTasks.length > 0) {
+                html += '<tr class="divider-row"><td colspan="5"></td></tr>';
+            }
+            
+            // Выполненные задачи (внизу)
+            completedTasks.forEach(task => {
+                // Отображаем кнопку для открытия ссылки в первой колонке
+                const linkCell = task.driveLink 
+                    ? `<td><button class="open-link-btn" onclick="openDriveLink('${task.driveLink}')">ОТКРЫТЬ</button></td>`
+                    : '<td class="no-link">—</td>';
+                
+                html += `
+                    <tr class="completed">
+                        ${linkCell}
+                        <td>${task.task}</td>
+                        <td>${task.createdDate}</td>
+                        <td>${task.completedDate}</td>
+                        <td>${task.executor}</td>
+                    </tr>
+                `;
+            });
+            
+            journalBody.innerHTML = html;
+        }
+
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ: Обработка изменения исполнителя
+        function handleExecutorChange(select, taskId, rowIndex) {
+            if (select.value) {
+                const row = select.closest('tr');
+                const originalHTML = row.innerHTML;
+                
+                // Сохраняем выбранное значение
+                const selectedValue = select.value;
+                
+                row.innerHTML = `
+                    <td colspan="5">
+                        <div class="soap-loading">
+                            <div class="soap-bubble"></div>
+                            <div class="loading-text">Сохранение данных...</div>
+                        </div>
+                    </td>
+                `;
+                
+                completeTask(taskId, selectedValue, rowIndex).catch(error => {
+                    // В случае ошибки восстанавливаем строку
+                    console.error('Ошибка при выполнении задачи:', error);
+                    row.innerHTML = originalHTML;
+                    // Восстанавливаем выбранное значение
+                    const newSelect = row.querySelector('select');
+                    if (newSelect) {
+                        newSelect.value = selectedValue;
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Загрузка данных при открытии страницы
+            loadJournal();
+            loadTasks();
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    button.classList.add('active');
+                    
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    if (tabId === 'tab2') {
+                        loadTasks();
+                    } else if (tabId === 'tab1') {
+                        loadJournal();
+                    }
+                });
+            });
+
+            // Обработчики для работы с изображениями
+            document.getElementById('closeModal').addEventListener('click', closeImageModal);
+
+            document.getElementById('imageModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeImageModal();
+                }
+            });
+
+            // Автоматическое обновление данных каждые 30 секунд
+            setInterval(() => {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab.id === 'tab2') {
+                    loadTasks();
+                } else if (activeTab.id === 'tab1') {
+                    loadJournal();
+                }
+            }, 30000);
+
+            // Отмечаем, что первоначальная загрузка завершена
+            setTimeout(() => {
+                isInitialLoad = false;
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
