@@ -145,7 +145,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 16px;
-            margin-bottom: 0;
+            margin-bottom: 20px;
             width: 100%;
             max-width: 500px;
             margin: 0 auto;
@@ -500,6 +500,56 @@
             font-weight: 500;
         }
 
+        /* СТИЛИ ПАГИНАЦИИ */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid #e5e5e5;
+            color: #1a2f40;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background-color: #f5f5f5;
+            border-color: #d0d0d0;
+        }
+
+        .page-btn.active {
+            background-color: #dc143c;
+            color: white;
+            border-color: #dc143c;
+        }
+
+        .page-btn:disabled {
+            background-color: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #e5e5e5;
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+
         /* АДАПТИВНОСТЬ */
         @media (max-width: 768px) {
             body {
@@ -606,6 +656,22 @@
                 font-size: 13px;
                 margin-left: 10px;
             }
+
+            .pagination {
+                gap: 6px;
+                padding: 8px;
+            }
+
+            .page-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+                min-width: 36px;
+            }
+
+            .page-info {
+                font-size: 13px;
+                margin: 0 8px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -660,6 +726,22 @@
                 font-size: 12px;
                 margin-left: 8px;
             }
+
+            .pagination {
+                gap: 4px;
+                padding: 6px;
+            }
+
+            .page-btn {
+                padding: 5px 8px;
+                font-size: 12px;
+                min-width: 32px;
+            }
+
+            .page-info {
+                font-size: 12px;
+                margin: 0 6px;
+            }
         }
 
         @media (max-width: 360px) {
@@ -702,6 +784,22 @@
             .executor-select {
                 font-size: 12px;
                 padding: 6px 8px;
+            }
+
+            .pagination {
+                gap: 3px;
+                padding: 5px;
+            }
+
+            .page-btn {
+                padding: 4px 6px;
+                font-size: 11px;
+                min-width: 28px;
+            }
+
+            .page-info {
+                font-size: 11px;
+                margin: 0 4px;
             }
         }
 
@@ -756,6 +854,18 @@
                     </div>
                 </div>
             </div>
+            <!-- Пагинация для реестра -->
+            <div class="pagination" id="journal-pagination" style="display: none;">
+                <button class="page-btn prev-btn" onclick="changePage('journal', -1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    Страница <span id="journal-current-page">1</span> из <span id="journal-total-pages">1</span>
+                </div>
+                <button class="page-btn next-btn" onclick="changePage('journal', 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
         
         <div class="tab-content" id="tab2">
@@ -767,17 +877,36 @@
                     </div>
                 </div>
             </div>
+            <!-- Пагинация для каталога -->
+            <div class="pagination" id="tasks-pagination" style="display: none;">
+                <button class="page-btn prev-btn" onclick="changePage('tasks', -1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    Страница <span id="tasks-current-page">1</span> из <span id="tasks-total-pages">1</span>
+                </div>
+                <button class="page-btn next-btn" onclick="changePage('tasks', 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         // Конфигурация
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbx5-tGhnLwWavAOApJdGfV51jr1JVii4YvOexG-ACx3cmOMK0qiu46mwWi1bNCnRuEe/exec';
+        const CARDS_PER_PAGE = 5;
 
         // Переменные для хранения данных и отслеживания состояния загрузки
         let isInitialLoad = true;
         let tasksData = null;
         let journalData = null;
+        
+        // Переменные для пагинации
+        let currentJournalPage = 1;
+        let currentTasksPage = 1;
+        let totalJournalPages = 1;
+        let totalTasksPages = 1;
 
         // Функция для преобразования ссылки Google Drive
         function convertGoogleDriveLink(driveLink) {
@@ -837,6 +966,47 @@
                 console.error('Ошибка запроса:', error);
                 throw error;
             }
+        }
+
+        // Функции пагинации
+        function updatePagination(type, currentPage, totalPages) {
+            const pagination = document.getElementById(`${type}-pagination`);
+            const currentPageSpan = document.getElementById(`${type}-current-page`);
+            const totalPagesSpan = document.getElementById(`${type}-total-pages`);
+            const prevBtn = pagination.querySelector('.prev-btn');
+            const nextBtn = pagination.querySelector('.next-btn');
+            
+            currentPageSpan.textContent = currentPage;
+            totalPagesSpan.textContent = totalPages;
+            
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            
+            pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+        }
+
+        function changePage(type, direction) {
+            if (type === 'journal') {
+                const newPage = currentJournalPage + direction;
+                if (newPage >= 1 && newPage <= totalJournalPages) {
+                    currentJournalPage = newPage;
+                    renderJournalCards(journalData);
+                    updatePagination('journal', currentJournalPage, totalJournalPages);
+                }
+            } else if (type === 'tasks') {
+                const newPage = currentTasksPage + direction;
+                if (newPage >= 1 && newPage <= totalTasksPages) {
+                    currentTasksPage = newPage;
+                    renderTasksCards(tasksData);
+                    updatePagination('tasks', currentTasksPage, totalTasksPages);
+                }
+            }
+        }
+
+        function getCurrentPageData(data, currentPage) {
+            const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+            const endIndex = startIndex + CARDS_PER_PAGE;
+            return data.slice(startIndex, endIndex);
         }
 
         // Функции API
@@ -983,10 +1153,19 @@
                         </div>
                     </div>
                 `;
+                updatePagination('tasks', 1, 1);
                 return;
             }
             
-            tasksCards.innerHTML = tasks.map(task => {
+            // Расчет пагинации
+            totalTasksPages = Math.ceil(tasks.length / CARDS_PER_PAGE);
+            if (currentTasksPage > totalTasksPages) {
+                currentTasksPage = 1;
+            }
+            
+            const currentTasks = getCurrentPageData(tasks, currentTasksPage);
+            
+            tasksCards.innerHTML = currentTasks.map(task => {
                 // Определяем стиль для статуса
                 let statusClass = 'success';
                 if (task.daysLeft <= 0) {
@@ -1039,6 +1218,8 @@
                     </div>
                 `;
             }).join('');
+            
+            updatePagination('tasks', currentTasksPage, totalTasksPages);
         }
 
         // ФУНКЦИЯ РЕНДЕРА КАРТОЧЕК ДЛЯ РЕЕСТРА ВЫПОЛНЕНИЯ
@@ -1054,6 +1235,7 @@
                         </div>
                     </div>
                 `;
+                updatePagination('journal', 1, 1);
                 return;
             }
             
@@ -1061,95 +1243,100 @@
             const pendingTasks = journal.filter(item => !item.isCompleted);
             const completedTasks = journal.filter(item => item.isCompleted);
             
+            // Расчет пагинации
+            totalJournalPages = Math.ceil(journal.length / CARDS_PER_PAGE);
+            if (currentJournalPage > totalJournalPages) {
+                currentJournalPage = 1;
+            }
+            
+            const currentJournal = getCurrentPageData(journal, currentJournalPage);
+            
             let html = '';
             
-            // Невыполненные задачи (вверху)
-            pendingTasks.forEach((task, index) => {
+            // Рендерим только текущую страницу
+            currentJournal.forEach((task, index) => {
                 const rowIndex = task.rowIndex || (index + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
                 
-                html += `
-                    <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                        <div class="task-header">
-                            <div class="task-title">${task.task}</div>
-                        </div>
-                        
-                        <div class="task-details">
-                            <div class="detail-row">
-                                <span class="detail-label">Дата появления:</span>
-                                <span class="detail-value">${task.createdDate}</span>
+                if (!task.isCompleted) {
+                    html += `
+                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Дата выполнения:</span>
-                                <span class="detail-value">${task.completedDate || '-'}</span>
+                            
+                            <div class="task-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Дата появления:</span>
+                                    <span class="detail-value">${task.createdDate}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Дата выполнения:</span>
+                                    <span class="detail-value">${task.completedDate || '-'}</span>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="executor-row">
-                            <span class="executor-label">Выполнил:</span>
-                            <select class="executor-select" id="executor-${taskId}">
-                                <option value="">-- Выберите --</option>
-                                <option value="Вадим">Вадим</option>
-                                <option value="Иванов">Иванов</option>
-                                <option value="Петров">Петров</option>
-                                <option value="Сидоров">Сидоров</option>
-                                <option value="Кузнецов">Кузнецов</option>
-                            </select>
-                        </div>
-                        
-                        <div class="buttons-row">
-                            ${hasLink 
-                                ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                    <i class="fas fa-file-alt"></i>ОТКРЫТЬ
-                                  </a>`
-                                : '<div class="no-open">Недоступно</div>'
-                            }
-                            <button class="submit-btn" onclick="submitTask('${taskId}', ${rowIndex})" disabled>
-                                <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            // Выполненные задачи (внизу)
-            completedTasks.forEach(task => {
-                const hasLink = task.driveLink && task.driveLink.trim() !== '';
-                
-                html += `
-                    <div class="task-card completed">
-                        <div class="task-header">
-                            <div class="task-title">${task.task}</div>
-                        </div>
-                        
-                        <div class="task-details">
-                            <div class="detail-row">
-                                <span class="detail-label">Дата появления:</span>
-                                <span class="detail-value">${task.createdDate}</span>
+                            
+                            <div class="executor-row">
+                                <span class="executor-label">Выполнил:</span>
+                                <select class="executor-select" id="executor-${taskId}">
+                                    <option value="">-- Выберите --</option>
+                                    <option value="Вадим">Вадим</option>
+                                    <option value="Иванов">Иванов</option>
+                                    <option value="Петров">Петров</option>
+                                    <option value="Сидоров">Сидоров</option>
+                                    <option value="Кузнецов">Кузнецов</option>
+                                </select>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Дата выполнения:</span>
-                                <span class="detail-value">${task.completedDate}</span>
+                            
+                            <div class="buttons-row">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <button class="submit-btn" onclick="submitTask('${taskId}', ${rowIndex})" disabled>
+                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
+                                </button>
                             </div>
                         </div>
-                        
-                        <div class="executor-row">
-                            <span class="executor-label">Выполнил:</span>
-                            <span class="executor-name">${task.executor}</span>
+                    `;
+                } else {
+                    html += `
+                        <div class="task-card completed">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
+                            </div>
+                            
+                            <div class="task-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Дата появления:</span>
+                                    <span class="detail-value">${task.createdDate}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Дата выполнения:</span>
+                                    <span class="detail-value">${task.completedDate}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="executor-row">
+                                <span class="executor-label">Выполнил:</span>
+                                <span class="executor-name">${task.executor}</span>
+                            </div>
+                            
+                            <div class="buttons-row">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <div class="submitted-text">ОТПРАВЛЕНО</div>
+                            </div>
                         </div>
-                        
-                        <div class="buttons-row">
-                            ${hasLink 
-                                ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                    <i class="fas fa-file-alt"></i>ОТКРЫТЬ
-                                  </a>`
-                                : '<div class="no-open">Недоступно</div>'
-                            }
-                            <div class="submitted-text">ОТПРАВЛЕНО</div>
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
             });
             
             journalCards.innerHTML = html;
@@ -1170,6 +1357,8 @@
                     event.stopPropagation();
                 });
             });
+            
+            updatePagination('journal', currentJournalPage, totalJournalPages);
         }
 
         // Функция отправки задачи
@@ -1234,9 +1423,12 @@
                     const tabId = button.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
                     
+                    // Сбрасываем пагинацию при переключении вкладок
                     if (tabId === 'tab2') {
+                        currentTasksPage = 1;
                         loadTasks();
                     } else if (tabId === 'tab1') {
+                        currentJournalPage = 1;
                         loadJournal();
                     }
                 });
