@@ -6,6 +6,8 @@
   <title>SMB SKYMALL</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Identity Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -23,28 +25,6 @@
       z-index: 10000;
       padding: 20px;
       gap: 20px;
-    }
-
-    .google-btn {
-      background: #4285F4;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-    }
-
-    .google-btn:hover {
-      background: #3367D6;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
     body, html {
@@ -630,9 +610,12 @@
 <body>
   <div id="login">
     <h2>Вход на сайт</h2>
-    <button class="google-btn" onclick="googleAuth()">
-      <i class="fab fa-google"></i> Войти через Google
-    </button>
+    <div id="g_id_onload"
+         data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
   </div>
 
   <div id="loader" class="loader-container" style="display: none;">
@@ -642,7 +625,7 @@
   <header>
     <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
     <div class="site-name" onclick="toggleSiteNameDropdown()">
-SKYMALL
+      SKYMALL
       <div class="site-name-dropdown" id="siteNameDropdown">
         <a href="https://smart-bowling.github.io/SMB-BB/" class="dropdown-button">
           <span>BLOCBUSTER</span>
@@ -656,9 +639,9 @@ SKYMALL
       <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">
         <span class="icon-space"><i class="fas fa-cube"></i></span>ДЕТАЛИ
       </a>
-<a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/">
-  <span class="icon-space"><i class="fas fa-exclamation-triangle"></i></span>STOP LANE
-</a>
+      <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/">
+        <span class="icon-space"><i class="fas fa-exclamation-triangle"></i></span>STOP LANE
+      </a>
     </div>
   </header>
 
@@ -709,7 +692,9 @@ SKYMALL
     })();
 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbyB588wg_q1ouNVjuHQzQqM0I096g4VNK_SUs1WcmliKDu5lMhZfklX5JZjodiyZC59qA/exec';
-    const allowedEmails = ["vadiksss900@gmail.com", "sasha380sheyd@gmail.com", "bowlingblock.b@gmail.com", "glusenkoaleksandr2907@gmail.com"];
+    
+    // Настройки авторизации
+    const allowedEmails = ["vadiksss900@gmail.com", "mesacevda1986@gmail.com", "bowlingblock.b@gmail.com", "glusg"];
 
     let fullData = [];
     let currentPage = 1;
@@ -718,12 +703,49 @@ SKYMALL
     let activeSearchText = "";
     let selectedRow = null;
 
+    // Обработчик ответа от Google
+    function handleCredentialResponse(response) {
+      showLoader();
+      try {
+        const data = parseJwt(response.credential);
+        const email = data.email;
+
+        if (allowedEmails.includes(email)) {
+          localStorage.setItem("userEmail", email);
+          location.reload();
+        } else {
+          alert("Доступ запрещён для: " + email);
+        }
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Проверка авторизации при загрузке страницы
+    function checkAuth() {
+      const userEmail = localStorage.getItem("userEmail");
+      if (userEmail && allowedEmails.includes(userEmail)) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("app-content").style.display = "block";
+        loadSheetData();
+      } else {
+        document.getElementById("login").style.display = "flex";
+      }
+    }
+
+    // Функция для разбора JWT токена
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      return JSON.parse(jsonPayload);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       checkAuth();
-      
-      if (window.location.hash) {
-        processAuthResponse();
-      }
       
       document.addEventListener('click', function(e) {
         const siteNameDropdown = document.getElementById('siteNameDropdown');
@@ -738,55 +760,6 @@ SKYMALL
         }
       });
     });
-
-    function checkAuth() {
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail && allowedEmails.includes(userEmail)) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('app-content').style.display = 'block';
-        loadSheetData();
-      } else {
-        document.getElementById('login').style.display = 'flex';
-      }
-    }
-
-    function googleAuth() {
-      const clientId = '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com';
-      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-      const scope = encodeURIComponent('email profile');
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-      
-      window.open(authUrl, 'GoogleAuth', 'width=500,height=600');
-    }
-
-    function processAuthResponse() {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      
-      if (accessToken) {
-        showLoader();
-        
-        fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + accessToken)
-          .then(response => response.json())
-          .then(data => {
-            if (data.email && allowedEmails.includes(data.email)) {
-              localStorage.setItem('userEmail', data.email);
-              window.location.href = window.location.origin + window.location.pathname;
-            } else {
-              alert('Доступ запрещен для: ' + data.email);
-              localStorage.removeItem('userEmail');
-            }
-          })
-          .catch(error => {
-            console.error('Ошибка получения данных:', error);
-            alert('Ошибка авторизации');
-          })
-          .finally(() => {
-            hideLoader();
-          });
-      }
-    }
 
     function toggleSiteNameDropdown() {
       const dropdown = document.getElementById("siteNameDropdown");
