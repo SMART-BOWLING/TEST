@@ -298,18 +298,113 @@
       font-weight: bold;
     }
 
-    /* Стили для поиска по названию */
-    .name-search-controls {
-      display: flex;
+    /* Стили для модального окна поиска */
+    .search-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
       justify-content: center;
-      margin: 20px auto;
-      max-width: 900px;
-      flex-wrap: wrap;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+
+    .search-modal-content {
+      position: relative;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      z-index: 10000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .search-modal-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 40px;
+      font-weight: bold;
+      color: #dc143c;
+      transition: all 0.2s ease;
+    }
+
+    .search-modal-close:hover {
+      color: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .search-modal h3 {
+      margin-top: 0;
+      font-size: 28px;
+      color: #1a2f40;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f2f5;
+      text-align: center;
+    }
+
+    .search-input-container {
+      margin: 20px 0;
+      display: flex;
       gap: 10px;
     }
 
+    .search-input {
+      flex: 1;
+      height: 60px;
+      border: 2px solid #dc143c;
+      border-radius: 12px;
+      outline: none;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 0 20px;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
+    }
+
+    .search-submit-btn {
+      height: 60px;
+      padding: 0 30px;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-submit-btn:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+    }
+
+    .name-search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
     .name-search-btn {
-      padding: 12px 20px;
+      padding: 15px;
       background: linear-gradient(to bottom, #1f2937, #0d1520);
       color: white;
       border: none;
@@ -318,13 +413,13 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
-      white-space: nowrap;
+      text-align: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .name-search-btn:hover {
       background: linear-gradient(to bottom, #2a3648, #111b29);
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
 
@@ -860,6 +955,27 @@
   </div>
 </header>
 
+<!-- Модальное окно поиска -->
+<div id="searchModal" class="search-modal">
+  <div class="search-modal-content">
+    <div class="search-modal-close" id="searchModalClose">×</div>
+    <h3>Поиск деталей</h3>
+    
+    <div class="search-input-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="Введите номер или название детали...">
+      <button id="searchSubmitBtn" class="search-submit-btn">
+        <i class="fas fa-search"></i> Найти
+      </button>
+    </div>
+    
+    <h4 style="margin: 20px 0 10px 0; color: #1a2f40; text-align: center;">Или выберите из списка:</h4>
+    
+    <div class="name-search-grid" id="nameSearchGrid">
+      <!-- Кнопки с названиями будут добавлены через JavaScript -->
+    </div>
+  </div>
+</div>
+
 <!-- Блок авторизации -->
 <div id="login">
   <h2>Вход на сайт</h2>
@@ -898,11 +1014,6 @@
   <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-BB/', '_blank')" class="btn-top">
     <i class="fas fa-plus-circle"></i> Добавить деталь
   </button>
-</div>
-
-<!-- Поиск по названию -->
-<div class="name-search-controls" id="nameSearchControls">
-  <!-- Кнопки будут добавлены через JavaScript -->
 </div>
 
   <div class="cards" id="cardsContainer"></div>
@@ -1413,10 +1524,6 @@
       currentPage = 1;
       renderPage(currentPage);
       document.getElementById('sortSelect').value = 'all';
-      // Сбрасываем активные кнопки поиска по названию
-      document.querySelectorAll('.name-search-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
     }
 
     // Функция для поиска по названию
@@ -1434,26 +1541,13 @@
       document.getElementById('sortSelect').value = 'all';
     }
 
-    // Создание кнопок для поиска по названию
+    // Функция для создания кнопок поиска по названию в модальном окне
     function createNameSearchButtons() {
-      const container = document.getElementById('nameSearchControls');
+      const container = document.getElementById('nameSearchGrid');
       if (!container) return;
       
       // Очищаем контейнер
       container.innerHTML = '';
-      
-      // Создаем кнопку "Все детали"
-      const allBtn = document.createElement('button');
-      allBtn.className = 'name-search-btn active';
-      allBtn.textContent = 'Все детали';
-      allBtn.onclick = () => {
-        resetSearch();
-        document.querySelectorAll('.name-search-btn').forEach(btn => {
-          btn.classList.remove('active');
-        });
-        allBtn.classList.add('active');
-      };
-      container.appendChild(allBtn);
       
       // Создаем кнопки для каждого названия
       partNames.forEach(name => {
@@ -1462,29 +1556,54 @@
         btn.textContent = name;
         btn.onclick = () => {
           searchByName(name);
-          document.querySelectorAll('.name-search-btn').forEach(btn => {
-            btn.classList.remove('active');
-          });
-          btn.classList.add('active');
+          document.getElementById('searchModal').style.display = 'none';
         };
         container.appendChild(btn);
       });
     }
 
-    // Инициализация событий
-    document.getElementById('btnSearch')?.addEventListener('click', () => {
-      const term = prompt('Введите номер детали или название для поиска:');
-      if (term !== null) {
-        searchByName(term);
-        // Сбрасываем активные кнопки поиска по названию
-        document.querySelectorAll('.name-search-btn').forEach(btn => {
-          btn.classList.remove('active');
-        });
+    // Функция для открытия модального окна поиска
+    function openSearchModal() {
+      createNameSearchButtons();
+      document.getElementById('searchModal').style.display = 'flex';
+      document.getElementById('searchInput').focus();
+    }
+
+    // Функция для выполнения поиска из модального окна
+    function performSearch() {
+      const searchTerm = document.getElementById('searchInput').value.trim();
+      if (searchTerm) {
+        searchByName(searchTerm);
+        document.getElementById('searchModal').style.display = 'none';
+        document.getElementById('searchInput').value = '';
       }
-    });
+    }
+
+    // Инициализация событий
+    document.getElementById('btnSearch')?.addEventListener('click', openSearchModal);
 
     document.getElementById('btnReset')?.addEventListener('click', () => {
       resetSearch();
+    });
+
+    document.getElementById('searchModalClose')?.addEventListener('click', () => {
+      document.getElementById('searchModal').style.display = 'none';
+      document.getElementById('searchInput').value = '';
+    });
+
+    document.getElementById('searchSubmitBtn')?.addEventListener('click', performSearch);
+
+    document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    document.getElementById('searchModal')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('searchModal')) {
+        document.getElementById('searchModal').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+      }
     });
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
@@ -1510,10 +1629,6 @@
         updateTotalPages();
         currentPage = 1;
         renderPage(currentPage);
-        // Сбрасываем активные кнопки поиска по названию
-        document.querySelectorAll('.name-search-btn').forEach(btn => {
-          btn.classList.remove('active');
-        });
       } finally {
         showLoader(false);
       }
@@ -1536,7 +1651,6 @@
         allEntries = await getEntries();
         currentEntries = [...allEntries];
         updateTotalPages();
-        createNameSearchButtons();
         renderPage(currentPage);
       } finally {
         showLoader(false);
