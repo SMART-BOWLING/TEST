@@ -169,6 +169,11 @@
       padding: 20px;
       background: #d1d5da;
       font-family: Arial, sans-serif;
+      /* Предотвращение скачков на мобильных */
+      overflow-x: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     .top-controls {
@@ -182,6 +187,8 @@
       padding-bottom: 8px;
       box-sizing: border-box;
       overflow-x: auto;
+      /* Фикс для мобильных */
+      -webkit-overflow-scrolling: touch;
     }
 
     .top-controls .btn-top {
@@ -204,6 +211,9 @@
       box-sizing: border-box;
       gap: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      /* Фикс для мобильных */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .top-controls button.btn-top {
@@ -241,6 +251,7 @@
       appearance: none;
       outline: none;
       transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .select-wrapper::before {
@@ -315,6 +326,8 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       box-sizing: border-box;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      /* Фикс для мобильных */
+      -webkit-tap-highlight-color: transparent;
     }
 
     .card:hover {
@@ -402,6 +415,7 @@
       z-index: 2;
       transition: all 0.2s ease;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .media-block .icon:hover {
@@ -446,6 +460,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .part-name-input {
@@ -459,6 +475,7 @@
       padding: 0 12px;
       background: transparent;
       font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .part-name-edit-btn {
@@ -476,6 +493,7 @@
       transition: all 0.2s ease;
       margin-left: 8px;
       flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .part-name-edit-btn:hover {
@@ -498,6 +516,7 @@
       transition: all 0.2s ease;
       margin-left: 8px;
       flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .part-name-save-btn:hover {
@@ -520,6 +539,7 @@
       transition: all 0.2s ease;
       margin-left: 8px;
       flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .part-name-cancel-btn:hover {
@@ -550,6 +570,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box; /* важно: padding включается в height */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
     .controls input {
@@ -565,6 +587,7 @@
       flex-shrink: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .controls input:focus {
@@ -586,6 +609,8 @@
       gap: 8px;
       transition: all 0.2s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .btn:hover {
@@ -641,6 +666,8 @@
       justify-content: center;
       z-index: 9999;
       backdrop-filter: blur(5px);
+      /* Фикс для мобильных */
+      -webkit-overflow-scrolling: touch;
     }
 
     .modal {
@@ -677,6 +704,7 @@
       font-weight: bold;
       color: #dc143c;
       transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .modal-close:hover {
@@ -730,6 +758,8 @@
       min-width: 140px;
       height: 60px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .pagination button:hover:not(:disabled) {
@@ -777,6 +807,7 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      -webkit-tap-highlight-color: transparent;
     }
 
     .pagination button {
@@ -923,6 +954,32 @@
 </div>
 
 <script>
+  // Фикс для мобильного скроллинга
+  document.addEventListener('touchmove', function(e) {
+    // Разрешаем скроллинг только по вертикали
+    if (e.touches.length === 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  
+  // Предотвращаем зум на мобильных
+  document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+  });
+  
+  // Фиксируем скролл позицию при фокусе
+  let lastScrollTop = 0;
+  document.addEventListener('focusin', function() {
+    lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  });
+  
+  document.addEventListener('focusout', function() {
+    // Возвращаем скролл на место с небольшой задержкой
+    setTimeout(function() {
+      window.scrollTo(0, lastScrollTop);
+    }, 10);
+  });
+
   // Функция для показа/скрытия индикатора загрузки
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
@@ -1196,9 +1253,15 @@
       div.append(controls);
 
       // Обработчик клика для кнопки редактирования
-      editButton.addEventListener('click', function() {
+      editButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const partNumber = partNameContainer.dataset.partNumber;
         const currentName = partNameText.textContent;
+        
+        // Сохраняем позицию скролла
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
         // Переходим в режим редактирования
         partNameContainer.classList.add('editing');
@@ -1226,6 +1289,9 @@
         partNameContainer.appendChild(saveButton);
         partNameContainer.appendChild(cancelButton);
         
+        // Восстанавливаем позицию скролла
+        window.scrollTo(0, scrollTop);
+        
         input.focus();
         input.select();
         
@@ -1241,6 +1307,9 @@
           partNameText.style.display = '';
           editButton.style.display = '';
           
+          // Восстанавливаем позицию скролла
+          window.scrollTo(0, scrollTop);
+          
           if (save && newName && newName !== currentName) {
             const res = await updatePartName(partNumber, newName);
             if (res.status === 'success') {
@@ -1255,21 +1324,39 @@
         };
         
         // Обработчики для кнопок
-        saveButton.addEventListener('click', () => finishEdit(true));
-        cancelButton.addEventListener('click', () => finishEdit(false));
+        saveButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          finishEdit(true);
+        });
+        
+        cancelButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          finishEdit(false);
+        });
         
         input.addEventListener('keypress', function(e) {
           if (e.key === 'Enter') {
+            e.preventDefault();
             finishEdit(true);
           }
         });
         
-        input.addEventListener('blur', () => {
-          // Не завершаем редактирование при потере фокуса
+        input.addEventListener('blur', function(e) {
+          // Не завершаем редактирование при потере фокуса сразу
+          // Ждем немного, чтобы дать время нажать кнопки
+          setTimeout(() => {
+            if (input.parentNode === partNameContainer) {
+              finishEdit(false);
+            }
+          }, 200);
         });
       });
 
-      rem.onclick = async () => {
+      rem.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (confirm('Удалить эту запись?')) {
           await deleteEntry(entry.rowIndex);
           allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
@@ -1280,7 +1367,9 @@
         }
       };
 
-      btnAdd.onclick = async () => {
+      btnAdd.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const deltaStr = prompt('Введите число для добавления:');
         const delta = Number(deltaStr);
         if (deltaStr !== null && !isNaN(delta)) {
@@ -1294,7 +1383,9 @@
         }
       };
 
-      btnTake.onclick = async () => {
+      btnTake.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const deltaStr = prompt('Введите число для вычитания:');
         const delta = Number(deltaStr);
         if (deltaStr !== null && !isNaN(delta)) {
@@ -1308,7 +1399,9 @@
         }
       };
 
-      btnInfo.onclick = async () => {
+      btnInfo.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const hist = await getHistory(entry.partNumber);
         document.getElementById('modalContent').textContent = hist;
         document.getElementById('modalOverlay').style.display = 'flex';
@@ -1349,7 +1442,10 @@
 
       renderPageNumbers();
       updatePaginationControls();
-      window.scrollTo(0, 0);
+      // Не скроллить автоматически при смене страницы на мобильных
+      if (window.innerWidth >= 1025) {
+        window.scrollTo(0, 0);
+      }
     }
 
     function renderPageNumbers() {
@@ -1389,7 +1485,11 @@
         if (page === currentPage) {
           btn.classList.add('active');
         }
-        btn.onclick = () => goToPage(page);
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          goToPage(page);
+        };
         pageContainer.appendChild(btn);
       }
       
@@ -1439,7 +1539,9 @@
     }
 
     // Инициализация событий
-    document.getElementById('btnSearch')?.addEventListener('click', () => {
+    document.getElementById('btnSearch')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const term = prompt('Введите номер детали или название для поиска:');
       if (term !== null) {
         const searchTerm = term.toLowerCase().trim();
@@ -1456,7 +1558,9 @@
       }
     });
 
-    document.getElementById('btnReset')?.addEventListener('click', () => {
+    document.getElementById('btnReset')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       currentEntries = [...allEntries];
       updateTotalPages();
       currentPage = 1;
@@ -1464,7 +1568,9 @@
       document.getElementById('sortSelect').value = 'all';
     });
 
-    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+    document.getElementById('sortSelect')?.addEventListener('change', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
       showLoader(true);
       try {
         if (this.value === 'all') {
