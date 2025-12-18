@@ -2,11 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>ДЕТАЛИ SKYMALL</title>
    <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Предзагрузка критичных ресурсов -->
+  <link rel="preconnect" href="https://i.idd.ru">
+  <link rel="dns-prefetch" href="https://i.idd.ru">
+  <link rel="preconnect" href="https://images.weserv.nl">
+  <link rel="dns-prefetch" href="https://images.weserv.nl">
   <style>
     /* Стили для выпадающего списка SKYMALL */
     .site-name-dropdown {
@@ -55,7 +61,6 @@
   text-decoration: none;
   transition: background 0.3s;
   text-align: center;
-
   white-space: nowrap; /* 🚫 запрещаем перенос */
 }
 
@@ -315,6 +320,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       box-sizing: border-box;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      contain: layout style paint;
     }
 
     .card:hover {
@@ -350,7 +356,7 @@
       border: none;
       z-index: 0;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.3s ease, filter 0.5s ease, transform 0.5s ease;
     }
 
     .media-block img.loaded,
@@ -810,6 +816,36 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
+    /* Стили для прогрессивной загрузки изображений */
+    .progressive-image-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .progressive-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .low-quality {
+      filter: blur(10px);
+      transform: scale(1.1);
+    }
+    
+    .high-quality {
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -935,7 +971,7 @@
   // Настройки авторизации
   const allowedEmails = ["vadiksss900@gmail.com", "mesacevda1986@gmail.com", "boddahotkidach@gmail.com"];
 
-  // Обработчик ответе от Google
+  // Обработчик ответа от Google
   function handleCredentialResponse(response) {
     showLoader(true);
     try {
@@ -979,6 +1015,38 @@
     prevPage: function() {},
     nextPage: function() {}
   };
+
+  // Функция для сжатия изображений из i.idd
+  function compressImageUrl(url, quality = 30, width = 800) {
+    if (!url || typeof url !== 'string') {
+      return '';
+    }
+    
+    // Для изображений из i.idd используем параметры сжатия
+    if (url.includes('i.idd')) {
+      // Добавляем параметры сжатия
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}quality=${quality}&width=${width}&format=webp`;
+    }
+    
+    // Если URL уже содержит параметры, добавляем к ним
+    if (url.includes('?')) {
+      return `${url}&quality=${quality}&width=${width}&format=webp`;
+    }
+    
+    // Для других URL используем proxy через images.weserv.nl
+    try {
+      const encodedUrl = encodeURIComponent(url);
+      return `https://images.weserv.nl/?url=${encodedUrl}&w=${width}&h=600&fit=cover&output=webp&q=${quality}`;
+    } catch (e) {
+      return url; // Возвращаем оригинальный URL в случае ошибки
+    }
+  }
+
+  // Функция для создания placeholder изображения
+  function createPlaceholderSVG(text = 'Загрузка...') {
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="%23f0f2f5"/><text x="400" y="300" font-family="Arial" font-size="24" text-anchor="middle" fill="%23666">${encodeURIComponent(text)}</text></svg>`;
+  }
 
   // Инициализация приложения
   function initApp() {
@@ -1062,6 +1130,7 @@
       }
     }
 
+    // Оптимизированная функция создания карточки с прогрессивной загрузкой изображений
     function createCard(entry) {
       const div = document.createElement('div');
       div.className = 'card';
@@ -1072,33 +1141,46 @@
       media.className = 'media-block';
 
       if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        // Для PDF preview используем iframe
         const iframe = document.createElement('iframe');
         iframe.src = entry.fileUrl;
-        iframe.loading = "lazy"; // Ленивая загрузка для iframe
+        iframe.loading = "lazy";
         iframe.classList.add('loaded');
         media.appendChild(iframe);
         media.classList.add('loaded');
       } else if (entry.fileUrl) {
-        const img = document.createElement('img');
-        img.loading = "lazy"; // ВАЖНО: ленивая загрузка для изображений
-        img.alt = entry.partNumber;
+        // Оптимизированная прогрессивная загрузка изображений
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'progressive-image-container';
         
-        // Обработчик загрузки изображения
-        img.onload = function() {
-          this.classList.add('loaded');
-          media.classList.add('loaded');
-        };
+        // 1. Placeholder для мгновенного отображения
+        const placeholder = document.createElement('img');
+        placeholder.className = 'progressive-image low-quality';
+        placeholder.alt = entry.partNumber;
+        placeholder.src = createPlaceholderSVG(entry.partNumber);
+        placeholder.loading = "lazy";
         
-        // Обработчик ошибки загрузки
-        img.onerror = function() {
-          // Заменяем на placeholder при ошибке
-          this.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="%23f0f2f5"/><text x="400" y="300" font-family="Arial" font-size="24" text-anchor="middle" fill="%23666">Изображение не загружено</text></svg>';
-          this.classList.add('loaded');
-          media.classList.add('loaded');
-        };
+        // 2. Основное изображение (среднее качество)
+        const mainImage = document.createElement('img');
+        mainImage.className = 'progressive-image high-quality';
+        mainImage.alt = entry.partNumber;
+        mainImage.loading = "lazy";
+        mainImage.style.display = 'none';
         
-        img.src = entry.fileUrl;
-        media.appendChild(img);
+        imgContainer.appendChild(placeholder);
+        imgContainer.appendChild(mainImage);
+        media.appendChild(imgContainer);
+        
+        // Асинхронная загрузка изображений
+        loadProgressiveImage(entry.fileUrl, placeholder, mainImage, media);
+      } else {
+        // Если нет изображения, показываем placeholder
+        const placeholderImg = document.createElement('img');
+        placeholderImg.src = createPlaceholderSVG('Нет изображения');
+        placeholderImg.alt = 'Нет изображения';
+        placeholderImg.classList.add('loaded');
+        media.appendChild(placeholderImg);
+        media.classList.add('loaded');
       }
 
       const overlay = document.createElement('div');
@@ -1112,7 +1194,7 @@
 
       div.append(media);
 
-      // Добавляем блок с названием детали
+      // Блок с названием детали
       const partNameContainer = document.createElement('div');
       partNameContainer.className = 'part-name-container';
       partNameContainer.dataset.partNumber = entry.partNumber;
@@ -1130,6 +1212,7 @@
       partNameContainer.appendChild(editButton);
       div.append(partNameContainer);
 
+      // Управляющие элементы
       const controls = document.createElement('div');
       controls.className = 'controls';
 
@@ -1157,12 +1240,11 @@
       controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
       div.append(controls);
 
-      // Обработчик клика для кнопки редактирования
+      // Обработчики событий
       editButton.addEventListener('click', function() {
         const partNumber = partNameContainer.dataset.partNumber;
         const currentName = partNameText.textContent;
         
-        // Переходим в режим редактирования
         partNameContainer.classList.add('editing');
         
         const input = document.createElement('input');
@@ -1180,7 +1262,6 @@
         cancelButton.innerHTML = '<i class="fas fa-times"></i>';
         cancelButton.title = 'Отменить';
         
-        // Заменяем содержимое контейнера
         partNameText.style.display = 'none';
         editButton.style.display = 'none';
         
@@ -1191,7 +1272,6 @@
         input.focus();
         input.select();
         
-        // Функция завершения редактирования
         const finishEdit = async (save = false) => {
           const newName = save ? input.value.trim() : currentName;
           
@@ -1207,7 +1287,6 @@
             const res = await updatePartName(partNumber, newName);
             if (res.status === 'success') {
               partNameText.textContent = newName;
-              // Обновляем название в массиве записей
               const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
               if (updatedEntry) updatedEntry.partName = newName;
             } else {
@@ -1216,7 +1295,6 @@
           }
         };
         
-        // Обработчики для кнопок
         saveButton.addEventListener('click', () => finishEdit(true));
         cancelButton.addEventListener('click', () => finishEdit(false));
         
@@ -1224,10 +1302,6 @@
           if (e.key === 'Enter') {
             finishEdit(true);
           }
-        });
-        
-        input.addEventListener('blur', () => {
-          // Не завершаем редактирование при потере фокуса
         });
       });
 
@@ -1279,14 +1353,77 @@
       return div;
     }
 
+    // Функция прогрессивной загрузки изображений
+    function loadProgressiveImage(originalUrl, placeholder, mainImage, mediaContainer) {
+      // Этап 1: Загружаем очень низкокачественное изображение (5% качества, 200px)
+      const lowQualityUrl = compressImageUrl(originalUrl, 5, 200);
+      
+      const lowQualityLoader = new Image();
+      lowQualityLoader.onload = function() {
+        // Заменяем placeholder на низкокачественное изображение
+        placeholder.src = lowQualityUrl;
+        mediaContainer.classList.add('loaded');
+        
+        // Этап 2: Загружаем среднее качество (30% качества, 400px)
+        const mediumQualityUrl = compressImageUrl(originalUrl, 30, 400);
+        const mediumLoader = new Image();
+        
+        mediumLoader.onload = function() {
+          mainImage.src = mediumQualityUrl;
+          mainImage.style.display = 'block';
+          setTimeout(() => {
+            mainImage.style.opacity = '1';
+          }, 10);
+          
+          // Этап 3: В фоне загружаем нормальное качество (50% качества, 800px)
+          const normalQualityUrl = compressImageUrl(originalUrl, 50, 800);
+          const normalLoader = new Image();
+          normalLoader.src = normalQualityUrl;
+          
+          normalLoader.onload = function() {
+            // Заменяем на нормальное качество
+            mainImage.src = normalQualityUrl;
+            
+            // Этап 4: В самом конце загружаем оригинал
+            setTimeout(() => {
+              const originalLoader = new Image();
+              originalLoader.src = originalUrl;
+              originalLoader.onload = function() {
+                // Если пользователь все еще смотрит на изображение, заменяем на оригинал
+                if (document.body.contains(mainImage)) {
+                  mainImage.src = originalUrl;
+                }
+              };
+            }, 2000);
+          };
+        };
+        
+        mediumLoader.onerror = function() {
+          // Если не удалось загрузить среднее качество, пробуем оригинал
+          mainImage.src = originalUrl;
+          mainImage.style.display = 'block';
+          setTimeout(() => {
+            mainImage.style.opacity = '1';
+          }, 10);
+        };
+        
+        mediumLoader.src = mediumQualityUrl;
+      };
+      
+      lowQualityLoader.onerror = function() {
+        // Если не удалось загрузить даже низкое качество, показываем ошибку
+        placeholder.src = createPlaceholderSVG('Ошибка загрузки');
+        mediaContainer.classList.add('loaded');
+      };
+      
+      lowQualityLoader.src = lowQualityUrl;
+    }
+
     function updateTotalPages() {
       totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
-      console.log('Updated total pages:', totalPages);
     }
 
     function renderPage(page) {
-      console.log(`Rendering page ${page} of ${totalPages}`);
-      
       const container = document.getElementById('cardsContainer');
       if (!container) {
         console.error('Cards container not found!');
@@ -1464,19 +1601,38 @@
       }
     });
 
-    // Загрузка данных
+    // Загрузка данных с предзагрузкой изображений
     async function loadData() {
       showLoader(true);
       try {
         allEntries = await getEntries();
         currentEntries = [...allEntries];
         updateTotalPages();
+        
+        // Предзагружаем первые изображения с низким качеством
+        preloadFirstImages();
+        
         renderPage(currentPage);
       } finally {
         showLoader(false);
       }
     }
 
+    // Функция предзагрузки первых изображений
+    function preloadFirstImages() {
+      const firstEntries = currentEntries.slice(0, cardsPerPage * 2); // Предзагружаем для текущей и следующей страницы
+      
+      firstEntries.forEach(entry => {
+        if (entry.fileUrl && !entry.fileUrl.includes('/preview')) {
+          // Предзагружаем очень низкокачественную версию
+          const lowQualityUrl = compressImageUrl(entry.fileUrl, 5, 100);
+          const img = new Image();
+          img.src = lowQualityUrl;
+        }
+      });
+    }
+
+    // Запуск приложения
     loadData();
   }
 </script>
