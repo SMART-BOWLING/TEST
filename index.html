@@ -380,6 +380,7 @@
     tbody tr.selected {
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
+      margin-bottom: 60px; /* Дополнительное место для кнопок */
     }
 
     tbody tr.selected::before {
@@ -626,39 +627,37 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Стили для кнопок сверху и снизу карточки */
+    /* Стили для кнопок фильтрации под карточкой */
     .card-filter-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 10px;
+      display: none;
       width: 100%;
-      display: none; /* Скрыты по умолчанию */
+      gap: 10px;
+      margin-top: 10px;
+      position: absolute;
+      left: 0;
+      top: 100%;
+      z-index: 2;
     }
 
     .card-filter-button {
-      width: 100%;
-      padding: 10px 15px;
-      background: linear-gradient(to bottom, #1a2f40, #0d1520);
+      flex: 1;
+      padding: 8px 10px;
+      background-color: #1a2f40;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 12px;
       text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .card-filter-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      background: linear-gradient(to bottom, #2a3648, #111b29);
+      background-color: #2a3648;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     }
 
     .card-filter-button:active {
@@ -666,23 +665,20 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
-    .card-filter-button i {
-      font-size: 16px;
-    }
-
-    /* Стили для контейнера карточки с кнопками */
+    /* Контейнер для карточки с относительным позиционированием */
     .card-container {
       position: relative;
-      width: 100%;
       margin-bottom: 20px;
     }
 
-    .top-button {
-      margin-bottom: 5px;
+    /* Убираем нижний отступ у последней ячейки, чтобы было место для кнопок */
+    tbody tr > td:last-child {
+      padding-bottom: 0;
     }
 
-    .bottom-button {
-      margin-top: 5px;
+    /* Добавляем место для кнопок под карточкой */
+    tbody tr.selected {
+      margin-bottom: 60px;
     }
   </style>
 </head>
@@ -1106,18 +1102,21 @@ BLOCKBUSTER
       const pageData = isFiltered ? filteredData.slice(start, end) : fullData.slice(start, end);
 
       pageData.forEach((row, index) => {
-        // Создаем контейнер для карточки с кнопками
+        // Создаем контейнер для карточки
         const cardContainer = document.createElement("div");
         cardContainer.className = "card-container";
         cardContainer.id = `card-container-${row[0]}`;
         
-        // Создаем верхнюю кнопку
-        const topButton = document.createElement("div");
-        topButton.className = "card-filter-buttons top-button";
-        topButton.id = `top-button-${row[0]}`;
-        topButton.innerHTML = `
+        // Создаем кнопки фильтрации
+        const filterButtons = document.createElement("div");
+        filterButtons.className = "card-filter-buttons";
+        filterButtons.id = `filter-buttons-${row[0]}`;
+        filterButtons.innerHTML = `
           <button class="card-filter-button" onclick="filterByMachineFromCard(${row[0]})">
-            <i class="fas fa-tasks"></i> Задачи с этой машиной
+            Задачи с этой машиной
+          </button>
+          <button class="card-filter-button" onclick="filterByTaskFromCard(${row[0]})">
+            Машины с этой задачей
           </button>
         `;
         
@@ -1159,20 +1158,9 @@ BLOCKBUSTER
             </div>
           </td>`;
         
-        // Создаем нижнюю кнопку
-        const bottomButton = document.createElement("div");
-        bottomButton.className = "card-filter-buttons bottom-button";
-        bottomButton.id = `bottom-button-${row[0]}`;
-        bottomButton.innerHTML = `
-          <button class="card-filter-button" onclick="filterByTaskFromCard(${row[0]})">
-            <i class="fas fa-cogs"></i> Машины с этой задачей
-          </button>
-        `;
-        
         // Собираем все вместе
-        cardContainer.appendChild(topButton);
         cardContainer.appendChild(tr);
-        cardContainer.appendChild(bottomButton);
+        cardContainer.appendChild(filterButtons);
         
         // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
@@ -1273,19 +1261,17 @@ BLOCKBUSTER
     }
 
     function showCardButtons(rowId) {
-      const topButton = document.getElementById(`top-button-${rowId}`);
-      const bottomButton = document.getElementById(`bottom-button-${rowId}`);
-      
-      if (topButton) topButton.style.display = 'flex';
-      if (bottomButton) bottomButton.style.display = 'flex';
+      const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
+      if (filterButtons) {
+        filterButtons.style.display = 'flex';
+      }
     }
 
     function hideCardButtons(rowId) {
-      const topButton = document.getElementById(`top-button-${rowId}`);
-      const bottomButton = document.getElementById(`bottom-button-${rowId}`);
-      
-      if (topButton) topButton.style.display = 'none';
-      if (bottomButton) bottomButton.style.display = 'none';
+      const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
+      if (filterButtons) {
+        filterButtons.style.display = 'none';
+      }
     }
 
     function renderFilteredPage(page) {
