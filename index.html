@@ -626,72 +626,63 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Стили для кнопок фильтрации внутри карточек */
-    .filter-buttons-container {
-      display: none;
-      width: 100%;
-      margin-top: 10px;
-      gap: 5px;
-    }
-
-    .filter-buttons-row {
+    /* Стили для кнопок сверху и снизу карточки */
+    .card-filter-buttons {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
       width: 100%;
-      gap: 5px;
+      display: none; /* Скрыты по умолчанию */
     }
 
-    .filter-button {
-      flex: 1;
-      padding: 6px 8px;
+    .card-filter-button {
+      width: 100%;
+      padding: 10px 15px;
       background: linear-gradient(to bottom, #1a2f40, #0d1520);
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 12px;
+      font-size: 14px;
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 8px;
       transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .filter-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    .card-filter-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
       background: linear-gradient(to bottom, #2a3648, #111b29);
     }
 
-    .filter-button:active {
+    .card-filter-button:active {
       transform: translateY(0);
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
-    .filter-button i {
-      font-size: 12px;
+    .card-filter-button i {
+      font-size: 16px;
     }
 
-    .filter-close {
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      padding: 6px 8px;
+    /* Стили для контейнера карточки с кнопками */
+    .card-container {
+      position: relative;
+      width: 100%;
+      margin-bottom: 20px;
     }
 
-    .filter-close:hover {
-      background: linear-gradient(to bottom, #e51c47, #c01238);
+    .top-button {
+      margin-bottom: 5px;
     }
 
-    .filter-button-small {
-      font-size: 11px;
-      padding: 5px 6px;
-    }
-
-    .filter-button-small i {
-      font-size: 11px;
+    .bottom-button {
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -788,7 +779,7 @@ BLOCKBUSTER
     const rowsPerPage = 20;
     let activeSearchColumn = null;
     let activeSearchText = "";
-    let selectedRow = null;
+    let selectedRowId = null;
     let selectedRowData = null;
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1115,16 +1106,30 @@ BLOCKBUSTER
       const pageData = isFiltered ? filteredData.slice(start, end) : fullData.slice(start, end);
 
       pageData.forEach((row, index) => {
+        // Создаем контейнер для карточки с кнопками
+        const cardContainer = document.createElement("div");
+        cardContainer.className = "card-container";
+        cardContainer.id = `card-container-${row[0]}`;
+        
+        // Создаем верхнюю кнопку
+        const topButton = document.createElement("div");
+        topButton.className = "card-filter-buttons top-button";
+        topButton.id = `top-button-${row[0]}`;
+        topButton.innerHTML = `
+          <button class="card-filter-button" onclick="filterByMachineFromCard(${row[0]})">
+            <i class="fas fa-tasks"></i> Задачи с этой машиной
+          </button>
+        `;
+        
+        // Создаем карточку (строку таблицы)
         const tr = document.createElement("tr");
+        tr.id = `card-${row[0]}`;
         const schemaLink = row[2]
           ? `<a href="${row[2]}" target="_blank" class="schema-button">
                <i class="fas fa-file-alt"></i>Открыть
              </a>`
           : "";
 
-        // Создаем уникальный ID для контейнера кнопок фильтрации
-        const filterButtonsId = `filter-buttons-${row[0]}`;
-        
         tr.innerHTML = `
           <td data-label="ЗАДАЧА">${row[2] ? `
             <a href="${row[2]}" target="_blank" class="schema-button">
@@ -1152,81 +1157,94 @@ BLOCKBUSTER
                      <i class="fas fa-paper-plane"></i>Отправить
                    </button>`}
             </div>
-            <!-- Контейнер для кнопок фильтрации -->
-            <div class="filter-buttons-container" id="${filterButtonsId}">
-              <div class="filter-buttons-row">
-                <button class="filter-button filter-button-small" onclick="filterByMachineFromCard(${row[0]})">
-                  <i class="fas fa-tasks"></i>Задачи с этой машиной
-                </button>
-                <button class="filter-button filter-close filter-button-small" onclick="closeFilters()">
-                  <i class="fas fa-times"></i>Закрыть
-                </button>
-              </div>
-              <div class="filter-buttons-row">
-                <button class="filter-button filter-button-small" onclick="filterByTaskFromCard(${row[0]})">
-                  <i class="fas fa-cogs"></i>Машины с этой задачей
-                </button>
-              </div>
-            </div>
           </td>`;
         
-        // Добавляем обработчик клика на строку
+        // Создаем нижнюю кнопку
+        const bottomButton = document.createElement("div");
+        bottomButton.className = "card-filter-buttons bottom-button";
+        bottomButton.id = `bottom-button-${row[0]}`;
+        bottomButton.innerHTML = `
+          <button class="card-filter-button" onclick="filterByTaskFromCard(${row[0]})">
+            <i class="fas fa-cogs"></i> Машины с этой задачей
+          </button>
+        `;
+        
+        // Собираем все вместе
+        cardContainer.appendChild(topButton);
+        cardContainer.appendChild(tr);
+        cardContainer.appendChild(bottomButton);
+        
+        // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
-          // Не выделяем строку, если клик был по кнопке или селекту
+          // Не обрабатываем клик по кнопкам или селектам
           if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
             return;
           }
           
+          const rowId = row[0];
+          
+          // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
+          if (selectedRowId === rowId) {
+            hideCardButtons(rowId);
+            selectedRowId = null;
+            selectedRowData = null;
+            tr.classList.remove('selected');
+            return;
+          }
+          
+          // Скрываем кнопки у предыдущей выбранной карточки
+          if (selectedRowId) {
+            hideCardButtons(selectedRowId);
+            const prevCard = document.getElementById(`card-${selectedRowId}`);
+            if (prevCard) prevCard.classList.remove('selected');
+          }
+          
           // Сохраняем данные выбранной строки
           selectedRowData = row;
+          selectedRowId = rowId;
           
-          // Снимаем выделение с предыдущей строки
-          if (selectedRow) {
-            selectedRow.classList.remove('selected');
-            // Скрываем кнопки фильтрации в предыдущей выбранной строке
-            const prevFilterButtons = selectedRow.querySelector('.filter-buttons-container');
-            if (prevFilterButtons) {
-              prevFilterButtons.style.display = 'none';
-            }
-          }
+          // Показываем кнопки у текущей карточки
+          showCardButtons(rowId);
           
-          // Выделяем текущую строку
-          this.classList.add('selected');
-          selectedRow = this;
-          
-          // Показываем кнопки фильтрации в текущей строке
-          const filterButtons = this.querySelector('.filter-buttons-container');
-          if (filterButtons) {
-            filterButtons.style.display = 'block';
-          }
+          // Выделяем карточку
+          tr.classList.add('selected');
         });
         
         // Добавляем обработчик клика на кнопку "Открыть"
         const openButton = tr.querySelector('.schema-button');
         if (openButton) {
           openButton.addEventListener('click', function(e) {
+            const rowId = row[0];
+            
+            // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
+            if (selectedRowId === rowId) {
+              hideCardButtons(rowId);
+              selectedRowId = null;
+              selectedRowData = null;
+              tr.classList.remove('selected');
+              
+              // Открываем ссылку в новой вкладке
+              window.open(this.href, '_blank');
+              e.preventDefault();
+              return;
+            }
+            
+            // Скрываем кнопки у предыдущей выбранной карточки
+            if (selectedRowId) {
+              hideCardButtons(selectedRowId);
+              const prevCard = document.getElementById(`card-${selectedRowId}`);
+              if (prevCard) prevCard.classList.remove('selected');
+            }
+            
             // Сохраняем данные выбранной строки
             selectedRowData = row;
+            selectedRowId = rowId;
             
-            // Снимаем выделение с предыдущей строки
-            if (selectedRow) {
-              selectedRow.classList.remove('selected');
-              // Скрываем кнопки фильтрации в предыдущей выбранной строке
-              const prevFilterButtons = selectedRow.querySelector('.filter-buttons-container');
-              if (prevFilterButtons) {
-                prevFilterButtons.style.display = 'none';
-              }
-            }
+            // Показываем кнопки у текущей карточки
+            showCardButtons(rowId);
             
-            // Выделяем текущую строку
+            // Выделяем карточку
             tr.classList.add('selected');
-            selectedRow = tr;
-            
-            // Показываем кнопки фильтрации в текущей строке
-            const filterButtons = tr.querySelector('.filter-buttons-container');
-            if (filterButtons) {
-              filterButtons.style.display = 'block';
-            }
             
             // Открываем ссылку в новой вкладке
             window.open(this.href, '_blank');
@@ -1236,7 +1254,8 @@ BLOCKBUSTER
           });
         }
         
-        tableBody.appendChild(tr);
+        // Добавляем карточку в таблицу
+        tableBody.appendChild(cardContainer);
       });
 
       applyHighlight();
@@ -1251,6 +1270,22 @@ BLOCKBUSTER
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
         updatePageTitle();
       }
+    }
+
+    function showCardButtons(rowId) {
+      const topButton = document.getElementById(`top-button-${rowId}`);
+      const bottomButton = document.getElementById(`bottom-button-${rowId}`);
+      
+      if (topButton) topButton.style.display = 'flex';
+      if (bottomButton) bottomButton.style.display = 'flex';
+    }
+
+    function hideCardButtons(rowId) {
+      const topButton = document.getElementById(`top-button-${rowId}`);
+      const bottomButton = document.getElementById(`bottom-button-${rowId}`);
+      
+      if (topButton) topButton.style.display = 'none';
+      if (bottomButton) bottomButton.style.display = 'none';
     }
 
     function renderFilteredPage(page) {
@@ -1479,26 +1514,6 @@ BLOCKBUSTER
       currentPage = 1;
       renderFilteredPage(currentPage);
       updatePageTitle(getFilterTitle());
-    }
-
-    function closeFilters() {
-      isFiltered = false;
-      currentFilterType = null;
-      currentFilterValue = null;
-      currentPage = 1;
-      renderPage(currentPage);
-      updatePageTitle();
-      
-      // Снимаем выделение с выбранной строки и скрываем кнопки
-      if (selectedRow) {
-        selectedRow.classList.remove('selected');
-        const filterButtons = selectedRow.querySelector('.filter-buttons-container');
-        if (filterButtons) {
-          filterButtons.style.display = 'none';
-        }
-        selectedRow = null;
-        selectedRowData = null;
-      }
     }
 
     function updatePageTitle(subtitle = '') {
