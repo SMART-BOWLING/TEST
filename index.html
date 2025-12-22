@@ -680,6 +680,36 @@
     tbody tr.selected {
       margin-bottom: 60px;
     }
+
+    /* Стиль для кнопки "Показать все задачи" */
+    .show-all-button {
+      display: none;
+      width: 96%;
+      max-width: 500px;
+      margin: 10px auto;
+      padding: 10px 15px;
+      background-color: #1a2f40;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .show-all-button:hover {
+      background-color: #2a3648;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .show-all-button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
@@ -732,6 +762,11 @@ BLOCKBUSTER
     <div>Открытых задач</div>
     <div id="openTaskCount">0</div>
   </div>
+
+  <!-- Кнопка "Показать все задачи" -->
+  <button class="show-all-button" id="showAllButton" onclick="showAllTasks()" style="display: none;">
+    Показать все задачи
+  </button>
 
   <div id="app-content" style="display:none;">
     <table>
@@ -1253,10 +1288,14 @@ BLOCKBUSTER
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= filteredData.length;
         updatePageTitle(getFilterTitle());
+        // Показываем кнопку "Показать все задачи"
+        document.getElementById('showAllButton').style.display = 'block';
       } else {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
         updatePageTitle();
+        // Скрываем кнопку "Показать все задачи"
+        document.getElementById('showAllButton').style.display = 'none';
       }
     }
 
@@ -1481,6 +1520,9 @@ BLOCKBUSTER
       currentPage = 1;
       renderFilteredPage(currentPage);
       updatePageTitle(getFilterTitle());
+      
+      // Показываем кнопку "Показать все задачи"
+      document.getElementById('showAllButton').style.display = 'block';
     }
 
     function filterByTaskFromCard(rowNumber) {
@@ -1500,6 +1542,32 @@ BLOCKBUSTER
       currentPage = 1;
       renderFilteredPage(currentPage);
       updatePageTitle(getFilterTitle());
+      
+      // Показываем кнопку "Показать все задачи"
+      document.getElementById('showAllButton').style.display = 'block';
+    }
+
+    function showAllTasks() {
+      isFiltered = false;
+      currentFilterType = null;
+      currentFilterValue = null;
+      currentPage = 1;
+      renderPage(currentPage);
+      updatePageTitle();
+      
+      // Скрываем кнопку "Показать все задачи"
+      document.getElementById('showAllButton').style.display = 'none';
+      
+      // Снимаем выделение с выбранной карточки
+      if (selectedRowId) {
+        hideCardButtons(selectedRowId);
+        const selectedCard = document.getElementById(`card-${selectedRowId}`);
+        if (selectedCard) {
+          selectedCard.classList.remove('selected');
+        }
+        selectedRowId = null;
+        selectedRowData = null;
+      }
     }
 
     function updatePageTitle(subtitle = '') {
