@@ -173,16 +173,58 @@
       font-size: 16px;
     }
 
+    /* Кнопка РЕЙТИНГ */
+    .rating-button {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #1a2f40;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 16px;
+      margin: 80px auto 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      width: 96%;
+      max-width: 500px;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .rating-button:hover {
+      background-color: #2a3648;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .rating-button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .rating-button i {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .rating-button.expanded i {
+      transform: rotate(180deg);
+    }
+
     /* ОБЩИЕ СТИЛИ ДЛЯ ВСЕХ КАРТОЧЕК - ОДИНАКОВАЯ ШИРИНА КАК У КАРТОЧЕК ЗАДАЧ */
     .mechanics-rating {
       background-color: #fff;
-      margin: 80px auto 15px;
+      margin: 15px auto;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       width: 96%;
       max-width: 500px;
       padding: 15px;
       box-sizing: border-box;
+      display: none; /* Скрыто по умолчанию */
     }
 
     .task-summary-card {
@@ -211,6 +253,7 @@
       max-width: 500px;
       padding: 15px;
       box-sizing: border-box;
+      display: none; /* Скрыто по умолчанию */
     }
 
     .mechanics-rating h3 {
@@ -747,13 +790,19 @@ BLOCKBUSTER
     </div>
   </header>
 
+  <!-- Кнопка РЕЙТИНГ -->
+  <div class="rating-button" id="ratingButton" onclick="toggleRating()" style="display: none;">
+    <div>РЕЙТИНГ</div>
+    <div><i class="fas fa-chevron-down"></i></div>
+  </div>
+
   <!-- КАРТОЧКИ С ОДИНАКОВОЙ ШИРИНОЙ -->
-  <div class="mechanics-rating" id="mechanicsRating" style="display: none;">
+  <div class="mechanics-rating" id="mechanicsRating">
     <h3><i class="fas fa-trophy"></i> Рейтинг механиков за текущий месяц</h3>
     <div id="ratingContent"></div>
   </div>
 
-  <div class="winner-section" id="winnerSection" style="display: none;">
+  <div class="winner-section" id="winnerSection">
     <h3><i class="fas fa-crown"></i> Победитель прошлого месяца</h3>
     <div id="winnerContent"></div>
   </div>
@@ -812,6 +861,7 @@ BLOCKBUSTER
     let activeSearchText = "";
     let selectedRowId = null;
     let selectedRowData = null;
+    let isRatingVisible = false;
 
     document.addEventListener('DOMContentLoaded', function() {
       checkAuth();
@@ -839,6 +889,7 @@ BLOCKBUSTER
       if (userEmail && allowedEmails.includes(userEmail)) {
         document.getElementById('login').style.display = 'none';
         document.getElementById('app-content').style.display = 'block';
+        document.getElementById('ratingButton').style.display = 'flex';
         loadSheetData();
       } else {
         document.getElementById('login').style.display = 'flex';
@@ -947,9 +998,25 @@ BLOCKBUSTER
       }
     }
 
+    function toggleRating() {
+      const ratingButton = document.getElementById('ratingButton');
+      const mechanicsRating = document.getElementById('mechanicsRating');
+      const winnerSection = document.getElementById('winnerSection');
+      
+      isRatingVisible = !isRatingVisible;
+      
+      if (isRatingVisible) {
+        ratingButton.classList.add('expanded');
+        mechanicsRating.style.display = 'block';
+        winnerSection.style.display = 'block';
+      } else {
+        ratingButton.classList.remove('expanded');
+        mechanicsRating.style.display = 'none';
+        winnerSection.style.display = 'none';
+      }
+    }
+
     function updateMechanicsRating(data) {
-      const ratingContainer = document.getElementById('mechanicsRating');
-      const winnerContainer = document.getElementById('winnerSection');
       const ratingContent = document.getElementById('ratingContent');
       const winnerContent = document.getElementById('winnerContent');
       
@@ -1013,7 +1080,6 @@ BLOCKBUSTER
       currentMonthArray.sort((a, b) => b.count - a.count);
       
       if (currentMonthArray.length > 0) {
-        ratingContainer.style.display = 'block';
         ratingContent.innerHTML = '';
         
         currentMonthArray.forEach((mechanic, index) => {
@@ -1037,7 +1103,6 @@ BLOCKBUSTER
           ratingContent.appendChild(ratingItem);
         });
       } else {
-        ratingContainer.style.display = 'block';
         ratingContent.innerHTML = `<div style="text-align: center; color: #666; padding: 20px;">Нет данных за ${monthNames[currentMonth]}</div>`;
       }
       
@@ -1050,7 +1115,6 @@ BLOCKBUSTER
       previousMonthArray.sort((a, b) => b.count - a.count);
       
       if (previousMonthArray.length > 0 && previousMonthArray[0].count > 0) {
-        winnerContainer.style.display = 'block';
         const winner = previousMonthArray[0];
         winnerContent.innerHTML = `
           <div class="winner-item">
@@ -1062,7 +1126,6 @@ BLOCKBUSTER
           </div>
         `;
       } else {
-        winnerContainer.style.display = 'block';
         winnerContent.innerHTML = `<div style="text-align: center; color: #666; padding: 8px 0;">Нет данных за ${monthNames[prevMonth]}</div>`;
       }
     }
@@ -1287,7 +1350,6 @@ BLOCKBUSTER
       if (isFiltered) {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= filteredData.length;
-        // Убрано обновление заголовка - теперь просто показываем "BLOCKBUSTER"
         // Показываем кнопку "Показать все задачи"
         document.getElementById('showAllButton').style.display = 'block';
       } else {
@@ -1565,8 +1627,6 @@ BLOCKBUSTER
         selectedRowData = null;
       }
     }
-
-    // Убраны функции updatePageTitle() и getFilterTitle() - больше не нужны
   </script>
 </body>
 </html>
