@@ -626,59 +626,72 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Стили для кнопок фильтрации */
-    .filter-buttons {
+    /* Стили для кнопок фильтрации внутри карточек */
+    .filter-buttons-container {
+      display: none;
+      width: 100%;
+      margin-top: 10px;
+      gap: 5px;
+    }
+
+    .filter-buttons-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
-      gap: 10px;
-      width: 96%;
-      max-width: 500px;
-      margin: 0 auto;
-      display: none; /* Скрыты по умолчанию */
+      width: 100%;
+      gap: 5px;
     }
 
     .filter-button {
       flex: 1;
-      padding: 8px 12px;
+      padding: 6px 8px;
       background: linear-gradient(to bottom, #1a2f40, #0d1520);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .filter-button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
       background: linear-gradient(to bottom, #2a3648, #111b29);
     }
 
     .filter-button:active {
-      transform: translateY(1px);
+      transform: translateY(0);
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     .filter-button i {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .filter-close {
       background: linear-gradient(to bottom, #dc143c, #b01030);
+      padding: 6px 8px;
     }
 
     .filter-close:hover {
       background: linear-gradient(to bottom, #e51c47, #c01238);
+    }
+
+    .filter-button-small {
+      font-size: 11px;
+      padding: 5px 6px;
+    }
+
+    .filter-button-small i {
+      font-size: 11px;
     }
   </style>
 </head>
@@ -731,19 +744,6 @@ BLOCKBUSTER
   <div class="task-summary-card">
     <div>Открытых задач</div>
     <div id="openTaskCount">0</div>
-  </div>
-
-  <!-- Кнопки фильтрации (появятся при выборе карточки) -->
-  <div class="filter-buttons" id="filterButtons">
-    <button class="filter-button" id="filterByMachine">
-      <i class="fas fa-tasks"></i> Задачи с этой машиной
-    </button>
-    <button class="filter-button filter-close" id="closeFilters">
-      <i class="fas fa-times"></i> Закрыть
-    </button>
-    <button class="filter-button" id="filterByTask">
-      <i class="fas fa-cogs"></i> Машины с этой задачей
-    </button>
   </div>
 
   <div id="app-content" style="display:none;">
@@ -810,11 +810,6 @@ BLOCKBUSTER
           dropdownMenu.style.display = 'none';
         }
       });
-
-      // Обработчики для кнопок фильтрации
-      document.getElementById('filterByMachine').addEventListener('click', filterByMachine);
-      document.getElementById('filterByTask').addEventListener('click', filterByTask);
-      document.getElementById('closeFilters').addEventListener('click', closeFilters);
     });
 
     function checkAuth() {
@@ -1119,7 +1114,7 @@ BLOCKBUSTER
       const end = start + rowsPerPage;
       const pageData = isFiltered ? filteredData.slice(start, end) : fullData.slice(start, end);
 
-      pageData.forEach((row) => {
+      pageData.forEach((row, index) => {
         const tr = document.createElement("tr");
         const schemaLink = row[2]
           ? `<a href="${row[2]}" target="_blank" class="schema-button">
@@ -1127,6 +1122,9 @@ BLOCKBUSTER
              </a>`
           : "";
 
+        // Создаем уникальный ID для контейнера кнопок фильтрации
+        const filterButtonsId = `filter-buttons-${row[0]}`;
+        
         tr.innerHTML = `
           <td data-label="ЗАДАЧА">${row[2] ? `
             <a href="${row[2]}" target="_blank" class="schema-button">
@@ -1154,12 +1152,28 @@ BLOCKBUSTER
                      <i class="fas fa-paper-plane"></i>Отправить
                    </button>`}
             </div>
+            <!-- Контейнер для кнопок фильтрации -->
+            <div class="filter-buttons-container" id="${filterButtonsId}">
+              <div class="filter-buttons-row">
+                <button class="filter-button filter-button-small" onclick="filterByMachineFromCard(${row[0]})">
+                  <i class="fas fa-tasks"></i>Задачи с этой машиной
+                </button>
+                <button class="filter-button filter-close filter-button-small" onclick="closeFilters()">
+                  <i class="fas fa-times"></i>Закрыть
+                </button>
+              </div>
+              <div class="filter-buttons-row">
+                <button class="filter-button filter-button-small" onclick="filterByTaskFromCard(${row[0]})">
+                  <i class="fas fa-cogs"></i>Машины с этой задачей
+                </button>
+              </div>
+            </div>
           </td>`;
         
         // Добавляем обработчик клика на строку
         tr.addEventListener('click', function(e) {
           // Не выделяем строку, если клик был по кнопке или селекту
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') {
+          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
             return;
           }
           
@@ -1169,14 +1183,22 @@ BLOCKBUSTER
           // Снимаем выделение с предыдущей строки
           if (selectedRow) {
             selectedRow.classList.remove('selected');
+            // Скрываем кнопки фильтрации в предыдущей выбранной строке
+            const prevFilterButtons = selectedRow.querySelector('.filter-buttons-container');
+            if (prevFilterButtons) {
+              prevFilterButtons.style.display = 'none';
+            }
           }
           
           // Выделяем текущую строку
           this.classList.add('selected');
           selectedRow = this;
           
-          // Показываем кнопки фильтрации
-          showFilterButtons();
+          // Показываем кнопки фильтрации в текущей строке
+          const filterButtons = this.querySelector('.filter-buttons-container');
+          if (filterButtons) {
+            filterButtons.style.display = 'block';
+          }
         });
         
         // Добавляем обработчик клика на кнопку "Открыть"
@@ -1189,14 +1211,22 @@ BLOCKBUSTER
             // Снимаем выделение с предыдущей строки
             if (selectedRow) {
               selectedRow.classList.remove('selected');
+              // Скрываем кнопки фильтрации в предыдущей выбранной строке
+              const prevFilterButtons = selectedRow.querySelector('.filter-buttons-container');
+              if (prevFilterButtons) {
+                prevFilterButtons.style.display = 'none';
+              }
             }
             
             // Выделяем текущую строку
             tr.classList.add('selected');
             selectedRow = tr;
             
-            // Показываем кнопки фильтрации
-            showFilterButtons();
+            // Показываем кнопки фильтрации в текущей строке
+            const filterButtons = tr.querySelector('.filter-buttons-container');
+            if (filterButtons) {
+              filterButtons.style.display = 'block';
+            }
             
             // Открываем ссылку в новой вкладке
             window.open(this.href, '_blank');
@@ -1215,9 +1245,11 @@ BLOCKBUSTER
       if (isFiltered) {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= filteredData.length;
+        updatePageTitle(getFilterTitle());
       } else {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
+        updatePageTitle();
       }
     }
 
@@ -1410,20 +1442,12 @@ BLOCKBUSTER
       document.getElementById("openTaskCount").textContent = openCount;
     }
 
-    // Функции для работы с фильтрацией
-    function showFilterButtons() {
-      if (!selectedRowData) return;
-      document.getElementById('filterButtons').style.display = 'flex';
-    }
-
-    function hideFilterButtons() {
-      document.getElementById('filterButtons').style.display = 'none';
-    }
-
-    function filterByMachine() {
-      if (!selectedRowData) return;
+    // Функции для работы с фильтрацией из карточек
+    function filterByMachineFromCard(rowNumber) {
+      const row = fullData.find(r => r[0] === rowNumber);
+      if (!row) return;
       
-      const machineName = selectedRowData[1];
+      const machineName = row[1];
       currentFilterType = 'machine';
       currentFilterValue = machineName;
       
@@ -1435,13 +1459,14 @@ BLOCKBUSTER
       isFiltered = true;
       currentPage = 1;
       renderFilteredPage(currentPage);
-      updatePageTitle(`Задачи с машиной: ${machineName}`);
+      updatePageTitle(getFilterTitle());
     }
 
-    function filterByTask() {
-      if (!selectedRowData) return;
+    function filterByTaskFromCard(rowNumber) {
+      const row = fullData.find(r => r[0] === rowNumber);
+      if (!row) return;
       
-      const taskName = selectedRowData[2];
+      const taskName = row[2];
       currentFilterType = 'task';
       currentFilterValue = taskName;
       
@@ -1453,7 +1478,7 @@ BLOCKBUSTER
       isFiltered = true;
       currentPage = 1;
       renderFilteredPage(currentPage);
-      updatePageTitle(`Машины с задачей: ${taskName}`);
+      updatePageTitle(getFilterTitle());
     }
 
     function closeFilters() {
@@ -1462,12 +1487,15 @@ BLOCKBUSTER
       currentFilterValue = null;
       currentPage = 1;
       renderPage(currentPage);
-      hideFilterButtons();
       updatePageTitle();
       
-      // Снимаем выделение с выбранной строки
+      // Снимаем выделение с выбранной строки и скрываем кнопки
       if (selectedRow) {
         selectedRow.classList.remove('selected');
+        const filterButtons = selectedRow.querySelector('.filter-buttons-container');
+        if (filterButtons) {
+          filterButtons.style.display = 'none';
+        }
         selectedRow = null;
         selectedRowData = null;
       }
@@ -1480,6 +1508,17 @@ BLOCKBUSTER
       } else {
         siteName.innerHTML = 'BLOCKBUSTER';
       }
+    }
+
+    function getFilterTitle() {
+      if (!isFiltered) return '';
+      
+      if (currentFilterType === 'machine') {
+        return `Задачи с машиной: ${currentFilterValue}`;
+      } else if (currentFilterType === 'task') {
+        return `Машины с задачей: ${currentFilterValue}`;
+      }
+      return '';
     }
   </script>
 </body>
