@@ -754,109 +754,66 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
-    /* Стили для описания задачи */
-    .task-description-container {
+    /* Стили для текста задачи (заглушки) */
+    .task-text-container {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 6px 8px;
-      border-bottom: 1px solid #ddd;
-      font-weight: 700;
-      text-align: left;
-      white-space: normal;
-      font-size: 13px;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 1;
-    }
-
-    .task-description-container::before {
-      content: "ЗАДАЧА СЛОВАМИ";
-      font-weight: 700;
-      color: #1a2f40;
-      flex-basis: 40%;
-      max-width: 40%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .task-description-text {
-      flex-basis: 60%;
-      max-width: 60%;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      color: #666;
-    }
-
-    .show-description-btn {
-      background-color: #1a2f40;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 12px;
-      font-weight: 700;
+      align-items: flex-start;
       cursor: pointer;
-      margin-left: 5px;
-      white-space: nowrap;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      padding: 6px 0;
     }
 
-    .show-description-btn:hover {
-      background-color: #2a3648;
-    }
-
-    .full-description-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 9998;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .full-description-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .full-description-text {
+    .task-text-preview {
+      flex: 1;
       font-weight: 600;
       color: #1a2f40;
-      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 10px;
+    }
+
+    .task-text-full {
+      display: none;
+      flex: 1;
+      font-weight: 600;
+      color: #1a2f40;
       white-space: pre-line;
-      font-size: 14px;
+      line-height: 1.4;
+      padding-top: 5px;
+      font-size: 12px;
     }
 
-    .close-modal-btn {
-      background-color: #dc143c;
-      color: white;
+    .task-text-container.expanded .task-text-preview {
+      display: none;
+    }
+
+    .task-text-container.expanded .task-text-full {
+      display: block;
+    }
+
+    .task-text-toggle {
+      background: none;
       border: none;
-      border-radius: 4px;
-      padding: 8px 15px;
-      font-size: 13px;
-      font-weight: 700;
+      color: #dc143c;
+      font-size: 12px;
       cursor: pointer;
-      margin-top: 15px;
-      width: 100%;
+      padding: 0 5px;
+      flex-shrink: 0;
+      font-weight: 700;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
-    .close-modal-btn:hover {
-      background-color: #a90e2e;
+    .task-text-toggle:hover {
+      color: #a90e2e;
+      transform: scale(1.1);
+    }
+
+    .task-text-toggle i {
+      margin-right: 4px;
+      font-size: 10px;
     }
   </style>
 </head>
@@ -922,16 +879,6 @@ BLOCKBUSTER
     Показать все задачи
   </button>
 
-  <!-- Модальное окно для полного описания задачи -->
-  <div id="fullDescriptionModal" class="full-description-modal">
-    <div class="full-description-content">
-      <div class="full-description-text" id="fullDescriptionText"></div>
-      <button class="close-modal-btn" onclick="closeDescriptionModal()">
-        <i class="fas fa-times"></i> Закрыть
-      </button>
-    </div>
-  </div>
-
   <div id="app-content" style="display:none;">
     <table>
       <thead>
@@ -978,8 +925,8 @@ BLOCKBUSTER
     let selectedRowData = null;
     let isRatingVisible = false;
 
-    // Текст-заглушка для описания задачи
-    const TASK_DESCRIPTION_TEXT = `1. ЖИДКАЯ СМАЗКА FRONT END.
+    // Текст задачи (заглушка)
+    const taskTextPlaceholder = `1. ЖИДКАЯ СМАЗКА FRONT END.
 2. ПРОВЕРКА И ФУНКЦИОНАЛЬНОЕ ТЕСТИРОВАНИЕ СОЛЕНОИДА.
 3. ПРОВЕРКА РОЛИКОВ СКОЛЬЖЕНИЯ ДИСКОВ, РАЗМЕЩЁННЫХ НА ВАЛУ МОТОРА СТОЛА.
 4. ПРОВЕРКА ТОРМОЗНЫХ МЕХАНИЗМОВ ДВИГАТЕЛЕЙ SWEEP / TABLE НА ПРЕДМЕТ КОРРЕКТНОГО СРАБАТЫВАНИЯ.`;
@@ -1348,19 +1295,23 @@ BLOCKBUSTER
              </a>`
           : "";
 
-        tr.innerHTML = `
-          <!-- Добавляем описание задачи -->
-          <td class="task-description-container">
-            <span class="task-description-text">${TASK_DESCRIPTION_TEXT.substring(0, 40)}...</span>
-            <button class="show-description-btn" onclick="showFullDescription(event, ${row[0]})">
-              <i class="fas fa-eye"></i> Показать описание
+        // Создаем текст задачи с функцией сворачивания/разворачивания
+        const taskTextHtml = `
+          <div class="task-text-container" id="task-text-${row[0]}" onclick="toggleTaskText(${row[0]}, event)">
+            <div class="task-text-preview" id="task-preview-${row[0]}">
+              ${taskTextPlaceholder.split('\n')[0]}
+            </div>
+            <div class="task-text-full" id="task-full-${row[0]}">
+              ${taskTextPlaceholder}
+            </div>
+            <button class="task-text-toggle" onclick="toggleTaskText(${row[0]}, event)">
+              <i class="fas fa-chevron-down"></i><span>Подробнее</span>
             </button>
-          </td>
-          <td data-label="ЗАДАЧА">${row[2] ? `
-            <a href="${row[2]}" target="_blank" class="schema-button">
-              <i class="fas fa-file-alt"></i>Открыть
-            </a>` : "Нет схемы"}
-          </td>
+          </div>
+        `;
+
+        tr.innerHTML = `
+          <td data-label="ЗАДАЧА">${taskTextHtml}</td>
           <td data-label="МАШИНА">${row[1]}</td>
           <td data-label="ОТКРЫТА">${row[3]}</td>
           <td data-label="ЗАКРЫТА">${row[4]}</td>
@@ -1390,8 +1341,9 @@ BLOCKBUSTER
         
         // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
-          // Не обрабатываем клик по кнопкам, селектам или кнопке показа описания
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.classList.contains('show-description-btn')) {
+          // Не обрабатываем клик по кнопкам или селектам
+          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || 
+              e.target.closest('button') || e.target.closest('.task-text-container')) {
             return;
           }
           
@@ -1488,24 +1440,23 @@ BLOCKBUSTER
       }
     }
 
-    // Функция для показа полного описания задачи
-    function showFullDescription(event, rowId) {
-      event.stopPropagation(); // Предотвращаем всплытие события
+    // Функция для сворачивания/разворачивания текста задачи
+    function toggleTaskText(rowId, event) {
+      event.stopPropagation();
+      const container = document.getElementById(`task-text-${rowId}`);
+      const toggleButton = container.querySelector('.task-text-toggle');
+      const icon = toggleButton.querySelector('i');
+      const text = toggleButton.querySelector('span');
       
-      // Находим данные строки
-      const row = fullData.find(r => r[0] === rowId);
-      if (!row) return;
-      
-      // Устанавливаем текст описания в модальное окно
-      document.getElementById('fullDescriptionText').textContent = TASK_DESCRIPTION_TEXT;
-      
-      // Показываем модальное окно
-      document.getElementById('fullDescriptionModal').style.display = 'flex';
-    }
-
-    // Функция для закрытия модального окна
-    function closeDescriptionModal() {
-      document.getElementById('fullDescriptionModal').style.display = 'none';
+      if (container.classList.contains('expanded')) {
+        container.classList.remove('expanded');
+        icon.className = 'fas fa-chevron-down';
+        text.textContent = 'Подробнее';
+      } else {
+        container.classList.add('expanded');
+        icon.className = 'fas fa-chevron-up';
+        text.textContent = 'Свернуть';
+      }
     }
 
     function showCardButtons(rowId) {
@@ -1565,10 +1516,19 @@ BLOCKBUSTER
                </a>`
             : "";
 
-          row.cells[0].innerHTML = rowData[2] ? `
-            <a href="${rowData[2]}" target="_blank" class="schema-button">
-              <i class="fas fa-file-alt"></i>Открыть
-            </a>` : "Нет схемы";
+          row.cells[0].innerHTML = `
+            <div class="task-text-container" id="task-text-${rowData[0]}" onclick="toggleTaskText(${rowData[0]}, event)">
+              <div class="task-text-preview" id="task-preview-${rowData[0]}">
+                ${taskTextPlaceholder.split('\n')[0]}
+              </div>
+              <div class="task-text-full" id="task-full-${rowData[0]}">
+                ${taskTextPlaceholder}
+              </div>
+              <button class="task-text-toggle" onclick="toggleTaskText(${rowData[0]}, event)">
+                <i class="fas fa-chevron-down"></i><span>Подробнее</span>
+              </button>
+            </div>
+          `;
           
           row.cells[1].textContent = rowData[1];
           row.cells[2].textContent = rowData[3];
