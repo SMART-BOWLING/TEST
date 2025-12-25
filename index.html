@@ -12,7 +12,7 @@
     /* Стили для сворачиваемого текста задачи */
     .task-description {
       position: relative;
-      margin: 8px 0;
+      margin: 0 0 8px 0;
       padding: 8px 10px;
       background-color: #f5f5f5;
       border-radius: 6px;
@@ -20,6 +20,9 @@
       cursor: pointer;
       user-select: none;
       transition: all 0.3s ease;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
     }
 
     .task-description:hover {
@@ -54,9 +57,6 @@
 
     .task-description .task-text {
       padding-right: 25px;
-      font-size: 12px;
-      line-height: 1.4;
-      color: #333;
     }
 
     #login {
@@ -1268,26 +1268,6 @@ BLOCKBUSTER
           </button>
         `;
         
-        // Создаем элемент с описанием задачи
-        const taskDescription = document.createElement("div");
-        taskDescription.className = "task-description collapsed";
-        taskDescription.innerHTML = `
-          <div class="task-text">
-            1. ЖИДКАЯ СМАЗКА FRONT END.<br>
-            2. ПРОВЕРКА И ФУНКЦИОНАЛЬНОЕ ТЕСТИРОВАНИЕ СОЛЕНОИДА.<br>
-            3. ПРОВЕРКА РОЛИКОВ СКОЛЬЖЕНИЯ ДИСКОВ, РАЗМЕЩЁННЫХ НА ВАЛУ МОТОРА СТОЛА.<br>
-            4. ПРОВЕРКА ТОРМОЗНЫХ МЕХАНИЗМОВ ДВИГАТЕЛЕЙ SWEEP / TABLE НА ПРЕДМЕТ КОРРЕКТНОГО СРАБАТЫВАНИЯ.
-          </div>
-          <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
-        `;
-        
-        taskDescription.addEventListener('click', function(e) {
-          if (!e.target.closest('.toggle-icon')) {
-            this.classList.toggle('collapsed');
-            this.classList.toggle('expanded');
-          }
-        });
-        
         // Создаем карточку (строку таблицы)
         const tr = document.createElement("tr");
         tr.id = `card-${row[0]}`;
@@ -1297,15 +1277,28 @@ BLOCKBUSTER
              </a>`
           : "";
 
-        // Добавляем описание задачи сразу после строки с машиной
+        // Создаем элемент с описанием задачи
+        const taskDescriptionHTML = `
+          <div class="task-description collapsed" onclick="toggleTaskDescription(${row[0]})">
+            <div class="task-text">
+              1. ЖИДКАЯ СМАЗКА FRONT END.<br>
+              2. ПРОВЕРКА И ФУНКЦИОНАЛЬНОЕ ТЕСТИРОВАНИЕ СОЛЕНОИДА.<br>
+              3. ПРОВЕРКА РОЛИКОВ СКОЛЬЖЕНИЯ ДИСКОВ, РАЗМЕЩЁННЫХ НА ВАЛУ МОТОРА СТОЛА.<br>
+              4. ПРОВЕРКА ТОРМОЗНЫХ МЕХАНИЗМОВ ДВИГАТЕЛЕЙ SWEEP / TABLE НА ПРЕДМЕТ КОРРЕКТНОГО СРАБАТЫВАНИЯ.
+            </div>
+            <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+          </div>
+        `;
+        
         tr.innerHTML = `
           <td data-label="ЗАДАЧА">${row[2] ? `
             <a href="${row[2]}" target="_blank" class="schema-button">
               <i class="fas fa-file-alt"></i>Открыть
             </a>` : "Нет схемы"}
           </td>
-          <td data-label="МАШИНА">${row[1]}</td>
-          <!-- Здесь будет добавлено описание задачи -->
+          <td data-label="МАШИНА">
+            ${row[1]}
+          </td>
           <td data-label="ОТКРЫТА">${row[3]}</td>
           <td data-label="ЗАКРЫТА">${row[4]}</td>
           ${row[5]
@@ -1330,13 +1323,47 @@ BLOCKBUSTER
         
         // Собираем все вместе
         cardContainer.appendChild(tr);
-        cardContainer.appendChild(taskDescription);
         cardContainer.appendChild(filterButtons);
+        
+        // Вставляем описание задачи ПЕРЕД строкой с машиной
+        // Для этого сначала находим ячейку с машиной
+        setTimeout(() => {
+          const machineCell = tr.querySelector('td[data-label="МАШИНА"]');
+          if (machineCell) {
+            // Создаем контейнер для описания задачи
+            const descriptionDiv = document.createElement('div');
+            descriptionDiv.className = 'task-description collapsed';
+            descriptionDiv.id = `task-desc-${row[0]}`;
+            descriptionDiv.innerHTML = `
+              <div class="task-text">
+                1. ЖИДКАЯ СМАЗКА FRONT END.<br>
+                2. ПРОВЕРКА И ФУНКЦИОНАЛЬНОЕ ТЕСТИРОВАНИЕ СОЛЕНОИДА.<br>
+                3. ПРОВЕРКА РОЛИКОВ СКОЛЬЖЕНИЯ ДИСКОВ, РАЗМЁЩЁННЫХ НА ВАЛУ МОТОРА СТОЛА.<br>
+                4. ПРОВЕРКА ТОРМОЗНЫХ МЕХАНИЗМОВ ДВИГАТЕЛЕЙ SWEEP / TABLE НА ПРЕДМЕТ КОРРЕКТНОГО СРАБАТЫВАНИЯ.
+              </div>
+              <span class="toggle-icon"><i class="fas fa-chevron-down"></i></span>
+            `;
+            
+            // Добавляем обработчик клика
+            descriptionDiv.addEventListener('click', function(e) {
+              if (e.target.closest('.toggle-icon') || e.target.classList.contains('toggle-icon')) {
+                this.classList.toggle('collapsed');
+                this.classList.toggle('expanded');
+              }
+            });
+            
+            // Вставляем описание задачи ПЕРЕД ячейкой с машиной
+            machineCell.parentNode.insertBefore(descriptionDiv, machineCell);
+          }
+        }, 0);
         
         // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
-          // Не обрабатываем клик по кнопкам или селектам
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
+          // Не обрабатываем клик по кнопкам, селектам или описанию задачи
+          if (e.target.tagName === 'BUTTON' || 
+              e.target.tagName === 'SELECT' || 
+              e.target.closest('button') ||
+              e.target.closest('.task-description')) {
             return;
           }
           
@@ -1430,6 +1457,14 @@ BLOCKBUSTER
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
         // Скрываем кнопку "Показать все задачи"
         document.getElementById('showAllButton').style.display = 'none';
+      }
+    }
+
+    function toggleTaskDescription(rowId) {
+      const desc = document.getElementById(`task-desc-${rowId}`);
+      if (desc) {
+        desc.classList.toggle('collapsed');
+        desc.classList.toggle('expanded');
       }
     }
 
