@@ -800,16 +800,6 @@
       color: #1a2f40;
       word-break: break-word;
     }
-
-    /* Отладка структуры данных */
-    .debug-info {
-      display: none;
-      background: #f0f0f0;
-      padding: 10px;
-      margin: 10px;
-      border-radius: 5px;
-      font-size: 12px;
-    }
   </style>
 </head>
 <body>
@@ -892,9 +882,6 @@ BLOCKBUSTER
       <button onclick="nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
     </div>
   </div>
-
-  <!-- Отладка структуры данных -->
-  <div id="debugInfo" class="debug-info"></div>
 
   <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxjMY-jtC2MRG2HNyMxLIxNABPgB4qxT0pQBUigjGrwjMtmZj0HYmwZX8rhOCpM85x2/exec';
@@ -1023,34 +1010,21 @@ BLOCKBUSTER
         if (!response.ok) throw new Error('Network response was not ok');
         fullData = await response.json();
         
-        // ОТЛАДКА: выведем структуру данных
+        // ОТЛАДКА: проверяем структуру данных
         console.log("Получены данные:", fullData);
         if (fullData.length > 0) {
-          console.log("Первая строка данных:", fullData[0]);
-          console.log("Количество колонок в первой строке:", fullData[0].length);
-          
-          // Покажем структуру данных на странице для отладки
-          const debugInfo = document.getElementById('debugInfo');
-          debugInfo.innerHTML = `
-            <strong>Структура данных:</strong><br>
-            Всего строк: ${fullData.length}<br>
-            Колонок в первой строке: ${fullData[0].length}<br>
-            Первая строка: ${JSON.stringify(fullData[0])}<br>
-            <br>
-            <strong>Индексы:</strong><br>
-            [0] = ${fullData[0][0]} (ID строки)<br>
-            [1] = ${fullData[0][1]} (Машина)<br>
-            [2] = ${fullData[0][2]} (Название задачи)<br>
-            [3] = ${fullData[0][3]} (Ссылка на схему)<br>
-            [4] = ${fullData[0][4]} (Дата открытия)<br>
-            [5] = ${fullData[0][5]} (Дата закрытия)<br>
-            [6] = ${fullData[0][6]} (Исполнитель)
-          `;
-          debugInfo.style.display = 'block';
+          console.log("Первая строка:", fullData[0]);
+          console.log("Колонка 0 (ссылка):", fullData[0][0]);
+          console.log("Колонка 1 (машина):", fullData[0][1]);
+          console.log("Колонка 2 (текст задачи):", fullData[0][2]);
+          console.log("Колонка 3 (дата открытия):", fullData[0][3]);
+          console.log("Колонка 4 (дата закрытия):", fullData[0][4]);
+          console.log("Колонка 5 (исполнитель):", fullData[0][5]);
         }
         
+        // Сортируем: сначала открытые задачи (без исполнителя), потом закрытые
         fullData.sort((a, b) => {
-          const aIsOpen = !a[5];
+          const aIsOpen = !a[5]; // Исполнитель в колонке 5
           const bIsOpen = !b[5];
           
           if (aIsOpen && !bIsOpen) return -1;
@@ -1115,7 +1089,7 @@ BLOCKBUSTER
       const previousMonthStats = {};
       
       data.forEach(row => {
-        if (row[4] && row[4].trim() !== '') {
+        if (row[4] && row[4].trim() !== '') { // Дата закрытия в колонке 4
           try {
             const dateParts = row[4].split('.');
             if (dateParts.length === 3) {
@@ -1123,7 +1097,7 @@ BLOCKBUSTER
               const month = parseInt(dateParts[1]) - 1;
               const year = parseInt(dateParts[2]);
               
-              const mechanic = row[5];
+              const mechanic = row[5]; // Исполнитель в колонке 5
               
               if (mechanic && (mechanic === 'МЕХАНИК(1)' || mechanic === 'МЕХАНИК(2)')) {
                 if (month === currentMonth && year === currentYear) {
@@ -1212,6 +1186,7 @@ BLOCKBUSTER
         const index = fullData.findIndex(row => row[0] === rowNumber);
         if (index !== -1) fullData[index] = updatedRow;
 
+        // Сортируем заново
         fullData.sort((a, b) => {
           const aIsOpen = !a[5];
           const bIsOpen = !b[5];
@@ -1221,6 +1196,7 @@ BLOCKBUSTER
           return 0;
         });
 
+        // Обновляем фильтрованные данные
         if (isFiltered) {
           if (currentFilterType === 'machine') {
             filteredData = fullData.filter(row => 
@@ -1284,11 +1260,18 @@ BLOCKBUSTER
         const tr = document.createElement("tr");
         tr.id = `card-${row[0]}`;
         
-        // Получаем данные по индексам
-        const taskName = row[2] || "Нет названия задачи"; // Название задачи из B5:Q25/B28:Q47
-        const schemaLink = row[3] || ""; // Ссылка на схему
+        // ПРАВИЛЬНЫЕ ИНДЕКСЫ:
+        // row[0] = Ссылка на схему (для кнопки "Открыть")
+        // row[1] = Название машины
+        // row[2] = Текстовое название задачи (для основного поля и описания)
+        // row[3] = Дата открытия
+        // row[4] = Дата закрытия
+        // row[5] = Исполнитель
         
-        // Создаем кнопку "Открыть" только если есть ссылка
+        const taskName = row[2] || "Нет названия задачи";
+        const schemaLink = row[0] || ""; // Ссылка в колонке 0
+        
+        // Кнопка "Открыть" только если есть ссылка
         const openButtonHtml = schemaLink ? 
           `<a href="${schemaLink}" target="_blank" class="schema-button">
              <i class="fas fa-file-alt"></i>Открыть
@@ -1301,10 +1284,10 @@ BLOCKBUSTER
           <td data-label="МАШИНА">
             ${row[1] || ""}
           </td>
-          <td data-label="ОТКРЫТА">${row[4] || ""}</td>
-          <td data-label="ЗАКРЫТА">${row[5] || ""}</td>
-          ${row[6]
-            ? `<td data-label="ВЫПОЛНИЛ">${row[6]}</td>`
+          <td data-label="ОТКРЫТА">${row[3] || ""}</td>
+          <td data-label="ЗАКРЫТА">${row[4] || ""}</td>
+          ${row[5]
+            ? `<td data-label="ВЫПОЛНИЛ">${row[5]}</td>`
             : `<td data-label="ВЫПОЛНИЛ" id="gText_${row[0]}">
                 <select id="g_${row[0]}">
                   <option value="" selected disabled></option>
@@ -1315,7 +1298,7 @@ BLOCKBUSTER
           <td data-label="ОТПРАВИТЬ">
             <div class="buttons-row">
               ${openButtonHtml}
-              ${row[6]
+              ${row[5]
                 ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
                 : `<button id="btn_${row[0]}" onclick="validateAndSend(${row[0]});">
                      <i class="fas fa-paper-plane"></i>Отправить
@@ -1381,10 +1364,12 @@ BLOCKBUSTER
           tr.classList.add('selected');
         });
         
-        // Добавляем обработчик для кнопки "Открыть"
+        // Обработчик для кнопки "Открыть"
         const openButton = tr.querySelector('.schema-button');
         if (openButton) {
           openButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // Останавливаем всплытие
+            
             const rowId = row[0];
             
             if (selectedRowId === rowId) {
@@ -1392,23 +1377,7 @@ BLOCKBUSTER
               selectedRowId = null;
               selectedRowData = null;
               tr.classList.remove('selected');
-              
-              window.open(this.href, '_blank');
-              e.preventDefault();
-              return;
             }
-            
-            if (selectedRowId) {
-              hideCardButtons(selectedRowId);
-              const prevCard = document.getElementById(`card-${selectedRowId}`);
-              if (prevCard) prevCard.classList.remove('selected');
-            }
-            
-            selectedRowData = row;
-            selectedRowId = rowId;
-            
-            showCardButtons(rowId);
-            tr.classList.add('selected');
             
             window.open(this.href, '_blank');
             e.preventDefault();
@@ -1490,7 +1459,7 @@ BLOCKBUSTER
         
         if (btn) {
           const taskName = rowData[2] || "Нет названия задачи";
-          const schemaLink = rowData[3] || "";
+          const schemaLink = rowData[0] || "";
           const openButtonHtml = schemaLink ? 
             `<a href="${schemaLink}" target="_blank" class="schema-button">
                <i class="fas fa-file-alt"></i>Открыть
@@ -1501,11 +1470,11 @@ BLOCKBUSTER
           `;
           
           row.cells[1].textContent = rowData[1] || "";
-          row.cells[2].textContent = rowData[4] || "";
-          row.cells[3].textContent = rowData[5] || "";
+          row.cells[2].textContent = rowData[3] || "";
+          row.cells[3].textContent = rowData[4] || "";
           
-          if (rowData[6]) {
-            row.cells[4].innerHTML = rowData[6];
+          if (rowData[5]) {
+            row.cells[4].innerHTML = rowData[5];
             row.cells[4].id = "";
           } else {
             row.cells[4].innerHTML = `
@@ -1520,7 +1489,7 @@ BLOCKBUSTER
           const buttonsRow = row.cells[5].querySelector('.buttons-row');
           buttonsRow.innerHTML = `
             ${openButtonHtml}
-            ${rowData[6]
+            ${rowData[5]
               ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
               : `<button id="btn_${rowData[0]}" onclick="validateAndSend(${rowData[0]});">
                    <i class="fas fa-paper-plane"></i>Отправить
@@ -1637,8 +1606,8 @@ BLOCKBUSTER
     }
 
     function updateOpenTaskCard(data) {
-      // Проверяем row[6] - это исполнитель
-      const openCount = data.filter(row => !row[6]).length;
+      // Проверяем row[5] - это исполнитель
+      const openCount = data.filter(row => !row[5]).length;
       document.getElementById("openTaskCount").textContent = openCount;
     }
 
@@ -1651,7 +1620,7 @@ BLOCKBUSTER
       currentFilterValue = machineName;
       
       filteredData = fullData.filter(row => 
-        row[1] === machineName && !row[6]
+        row[1] === machineName && !row[5]
       );
       
       isFiltered = true;
@@ -1670,7 +1639,7 @@ BLOCKBUSTER
       currentFilterValue = taskName;
       
       filteredData = fullData.filter(row => 
-        row[2] === taskName && !row[6]
+        row[2] === taskName && !row[5]
       );
       
       isFiltered = true;
