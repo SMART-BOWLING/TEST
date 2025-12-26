@@ -798,7 +798,6 @@
     .task-name {
       font-weight: 700;
       color: #1a2f40;
-      margin-bottom: 5px;
       word-break: break-word;
     }
   </style>
@@ -1246,27 +1245,23 @@ BLOCKBUSTER
         const tr = document.createElement("tr");
         tr.id = `card-${row[0]}`;
         
-        // Ссылка на схему находится в row[3] (колонка D в Google Sheets)
+        // Ссылка на схему находится в row[3] - только для кнопки "Открыть"
         const schemaLink = row[3] ? `<a href="${row[3]}" target="_blank" class="schema-button">
                <i class="fas fa-file-alt"></i>Открыть
              </a>` : "";
 
-        // ОТОБРАЖЕНИЕ С НОВОЙ СТРУКТУРОЙ:
+        // ОТОБРАЖЕНИЕ:
         // row[0] - ID строки
         // row[1] - Название машины
-        // row[2] - Текстовое название задачи (из матрицы B5:Q25 или B28:Q47)
-        // row[3] - Ссылка на схему (из колонки A листа "1")
+        // row[2] - Текстовое название задачи (В ОСНОВНОМ ПОЛЕ)
+        // row[3] - Ссылка на схему (ТОЛЬКО В КНОПКЕ)
         // row[4] - Дата открытия
         // row[5] - Дата закрытия
-        // row[6] - Исполнитель (МЕХАНИК(1) или МЕХАНИК(2))
+        // row[6] - Исполнитель
         
         tr.innerHTML = `
           <td data-label="ЗАДАЧА">
-            <div class="task-name">${row[2] || "Нет названия"}</div>
-            ${row[3] ? `
-              <a href="${row[3]}" target="_blank" class="schema-button">
-                <i class="fas fa-file-alt"></i>Открыть схему
-              </a>` : "Нет схемы"}
+            <div class="task-name">${row[2] || "Нет названия задачи"}</div>
           </td>
           <td data-label="МАШИНА">
             ${row[1]}
@@ -1303,7 +1298,7 @@ BLOCKBUSTER
             descriptionDiv.className = 'task-description collapsed';
             descriptionDiv.id = `task-desc-${row[0]}`;
             
-            // Используем текстовое название задачи для описания
+            // В описании используем ТЕКСТОВОЕ название задачи из row[2]
             const taskDescription = row[2] || "Нет описания задачи";
             descriptionDiv.innerHTML = `
               <div class="task-text">
@@ -1465,11 +1460,7 @@ BLOCKBUSTER
             : "";
 
           row.cells[0].innerHTML = `
-            <div class="task-name">${rowData[2] || "Нет названия"}</div>
-            ${rowData[3] ? `
-              <a href="${rowData[3]}" target="_blank" class="schema-button">
-                <i class="fas fa-file-alt"></i>Открыть схему
-              </a>` : "Нет схемы"}
+            <div class="task-name">${rowData[2] || "Нет названия задачи"}</div>
           `;
           
           row.cells[1].textContent = rowData[1];
@@ -1609,7 +1600,6 @@ BLOCKBUSTER
     }
 
     function updateOpenTaskCard(data) {
-      // Теперь проверяем row[6] вместо row[5], так как изменилась структура данных
       const openCount = data.filter(row => !row[6]).length;
       document.getElementById("openTaskCount").textContent = openCount;
     }
