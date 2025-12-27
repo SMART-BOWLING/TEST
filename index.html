@@ -1040,9 +1040,28 @@
       </div>
     </div>
   </div>
+
+  <!-- Модальное окно для сбора истории -->
+  <div id="historyModal" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-close" onclick="closeHistoryModal()">×</div>
+      <h3>Сбор данных для статистики</h3>
+      <div id="historyProgress" style="margin: 20px 0;">
+        <p>Пожалуйста, подождите, идет сбор данных истории...</p>
+        <div style="background: #eee; border-radius: 8px; height: 20px; margin: 10px 0;">
+          <div id="progressBar" style="background: #28a745; height: 100%; border-radius: 8px; width: 0%; transition: width 0.3s;"></div>
+        </div>
+        <p id="progressText">Подготовка к сбору данных...</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
+  // Глобальные переменные для хранения истории
+  let allHistoryData = [];
+  let collectedHistoryParts = new Set();
+
   // Функция для показа/скрытия индикатора загрузки
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
@@ -1126,7 +1145,7 @@
     return limitedAccessEmails.includes(userEmail);
   }
 
-  // Функции для работы с модальным окном дат
+  // Функции для работы с модальными окнами
   function openDateRangeModal() {
     const today = new Date().toISOString().split('T')[0];
     const monthAgo = new Date();
@@ -1142,16 +1161,166 @@
     document.getElementById('dateRangeModal').style.display = 'none';
   }
 
-  // Функция для получения истории операций
-  async function getOperationsHistory(startDate, endDate) {
-    showLoader(true);
+  function openHistoryModal() {
+    document.getElementById('historyModal').style.display = 'flex';
+  }
+
+  function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+  }
+
+  function updateProgress(percent, text) {
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressText').textContent = text;
+  }
+
+  // Функция для сбора истории всех деталей
+  async function collectAllHistory() {
+    const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
+    const allParts = window.allEntries || [];
+    
+    allHistoryData = [];
+    collectedHistoryParts.clear();
+    
+    openHistoryModal();
+    updateProgress(0, 'Начинаем сбор данных...');
+    
     try {
-      const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
-      const res = await fetch(`${API_URL}?action=getOperationsHistory&startDate=${startDate}&endDate=${endDate}`);
-      return await res.json();
+      for (let i = 0; i < allParts.length; i++) {
+        const part = allParts[i];
+        const partNumber = part.partNumber;
+        
+        if (!collectedHistoryParts.has(partNumber)) {
+          updateProgress(
+            Math.round((i / allParts.length) * 100),
+            `Сбор истории для детали ${i + 1} из ${allParts.length}: ${partNumber}`
+          );
+          
+          try {
+            const response = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+            const historyText = await response.text();
+            
+            if (historyText && historyText.trim() !== '') {
+              const historyLines = historyText.split('\n').filter(line => line.trim() !== '');
+              
+              historyLines.forEach(line => {
+                const parts = line.split(' - ');
+                if (parts.length >= 4) {
+                  const dateTimeStr = parts[0].trim();
+                  const operation = parts[1].trim();
+                  const quantityChange = parts[2].trim();
+                  const nameInfo = parts.slice(3).join(' - ').trim();
+                  
+                  // Извлекаем имя из строки
+                  let name = '';
+                  if (nameInfo.includes('для')) {
+                    const nameMatch = nameInfo.match(/для\s+(.+)/);
+                    if (nameMatch) name = nameMatch[1].trim();
+                  }
+                  
+                  // Парсим изменение количества
+                  const deltaMatch = quantityChange.match(/[-+]?\d+/);
+                  const delta = deltaMatch ? parseInt(deltaMatch[0]) : 0;
+                  
+                  // Парсим дату
+                  let date;
+                  try {
+                    date = new Date(dateTimeStr);
+                    if (isNaN(date.getTime())) {
+                      // Попробуем другой формат
+                      const dateMatch = dateTimeStr.match(/(\d{1,2})\.(\d{1,2})\.(\d{4}) (\d{1,2}):(\d{2}):(\d{2})/);
+                      if (dateMatch) {
+                        const [_, day, month, year, hour, minute, second] = dateMatch;
+                        date = new Date(year, month - 1, day, hour, minute, second);
+                      }
+                    }
+                  } catch (e) {
+                    date = new Date(); // Текущая дата в случае ошибки
+                  }
+                  
+                  if (!isNaN(date.getTime()) && delta !== 0 && name) {
+                    allHistoryData.push({
+                      date: date,
+                      partNumber: partNumber,
+                      partName: part.partName || 'Без названия',
+                      delta: delta,
+                      name: name,
+                      operation: operation,
+                      dateStr: dateTimeStr
+                    });
+                  }
+                }
+              });
+            }
+            
+            collectedHistoryParts.add(partNumber);
+            
+            // Небольшая задержка, чтобы не перегружать сервер
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+          } catch (error) {
+            console.error(`Ошибка при получении истории для ${partNumber}:`, error);
+          }
+        }
+      }
+      
+      updateProgress(100, 'Сбор данных завершен!');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return allHistoryData;
+      
     } finally {
-      showLoader(false);
+      closeHistoryModal();
     }
+  }
+
+  // Функция для фильтрации истории по дате
+  function filterHistoryByDate(historyData, startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Конец дня
+    
+    return historyData.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= start && entryDate <= end;
+    });
+  }
+
+  // Функция для генерации статистики из собранной истории
+  function generateStatisticsFromHistory(historyData, startDate, endDate) {
+    const filteredHistory = filterHistoryByDate(historyData, startDate, endDate);
+    
+    // Группируем по деталям
+    const stats = {};
+    
+    filteredHistory.forEach(entry => {
+      if (entry.delta < 0) { // Только операции "взятия"
+        const key = `${entry.partNumber} - ${entry.partName}`;
+        
+        if (!stats[key]) {
+          stats[key] = {
+            partNumber: entry.partNumber,
+            partName: entry.partName,
+            totalTaken: 0,
+            takers: {}
+          };
+        }
+        
+        const quantity = Math.abs(entry.delta);
+        stats[key].totalTaken += quantity;
+        
+        if (entry.name) {
+          stats[key].takers[entry.name] = (stats[key].takers[entry.name] || 0) + quantity;
+        }
+      }
+    });
+    
+    return {
+      stats: stats,
+      totalOperations: filteredHistory.length,
+      totalTakenOperations: filteredHistory.filter(e => e.delta < 0).length,
+      period: { startDate, endDate }
+    };
   }
 
   // Функция для генерации PDF со статистикой
@@ -1170,15 +1339,22 @@
     }
     
     closeDateRangeModal();
+    showLoader(true);
     
     try {
-      showLoader(true);
-      const operations = await getOperationsHistory(startDate, endDate);
+      // Собираем историю, если еще не собрали
+      if (allHistoryData.length === 0) {
+        await collectAllHistory();
+      }
       
-      if (!operations || operations.length === 0) {
-        alert('За выбранный период нет данных о взятии деталей');
+      // Если история пуста после сбора
+      if (allHistoryData.length === 0) {
+        alert('Не удалось собрать данные истории. Пожалуйста, попробуйте снова.');
         return;
       }
+      
+      // Генерируем статистику
+      const statistics = generateStatisticsFromHistory(allHistoryData, startDate, endDate);
       
       // Создаем PDF документ
       const { jsPDF } = window.jspdf;
@@ -1194,85 +1370,71 @@
       doc.setTextColor(100, 100, 100);
       doc.text(`Период: с ${formatDate(startDate)} по ${formatDate(endDate)}`, 20, 30);
       
-      // Подсчет статистики
-      const stats = {};
-      operations.forEach(op => {
-        const key = `${op.partNumber} - ${op.partName || 'Без названия'}`;
-        if (!stats[key]) {
-          stats[key] = {
-            partNumber: op.partNumber,
-            partName: op.partName || 'Без названия',
-            operations: []
-          };
-        }
-        stats[key].operations.push(op);
-      });
-      
-      // Создаем таблицу статистики
+      // Подготовка данных для таблицы
       const tableData = [];
-      Object.keys(stats).forEach(key => {
-        const stat = stats[key];
-        const totalTaken = stat.operations
-          .filter(op => op.delta < 0)
-          .reduce((sum, op) => sum + Math.abs(op.delta), 0);
-        
-        const takers = {};
-        stat.operations.forEach(op => {
-          if (op.delta < 0 && op.name) {
-            const qty = Math.abs(op.delta);
-            takers[op.name] = (takers[op.name] || 0) + qty;
-          }
-        });
-        
-        const takersList = Object.entries(takers)
+      const statsArray = Object.values(statistics.stats);
+      
+      // Сортируем по количеству взятых (по убыванию)
+      statsArray.sort((a, b) => b.totalTaken - a.totalTaken);
+      
+      statsArray.forEach(stat => {
+        const takersList = Object.entries(stat.takers)
           .map(([name, qty]) => `${name}: ${qty}`)
           .join('; ');
         
         tableData.push([
           stat.partNumber,
           stat.partName,
-          totalTaken,
+          stat.totalTaken,
           takersList || 'Нет данных'
         ]);
       });
       
-      // Сортируем по количеству взятых
-      tableData.sort((a, b) => b[2] - a[2]);
-      
-      // Добавляем таблицу
-      doc.autoTable({
-        startY: 40,
-        head: [['Номер детали', 'Название детали', 'Всего взято', 'Кто взял и сколько']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: {
-          fillColor: [220, 20, 60],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        styles: {
-          fontSize: 10,
-          cellPadding: 3
-        },
-        columnStyles: {
-          0: { cellWidth: 60 },
-          1: { cellWidth: 70 },
-          2: { cellWidth: 40 },
-          3: { cellWidth: 110 }
-        }
-      });
-      
-      // Итоговая статистика
-      const finalY = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(12);
-      doc.setTextColor(40, 40, 40);
-      doc.text(`Всего операций за период: ${operations.length}`, 20, finalY);
-      
-      const uniqueParts = Object.keys(stats).length;
-      doc.text(`Уникальных деталей: ${uniqueParts}`, 20, finalY + 8);
-      
-      const totalTaken = tableData.reduce((sum, row) => sum + row[2], 0);
-      doc.text(`Общее количество взятых деталей: ${totalTaken}`, 20, finalY + 16);
+      if (tableData.length === 0) {
+        doc.setFontSize(14);
+        doc.setTextColor(100, 100, 100);
+        doc.text('За выбранный период нет данных о взятии деталей', 20, 50);
+      } else {
+        // Добавляем таблицу
+        doc.autoTable({
+          startY: 40,
+          head: [['Номер детали', 'Название детали', 'Всего взято', 'Кто взял и сколько']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [220, 20, 60],
+            textColor: 255,
+            fontStyle: 'bold'
+          },
+          styles: {
+            fontSize: 10,
+            cellPadding: 3
+          },
+          columnStyles: {
+            0: { cellWidth: 60 },
+            1: { cellWidth: 70 },
+            2: { cellWidth: 40 },
+            3: { cellWidth: 110 }
+          }
+        });
+        
+        // Итоговая статистика
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.setTextColor(40, 40, 40);
+        
+        const totalTaken = statsArray.reduce((sum, stat) => sum + stat.totalTaken, 0);
+        const uniqueTakers = new Set();
+        statsArray.forEach(stat => {
+          Object.keys(stat.takers).forEach(taker => uniqueTakers.add(taker));
+        });
+        
+        doc.text(`Всего операций за период: ${statistics.totalOperations}`, 20, finalY);
+        doc.text(`Операций взятия: ${statistics.totalTakenOperations}`, 20, finalY + 8);
+        doc.text(`Уникальных деталей: ${statsArray.length}`, 20, finalY + 16);
+        doc.text(`Общее количество взятых деталей: ${totalTaken}`, 20, finalY + 24);
+        doc.text(`Количество уникальных сотрудников: ${uniqueTakers.size}`, 20, finalY + 32);
+      }
       
       // Сохраняем PDF
       const fileName = `Статистика_${startDate}_${endDate}.pdf`;
@@ -1301,9 +1463,6 @@
     let currentPage = 1;
     let totalPages = 1;
     const cardsPerPage = 5;
-
-    // УБРАН КОД, КОТОРЫЙ СКРЫВАЛ КНОПКИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ С ОГРАНИЧЕННЫМ ДОСТУПОМ
-    // Теперь кнопки видны всем пользователям
 
     // Основные функции приложения
     async function getEntries() {
@@ -1744,7 +1903,6 @@
     }
 
     // Инициализация событий
-    // Для пользователей с ограниченным доступом оставляем функционал кнопок
     document.getElementById('btnSearch')?.addEventListener('click', () => {
       const term = prompt('Введите номер детали для поиска:');
       if (term !== null) {
@@ -1815,6 +1973,9 @@
       showLoader(true);
       try {
         allEntries = await getEntries();
+        // Сохраняем в глобальную переменную для доступа из других функций
+        window.allEntries = allEntries;
+        
         currentEntries = [...allEntries];
         
         // Для пользователей с ограниченным доступом показываем все записи сразу
