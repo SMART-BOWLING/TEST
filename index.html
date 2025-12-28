@@ -847,6 +847,16 @@
       font-size: 20px;
       font-weight: 800;
     }
+    
+    /* Стиль для кнопки итоговой истории */
+    #btnTotalHistory {
+      background: linear-gradient(to bottom, #2e7d32, #1b5e20) !important;
+      color: white !important;
+    }
+
+    #btnTotalHistory:hover {
+      background: linear-gradient(to bottom, #388e3c, #2e7d32) !important;
+    }
   </style>
 </head>
 <body>
@@ -912,11 +922,6 @@
     <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-STORE/', '_blank')" class="btn-top" id="btnAddPart">
       <i class="fas fa-plus-circle"></i> Добавить деталь
     </button>
-
-    <!-- НОВАЯ КНОПКА ДЛЯ СТАТИСТИКИ -->
-    <button id="btnStatistics" class="btn-top" style="background: linear-gradient(to bottom, #28a745, #1e7e34);">
-      <i class="fas fa-chart-bar"></i> Статистика
-    </button>
   </div>
 
   <div class="cards" id="cardsContainer"></div>
@@ -932,25 +937,6 @@
       <div id="modalClose" class="modal-close">×</div>
       <h3>История изменений</h3>
       <pre id="modalContent"></pre>
-    </div>
-  </div>
-
-  <!-- Модальное окно для статистики -->
-  <div id="statisticsModal" class="modal-overlay" style="display: none;">
-    <div class="modal" style="max-width: 95vw; max-height: 90vh;">
-      <div class="modal-close" onclick="closeStatisticsModal()">×</div>
-      <h3>Итоговая статистика по деталям</h3>
-      <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-        <button onclick="exportStatistics()" class="btn-top" style="background: linear-gradient(to bottom, #28a745, #1e7e34);">
-          <i class="fas fa-download"></i> Экспорт в CSV
-        </button>
-        <button onclick="loadStatistics()" class="btn-top" style="background: linear-gradient(to bottom, #1a2f40, #0d1a26);">
-          <i class="fas fa-sync-alt"></i> Обновить
-        </button>
-      </div>
-      <div id="statisticsContent" style="overflow: auto; max-height: 60vh;">
-        <!-- Здесь будет таблица со статистикой -->
-      </div>
     </div>
   </div>
 </div>
@@ -1033,455 +1019,348 @@
     nextPage: function() {}
   };
 
-  // Глобальная переменная для хранения статистики
-  let statisticsData = null;
-
   // Проверка, имеет ли пользователь ограниченный доступ
   function hasLimitedAccess() {
     const userEmail = localStorage.getItem("userEmail");
     return limitedAccessEmails.includes(userEmail);
   }
 
-  // НОВАЯ ФУНКЦИЯ: Анализ истории для получения статистики
-  function analyzeHistory(historyText) {
-    const stats = {
-      totalTaken: 0,
-      byPerson: {},
-      byCity: {
-        'Харьков': 0,
-        'Киев': 0,
-        'Львов': 0,
-        'Одесса': 0,
-        'Днепр': 0,
-        'Запорожье': 0,
-        'Другой': 0
-      }
-    };
-
-    if (!historyText || historyText.trim() === '') {
-      return stats;
-    }
-
-    const lines = historyText.split('\n');
+  // ============= ФУНКЦИИ ДЛЯ ИТОГОВОЙ ИСТОРИИ =============
+  
+  // Добавьте эту кнопку в верхний блок управления
+  function addHistoryButton() {
+    const topControls = document.getElementById('topControls');
     
-    lines.forEach(line => {
-      // Ищем строки вида "Имя: количество"
-      const match = line.match(/(.+?):\s*(-?\d+)/);
-      if (match) {
-        const name = match[1].trim();
-        const quantity = Math.abs(parseInt(match[2]));
-        
-        if (quantity > 0) {
-          stats.totalTaken += quantity;
-          
-          // Считаем по людям
-          stats.byPerson[name] = (stats.byPerson[name] || 0) + quantity;
-          
-          // Определяем город по имени
-          const nameLower = name.toLowerCase();
-          let city = 'Другой';
-          
-          if (nameLower.includes('харьков') || nameLower.includes('kharkiv') || nameLower.includes('kh') || 
-              nameLower.includes('харк') || nameLower.includes('харьк')) {
-            city = 'Харьков';
-          } else if (nameLower.includes('киев') || nameLower.includes('kyiv') || nameLower.includes('kiev')) {
-            city = 'Киев';
-          } else if (nameLower.includes('львов') || nameLower.includes('lviv') || nameLower.includes('львів')) {
-            city = 'Львов';
-          } else if (nameLower.includes('одесс') || nameLower.includes('odesa') || nameLower.includes('одеса')) {
-            city = 'Одесса';
-          } else if (nameLower.includes('днепр') || nameLower.includes('dnipro')) {
-            city = 'Днепр';
-          } else if (nameLower.includes('запорож') || nameLower.includes('zaporizhzhia')) {
-            city = 'Запорожье';
-          }
-          
-          stats.byCity[city] += quantity;
-        }
-      }
-    });
-
-    // Сортируем людей по количеству взятых деталей
-    stats.byPerson = Object.fromEntries(
-      Object.entries(stats.byPerson).sort(([,a], [,b]) => b - a)
-    );
-
-    return stats;
+    // Создаем кнопку для итоговой истории
+    const historyBtn = document.createElement('button');
+    historyBtn.className = 'btn-top';
+    historyBtn.id = 'btnTotalHistory';
+    historyBtn.innerHTML = '<i class="fas fa-list-alt"></i> Итоговая история';
+    historyBtn.onclick = generateTotalHistory;
+    
+    // Вставляем кнопку после кнопки поиска
+    const searchBtn = document.getElementById('btnSearch');
+    searchBtn.parentNode.insertBefore(historyBtn, searchBtn.nextSibling);
   }
 
-  // НОВАЯ ФУНКЦИЯ: Сбор статистики по всем деталям
-  async function collectStatistics() {
+  // Модальное окно для отображения итоговой истории
+  function createHistoryModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'historyModal';
+    modal.style.display = 'none';
+    
+    modal.innerHTML = `
+      <div class="modal" style="max-width: 90%; max-height: 85vh;">
+        <div class="modal-close" onclick="closeHistoryModal()">×</div>
+        <h3>Итоговая история по всем деталям</h3>
+        <div style="margin: 20px 0;">
+          <button id="exportHistoryBtn" class="btn" style="background: #2e7d32; color: white;">
+            <i class="fas fa-download"></i> Экспорт в CSV
+          </button>
+          <button id="printHistoryBtn" class="btn" style="background: #1565c0; color: white; margin-left: 10px;">
+            <i class="fas fa-print"></i> Печать
+          </button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table id="historyTable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: #1a2f40; color: white;">
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">№ детали</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Название</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Текущий остаток</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Кому отправлено</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Количество</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправлено</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  }
+
+  // Функция для закрытия модального окна истории
+  function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+  }
+
+  // Основная функция для генерации итоговой истории
+  async function generateTotalHistory() {
     showLoader(true);
     
     try {
       // Получаем все записи
       const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
-      const response = await fetch(`${API_URL}?action=getEntries`);
-      const entries = await response.json();
+      const res = await fetch(`${API_URL}?action=getEntries`);
+      const allEntries = await res.json();
       
-      const statistics = [];
-      let totalParts = entries.length;
-      let processedParts = 0;
+      // Массив для хранения данных истории
+      const historyData = [];
       
-      // Для каждой детали получаем историю и анализируем
-      for (const entry of entries) {
-        try {
-          // Получаем историю для детали
-          const historyResponse = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
-          const historyText = await historyResponse.text();
-          
-          const historyStats = analyzeHistory(historyText);
-          
-          statistics.push({
-            partNumber: entry.partNumber,
-            partName: entry.partName || 'Название не указано',
-            currentQuantity: entry.quantity || 0,
-            totalTaken: historyStats.totalTaken,
-            byCity: historyStats.byCity,
-            byPerson: historyStats.byPerson,
-            historyText: historyText
-          });
-          
-          processedParts++;
-          
-          // Обновляем прогресс каждые 10 деталей
-          if (processedParts % 10 === 0) {
-            console.log(`Обработано ${processedParts} из ${totalParts} деталей...`);
-          }
-        } catch (error) {
-          console.error(`Ошибка при обработке детали ${entry.partNumber}:`, error);
-          // Продолжаем с другими деталями
-        }
+      // Для каждой детали получаем историю
+      for (const entry of allEntries) {
+        const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
+        const historyText = await historyRes.text();
+        
+        // Парсим историю из текста
+        const historyItems = parseHistory(historyText, entry.partNumber, entry.partName);
+        
+        // Добавляем в общий массив
+        historyData.push(...historyItems);
       }
       
-      // Сортируем статистику по количеству взятых деталей (по убыванию)
-      statistics.sort((a, b) => b.totalTaken - a.totalTaken);
+      // Группируем данные по получателям
+      const groupedData = groupHistoryByRecipient(historyData);
       
-      statisticsData = statistics;
-      return statistics;
+      // Отображаем результаты
+      displayHistoryTable(groupedData, allEntries);
+      
+      // Показываем модальное окно
+      document.getElementById('historyModal').style.display = 'flex';
+      
+      // Добавляем обработчики для кнопок экспорта и печати
+      setupHistoryButtons(groupedData);
       
     } catch (error) {
-      console.error('Ошибка при сборе статистики:', error);
-      return null;
+      console.error('Ошибка при генерации истории:', error);
+      alert('Произошла ошибка при формировании истории');
     } finally {
       showLoader(false);
     }
   }
 
-  // НОВАЯ ФУНКЦИЯ: Отображение статистики
-  async function showStatistics() {
-    // Показываем сообщение о загрузке
-    const modal = document.getElementById('statisticsModal');
-    const content = document.getElementById('statisticsContent');
+  // Функция для парсинга истории из текста
+  function parseHistory(historyText, partNumber, partName) {
+    const items = [];
+    const lines = historyText.split('\n').filter(line => line.trim());
     
-    content.innerHTML = `
-      <div style="text-align: center; padding: 40px;">
-        <div class="loader" style="margin: 0 auto 20px;"></div>
-        <p style="font-size: 18px; color: #666;">Сбор статистики... Это может занять несколько минут.</p>
-        <p style="font-size: 14px; color: #999;">Получаю историю по каждой детали...</p>
-      </div>
-    `;
+    let currentQuantity = 0;
     
-    modal.style.display = 'flex';
-    
-    // Собираем статистику
-    const statistics = await collectStatistics();
-    
-    if (!statistics || statistics.length === 0) {
-      content.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc143c;">Не удалось собрать статистику</div>';
-      return;
+    // Находим текущий остаток в последней строке
+    const lastLine = lines[lines.length - 1] || '';
+    const lastMatch = lastLine.match(/Ост\.\s*(\d+)/);
+    if (lastMatch) {
+      currentQuantity = parseInt(lastMatch[1]);
     }
-
-    // Создаем HTML для таблицы статистики
-    let html = `
-      <style>
-        .statistics-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-family: Arial, sans-serif;
-          font-size: 14px;
-          margin-top: 10px;
-        }
-        .statistics-table th {
-          background: linear-gradient(to bottom, #1a2f40, #0d1a26);
-          color: white;
-          padding: 12px 8px;
-          text-align: left;
-          border: 1px solid #ddd;
-          font-weight: bold;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-          font-size: 14px;
-        }
-        .statistics-table td {
-          padding: 10px 8px;
-          border: 1px solid #ddd;
-          vertical-align: top;
-          font-size: 13px;
-        }
-        .statistics-table tr:nth-child(even) {
-          background-color: #f8f9fa;
-        }
-        .statistics-table tr:hover {
-          background-color: #e9ecef;
-        }
-        .city-stats {
-          margin-top: 3px;
-          font-size: 12px;
-          color: #555;
-        }
-        .city-stat-item {
-          padding: 1px 0;
-          line-height: 1.3;
-        }
-        .total-row {
-          font-weight: bold;
-          background: linear-gradient(to right, #e9ecef, #dee2e6) !important;
-        }
-        .person-stats {
-          max-height: 100px;
-          overflow-y: auto;
-          font-size: 11px;
-          border: 1px solid #eee;
-          padding: 5px;
-          background: #f9f9f9;
-          border-radius: 4px;
-          margin-top: 5px;
-        }
-        .person-stat-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 2px 0;
-          border-bottom: 1px dotted #eee;
-        }
-        .low-stock {
-          background-color: #fff5f5 !important;
-        }
-        .out-of-stock {
-          background-color: #ffe6e6 !important;
-          color: #dc143c;
-          font-weight: bold;
-        }
-        .expand-btn {
-          background: none;
-          border: none;
-          color: #1a2f40;
-          cursor: pointer;
-          font-size: 12px;
-          padding: 2px 5px;
-          margin-left: 5px;
-        }
-        .expand-btn:hover {
-          text-decoration: underline;
-        }
-      </style>
+    
+    // Парсим каждую строку истории
+    lines.forEach(line => {
+      // Ищем паттерн: Дата Время Взято X. для телефона
+      const pattern = /(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2}:\d{2})\s+Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+(\d+)/;
+      const match = line.match(pattern);
       
-      <table class="statistics-table">
-        <thead>
-          <tr>
-            <th style="min-width: 100px;">Номер детали</th>
-            <th style="min-width: 150px;">Название детали</th>
-            <th style="min-width: 60px;">Остаток</th>
-            <th style="min-width: 80px;">Всего взято</th>
-            <th style="min-width: 150px;">По городам</th>
-            <th style="min-width: 200px;">По людям (топ-5)</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    // Общие итоги
-    let totalRemaining = 0;
-    let totalTakenAll = 0;
-    let totalByCityAll = {
-      'Харьков': 0,
-      'Киев': 0,
-      'Львов': 0,
-      'Одесса': 0,
-      'Днепр': 0,
-      'Запорожье': 0,
-      'Другой': 0
-    };
-
-    statistics.forEach((stat, index) => {
-      // Определяем класс для строки в зависимости от остатка
-      let rowClass = '';
-      if (stat.currentQuantity <= 0) {
-        rowClass = 'out-of-stock';
-      } else if (stat.currentQuantity <= 5) {
-        rowClass = 'low-stock';
-      }
-
-      // Формируем строку с городами
-      let citiesHtml = '';
-      Object.entries(stat.byCity).forEach(([city, count]) => {
-        if (count > 0) {
-          citiesHtml += `<div class="city-stat-item">${city}: ${count} шт.</div>`;
-          totalByCityAll[city] += count;
-        }
-      });
-
-      if (citiesHtml === '') {
-        citiesHtml = '<div style="color: #999; font-size: 12px;">Нет данных</div>';
-      }
-
-      // Формируем строку с топ-5 людей
-      let peopleHtml = '';
-      const topPeople = Object.entries(stat.byPerson).slice(0, 5);
-      
-      if (topPeople.length > 0) {
-        topPeople.forEach(([person, count]) => {
-          peopleHtml += `<div class="person-stat-item">
-            <span>${person.length > 20 ? person.substring(0, 20) + '...' : person}</span>
-            <span>${count} шт.</span>
-          </div>`;
+      if (match) {
+        const [, date, time, taken, recipient, remaining] = match;
+        items.push({
+          partNumber,
+          partName: partName || 'Не указано',
+          date: `${date} ${time}`,
+          taken: parseInt(taken),
+          recipient: recipient.trim(),
+          remaining: parseInt(remaining),
+          currentQuantity // Добавляем текущий остаток
         });
-        
-        if (Object.keys(stat.byPerson).length > 5) {
-          peopleHtml += `<div style="text-align: center; padding: 3px; font-size: 11px; color: #666;">
-            ... и еще ${Object.keys(stat.byPerson).length - 5} человек
-          </div>`;
-        }
-      } else {
-        peopleHtml = '<div style="color: #999; font-size: 12px;">Нет данных</div>';
       }
+    });
+    
+    return items;
+  }
 
-      totalRemaining += parseInt(stat.currentQuantity) || 0;
-      totalTakenAll += stat.totalTaken;
+  // Группировка истории по получателям
+  function groupHistoryByRecipient(historyData) {
+    const grouped = {};
+    
+    historyData.forEach(item => {
+      const key = `${item.partNumber}|${item.recipient}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = {
+          partNumber: item.partNumber,
+          partName: item.partName,
+          recipient: item.recipient,
+          totalTaken: 0,
+          lastDate: item.date,
+          items: [],
+          currentQuantity: item.currentQuantity
+        };
+      }
+      
+      grouped[key].totalTaken += item.taken;
+      grouped[key].items.push(item);
+      
+      // Обновляем последнюю дату
+      if (new Date(item.date) > new Date(grouped[key].lastDate)) {
+        grouped[key].lastDate = item.date;
+      }
+    });
+    
+    // Преобразуем объект в массив и сортируем
+    return Object.values(grouped).sort((a, b) => {
+      // Сначала по номеру детали, потом по получателю
+      if (a.partNumber !== b.partNumber) {
+        return a.partNumber.localeCompare(b.partNumber);
+      }
+      return a.recipient.localeCompare(b.recipient);
+    });
+  }
 
-      html += `
-        <tr class="${rowClass}">
-          <td><strong>${stat.partNumber || 'Н/Д'}</strong></td>
-          <td>${stat.partName}</td>
-          <td style="text-align: center; font-weight: ${stat.currentQuantity <= 5 ? 'bold' : 'normal'}; 
-              color: ${stat.currentQuantity <= 5 ? '#dc143c' : (stat.currentQuantity <= 0 ? '#dc143c' : '#28a745')}">
-            ${stat.currentQuantity || 0}
-          </td>
-          <td style="text-align: center; font-weight: bold;">${stat.totalTaken}</td>
-          <td><div class="city-stats">${citiesHtml}</div></td>
-          <td><div class="person-stats">${peopleHtml}</div></td>
-        </tr>
+  // Отображение таблицы с историей
+  function displayHistoryTable(groupedData, allEntries) {
+    const tableBody = document.getElementById('historyTableBody');
+    tableBody.innerHTML = '';
+    
+    // Создаем маппинг текущих остатков по номерам деталей
+    const currentQuantities = {};
+    allEntries.forEach(entry => {
+      currentQuantities[entry.partNumber] = entry.quantity;
+    });
+    
+    groupedData.forEach((item, index) => {
+      const row = document.createElement('tr');
+      row.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : '#fff';
+      row.style.borderBottom = '1px solid #ddd';
+      
+      // Форматируем дату для отображения
+      const formattedDate = new Date(item.lastDate).toLocaleString('ru-RU');
+      
+      row.innerHTML = `
+        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${item.partNumber}</td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${item.partName}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${currentQuantities[item.partNumber] < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
+          ${currentQuantities[item.partNumber] || 0}
+        </td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${item.recipient}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">
+          ${item.totalTaken}
+        </td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${formattedDate}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3cd;">
+          ${item.totalTaken} шт.
+        </td>
       `;
-    });
-
-    // Итоговая строка по городам
-    let citiesTotalHtml = '';
-    Object.entries(totalByCityAll).forEach(([city, count]) => {
-      if (count > 0) {
-        citiesTotalHtml += `<div class="city-stat-item">${city}: ${count} шт.</div>`;
-      }
-    });
-
-    // Добавляем итоговую строку
-    html += `
-      <tr class="total-row">
-        <td colspan="2"><strong>ИТОГО:</strong></td>
-        <td style="text-align: center;"><strong>${totalRemaining}</strong></td>
-        <td style="text-align: center;"><strong>${totalTakenAll}</strong></td>
-        <td><div class="city-stats">${citiesTotalHtml}</div></td>
-        <td><strong>Всего деталей: ${statistics.length}</strong></td>
-      </tr>
-    `;
-
-    html += `
-        </tbody>
-      </table>
       
-      <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 13px;">
-        <p><strong>Примечания:</strong></p>
-        <ul style="margin: 10px 0; padding-left: 20px;">
-          <li>Красным выделены детали, которых нет в наличии (остаток = 0)</li>
-          <li>Розовым фоном выделены детали с остатком ≤ 5</li>
-          <li>Город определяется автоматически по наличию ключевых слов в имени</li>
-          <li>Статистика собирается на основе истории операций "ВЗЯТЬ"</li>
-        </ul>
-      </div>
-    `;
-
-    content.innerHTML = html;
-  }
-
-  // НОВАЯ ФУНКЦИЯ: Загрузка статистики (обновление)
-  async function loadStatistics() {
-    showStatistics();
-  }
-
-  // НОВАЯ ФУНКЦИЯ: Закрытие модального окна статистики
-  function closeStatisticsModal() {
-    document.getElementById('statisticsModal').style.display = 'none';
-  }
-
-  // НОВАЯ ФУНКЦИЯ: Экспорт статистики в CSV
-  function exportStatistics() {
-    if (!statisticsData) {
-      alert('Сначала загрузите статистику');
-      return;
+      tableBody.appendChild(row);
+    });
+    
+    // Добавляем итоговую строку
+    if (groupedData.length > 0) {
+      const totalRow = document.createElement('tr');
+      totalRow.style.backgroundColor = '#e3f2fd';
+      totalRow.style.fontWeight = 'bold';
+      
+      const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
+      const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
+      const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
+      
+      totalRow.innerHTML = `
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="3">
+          Итого: ${uniqueParts} деталей, ${uniqueRecipients} получателей
+        </td>
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
+          Всего отправок: ${groupedData.length}
+        </td>
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
+          Общее количество: ${totalTaken} шт.
+        </td>
+      `;
+      
+      tableBody.appendChild(totalRow);
     }
+  }
+
+  // Настройка кнопок экспорта и печати
+  function setupHistoryButtons(groupedData) {
+    // Экспорт в CSV
+    document.getElementById('exportHistoryBtn').onclick = () => exportHistoryToCSV(groupedData);
     
-    // Создаем заголовки CSV
-    let csv = 'Номер детали,Название детали,Остаток,Всего взято,Харьков,Киев,Львов,Одесса,Днепр,Запорожье,Другой\n';
-    
-    // Добавляем данные
-    statisticsData.forEach(stat => {
-      const row = [
-        `"${stat.partNumber || ''}"`,
-        `"${stat.partName || ''}"`,
-        stat.currentQuantity,
-        stat.totalTaken,
-        stat.byCity['Харьков'] || 0,
-        stat.byCity['Киев'] || 0,
-        stat.byCity['Львов'] || 0,
-        stat.byCity['Одесса'] || 0,
-        stat.byCity['Днепр'] || 0,
-        stat.byCity['Запорожье'] || 0,
-        stat.byCity['Другой'] || 0
-      ];
-      
-      csv += row.join(',') + '\n';
-    });
-    
-    // Добавляем итоговую строку
-    const totals = {
-      Харьков: 0,
-      Киев: 0,
-      Львов: 0,
-      Одесса: 0,
-      Днепр: 0,
-      Запорожье: 0,
-      Другой: 0,
-      remaining: 0,
-      taken: 0
+    // Печать
+    document.getElementById('printHistoryBtn').onclick = () => {
+      const printContent = document.getElementById('historyTable').outerHTML;
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Итоговая история деталей</title>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              table { width: 100%; border-collapse: collapse; }
+              th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .total-row { background-color: #e6f3ff; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h2>Итоговая история по всем деталям</h2>
+            <p>Сформировано: ${new Date().toLocaleString('ru-RU')}</p>
+            ${printContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
     };
+  }
+
+  // Экспорт истории в CSV
+  function exportHistoryToCSV(groupedData) {
+    let csvContent = "data:text/csv;charset=utf-8,";
     
-    statisticsData.forEach(stat => {
-      totals.remaining += stat.currentQuantity;
-      totals.taken += stat.totalTaken;
-      totals.Харьков += stat.byCity['Харьков'] || 0;
-      totals.Киев += stat.byCity['Киев'] || 0;
-      totals.Львов += stat.byCity['Львов'] || 0;
-      totals.Одесса += stat.byCity['Одесса'] || 0;
-      totals.Днепр += stat.byCity['Днепр'] || 0;
-      totals.Запорожье += stat.byCity['Запорожье'] || 0;
-      totals.Другой += stat.byCity['Другой'] || 0;
+    // Заголовки
+    csvContent += "Номер детали;Название;Текущий остаток;Получатель;Отправлено всего;Последняя отправка\n";
+    
+    // Данные
+    groupedData.forEach(item => {
+      const row = [
+        item.partNumber,
+        `"${item.partName}"`,
+        item.currentQuantity,
+        `"${item.recipient}"`,
+        item.totalTaken,
+        item.lastDate
+      ].join(';');
+      
+      csvContent += row + "\n";
     });
     
-    csv += '\n';
-    csv += `"ИТОГО:","Всего деталей: ${statisticsData.length}",${totals.remaining},${totals.taken},${totals.Харьков},${totals.Киев},${totals.Львов},${totals.Одесса},${totals.Днепр},${totals.Запорожье},${totals.Другой}\n`;
+    // Итоговая строка
+    const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
+    const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
+    const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
     
-    // Создаем и скачиваем файл
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
+    csvContent += `\nИтого:;${uniqueParts} деталей;;;;\n`;
+    csvContent += `Всего получателей:;${uniqueRecipients};;;;\n`;
+    csvContent += `Общее количество:;${totalTaken} шт;;;;\n`;
+    csvContent += `Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;\n`;
     
-    link.setAttribute('href', url);
-    link.setAttribute('download', `статистика_детали_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
+    // Создаем ссылку для скачивания
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `история_деталей_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
+
+  // Инициализация кнопки истории
+  function initHistoryButton() {
+    // Добавляем кнопку только для авторизованных пользователей без ограниченного доступа
+    const userEmail = localStorage.getItem("userEmail");
+    const limitedAccessEmails = ["nikoshina16@gmail.com", "bowlingblock.b@gmail.com"];
+    
+    if (userEmail && !limitedAccessEmails.includes(userEmail)) {
+      addHistoryButton();
+      createHistoryModal();
+    }
+  }
+
+  // ============= ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =============
 
   // Инициализация приложения
   function initApp() {
@@ -1492,6 +1371,12 @@
     let currentPage = 1;
     let totalPages = 1;
     const cardsPerPage = 5;
+
+    // Инициализируем кнопку истории
+    initHistoryButton();
+
+    // УБРАН КОД, КОТОРЫЙ СКРЫВАЛ КНОПКИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ С ОГРАНИЧЕННЫМ ДОСТУПОМ
+    // Теперь кнопки видны всем пользователям
 
     // Основные функции приложения
     async function getEntries() {
@@ -1932,6 +1817,7 @@
     }
 
     // Инициализация событий
+    // Для пользователей с ограниченным доступом оставляем функционал кнопок
     document.getElementById('btnSearch')?.addEventListener('click', () => {
       const term = prompt('Введите номер детали для поиска:');
       if (term !== null) {
@@ -1952,11 +1838,6 @@
       currentPage = 1;
       renderPage(currentPage);
       document.getElementById('sortSelect').value = 'all';
-    });
-
-    // НОВЫЙ ОБРАБОТЧИК: Кнопка статистики
-    document.getElementById('btnStatistics')?.addEventListener('click', () => {
-      showStatistics();
     });
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
@@ -1994,13 +1875,6 @@
     document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
       if (e.target === document.getElementById('modalOverlay')) {
         document.getElementById('modalOverlay').style.display = 'none';
-      }
-    });
-
-    // Закрытие модального окна статистики при клике на оверлей
-    document.getElementById('statisticsModal')?.addEventListener('click', (e) => {
-      if (e.target === document.getElementById('statisticsModal')) {
-        closeStatisticsModal();
       }
     });
 
