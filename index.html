@@ -935,6 +935,24 @@
       font-size: 14px;
       color: #555;
     }
+    
+    /* Стили для групп отправок */
+    .shipment-group {
+      border-left: 4px solid #42a5f5;
+      padding-left: 10px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .shipment-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 3px 0;
+      font-size: 13px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -1193,7 +1211,9 @@
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">Текущий остаток</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">Кому отправлено</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">Количество</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата первой отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата последней отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправок</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправлено</th>
               </tr>
             </thead>
@@ -1307,7 +1327,7 @@
       ]);
       await new Promise(resolve => setTimeout(resolve, 400));
       
-      // Группируем данные по получателям
+      // Группируем данные по получателям (с суммированием повторяющихся номеров)
       const groupedData = groupHistoryByRecipient(historyData);
       
       // Обновляем прогресс - этап 5
@@ -1374,7 +1394,7 @@
     return items;
   }
 
-  // Группировка истории по получателям
+  // Группировка истории по получателям с суммированием повторяющихся номеров
   function groupHistoryByRecipient(historyData) {
     const grouped = {};
     
@@ -1387,14 +1407,32 @@
           partName: item.partName,
           recipient: item.recipient,
           totalTaken: 0,
+          shipments: 0, // Количество отправок
+          firstDate: item.date,
           lastDate: item.date,
           items: [],
+          shipmentDetails: [], // Детали каждой отправки
           currentQuantity: item.currentQuantity
         };
       }
       
+      // Суммируем количество
       grouped[key].totalTaken += item.taken;
-      grouped[key].items.push(item);
+      
+      // Увеличиваем счетчик отправок
+      grouped[key].shipments += 1;
+      
+      // Добавляем детали отправки
+      grouped[key].shipmentDetails.push({
+        date: item.date,
+        taken: item.taken,
+        remaining: item.remaining
+      });
+      
+      // Обновляем первую дату (если это первая отправка)
+      if (!grouped[key].firstDate || new Date(item.date) < new Date(grouped[key].firstDate)) {
+        grouped[key].firstDate = item.date;
+      }
       
       // Обновляем последнюю дату
       if (new Date(item.date) > new Date(grouped[key].lastDate)) {
@@ -1428,8 +1466,17 @@
       row.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : '#fff';
       row.style.borderBottom = '1px solid #ddd';
       
-      // Форматируем дату для отображения
-      const formattedDate = new Date(item.lastDate).toLocaleString('ru-RU');
+      // Форматируем даты для отображения
+      const firstDateFormatted = new Date(item.firstDate).toLocaleString('ru-RU');
+      const lastDateFormatted = new Date(item.lastDate).toLocaleString('ru-RU');
+      
+      // Создаем ячейку с деталями отправок (при наведении)
+      const shipmentDetails = item.shipmentDetails.map(detail => 
+        `<div class="shipment-item">
+           <span>${new Date(detail.date).toLocaleDateString('ru-RU')} ${new Date(detail.date).toLocaleTimeString('ru-RU')}</span>
+           <span><strong>${detail.taken} шт.</strong> (осталось: ${detail.remaining})</span>
+         </div>`
+      ).join('');
       
       row.innerHTML = `
         <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${item.partNumber}</td>
@@ -1437,17 +1484,42 @@
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${currentQuantities[item.partNumber] < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
           ${currentQuantities[item.partNumber] || 0}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;">${item.recipient}</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">
+        <td style="padding: 10px; border: 1px solid #ddd;" title="${item.recipient}">
+          ${item.recipient}
+          <div class="shipment-group" style="display: none; margin-top: 5px;">
+            ${shipmentDetails}
+          </div>
+        </td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;" title="Всего отправлено: ${item.totalTaken} шт.">
           ${item.totalTaken}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;">${formattedDate}</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3cd;">
+        <td style="padding: 10px; border: 1px solid #ddd;" title="Первая отправка">${firstDateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #ddd;" title="Последняя отправка">${lastDateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e3f2fd; font-weight: bold;" title="Количество отправок">
+          ${item.shipments}
+        </td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3cd; font-weight: bold;" title="Общее количество отправленного">
           ${item.totalTaken} шт.
         </td>
       `;
       
       tableBody.appendChild(row);
+      
+      // Добавляем обработчик для показа деталей отправок при наведении
+      const recipientCell = row.cells[3];
+      recipientCell.addEventListener('mouseenter', function() {
+        const shipmentGroup = this.querySelector('.shipment-group');
+        if (shipmentGroup) {
+          shipmentGroup.style.display = 'block';
+        }
+      });
+      
+      recipientCell.addEventListener('mouseleave', function() {
+        const shipmentGroup = this.querySelector('.shipment-group');
+        if (shipmentGroup) {
+          shipmentGroup.style.display = 'none';
+        }
+      });
     });
     
     // Добавляем итоговую строку
@@ -1457,6 +1529,7 @@
       totalRow.style.fontWeight = 'bold';
       
       const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
+      const totalShipments = groupedData.reduce((sum, item) => sum + item.shipments, 0);
       const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
       const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
       
@@ -1465,7 +1538,10 @@
           Итого: ${uniqueParts} деталей, ${uniqueRecipients} получателей
         </td>
         <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
-          Всего отправок: ${groupedData.length}
+          Всего отправок: ${totalShipments}
+        </td>
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
+          Уникальных записей: ${groupedData.length}
         </td>
         <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
           Общее количество: ${totalTaken} шт.
@@ -1495,6 +1571,7 @@
               th, td { border: 1px solid #000; padding: 8px; text-align: left; }
               th { background-color: #f2f2f2; }
               .total-row { background-color: #e6f3ff; font-weight: bold; }
+              .shipment-group { display: none; }
             </style>
           </head>
           <body>
@@ -1514,7 +1591,7 @@
     let csvContent = "data:text/csv;charset=utf-8,";
     
     // Заголовки
-    csvContent += "Номер детали;Название;Текущий остаток;Получатель;Отправлено всего;Последняя отправка\n";
+    csvContent += "Номер детали;Название;Текущий остаток;Получатель;Всего отправлено;Дата первой отправки;Дата последней отправки;Количество отправок;Сумма отправленного\n";
     
     // Данные
     groupedData.forEach(item => {
@@ -1524,7 +1601,10 @@
         item.currentQuantity,
         `"${item.recipient}"`,
         item.totalTaken,
-        item.lastDate
+        item.firstDate,
+        item.lastDate,
+        item.shipments,
+        item.totalTaken
       ].join(';');
       
       csvContent += row + "\n";
@@ -1532,13 +1612,15 @@
     
     // Итоговая строка
     const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
+    const totalShipments = groupedData.reduce((sum, item) => sum + item.shipments, 0);
     const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
     const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
     
-    csvContent += `\nИтого:;${uniqueParts} деталей;;;;\n`;
-    csvContent += `Всего получателей:;${uniqueRecipients};;;;\n`;
-    csvContent += `Общее количество:;${totalTaken} шт;;;;\n`;
-    csvContent += `Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;\n`;
+    csvContent += `\nИтого:;${uniqueParts} деталей;;;;;;;\n`;
+    csvContent += `Всего получателей:;${uniqueRecipients};;;;;;\n`;
+    csvContent += `Общее количество отправок:;${totalShipments};;;;;;\n`;
+    csvContent += `Общее количество отправленного:;${totalTaken} шт;;;;;;\n`;
+    csvContent += `Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;;;\n`;
     
     // Создаем ссылку для скачивания
     const encodedUri = encodeURI(csvContent);
