@@ -1222,15 +1222,13 @@
           </div>
         </div>
         <div style="overflow-x: auto; max-height: 60vh;">
-          <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1200px;">
+          <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 800px;">
             <thead>
               <tr style="background: #1a2f40; color: white; position: sticky; top: 0; z-index: 10;">
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 120px;">№ детали</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 150px;">Название</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Текущий остаток</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 180px;">Кому отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Всего отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 200px;">Даты отправок</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Кол-во отправок</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 120px;">Сумма отправленного</th>
               </tr>
@@ -1480,12 +1478,6 @@
       row.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : '#fff';
       row.style.borderBottom = '1px solid #ddd';
       
-      // Форматируем все даты отправок для отображения в одной ячейке
-      const shipmentDatesFormatted = item.shipmentDates
-        .sort((a, b) => new Date(b) - new Date(a)) // Сортируем от новых к старым
-        .map(date => new Date(date).toLocaleDateString('ru-RU'))
-        .join('\n'); // Разделяем переносом строки
-      
       // Создаем детали отправок для всплывающей подсказки
       const shipmentDetails = item.shipmentDetails
         .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -1506,19 +1498,13 @@
           <div style="cursor: help; position: relative;">
             ${item.recipient}
             <div class="shipment-group" id="shipment-group-${index}">
-              <div style="font-weight: bold; margin-bottom: 8px; color: #1565c0;">Все даты отправок:</div>
+              <div style="font-weight: bold; margin-bottom: 8px; color: #1565c0;">Даты отправок:</div>
               ${shipmentDetails}
               <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd; font-weight: bold;">
                 Всего: ${item.totalTaken} шт. (${item.shipments} отправок)
               </div>
             </div>
           </div>
-        </td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">
-          ${item.totalTaken}
-        </td>
-        <td style="padding: 10px; border: 1px solid #ddd; white-space: pre-line; min-width: 200px;">
-          ${shipmentDatesFormatted || 'Нет данных'}
         </td>
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e3f2fd; font-weight: bold;">
           ${item.shipments}
@@ -1571,13 +1557,10 @@
         <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
           Итого: ${uniqueParts} деталей, ${uniqueRecipients} получателей
         </td>
-        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
-          Всего отправок: ${totalShipments}
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;">
+          Отправок: ${totalShipments}
         </td>
-        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
-          Уникальных записей: ${groupedData.length}
-        </td>
-        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="3">
           Общее количество: ${totalTaken} шт.
         </td>
       `;
@@ -1613,12 +1596,10 @@
               th, td { border: 1px solid #000; padding: 6px; text-align: left; }
               th { background-color: #f2f2f2; font-weight: bold; }
               .total-row { background-color: #e6f3ff; font-weight: bold; }
-              .dates-cell { white-space: pre-line; }
               @media print {
                 body { font-size: 10px; margin: 10px; }
                 table { font-size: 10px; }
                 th, td { padding: 4px; }
-                .dates-cell { font-size: 8px; }
               }
             </style>
           </head>
@@ -1643,7 +1624,7 @@
   function exportReportToCSV(groupedData) {
     try {
       // 1. Создаем заголовки
-      let csv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Даты отправок","Количество отправок","Сумма отправленного"\r\n';
+      let csv = '"Номер детали","Название","Текущий остаток","Получатель","Количество отправок","Сумма отправленного"\r\n';
       
       // 2. Добавляем данные
       groupedData.forEach(item => {
@@ -1652,13 +1633,7 @@
         const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
         const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
         
-        // Форматируем даты для CSV (через запятую)
-        const shipmentDates = item.shipmentDates
-          .sort((a, b) => new Date(b) - new Date(a))
-          .map(date => new Date(date).toLocaleDateString('ru-RU'))
-          .join(', ');
-        
-        csv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${shipmentDates}",${item.shipments},${item.totalTaken}\r\n`;
+        csv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.shipments},${item.totalTaken}\r\n`;
       });
       
       // 3. Добавляем итоги
@@ -1668,11 +1643,11 @@
       const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
       
       csv += '\r\n';
-      csv += '"Итого","' + uniqueParts + ' деталей","","","","","",""\r\n';
-      csv += '"Всего получателей","' + uniqueRecipients + '","","","","","",""\r\n';
-      csv += '"Общее количество отправок","' + totalShipments + '","","","","","",""\r\n';
-      csv += '"Общее количество отправленного","' + totalTaken + ' шт","","","","","",""\r\n';
-      csv += '"Дата формирования","' + new Date().toLocaleString('ru-RU').replace(/"/g, '""') + '","","","","","",""\r\n';
+      csv += '"Итого","' + uniqueParts + ' деталей","","","",""\r\n';
+      csv += '"Всего получателей","' + uniqueRecipients + '","","","",""\r\n';
+      csv += '"Общее количество отправок","' + totalShipments + '","","","",""\r\n';
+      csv += '"Общее количество отправленного","' + totalTaken + ' шт","","","",""\r\n';
+      csv += '"Дата формирования","' + new Date().toLocaleString('ru-RU').replace(/"/g, '""') + '","","","",""\r\n';
       
       // 4. Создаем и скачиваем файл
       const BOM = '\uFEFF'; // Byte Order Mark для UTF-8
@@ -1708,20 +1683,14 @@
     // Берем первые 2 записи для теста
     const testData = groupedData.slice(0, 2);
     
-    let testCsv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Даты отправок","Количество отправок","Сумма отправленного"\r\n';
+    let testCsv = '"Номер детали","Название","Текущий остаток","Получатель","Количество отправок","Сумма отправленного"\r\n';
     
     testData.forEach(item => {
       const partNumber = item.partNumber ? item.partNumber.replace(/"/g, '""') : '';
       const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
       const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
       
-      // Форматируем даты для CSV
-      const shipmentDates = item.shipmentDates
-        .sort((a, b) => new Date(b) - new Date(a))
-        .map(date => new Date(date).toLocaleDateString('ru-RU'))
-        .join(', ');
-      
-      testCsv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${shipmentDates}",${item.shipments},${item.totalTaken}\r\n`;
+      testCsv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.shipments},${item.totalTaken}\r\n`;
     });
     
     // Показываем тестовый CSV в новом окне
@@ -1746,12 +1715,12 @@
           </div>
           
           <div class="instructions">
-            <h3>Новый формат отчета:</h3>
+            <h3>Упрощенный формат отчета:</h3>
             <ul>
-              <li>Убраны колонки "Дата первой отправки" и "Дата последней отправки"</li>
-              <li>Добавлена колонка "Даты отправок" - все даты через запятую в одной ячейке</li>
-              <li>В таблице на сайте даты отображаются через перенос строки</li>
-              <li>При наведении на номер телефона показываются детали отправок</li>
+              <li>Убраны колонки "Даты отправок" и "Всего отправлено"</li>
+              <li>Оставлены только основные данные</li>
+              <li>При наведении на номер телефона показываются все даты отправок</li>
+              <li>Сумма отправленного теперь в отдельной колонке</li>
             </ul>
           </div>
         </body>
