@@ -944,6 +944,12 @@
       background: #f8f9fa;
       padding: 8px;
       border-radius: 4px;
+      display: none;
+      position: absolute;
+      z-index: 1000;
+      min-width: 300px;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     
     .shipment-item {
@@ -952,6 +958,16 @@
       margin: 3px 0;
       font-size: 13px;
       color: #666;
+    }
+    
+    .shipment-date {
+      color: #555;
+      font-weight: bold;
+    }
+    
+    .shipment-quantity {
+      color: #d32f2f;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -1191,30 +1207,33 @@
     modal.style.display = 'none';
     
     modal.innerHTML = `
-      <div class="modal" style="max-width: 90%; max-height: 85vh;">
+      <div class="modal" style="max-width: 95%; max-height: 90vh; width: 95%;">
         <div class="modal-close" onclick="closeReportModal()">×</div>
         <h3>Отчет по всем деталям</h3>
-        <div style="margin: 20px 0;">
-          <button id="exportReportBtn" class="btn" style="background: #2e7d32; color: white;">
+        <div style="margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="exportReportBtn" class="btn" style="background: #2e7d32; color: white; min-width: 180px;">
             <i class="fas fa-download"></i> Экспорт в CSV
           </button>
-          <button id="printReportBtn" class="btn" style="background: #1565c0; color: white; margin-left: 10px;">
+          <button id="printReportBtn" class="btn" style="background: #1565c0; color: white; min-width: 140px;">
             <i class="fas fa-print"></i> Печать
           </button>
+          <div style="flex: 1; text-align: right; color: #666; font-size: 14px; padding-top: 15px;">
+            Всего записей: <span id="totalRecords">0</span>
+          </div>
         </div>
-        <div style="overflow-x: auto;">
-          <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <div style="overflow-x: auto; max-height: 60vh;">
+          <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1200px;">
             <thead>
-              <tr style="background: #1a2f40; color: white;">
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">№ детали</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Название</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Текущий остаток</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Кому отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Количество</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата первой отправки</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Дата последней отправки</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправок</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправлено</th>
+              <tr style="background: #1a2f40; color: white; position: sticky; top: 0; z-index: 10;">
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 120px;">№ детали</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 150px;">Название</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Текущий остаток</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 180px;">Кому отправлено</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Всего отправлено</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 160px;">Дата первой отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 160px;">Дата последней отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Кол-во отправок</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 120px;">Сумма отправленного</th>
               </tr>
             </thead>
             <tbody id="reportTableBody">
@@ -1293,8 +1312,9 @@
         processedCount++;
         
         // Обновляем прогресс для каждой детали
+        const progressValue = 3 + (processedCount / allEntries.length);
         updateProgress(
-          3 + (processedCount / allEntries.length), 
+          progressValue, 
           5, 
           `Обработка детали ${processedCount} из ${allEntries.length}...`,
           [
@@ -1455,6 +1475,9 @@
     const tableBody = document.getElementById('reportTableBody');
     tableBody.innerHTML = '';
     
+    // Обновляем счетчик записей
+    document.getElementById('totalRecords').textContent = groupedData.length;
+    
     // Создаем маппинг текущих остатков по номерам деталей
     const currentQuantities = {};
     allEntries.forEach(entry => {
@@ -1467,14 +1490,14 @@
       row.style.borderBottom = '1px solid #ddd';
       
       // Форматируем даты для отображения
-      const firstDateFormatted = new Date(item.firstDate).toLocaleString('ru-RU');
-      const lastDateFormatted = new Date(item.lastDate).toLocaleString('ru-RU');
+      const firstDateFormatted = item.firstDate ? new Date(item.firstDate).toLocaleString('ru-RU') : 'Нет данных';
+      const lastDateFormatted = item.lastDate ? new Date(item.lastDate).toLocaleString('ru-RU') : 'Нет данных';
       
-      // Создаем ячейку с деталями отправок (при наведении)
+      // Создаем детали отправок для всплывающей подсказки
       const shipmentDetails = item.shipmentDetails.map(detail => 
         `<div class="shipment-item">
-           <span>${new Date(detail.date).toLocaleDateString('ru-RU')} ${new Date(detail.date).toLocaleTimeString('ru-RU')}</span>
-           <span><strong>${detail.taken} шт.</strong> (осталось: ${detail.remaining})</span>
+           <span class="shipment-date">${new Date(detail.date).toLocaleDateString('ru-RU')} ${new Date(detail.date).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}</span>
+           <span class="shipment-quantity">${detail.taken} шт. (ост: ${detail.remaining})</span>
          </div>`
       ).join('');
       
@@ -1484,41 +1507,56 @@
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${currentQuantities[item.partNumber] < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
           ${currentQuantities[item.partNumber] || 0}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;" title="${item.recipient}">
-          ${item.recipient}
-          <div class="shipment-group" style="display: none; margin-top: 5px;">
-            ${shipmentDetails}
+        <td style="padding: 10px; border: 1px solid #ddd; position: relative;">
+          <div style="cursor: help; position: relative;">
+            ${item.recipient}
+            <div class="shipment-group" id="shipment-group-${index}">
+              <div style="font-weight: bold; margin-bottom: 8px; color: #1565c0;">Детали отправок:</div>
+              ${shipmentDetails}
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd; font-weight: bold;">
+                Всего: ${item.totalTaken} шт. (${item.shipments} отправок)
+              </div>
+            </div>
           </div>
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;" title="Всего отправлено: ${item.totalTaken} шт.">
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">
           ${item.totalTaken}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;" title="Первая отправка">${firstDateFormatted}</td>
-        <td style="padding: 10px; border: 1px solid #ddd;" title="Последняя отправка">${lastDateFormatted}</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e3f2fd; font-weight: bold;" title="Количество отправок">
+        <td style="padding: 10px; border: 1px solid #ddd;">${firstDateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${lastDateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e3f2fd; font-weight: bold;">
           ${item.shipments}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3cd; font-weight: bold;" title="Общее количество отправленного">
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #fff3cd; font-weight: bold;">
           ${item.totalTaken} шт.
         </td>
       `;
       
       tableBody.appendChild(row);
       
-      // Добавляем обработчик для показа деталей отправок при наведении
+      // Добавляем обработчики для показа деталей отправок
       const recipientCell = row.cells[3];
-      recipientCell.addEventListener('mouseenter', function() {
-        const shipmentGroup = this.querySelector('.shipment-group');
-        if (shipmentGroup) {
-          shipmentGroup.style.display = 'block';
+      const shipmentGroup = document.getElementById(`shipment-group-${index}`);
+      
+      recipientCell.addEventListener('mouseenter', function(e) {
+        shipmentGroup.style.display = 'block';
+        // Позиционируем всплывающее окно
+        const rect = this.getBoundingClientRect();
+        shipmentGroup.style.left = (rect.right + 10) + 'px';
+        shipmentGroup.style.top = (rect.top) + 'px';
+      });
+      
+      recipientCell.addEventListener('mouseleave', function(e) {
+        // Проверяем, находится ли курсор над всплывающим окном
+        const relatedTarget = e.relatedTarget;
+        if (!shipmentGroup.contains(relatedTarget)) {
+          shipmentGroup.style.display = 'none';
         }
       });
       
-      recipientCell.addEventListener('mouseleave', function() {
-        const shipmentGroup = this.querySelector('.shipment-group');
-        if (shipmentGroup) {
-          shipmentGroup.style.display = 'none';
-        }
+      // Обработчик для всплывающего окна
+      shipmentGroup.addEventListener('mouseleave', function(e) {
+        this.style.display = 'none';
       });
     });
     
@@ -1566,70 +1604,124 @@
           <head>
             <title>Отчет по деталям</title>
             <style>
-              body { font-family: Arial, sans-serif; }
-              table { width: 100%; border-collapse: collapse; }
-              th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+              th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+              th { background-color: #f2f2f2; font-weight: bold; }
               .total-row { background-color: #e6f3ff; font-weight: bold; }
-              .shipment-group { display: none; }
+              @media print {
+                body { font-size: 10px; margin: 10px; }
+                table { font-size: 10px; }
+                th, td { padding: 4px; }
+              }
             </style>
           </head>
           <body>
             <h2>Отчет по всем деталям</h2>
-            <p>Сформировано: ${new Date().toLocaleString('ru-RU')}</p>
+            <p><strong>Сформировано:</strong> ${new Date().toLocaleString('ru-RU')}</p>
+            <p><strong>Всего записей:</strong> ${groupedData.length}</p>
             ${printContent}
+            <script>
+              window.onload = function() {
+                window.print();
+              };
+            <\/script>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
     };
   }
 
-  // Экспорт отчета в CSV
+  // Исправленная функция экспорта в CSV
   function exportReportToCSV(groupedData) {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Заголовки
-    csvContent += "Номер детали;Название;Текущий остаток;Получатель;Всего отправлено;Дата первой отправки;Дата последней отправки;Количество отправок;Сумма отправленного\n";
-    
-    // Данные
-    groupedData.forEach(item => {
-      const row = [
-        item.partNumber,
-        `"${item.partName}"`,
-        item.currentQuantity,
-        `"${item.recipient}"`,
-        item.totalTaken,
-        item.firstDate,
-        item.lastDate,
-        item.shipments,
-        item.totalTaken
-      ].join(';');
+    try {
+      // Создаем CSV контент
+      const csvRows = [];
       
-      csvContent += row + "\n";
-    });
-    
-    // Итоговая строка
-    const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
-    const totalShipments = groupedData.reduce((sum, item) => sum + item.shipments, 0);
-    const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
-    const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
-    
-    csvContent += `\nИтого:;${uniqueParts} деталей;;;;;;;\n`;
-    csvContent += `Всего получателей:;${uniqueRecipients};;;;;;\n`;
-    csvContent += `Общее количество отправок:;${totalShipments};;;;;;\n`;
-    csvContent += `Общее количество отправленного:;${totalTaken} шт;;;;;;\n`;
-    csvContent += `Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;;;\n`;
-    
-    // Создаем ссылку для скачивания
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `отчет_деталей_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // Заголовки
+      const headers = [
+        "Номер детали",
+        "Название", 
+        "Текущий остаток",
+        "Получатель",
+        "Всего отправлено",
+        "Дата первой отправки",
+        "Дата последней отправки", 
+        "Количество отправок",
+        "Сумма отправленного"
+      ];
+      
+      // Функция для экранирования CSV полей
+      const escapeCSV = (field) => {
+        if (field === null || field === undefined) return '';
+        const stringValue = String(field);
+        // Если содержит кавычки, точку с запятой или перевод строки
+        if (stringValue.includes('"') || stringValue.includes(';') || stringValue.includes('\n') || stringValue.includes('\r')) {
+          return '"' + stringValue.replace(/"/g, '""') + '"';
+        }
+        return stringValue;
+      };
+      
+      // Добавляем заголовки
+      csvRows.push(headers.map(escapeCSV).join(';'));
+      
+      // Добавляем данные
+      groupedData.forEach(item => {
+        const row = [
+          escapeCSV(item.partNumber),
+          escapeCSV(item.partName),
+          escapeCSV(item.currentQuantity),
+          escapeCSV(item.recipient),
+          escapeCSV(item.totalTaken),
+          escapeCSV(item.firstDate),
+          escapeCSV(item.lastDate),
+          escapeCSV(item.shipments),
+          escapeCSV(item.totalTaken)
+        ];
+        csvRows.push(row.join(';'));
+      });
+      
+      // Добавляем итоги
+      const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
+      const totalShipments = groupedData.reduce((sum, item) => sum + item.shipments, 0);
+      const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
+      const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
+      
+      csvRows.push(''); // Пустая строка
+      csvRows.push(`Итого:;${uniqueParts} деталей;;;;;;`);
+      csvRows.push(`Всего получателей:;${uniqueRecipients};;;;;;`);
+      csvRows.push(`Общее количество отправок:;${totalShipments};;;;;;`);
+      csvRows.push(`Общее количество отправленного:;${totalTaken} шт;;;;;;`);
+      csvRows.push(`Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;;;`);
+      
+      // Создаем CSV строку
+      const csvContent = csvRows.join('\n');
+      
+      // Создаем Blob с BOM для корректного отображения кириллицы в Excel
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Создаем ссылку для скачивания
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `отчет_деталей_${new Date().toISOString().split('T')[0]}.csv`;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Очищаем
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Ошибка при экспорте в CSV:', error);
+      alert('Произошла ошибка при экспорте. Пожалуйста, попробуйте снова.');
+    }
   }
 
   // Инициализация кнопки отчета
