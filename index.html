@@ -1595,6 +1595,14 @@
     // Экспорт в CSV
     document.getElementById('exportReportBtn').onclick = () => exportReportToCSV(groupedData);
     
+    // Тест CSV (добавляем для отладки)
+    const testCsvBtn = document.createElement('button');
+    testCsvBtn.className = 'btn';
+    testCsvBtn.style.background = '#ff9800; color: white; margin-left: 10px;';
+    testCsvBtn.innerHTML = '<i class="fas fa-bug"></i> Тест CSV';
+    testCsvBtn.onclick = () => testCSVFormat(groupedData);
+    document.getElementById('exportReportBtn').parentNode.appendChild(testCsvBtn);
+    
     // Печать
     document.getElementById('printReportBtn').onclick = () => {
       const printContent = document.getElementById('reportTable').outerHTML;
@@ -1633,95 +1641,144 @@
     };
   }
 
-  // Исправленная функция экспорта в CSV
+  // Простая и надежная функция экспорта в CSV
   function exportReportToCSV(groupedData) {
     try {
-      // Создаем CSV контент
-      const csvRows = [];
+      // 1. Создаем заголовки
+      let csv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Дата первой отправки","Дата последней отправки","Количество отправок","Сумма отправленного"\r\n';
       
-      // Заголовки
-      const headers = [
-        "Номер детали",
-        "Название", 
-        "Текущий остаток",
-        "Получатель",
-        "Всего отправлено",
-        "Дата первой отправки",
-        "Дата последней отправки", 
-        "Количество отправок",
-        "Сумма отправленного"
-      ];
-      
-      // Функция для экранирования CSV полей
-      const escapeCSV = (field) => {
-        if (field === null || field === undefined) return '';
-        const stringValue = String(field);
-        // Если содержит кавычки, точку с запятой или перевод строки
-        if (stringValue.includes('"') || stringValue.includes(';') || stringValue.includes('\n') || stringValue.includes('\r')) {
-          return '"' + stringValue.replace(/"/g, '""') + '"';
-        }
-        return stringValue;
-      };
-      
-      // Добавляем заголовки
-      csvRows.push(headers.map(escapeCSV).join(';'));
-      
-      // Добавляем данные
+      // 2. Добавляем данные
       groupedData.forEach(item => {
-        const row = [
-          escapeCSV(item.partNumber),
-          escapeCSV(item.partName),
-          escapeCSV(item.currentQuantity),
-          escapeCSV(item.recipient),
-          escapeCSV(item.totalTaken),
-          escapeCSV(item.firstDate),
-          escapeCSV(item.lastDate),
-          escapeCSV(item.shipments),
-          escapeCSV(item.totalTaken)
-        ];
-        csvRows.push(row.join(';'));
+        // Экранируем кавычки в текстовых полях
+        const partNumber = item.partNumber ? item.partNumber.replace(/"/g, '""') : '';
+        const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
+        const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
+        const firstDate = item.firstDate ? item.firstDate.replace(/"/g, '""') : '';
+        const lastDate = item.lastDate ? item.lastDate.replace(/"/g, '""') : '';
+        
+        csv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${firstDate}","${lastDate}",${item.shipments},${item.totalTaken}\r\n`;
       });
       
-      // Добавляем итоги
+      // 3. Добавляем итоги
       const totalTaken = groupedData.reduce((sum, item) => sum + item.totalTaken, 0);
       const totalShipments = groupedData.reduce((sum, item) => sum + item.shipments, 0);
       const uniqueParts = [...new Set(groupedData.map(item => item.partNumber))].length;
       const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
       
-      csvRows.push(''); // Пустая строка
-      csvRows.push(`Итого:;${uniqueParts} деталей;;;;;;`);
-      csvRows.push(`Всего получателей:;${uniqueRecipients};;;;;;`);
-      csvRows.push(`Общее количество отправок:;${totalShipments};;;;;;`);
-      csvRows.push(`Общее количество отправленного:;${totalTaken} шт;;;;;;`);
-      csvRows.push(`Дата формирования:;${new Date().toLocaleString('ru-RU')};;;;;;`);
+      csv += '\r\n';
+      csv += '"Итого","' + uniqueParts + ' деталей","","","","","","",""\r\n';
+      csv += '"Всего получателей","' + uniqueRecipients + '","","","","","","",""\r\n';
+      csv += '"Общее количество отправок","' + totalShipments + '","","","","","","",""\r\n';
+      csv += '"Общее количество отправленного","' + totalTaken + ' шт","","","","","","",""\r\n';
+      csv += '"Дата формирования","' + new Date().toLocaleString('ru-RU').replace(/"/g, '""') + '","","","","","","",""\r\n';
       
-      // Создаем CSV строку
-      const csvContent = csvRows.join('\n');
+      // 4. Создаем и скачиваем файл
+      const BOM = '\uFEFF'; // Byte Order Mark для UTF-8
+      const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
       
-      // Создаем Blob с BOM для корректного отображения кириллицы в Excel
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Создаем ссылку для скачивания
       const link = document.createElement('a');
       link.href = url;
       link.download = `отчет_деталей_${new Date().toISOString().split('T')[0]}.csv`;
-      link.style.display = 'none';
       
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       
-      // Очищаем
+      // Освобождаем память
       setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url);
       }, 100);
       
     } catch (error) {
       console.error('Ошибка при экспорте в CSV:', error);
       alert('Произошла ошибка при экспорте. Пожалуйста, попробуйте снова.');
     }
+  }
+
+  // Функция для тестирования формата CSV
+  function testCSVFormat(groupedData) {
+    if (groupedData.length === 0) {
+      alert('Нет данных для теста');
+      return;
+    }
+    
+    // Берем первые 2 записи для теста
+    const testData = groupedData.slice(0, 2);
+    
+    let testCsv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Дата первой отправки","Дата последней отправки","Количество отправок","Сумма отправленного"\r\n';
+    
+    testData.forEach(item => {
+      const partNumber = item.partNumber ? item.partNumber.replace(/"/g, '""') : '';
+      const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
+      const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
+      const firstDate = item.firstDate ? item.firstDate.replace(/"/g, '""') : '';
+      const lastDate = item.lastDate ? item.lastDate.replace(/"/g, '""') : '';
+      
+      testCsv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${firstDate}","${lastDate}",${item.shipments},${item.totalTaken}\r\n`;
+    });
+    
+    // Показываем тестовый CSV в новом окне
+    const testWindow = window.open('', '_blank');
+    testWindow.document.write(`
+      <html>
+        <head>
+          <title>Тест CSV формата</title>
+          <style>
+            body { font-family: monospace; white-space: pre-wrap; padding: 20px; background: #f5f5f5; }
+            .csv-header { color: #d32f2f; font-weight: bold; }
+            .csv-data { color: #1976d2; }
+            .instructions { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <h2>Тестовый CSV формат (первые 2 записи)</h2>
+          <div style="background: white; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+            <div class="csv-header">${testCsv.split('\r\n')[0]}</div>
+            <div class="csv-data">${testCsv.split('\r\n')[1]}</div>
+            <div class="csv-data">${testCsv.split('\r\n')[2]}</div>
+          </div>
+          
+          <div class="instructions">
+            <h3>Как правильно открыть CSV в Excel:</h3>
+            <ol>
+              <li><strong>Способ 1 (рекомендуется):</strong>
+                <ul>
+                  <li>Откройте Excel</li>
+                  <li>Перейдите на вкладку "Данные"</li>
+                  <li>Нажмите "Получить данные" → "Из файла" → "Из текста/CSV"</li>
+                  <li>Выберите файл CSV</li>
+                  <li>В окне импорта установите:
+                    <ul>
+                      <li>Кодировка: UTF-8</li>
+                      <li>Разделитель: Запятая</li>
+                      <li>Тип данных: Определить типы данных</li>
+                    </ul>
+                  </li>
+                  <li>Нажмите "Загрузить"</li>
+                </ul>
+              </li>
+              <li><strong>Способ 2:</strong>
+                <ul>
+                  <li>Измените расширение файла с .csv на .txt</li>
+                  <li>Откройте Excel</li>
+                  <li>Файл → Открыть → выберите ваш .txt файл</li>
+                  <li>В мастере импорта выберите:
+                    <ul>
+                      <li>Тип данных: С разделителями</li>
+                      <li>Кодировка: 65001: Unicode (UTF-8)</li>
+                      <li>Разделитель: запятая</li>
+                      <li>Текст в кавычках: двойные кавычки</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </body>
+      </html>
+    `);
+    testWindow.document.close();
   }
 
   // Инициализация кнопки отчета
