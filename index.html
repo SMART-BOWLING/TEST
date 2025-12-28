@@ -848,14 +848,92 @@
       font-weight: 800;
     }
     
-    /* Стиль для кнопки итоговой истории */
-    #btnTotalHistory {
-      background: linear-gradient(to bottom, #2e7d32, #1b5e20) !important;
+    /* Стиль для кнопки Отчет (бывшая Итоговая история) */
+    #btnReport {
+      background: linear-gradient(to bottom, #1565c0, #0d47a1) !important;
       color: white !important;
     }
 
-    #btnTotalHistory:hover {
-      background: linear-gradient(to bottom, #388e3c, #2e7d32) !important;
+    #btnReport:hover {
+      background: linear-gradient(to bottom, #1976d2, #1565c0) !important;
+    }
+    
+    /* Стили для прогресс-бара */
+    .progress-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      backdrop-filter: blur(3px);
+    }
+    
+    .progress-content {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 400px;
+      max-width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: modalAppear 0.3s ease;
+    }
+    
+    .progress-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #1a2f40;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1565c0, #42a5f5);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    
+    .progress-text {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #777;
+      margin-top: 10px;
+    }
+    
+    .progress-details {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      text-align: left;
+    }
+    
+    .progress-detail {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
@@ -863,6 +941,24 @@
 <!-- Индикатор загрузки -->
 <div class="loader-container" id="loader">
   <div class="loader"></div>
+</div>
+
+<!-- Модальное окно прогресса -->
+<div class="progress-modal" id="progressModal">
+  <div class="progress-content">
+    <div class="progress-title">Формирование отчета</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">Подготовка данных...</div>
+    <div class="progress-stats">
+      <span id="processedItems">0</span>
+      <span id="totalItems">0</span>
+    </div>
+    <div class="progress-details" id="progressDetails">
+      <div class="progress-detail">Сбор информации о деталях...</div>
+    </div>
+  </div>
 </div>
 
 <!-- Шапка -->
@@ -1025,45 +1121,71 @@
     return limitedAccessEmails.includes(userEmail);
   }
 
-  // ============= ФУНКЦИИ ДЛЯ ИТОГОВОЙ ИСТОРИИ =============
+  // ============= ФУНКЦИИ ДЛЯ ОТЧЕТА =============
   
   // Добавьте эту кнопку в верхний блок управления
-  function addHistoryButton() {
+  function addReportButton() {
     const topControls = document.getElementById('topControls');
     
-    // Создаем кнопку для итоговой истории
-    const historyBtn = document.createElement('button');
-    historyBtn.className = 'btn-top';
-    historyBtn.id = 'btnTotalHistory';
-    historyBtn.innerHTML = '<i class="fas fa-list-alt"></i> Итоговая история';
-    historyBtn.onclick = generateTotalHistory;
+    // Создаем кнопку для отчета
+    const reportBtn = document.createElement('button');
+    reportBtn.className = 'btn-top';
+    reportBtn.id = 'btnReport';
+    reportBtn.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
+    reportBtn.onclick = generateReport;
     
-    // Вставляем кнопку после кнопки поиска
+    // Вставляем кнопку после кнопки поиска (теперь она будет перед кнопкой Сбросить)
     const searchBtn = document.getElementById('btnSearch');
-    searchBtn.parentNode.insertBefore(historyBtn, searchBtn.nextSibling);
+    searchBtn.parentNode.insertBefore(reportBtn, searchBtn.nextSibling);
   }
 
-  // Модальное окно для отображения итоговой истории
-  function createHistoryModal() {
+  // Модальное окно для отображения прогресса
+  function createProgressModal() {
+    const modal = document.createElement('div');
+    modal.className = 'progress-modal';
+    modal.id = 'progressModal';
+    
+    modal.innerHTML = `
+      <div class="progress-content">
+        <div class="progress-title">Формирование отчета</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">Подготовка данных...</div>
+        <div class="progress-stats">
+          <span id="processedItems">0</span>
+          <span id="totalItems">0</span>
+        </div>
+        <div class="progress-details" id="progressDetails">
+          <div class="progress-detail">Сбор информации о деталях...</div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  }
+
+  // Модальное окно для отображения отчета
+  function createReportModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    modal.id = 'historyModal';
+    modal.id = 'reportModal';
     modal.style.display = 'none';
     
     modal.innerHTML = `
       <div class="modal" style="max-width: 90%; max-height: 85vh;">
-        <div class="modal-close" onclick="closeHistoryModal()">×</div>
-        <h3>Итоговая история по всем деталям</h3>
+        <div class="modal-close" onclick="closeReportModal()">×</div>
+        <h3>Отчет по всем деталям</h3>
         <div style="margin: 20px 0;">
-          <button id="exportHistoryBtn" class="btn" style="background: #2e7d32; color: white;">
+          <button id="exportReportBtn" class="btn" style="background: #2e7d32; color: white;">
             <i class="fas fa-download"></i> Экспорт в CSV
           </button>
-          <button id="printHistoryBtn" class="btn" style="background: #1565c0; color: white; margin-left: 10px;">
+          <button id="printReportBtn" class="btn" style="background: #1565c0; color: white; margin-left: 10px;">
             <i class="fas fa-print"></i> Печать
           </button>
         </div>
         <div style="overflow-x: auto;">
-          <table id="historyTable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <table id="reportTable" style="width: 100%; border-collapse: collapse; font-size: 14px;">
             <thead>
               <tr style="background: #1a2f40; color: white;">
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">№ детали</th>
@@ -1075,7 +1197,7 @@
                 <th style="padding: 12px; border: 1px solid #444; text-align: left;">Всего отправлено</th>
               </tr>
             </thead>
-            <tbody id="historyTableBody">
+            <tbody id="reportTableBody">
             </tbody>
           </table>
         </div>
@@ -1085,26 +1207,83 @@
     document.body.appendChild(modal);
   }
 
-  // Функция для закрытия модального окна истории
-  function closeHistoryModal() {
-    document.getElementById('historyModal').style.display = 'none';
+  // Функция для закрытия модального окна отчета
+  function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
   }
 
-  // Основная функция для генерации итоговой истории
-  async function generateTotalHistory() {
-    showLoader(true);
+  // Функция для показа/скрытия прогресса
+  function showProgressModal(show) {
+    document.getElementById('progressModal').style.display = show ? 'flex' : 'none';
+  }
+
+  // Функция для обновления прогресса
+  function updateProgress(step, total, message, details) {
+    const percent = Math.round((step / total) * 100);
+    document.getElementById('progressFill').style.width = percent + '%';
+    document.getElementById('progressText').textContent = message;
+    document.getElementById('processedItems').textContent = `Обработано: ${step}`;
+    document.getElementById('totalItems').textContent = `Всего: ${total}`;
+    
+    if (details) {
+      const detailsContainer = document.getElementById('progressDetails');
+      detailsContainer.innerHTML = details.map(detail => 
+        `<div class="progress-detail">${detail}</div>`
+      ).join('');
+    }
+  }
+
+  // Основная функция для генерации отчета
+  async function generateReport() {
+    showProgressModal(true);
     
     try {
+      // Обновляем прогресс - этап 1
+      updateProgress(1, 5, "Подключение к базе данных...", [
+        "Установка соединения",
+        "Проверка доступности сервера"
+      ]);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Получаем все записи
       const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
+      
+      // Обновляем прогресс - этап 2
+      updateProgress(2, 5, "Загрузка данных о деталях...", [
+        "Получение списка деталей",
+        "Загрузка информации о количестве"
+      ]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const res = await fetch(`${API_URL}?action=getEntries`);
       const allEntries = await res.json();
       
+      // Обновляем прогресс - этап 3
+      updateProgress(3, 5, "Анализ истории изменений...", [
+        `Загружено ${allEntries.length} деталей`,
+        "Начало анализа истории"
+      ]);
+      
       // Массив для хранения данных истории
       const historyData = [];
+      let processedCount = 0;
       
-      // Для каждой детали получаем историю
+      // Для каждой детали получаем историю с прогрессом
       for (const entry of allEntries) {
+        processedCount++;
+        
+        // Обновляем прогресс для каждой детали
+        updateProgress(
+          3 + (processedCount / allEntries.length), 
+          5, 
+          `Обработка детали ${processedCount} из ${allEntries.length}...`,
+          [
+            `Деталь: ${entry.partNumber}`,
+            `Название: ${entry.partName || 'Не указано'}`,
+            `Текущий остаток: ${entry.quantity}`
+          ]
+        );
+        
         const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
         const historyText = await historyRes.text();
         
@@ -1113,25 +1292,48 @@
         
         // Добавляем в общий массив
         historyData.push(...historyItems);
+        
+        // Небольшая задержка для плавного прогресса
+        if (processedCount % 3 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
+      
+      // Обновляем прогресс - этап 4
+      updateProgress(4, 5, "Группировка и анализ данных...", [
+        `Проанализировано ${historyData.length} записей истории`,
+        "Группировка по получателям",
+        "Подсчет итогов"
+      ]);
+      await new Promise(resolve => setTimeout(resolve, 400));
       
       // Группируем данные по получателям
       const groupedData = groupHistoryByRecipient(historyData);
       
+      // Обновляем прогресс - этап 5
+      updateProgress(5, 5, "Формирование отчета...", [
+        "Создание таблицы",
+        "Подготовка к отображению",
+        "Отчет готов!"
+      ]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Закрываем прогресс и показываем отчет
+      showProgressModal(false);
+      
       // Отображаем результаты
-      displayHistoryTable(groupedData, allEntries);
+      displayReportTable(groupedData, allEntries);
       
       // Показываем модальное окно
-      document.getElementById('historyModal').style.display = 'flex';
+      document.getElementById('reportModal').style.display = 'flex';
       
       // Добавляем обработчики для кнопок экспорта и печати
-      setupHistoryButtons(groupedData);
+      setupReportButtons(groupedData);
       
     } catch (error) {
-      console.error('Ошибка при генерации истории:', error);
-      alert('Произошла ошибка при формировании истории');
-    } finally {
-      showLoader(false);
+      console.error('Ошибка при генерации отчета:', error);
+      showProgressModal(false);
+      alert('Произошла ошибка при формировании отчета: ' + error.message);
     }
   }
 
@@ -1210,9 +1412,9 @@
     });
   }
 
-  // Отображение таблицы с историей
-  function displayHistoryTable(groupedData, allEntries) {
-    const tableBody = document.getElementById('historyTableBody');
+  // Отображение таблицы с отчетом
+  function displayReportTable(groupedData, allEntries) {
+    const tableBody = document.getElementById('reportTableBody');
     tableBody.innerHTML = '';
     
     // Создаем маппинг текущих остатков по номерам деталей
@@ -1275,18 +1477,18 @@
   }
 
   // Настройка кнопок экспорта и печати
-  function setupHistoryButtons(groupedData) {
+  function setupReportButtons(groupedData) {
     // Экспорт в CSV
-    document.getElementById('exportHistoryBtn').onclick = () => exportHistoryToCSV(groupedData);
+    document.getElementById('exportReportBtn').onclick = () => exportReportToCSV(groupedData);
     
     // Печать
-    document.getElementById('printHistoryBtn').onclick = () => {
-      const printContent = document.getElementById('historyTable').outerHTML;
+    document.getElementById('printReportBtn').onclick = () => {
+      const printContent = document.getElementById('reportTable').outerHTML;
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <html>
           <head>
-            <title>Итоговая история деталей</title>
+            <title>Отчет по деталям</title>
             <style>
               body { font-family: Arial, sans-serif; }
               table { width: 100%; border-collapse: collapse; }
@@ -1296,7 +1498,7 @@
             </style>
           </head>
           <body>
-            <h2>Итоговая история по всем деталям</h2>
+            <h2>Отчет по всем деталям</h2>
             <p>Сформировано: ${new Date().toLocaleString('ru-RU')}</p>
             ${printContent}
           </body>
@@ -1307,8 +1509,8 @@
     };
   }
 
-  // Экспорт истории в CSV
-  function exportHistoryToCSV(groupedData) {
+  // Экспорт отчета в CSV
+  function exportReportToCSV(groupedData) {
     let csvContent = "data:text/csv;charset=utf-8,";
     
     // Заголовки
@@ -1342,21 +1544,22 @@
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `история_деталей_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `отчет_деталей_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
-  // Инициализация кнопки истории
-  function initHistoryButton() {
+  // Инициализация кнопки отчета
+  function initReportButton() {
     // Добавляем кнопку только для авторизованных пользователей без ограниченного доступа
     const userEmail = localStorage.getItem("userEmail");
     const limitedAccessEmails = ["nikoshina16@gmail.com", "bowlingblock.b@gmail.com"];
     
     if (userEmail && !limitedAccessEmails.includes(userEmail)) {
-      addHistoryButton();
-      createHistoryModal();
+      addReportButton();
+      createProgressModal();
+      createReportModal();
     }
   }
 
@@ -1372,11 +1575,8 @@
     let totalPages = 1;
     const cardsPerPage = 5;
 
-    // Инициализируем кнопку истории
-    initHistoryButton();
-
-    // УБРАН КОД, КОТОРЫЙ СКРЫВАЛ КНОПКИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ С ОГРАНИЧЕННЫМ ДОСТУПОМ
-    // Теперь кнопки видны всем пользователям
+    // Инициализируем кнопку отчета
+    initReportButton();
 
     // Основные функции приложения
     async function getEntries() {
@@ -1817,7 +2017,6 @@
     }
 
     // Инициализация событий
-    // Для пользователей с ограниченным доступом оставляем функционал кнопок
     document.getElementById('btnSearch')?.addEventListener('click', () => {
       const term = prompt('Введите номер детали для поиска:');
       if (term !== null) {
