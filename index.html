@@ -1230,8 +1230,7 @@
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Текущий остаток</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 180px;">Кому отправлено</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Всего отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 160px;">Дата первой отправки</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 160px;">Дата последней отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; min-width: 200px;">Даты отправок</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 100px;">Кол-во отправок</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: center; min-width: 120px;">Сумма отправленного</th>
               </tr>
@@ -1428,9 +1427,8 @@
           recipient: item.recipient,
           totalTaken: 0,
           shipments: 0, // Количество отправок
-          firstDate: item.date,
-          lastDate: item.date,
           items: [],
+          shipmentDates: [], // Массив всех дат отправок
           shipmentDetails: [], // Детали каждой отправки
           currentQuantity: item.currentQuantity
         };
@@ -1442,22 +1440,15 @@
       // Увеличиваем счетчик отправок
       grouped[key].shipments += 1;
       
+      // Добавляем дату отправки
+      grouped[key].shipmentDates.push(item.date);
+      
       // Добавляем детали отправки
       grouped[key].shipmentDetails.push({
         date: item.date,
         taken: item.taken,
         remaining: item.remaining
       });
-      
-      // Обновляем первую дату (если это первая отправка)
-      if (!grouped[key].firstDate || new Date(item.date) < new Date(grouped[key].firstDate)) {
-        grouped[key].firstDate = item.date;
-      }
-      
-      // Обновляем последнюю дату
-      if (new Date(item.date) > new Date(grouped[key].lastDate)) {
-        grouped[key].lastDate = item.date;
-      }
     });
     
     // Преобразуем объект в массив и сортируем
@@ -1489,17 +1480,21 @@
       row.style.backgroundColor = index % 2 === 0 ? '#f9f9f9' : '#fff';
       row.style.borderBottom = '1px solid #ddd';
       
-      // Форматируем даты для отображения
-      const firstDateFormatted = item.firstDate ? new Date(item.firstDate).toLocaleString('ru-RU') : 'Нет данных';
-      const lastDateFormatted = item.lastDate ? new Date(item.lastDate).toLocaleString('ru-RU') : 'Нет данных';
+      // Форматируем все даты отправок для отображения в одной ячейке
+      const shipmentDatesFormatted = item.shipmentDates
+        .sort((a, b) => new Date(b) - new Date(a)) // Сортируем от новых к старым
+        .map(date => new Date(date).toLocaleDateString('ru-RU'))
+        .join('\n'); // Разделяем переносом строки
       
       // Создаем детали отправок для всплывающей подсказки
-      const shipmentDetails = item.shipmentDetails.map(detail => 
-        `<div class="shipment-item">
-           <span class="shipment-date">${new Date(detail.date).toLocaleDateString('ru-RU')} ${new Date(detail.date).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}</span>
-           <span class="shipment-quantity">${detail.taken} шт. (ост: ${detail.remaining})</span>
-         </div>`
-      ).join('');
+      const shipmentDetails = item.shipmentDetails
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .map(detail => 
+          `<div class="shipment-item">
+             <span class="shipment-date">${new Date(detail.date).toLocaleDateString('ru-RU')}</span>
+             <span class="shipment-quantity">${detail.taken} шт.</span>
+           </div>`
+        ).join('');
       
       row.innerHTML = `
         <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${item.partNumber}</td>
@@ -1511,7 +1506,7 @@
           <div style="cursor: help; position: relative;">
             ${item.recipient}
             <div class="shipment-group" id="shipment-group-${index}">
-              <div style="font-weight: bold; margin-bottom: 8px; color: #1565c0;">Детали отправок:</div>
+              <div style="font-weight: bold; margin-bottom: 8px; color: #1565c0;">Все даты отправок:</div>
               ${shipmentDetails}
               <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd; font-weight: bold;">
                 Всего: ${item.totalTaken} шт. (${item.shipments} отправок)
@@ -1522,8 +1517,9 @@
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: #d32f2f; font-weight: bold;">
           ${item.totalTaken}
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;">${firstDateFormatted}</td>
-        <td style="padding: 10px; border: 1px solid #ddd;">${lastDateFormatted}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; white-space: pre-line; min-width: 200px;">
+          ${shipmentDatesFormatted || 'Нет данных'}
+        </td>
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center; background: #e3f2fd; font-weight: bold;">
           ${item.shipments}
         </td>
@@ -1572,7 +1568,7 @@
       const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
       
       totalRow.innerHTML = `
-        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="3">
+        <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
           Итого: ${uniqueParts} деталей, ${uniqueRecipients} получателей
         </td>
         <td style="padding: 12px; border: 1px solid #444; text-align: center;" colspan="2">
@@ -1617,10 +1613,12 @@
               th, td { border: 1px solid #000; padding: 6px; text-align: left; }
               th { background-color: #f2f2f2; font-weight: bold; }
               .total-row { background-color: #e6f3ff; font-weight: bold; }
+              .dates-cell { white-space: pre-line; }
               @media print {
                 body { font-size: 10px; margin: 10px; }
                 table { font-size: 10px; }
                 th, td { padding: 4px; }
+                .dates-cell { font-size: 8px; }
               }
             </style>
           </head>
@@ -1645,7 +1643,7 @@
   function exportReportToCSV(groupedData) {
     try {
       // 1. Создаем заголовки
-      let csv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Дата первой отправки","Дата последней отправки","Количество отправок","Сумма отправленного"\r\n';
+      let csv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Даты отправок","Количество отправок","Сумма отправленного"\r\n';
       
       // 2. Добавляем данные
       groupedData.forEach(item => {
@@ -1653,10 +1651,14 @@
         const partNumber = item.partNumber ? item.partNumber.replace(/"/g, '""') : '';
         const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
         const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
-        const firstDate = item.firstDate ? item.firstDate.replace(/"/g, '""') : '';
-        const lastDate = item.lastDate ? item.lastDate.replace(/"/g, '""') : '';
         
-        csv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${firstDate}","${lastDate}",${item.shipments},${item.totalTaken}\r\n`;
+        // Форматируем даты для CSV (через запятую)
+        const shipmentDates = item.shipmentDates
+          .sort((a, b) => new Date(b) - new Date(a))
+          .map(date => new Date(date).toLocaleDateString('ru-RU'))
+          .join(', ');
+        
+        csv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${shipmentDates}",${item.shipments},${item.totalTaken}\r\n`;
       });
       
       // 3. Добавляем итоги
@@ -1666,11 +1668,11 @@
       const uniqueRecipients = [...new Set(groupedData.map(item => item.recipient))].length;
       
       csv += '\r\n';
-      csv += '"Итого","' + uniqueParts + ' деталей","","","","","","",""\r\n';
-      csv += '"Всего получателей","' + uniqueRecipients + '","","","","","","",""\r\n';
-      csv += '"Общее количество отправок","' + totalShipments + '","","","","","","",""\r\n';
-      csv += '"Общее количество отправленного","' + totalTaken + ' шт","","","","","","",""\r\n';
-      csv += '"Дата формирования","' + new Date().toLocaleString('ru-RU').replace(/"/g, '""') + '","","","","","","",""\r\n';
+      csv += '"Итого","' + uniqueParts + ' деталей","","","","","",""\r\n';
+      csv += '"Всего получателей","' + uniqueRecipients + '","","","","","",""\r\n';
+      csv += '"Общее количество отправок","' + totalShipments + '","","","","","",""\r\n';
+      csv += '"Общее количество отправленного","' + totalTaken + ' шт","","","","","",""\r\n';
+      csv += '"Дата формирования","' + new Date().toLocaleString('ru-RU').replace(/"/g, '""') + '","","","","","",""\r\n';
       
       // 4. Создаем и скачиваем файл
       const BOM = '\uFEFF'; // Byte Order Mark для UTF-8
@@ -1706,16 +1708,20 @@
     // Берем первые 2 записи для теста
     const testData = groupedData.slice(0, 2);
     
-    let testCsv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Дата первой отправки","Дата последней отправки","Количество отправок","Сумма отправленного"\r\n';
+    let testCsv = '"Номер детали","Название","Текущий остаток","Получатель","Всего отправлено","Даты отправок","Количество отправок","Сумма отправленного"\r\n';
     
     testData.forEach(item => {
       const partNumber = item.partNumber ? item.partNumber.replace(/"/g, '""') : '';
       const partName = item.partName ? item.partName.replace(/"/g, '""') : '';
       const recipient = item.recipient ? item.recipient.replace(/"/g, '""') : '';
-      const firstDate = item.firstDate ? item.firstDate.replace(/"/g, '""') : '';
-      const lastDate = item.lastDate ? item.lastDate.replace(/"/g, '""') : '';
       
-      testCsv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${firstDate}","${lastDate}",${item.shipments},${item.totalTaken}\r\n`;
+      // Форматируем даты для CSV
+      const shipmentDates = item.shipmentDates
+        .sort((a, b) => new Date(b) - new Date(a))
+        .map(date => new Date(date).toLocaleDateString('ru-RU'))
+        .join(', ');
+      
+      testCsv += `"${partNumber}","${partName}",${item.currentQuantity},"${recipient}",${item.totalTaken},"${shipmentDates}",${item.shipments},${item.totalTaken}\r\n`;
     });
     
     // Показываем тестовый CSV в новом окне
@@ -1740,40 +1746,13 @@
           </div>
           
           <div class="instructions">
-            <h3>Как правильно открыть CSV в Excel:</h3>
-            <ol>
-              <li><strong>Способ 1 (рекомендуется):</strong>
-                <ul>
-                  <li>Откройте Excel</li>
-                  <li>Перейдите на вкладку "Данные"</li>
-                  <li>Нажмите "Получить данные" → "Из файла" → "Из текста/CSV"</li>
-                  <li>Выберите файл CSV</li>
-                  <li>В окне импорта установите:
-                    <ul>
-                      <li>Кодировка: UTF-8</li>
-                      <li>Разделитель: Запятая</li>
-                      <li>Тип данных: Определить типы данных</li>
-                    </ul>
-                  </li>
-                  <li>Нажмите "Загрузить"</li>
-                </ul>
-              </li>
-              <li><strong>Способ 2:</strong>
-                <ul>
-                  <li>Измените расширение файла с .csv на .txt</li>
-                  <li>Откройте Excel</li>
-                  <li>Файл → Открыть → выберите ваш .txt файл</li>
-                  <li>В мастере импорта выберите:
-                    <ul>
-                      <li>Тип данных: С разделителями</li>
-                      <li>Кодировка: 65001: Unicode (UTF-8)</li>
-                      <li>Разделитель: запятая</li>
-                      <li>Текст в кавычках: двойные кавычки</li>
-                    </ul>
-                  </li>
-                </ul>
-              </li>
-            </ol>
+            <h3>Новый формат отчета:</h3>
+            <ul>
+              <li>Убраны колонки "Дата первой отправки" и "Дата последней отправки"</li>
+              <li>Добавлена колонка "Даты отправок" - все даты через запятую в одной ячейке</li>
+              <li>В таблице на сайте даты отображаются через перенос строки</li>
+              <li>При наведении на номер телефона показываются детали отправок</li>
+            </ul>
           </div>
         </body>
       </html>
