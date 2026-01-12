@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- html2pdf library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     /* Стили для выпадающего списка SKYMALL */
     .site-name-dropdown {
@@ -935,84 +937,162 @@
       color: #555;
     }
     
-    /* Стили для таблицы отчета */
-    .report-table {
+    /* Стили для отчета в PDF */
+    .pdf-report {
+      font-family: Arial, sans-serif;
+      width: 100%;
+      padding: 20px;
+      background: white;
+    }
+    
+    .pdf-report h1 {
+      color: #1a2f40;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    
+    .pdf-report h2 {
+      color: #1565c0;
+      margin: 30px 0 15px 0;
+      font-size: 18px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 5px;
+    }
+    
+    .pdf-report .report-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .pdf-report .report-info div {
+      flex: 1;
+      text-align: center;
+    }
+    
+    .pdf-report table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin: 10px 0;
+      font-size: 12px;
     }
     
-    .report-table th {
+    .pdf-report th {
       background: #1a2f40;
       color: white;
-      padding: 12px;
+      padding: 8px;
       border: 1px solid #444;
       text-align: left;
-      position: sticky;
-      top: 0;
     }
     
-    .report-table td {
-      padding: 10px;
+    .pdf-report td {
+      padding: 6px;
       border: 1px solid #ddd;
     }
     
-    .report-table tr:nth-child(even) {
-      background: #f8f9fa;
-    }
-    
-    .report-table tr:hover {
-      background: #e3f2fd;
-    }
-    
-    .report-table .part-row {
-      background: #e8f5e8 !important;
+    .pdf-report .part-header {
+      background: #e8f5e8;
       font-weight: bold;
     }
     
-    .report-table .shipment-row {
+    .pdf-report .shipment-row {
       background: #fff;
     }
     
-    .report-table .total-row {
-      background: #e3f2fd !important;
+    .pdf-report .total-row {
+      background: #e3f2fd;
       font-weight: bold;
     }
     
-    /* Стили для деталей отправок */
-    .shipment-details {
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
-    }
-    
-    .shipment-detail-item {
-      display: flex;
-      justify-content: space-between;
-      margin: 2px 0;
-    }
-    
-    /* Стили для отчета */
-    .report-summary {
-      background: #e3f2fd;
+    .pdf-report .summary {
+      margin-top: 30px;
       padding: 15px;
+      background: #f8f9fa;
       border-radius: 8px;
-      margin: 20px 0;
     }
     
-    .report-summary-item {
+    .pdf-report .summary-row {
       display: flex;
       justify-content: space-between;
       margin: 5px 0;
     }
     
-    .report-summary-label {
+    .pdf-report .summary-label {
       font-weight: bold;
       color: #1565c0;
     }
     
-    .report-summary-value {
+    .pdf-report .summary-value {
       font-weight: bold;
+    }
+    
+    .pdf-report .page-break {
+      page-break-after: always;
+    }
+    
+    /* Стили для модального окна с опциями PDF */
+    .pdf-options-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 100001;
+    }
+    
+    .pdf-options-content {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 400px;
+      max-width: 90%;
+    }
+    
+    .pdf-option-group {
+      margin: 15px 0;
+    }
+    
+    .pdf-option-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #1a2f40;
+    }
+    
+    .pdf-option-checkbox {
+      margin-right: 10px;
+    }
+    
+    .pdf-option-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 25px;
+    }
+    
+    .pdf-option-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .pdf-option-btn-cancel {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .pdf-option-btn-generate {
+      background: #28a745;
+      color: white;
     }
   </style>
 </head>
@@ -1022,7 +1102,56 @@
   <div class="loader"></div>
 </div>
 
-<!-- Прогресс бар (будет создан динамически) -->
+<!-- Модальное окно с опциями PDF -->
+<div class="pdf-options-modal" id="pdfOptionsModal">
+  <div class="pdf-options-content">
+    <h3>Настройки экспорта в PDF</h3>
+    
+    <div class="pdf-option-group">
+      <label class="pdf-option-label">
+        <input type="checkbox" class="pdf-option-checkbox" id="includeSummary" checked>
+        Включать итоговую информацию
+      </label>
+    </div>
+    
+    <div class="pdf-option-group">
+      <label class="pdf-option-label">
+        <input type="checkbox" class="pdf-option-checkbox" id="includeDates" checked>
+        Включать даты отправок
+      </label>
+    </div>
+    
+    <div class="pdf-option-group">
+      <label class="pdf-option-label">
+        <input type="checkbox" class="pdf-option-checkbox" id="groupByPart" checked>
+        Группировать по деталям
+      </label>
+    </div>
+    
+    <div class="pdf-option-group">
+      <label class="pdf-option-label">
+        <input type="checkbox" class="pdf-option-checkbox" id="compactView">
+        Компактный вид (меньше отступов)
+      </label>
+    </div>
+    
+    <div class="pdf-option-group">
+      <label class="pdf-option-label">
+        <input type="radio" class="pdf-option-checkbox" name="orientation" value="portrait" checked>
+        Книжная ориентация
+      </label>
+      <label class="pdf-option-label">
+        <input type="radio" class="pdf-option-checkbox" name="orientation" value="landscape">
+        Альбомная ориентация
+      </label>
+    </div>
+    
+    <div class="pdf-option-buttons">
+      <button class="pdf-option-btn pdf-option-btn-cancel" onclick="closePdfOptions()">Отмена</button>
+      <button class="pdf-option-btn pdf-option-btn-generate" onclick="generatePdfWithOptions()">Создать PDF</button>
+    </div>
+  </div>
+</div>
 
 <!-- Шапка -->
 <header>
@@ -1073,8 +1202,6 @@
     <button id="btnSearch" class="btn-top">
       <i class="fas fa-search"></i> Поиск
     </button>
-
-    <!-- Кнопка Отчет будет добавлена динамически -->
 
     <button id="btnReset" class="btn-top">
       <i class="fas fa-sync-alt"></i> Сбросить
@@ -1186,7 +1313,298 @@
     return limitedAccessEmails.includes(userEmail);
   }
 
-  // ============= УЛУЧШЕННЫЕ ФУНКЦИИ ДЛЯ ОТЧЕТА =============
+  // ============= ФУНКЦИИ ДЛЯ PDF ЭКСПОРТА =============
+
+  // Функция для открытия модального окна с опциями PDF
+  function openPdfOptions() {
+    document.getElementById('pdfOptionsModal').style.display = 'flex';
+  }
+
+  // Функция для закрытия модального окна с опциями PDF
+  function closePdfOptions() {
+    document.getElementById('pdfOptionsModal').style.display = 'none';
+  }
+
+  // Генерация PDF с выбранными опциями
+  function generatePdfWithOptions() {
+    closePdfOptions();
+    
+    const options = {
+      includeSummary: document.getElementById('includeSummary').checked,
+      includeDates: document.getElementById('includeDates').checked,
+      groupByPart: document.getElementById('groupByPart').checked,
+      compactView: document.getElementById('compactView').checked,
+      orientation: document.querySelector('input[name="orientation"]:checked').value
+    };
+    
+    generatePdfReport(options);
+  }
+
+  // Основная функция генерации PDF
+  function generatePdfReport(options = {}) {
+    if (!window.currentReportData || window.currentReportData.length === 0) {
+      alert('Нет данных для экспорта в PDF');
+      return;
+    }
+    
+    showLoader(true);
+    
+    try {
+      // Создаем HTML для PDF
+      const pdfHtml = createPdfHtml(window.currentReportData, options);
+      
+      // Создаем временный элемент для PDF
+      const element = document.createElement('div');
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.innerHTML = pdfHtml;
+      document.body.appendChild(element);
+      
+      // Настройки для html2pdf
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `отчет_отправок_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          windowWidth: element.scrollWidth
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: options.orientation || 'portrait'
+        }
+      };
+      
+      // Генерируем PDF
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .then(() => {
+          document.body.removeChild(element);
+          showLoader(false);
+        })
+        .catch(error => {
+          console.error('Ошибка при создании PDF:', error);
+          document.body.removeChild(element);
+          showLoader(false);
+          alert('Произошла ошибка при создании PDF. Попробуйте еще раз.');
+        });
+        
+    } catch (error) {
+      console.error('Ошибка при генерации PDF:', error);
+      showLoader(false);
+      alert('Произошла ошибка: ' + error.message);
+    }
+  }
+
+  // Создание HTML для PDF
+  function createPdfHtml(reportData, options) {
+    const totalShipped = reportData.reduce((sum, item) => sum + item.totalShipped, 0);
+    const totalRecipients = reportData.reduce((sum, item) => sum + item.shipments.length, 0);
+    const totalParts = reportData.length;
+    
+    let html = `
+      <div class="pdf-report" style="${options.compactView ? 'padding: 10px;' : 'padding: 20px;'}">
+        <h1 style="font-size: ${options.compactView ? '20px' : '24px'}; margin-bottom: ${options.compactView ? '15px' : '20px'};">Отчет по отправкам деталей</h1>
+        
+        <div class="report-info" style="margin-bottom: ${options.compactView ? '15px' : '20px'}; padding: ${options.compactView ? '8px' : '10px'}; font-size: ${options.compactView ? '11px' : '12px'}">
+          <div>
+            <strong>Дата формирования:</strong><br>
+            ${new Date().toLocaleString('ru-RU')}
+          </div>
+          <div>
+            <strong>Всего деталей:</strong><br>
+            ${totalParts}
+          </div>
+          <div>
+            <strong>Всего получателей:</strong><br>
+            ${totalRecipients}
+          </div>
+          <div>
+            <strong>Общее количество:</strong><br>
+            ${totalShipped} шт.
+          </div>
+        </div>
+    `;
+    
+    // Группируем по деталям
+    if (options.groupByPart) {
+      reportData.forEach((item, index) => {
+        html += createPartSection(item, index, options);
+        
+        // Добавляем разрыв страницы после каждых 3 деталей (для компактного вида) или 2 деталей (для обычного)
+        if ((index + 1) % (options.compactView ? 4 : 3) === 0 && index !== reportData.length - 1) {
+          html += '<div class="page-break"></div>';
+        }
+      });
+    } else {
+      // Плоский список всех отправок
+      html += createFlatTable(reportData, options);
+    }
+    
+    // Добавляем итоговую информацию
+    if (options.includeSummary) {
+      html += `
+        <div class="summary" style="margin-top: ${options.compactView ? '20px' : '30px'}; padding: ${options.compactView ? '10px' : '15px'}">
+          <h2 style="font-size: ${options.compactView ? '16px' : '18px'}; margin: ${options.compactView ? '20px 0 10px 0' : '30px 0 15px 0'};">Итоговая информация</h2>
+          <div class="summary-row">
+            <span class="summary-label">Всего деталей в отчете:</span>
+            <span class="summary-value">${totalParts}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Всего получателей:</span>
+            <span class="summary-value">${totalRecipients}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Общее количество отправок:</span>
+            <span class="summary-value">${reportData.reduce((sum, item) => sum + item.shipments.reduce((s, ship) => s + ship.shipments.length, 0), 0)}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Общее количество отправленного:</span>
+            <span class="summary-value">${totalShipped} шт.</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Среднее количество на деталь:</span>
+            <span class="summary-value">${(totalShipped / totalParts).toFixed(1)} шт.</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    html += '</div>';
+    return html;
+  }
+
+  // Создание секции для детали
+  function createPartSection(item, index, options) {
+    let html = `
+      <h2 style="font-size: ${options.compactView ? '14px' : '16px'}; margin: ${options.compactView ? '15px 0 8px 0' : '20px 0 10px 0'}; padding-bottom: 5px; border-bottom: 1px solid #eee;">
+        ${index + 1}. ${item.partNumber} - ${item.partName}
+        <span style="float: right; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
+          Текущий остаток: ${item.currentQuantity} шт.
+        </span>
+      </h2>
+    `;
+    
+    if (item.shipments.length > 0) {
+      html += `
+        <table style="font-size: ${options.compactView ? '10px' : '11px'};">
+          <thead>
+            <tr>
+              <th style="padding: ${options.compactView ? '5px' : '6px'}">Получатель</th>
+              <th style="padding: ${options.compactView ? '5px' : '6px'}; text-align: center">Отправок</th>
+              <th style="padding: ${options.compactView ? '5px' : '6px'}; text-align: center">Всего</th>
+              ${options.includeDates ? '<th style="padding: ' + (options.compactView ? '5px' : '6px') + '">Дата последней</th>' : ''}
+              ${options.includeDates ? '<th style="padding: ' + (options.compactView ? '5px' : '6px') + '">Все даты отправок</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      item.shipments.forEach((shipment, shipIndex) => {
+        const rowClass = shipIndex % 2 === 0 ? 'shipment-row' : '';
+        const shipmentDates = shipment.shipments
+          .map(s => `${s.date.split(' ')[0]}: ${s.quantity} шт.`)
+          .join(options.compactView ? '; ' : '<br>');
+        
+        html += `
+          <tr class="${rowClass}" style="background: ${shipIndex % 2 === 0 ? '#fff' : '#f8f9fa'}">
+            <td style="padding: ${options.compactView ? '4px' : '5px'}">${shipment.recipient}</td>
+            <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center">${shipment.shipments.length}</td>
+            <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center; font-weight: bold">${shipment.total} шт.</td>
+            ${options.includeDates ? `<td style="padding: ${options.compactView ? '4px' : '5px'}">${shipment.lastShipmentDate || 'Неизвестно'}</td>` : ''}
+            ${options.includeDates ? `<td style="padding: ${options.compactView ? '4px' : '5px'}; font-size: ${options.compactView ? '9px' : '10px'}">${shipmentDates}</td>` : ''}
+          </tr>
+        `;
+      });
+      
+      // Итоговая строка для детали
+      html += `
+          <tr class="total-row" style="background: #e3f2fd; font-weight: bold">
+            <td colspan="${options.includeDates ? '3' : '2'}" style="padding: ${options.compactView ? '4px' : '5px'}; text-align: right">
+              Итого по детали:
+            </td>
+            <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center">
+              ${item.totalShipped} шт.
+            </td>
+            ${options.includeDates ? `<td colspan="2" style="padding: ${options.compactView ? '4px' : '5px'}; font-size: ${options.compactView ? '9px' : '10px'}">
+              Отправлено ${item.shipments.length} получателям
+            </td>` : ''}
+          </tr>
+        </tbody>
+      </table>
+      `;
+    } else {
+      html += `<p style="font-style: italic; color: #666; font-size: ${options.compactView ? '11px' : '12px'}">Нет данных об отправках</p>`;
+    }
+    
+    return html;
+  }
+
+  // Создание плоской таблицы (без группировки по деталям)
+  function createFlatTable(reportData, options) {
+    let html = `
+      <h2 style="font-size: ${options.compactView ? '14px' : '16px'}; margin: ${options.compactView ? '15px 0 8px 0' : '20px 0 10px 0'}">Все отправки</h2>
+      <table style="font-size: ${options.compactView ? '10px' : '11px'};">
+        <thead>
+          <tr>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}">№ детали</th>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}">Название</th>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}; text-align: center">Остаток</th>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}">Получатель</th>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}; text-align: center">Отправок</th>
+            <th style="padding: ${options.compactView ? '5px' : '6px'}; text-align: center">Всего</th>
+            ${options.includeDates ? '<th style="padding: ' + (options.compactView ? '5px' : '6px') + '">Дата последней</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    let rowIndex = 0;
+    reportData.forEach(item => {
+      if (item.shipments.length > 0) {
+        item.shipments.forEach((shipment, shipIndex) => {
+          const rowClass = rowIndex % 2 === 0 ? '' : 'shipment-row';
+          html += `
+            <tr class="${rowClass}" style="background: ${rowIndex % 2 === 0 ? '#fff' : '#f8f9fa'}">
+              <td style="padding: ${options.compactView ? '4px' : '5px'}">${item.partNumber}</td>
+              <td style="padding: ${options.compactView ? '4px' : '5px'}">${item.partName}</td>
+              <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold">${item.currentQuantity}</td>
+              <td style="padding: ${options.compactView ? '4px' : '5px'}">${shipment.recipient}</td>
+              <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center">${shipment.shipments.length}</td>
+              <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center; font-weight: bold">${shipment.total} шт.</td>
+              ${options.includeDates ? `<td style="padding: ${options.compactView ? '4px' : '5px'}">${shipment.lastShipmentDate || 'Неизвестно'}</td>` : ''}
+            </tr>
+          `;
+          rowIndex++;
+        });
+      } else {
+        // Если нет отправок, показываем только деталь
+        html += `
+          <tr style="background: ${rowIndex % 2 === 0 ? '#fff' : '#f8f9fa'}">
+            <td style="padding: ${options.compactView ? '4px' : '5px'}">${item.partNumber}</td>
+            <td style="padding: ${options.compactView ? '4px' : '5px'}">${item.partName}</td>
+            <td style="padding: ${options.compactView ? '4px' : '5px'}; text-align: center; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold">${item.currentQuantity}</td>
+            <td colspan="${options.includeDates ? '4' : '3'}" style="padding: ${options.compactView ? '4px' : '5px'}; font-style: italic; color: #666">Нет данных об отправках</td>
+          </tr>
+        `;
+        rowIndex++;
+      }
+    });
+    
+    html += `
+        </tbody>
+      </table>
+    `;
+    
+    return html;
+  }
+
+  // ============= ОСТАЛЬНЫЕ ФУНКЦИИ ОТЧЕТА =============
 
   // Создаем прогресс-модальное окно
   function createProgressModal() {
@@ -1212,7 +1630,7 @@
     document.body.appendChild(modal);
   }
 
-  // Добавляем кнопку в верхний блок управления
+  // Добавляем кнопку отчета
   function addReportButton() {
     const topControls = document.getElementById('topControls');
     
@@ -1351,7 +1769,7 @@
         // Стандартный паттерн: Взято X. для [имя] Ост. Y
         /Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+\d+/,
         // Альтернативный паттерн: [дата] [время] Взято X. для [имя] Ост. Y
-        /\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2}\s+Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+\d+/,
+        /\d{2}\.\d{2}.\d{4}\s+\d{2}:\d{2}:\d{2}\s+Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+\d+/,
         // Паттерн с номером телефона
         /Взято\s+(\d+).\s+для\s+(\+\d[\d\s\-\(\)]+)/,
         // Паттерн с именем и фамилией
@@ -1366,7 +1784,7 @@
           
           // Извлекаем дату из строки
           let date = 'Неизвестно';
-          const dateMatch = line.match(/(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2}:\d{2})/);
+          const dateMatch = line.match(/(\d{2}\.\d{2}.\d{4})\s+(\d{2}:\d{2}:\d{2})/);
           if (dateMatch) {
             date = `${dateMatch[1]} ${dateMatch[2]}`;
           }
@@ -1440,22 +1858,28 @@
     modalOverlay.id = 'reportModal';
     modalOverlay.style.display = 'flex';
     
-    // Сохраняем данные отчета в глобальной переменной для экспорта
+    // Сохраняем данные отчета в глобальной переменной
     window.currentReportData = reportData;
+    
+    const totalShipped = reportData.reduce((sum, item) => sum + item.totalShipped, 0);
+    const totalRecipients = reportData.reduce((sum, item) => sum + item.shipments.length, 0);
     
     modalOverlay.innerHTML = `
       <div class="modal" style="max-width: 95%; max-height: 90vh; width: 95%;">
         <div class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</div>
         <h3>Отчет по отправкам деталей</h3>
-        <div style="margin: 20px 0;">
-          <button onclick="exportReportToCSV()" class="btn" style="background: #2e7d32; color: white; margin-right: 10px;">
-            <i class="fas fa-download"></i> Экспорт в CSV
+        <div style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px;">
+          <button onclick="exportReportToCSV()" class="btn" style="background: #2e7d32; color: white; min-width: 180px;">
+            <i class="fas fa-file-csv"></i> Экспорт в CSV
           </button>
-          <button onclick="printReport()" class="btn" style="background: #1565c0; color: white;">
+          <button onclick="openPdfOptions()" class="btn" style="background: #d32f2f; color: white; min-width: 180px;">
+            <i class="fas fa-file-pdf"></i> Экспорт в PDF
+          </button>
+          <button onclick="printReport()" class="btn" style="background: #1565c0; color: white; min-width: 140px;">
             <i class="fas fa-print"></i> Печать
           </button>
-          <div style="float: right; color: #666;">
-            Всего деталей: ${reportData.length} | Всего получателей: ${reportData.reduce((sum, item) => sum + item.shipments.length, 0)}
+          <div style="flex: 1; text-align: right; color: #666; font-size: 14px; padding-top: 15px;">
+            Всего: ${reportData.length} деталей, ${totalRecipients} получателей, ${totalShipped} шт.
           </div>
         </div>
         <div style="overflow-x: auto; max-height: 70vh;">
@@ -1464,11 +1888,11 @@
               <tr style="background: #1a2f40; color: white; position: sticky; top: 0;">
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 120px;">№ детали</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 200px;">Название</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Текущий остаток</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Остаток</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 200px;">Кому отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 120px;">Кол-во отправок</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Всего отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 150px;">Дата последней отправки</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 120px;">Отправок</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Всего</th>
+                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 150px;">Дата последней</th>
                 <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 150px;">Детали отправок</th>
               </tr>
             </thead>
@@ -1476,20 +1900,6 @@
               ${generateReportTableRows(reportData)}
             </tbody>
           </table>
-        </div>
-        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-          <h4 style="margin-top: 0;">Итоги:</h4>
-          <div style="display: flex; justify-content: space-between;">
-            <div>
-              <strong>Всего деталей в отчете:</strong> ${reportData.length}
-            </div>
-            <div>
-              <strong>Общее количество отправленного:</strong> ${reportData.reduce((sum, item) => sum + item.totalShipped, 0)} шт.
-            </div>
-            <div>
-              <strong>Общее количество получателей:</strong> ${reportData.reduce((sum, item) => sum + item.shipments.length, 0)}
-            </div>
-          </div>
         </div>
       </div>
     `;
@@ -1581,7 +1991,6 @@
     
     window.currentReportData.forEach(item => {
       if (item.shipments.length === 0) {
-        // Если нет отправок, все равно добавляем деталь
         csv += `${item.partNumber};"${item.partName}";${item.currentQuantity};;0;0;\n`;
       } else {
         item.shipments.forEach(shipment => {
