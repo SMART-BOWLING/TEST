@@ -1307,24 +1307,20 @@
             
             <!-- ДОБАВЛЕН ВЫПАДАЮЩИЙ ФИЛЬТР -->
             <div class="open-tasks-counter" id="open-tasks-counter" onclick="toggleTasksFilter()">
-                <span class="label">Открытых задач:</span>
+                <span class="label">Все задачи:</span>
                 <span class="count">0</span>
                 <div class="tasks-filter-dropdown" id="tasksFilterDropdown">
                     <button onclick="filterTasks('all')" class="active">
                         <i class="fas fa-layer-group"></i>
                         Все задачи
                     </button>
-                    <button onclick="filterTasks('pending')">
-                        <i class="fas fa-clock"></i>
-                        Открытые задачи
+                    <button onclick="filterTasks('old')">
+                        <i class="fas fa-archive"></i>
+                        Старые задачи
                     </button>
                     <button onclick="filterTasks('completed')">
                         <i class="fas fa-history"></i>
                         Последние выполненные
-                    </button>
-                    <button onclick="filterTasks('old')">
-                        <i class="fas fa-archive"></i>
-                        Старые задачи
                     </button>
                 </div>
             </div>
@@ -1414,7 +1410,7 @@
         }
 
         // ФУНКЦИИ ДЛЯ ФИЛЬТРАЦИИ ЗАДАЧ
-        let currentFilter = 'all'; // all, pending, completed, old
+        let currentFilter = 'all'; // all, old, completed
         let allJournalData = []; // Сохраняем все данные журнала
         
         function toggleTasksFilter() {
@@ -1450,9 +1446,8 @@
         function getFilterButtonText(filterType) {
             switch(filterType) {
                 case 'all': return 'Все задачи';
-                case 'pending': return 'Открытые задачи';
-                case 'completed': return 'Последние выполненные';
                 case 'old': return 'Старые задачи';
+                case 'completed': return 'Последние выполненные';
                 default: return 'Все задачи';
             }
         }
@@ -1464,40 +1459,41 @@
             
             if (!allJournalData || allJournalData.length === 0) {
                 countSpan.textContent = '0';
-                labelSpan.textContent = 'Открытых задач:';
+                labelSpan.textContent = 'Все задачи:';
                 return;
             }
             
             let count = 0;
-            let label = 'Открытых задач:';
+            let label = 'Все задачи:';
             
             switch(currentFilter) {
                 case 'all':
                     count = allJournalData.length;
-                    label = 'Всего задач:';
-                    break;
-                case 'pending':
-                    count = allJournalData.filter(task => !task.isCompleted).length;
-                    label = 'Открытых задач:';
-                    break;
-                case 'completed':
-                    // Подсчитываем выполненные задачи
-                    count = allJournalData.filter(task => task.isCompleted).length;
-                    label = 'Выполненных задач:';
+                    label = 'Все задачи:';
                     break;
                 case 'old':
-                    // Фильтруем старые задачи (например, старше 30 дней)
-                    const thirtyDaysAgo = new Date();
-                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                    
-                    count = allJournalData.filter(task => {
-                        if (task.isCompleted) return false;
-                        if (!task.createdDate) return false;
-                        
-                        const taskDate = new Date(task.createdDate);
-                        return taskDate < thirtyDaysAgo;
-                    }).length;
-                    label = 'Старых задач:';
+                    // Фильтруем старые задачи (самые старые сверху)
+                    const oldTasks = allJournalData.filter(task => !task.isCompleted);
+                    oldTasks.sort((a, b) => {
+                        if (a.createdDate && b.createdDate) {
+                            return new Date(a.createdDate) - new Date(b.createdDate);
+                        }
+                        return 0;
+                    });
+                    count = oldTasks.length;
+                    label = 'Старые задачи:';
+                    break;
+                case 'completed':
+                    // Подсчитываем выполненные задачи (самые новые сверху)
+                    const completedTasks = allJournalData.filter(task => task.isCompleted);
+                    completedTasks.sort((a, b) => {
+                        if (a.completedDate && b.completedDate) {
+                            return new Date(b.completedDate) - new Date(a.completedDate);
+                        }
+                        return 0;
+                    });
+                    count = completedTasks.length;
+                    label = 'Выполненные задачи:';
                     break;
             }
             
@@ -1513,25 +1509,43 @@
             switch(currentFilter) {
                 case 'all':
                     filteredData = [...allJournalData];
-                    break;
-                case 'pending':
-                    filteredData = allJournalData.filter(task => !task.isCompleted);
-                    break;
-                case 'completed':
-                    // Берем только выполненные задачи
-                    filteredData = allJournalData.filter(task => task.isCompleted);
+                    // В режиме "Все задачи" сортируем: открытые сверху (новые), потом закрытые
+                    filteredData.sort((a, b) => {
+                        if (!a.isCompleted && b.isCompleted) return -1;
+                        if (a.isCompleted && !b.isCompleted) return 1;
+                        
+                        if (!a.isCompleted && !b.isCompleted) {
+                            // Обе открытые - новые сверху
+                            if (a.createdDate && b.createdDate) {
+                                return new Date(b.createdDate) - new Date(a.createdDate);
+                            }
+                        } else {
+                            // Обе закрытые - новые сверху
+                            if (a.completedDate && b.completedDate) {
+                                return new Date(b.completedDate) - new Date(a.completedDate);
+                            }
+                        }
+                        return 0;
+                    });
                     break;
                 case 'old':
-                    // Фильтруем старые задачи (старше 30 дней)
-                    const thirtyDaysAgo = new Date();
-                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                    
-                    filteredData = allJournalData.filter(task => {
-                        if (task.isCompleted) return false;
-                        if (!task.createdDate) return false;
-                        
-                        const taskDate = new Date(task.createdDate);
-                        return taskDate < thirtyDaysAgo;
+                    // Только открытые задачи, отсортированные по самой старой дате сверху
+                    filteredData = allJournalData.filter(task => !task.isCompleted);
+                    filteredData.sort((a, b) => {
+                        if (a.createdDate && b.createdDate) {
+                            return new Date(a.createdDate) - new Date(b.createdDate);
+                        }
+                        return 0;
+                    });
+                    break;
+                case 'completed':
+                    // Только выполненные задачи, отсортированные по самой новой дате сверху
+                    filteredData = allJournalData.filter(task => task.isCompleted);
+                    filteredData.sort((a, b) => {
+                        if (a.completedDate && b.completedDate) {
+                            return new Date(b.completedDate) - new Date(a.completedDate);
+                        }
+                        return 0;
                     });
                     break;
             }
@@ -1638,7 +1652,7 @@
             if (type === 'journal') {
                 if (pageNumber >= 1 && pageNumber <= totalJournalPages && pageNumber !== currentJournalPage) {
                     currentJournalPage = pageNumber;
-                    renderJournalCards(journalData);
+                    applyFilterToJournal();
                     updatePagination('journal', currentJournalPage, totalJournalPages);
                 }
             } else if (type === 'tasks') {
@@ -1728,7 +1742,7 @@
         async function loadJournal() {
             try {
                 if (journalData && !isInitialLoad) {
-                    renderJournalCards(journalData);
+                    applyFilterToJournal();
                     return;
                 }
                 
@@ -1924,43 +1938,12 @@
                 return;
             }
             
-            // РАЗДЕЛЯЕМ ЗАДАЧИ НА ОТКРЫТЫЕ И ЗАКРЫТЫЕ
-            const openTasks = [];
-            const closedTasks = [];
-            
-            journal.forEach(task => {
-                if (!task.isCompleted) {
-                    openTasks.push(task);
-                } else {
-                    closedTasks.push(task);
-                }
-            });
-            
-            // СОРТИРУЕМ ОТКРЫТЫЕ ЗАДАЧИ: НОВЫЕ СВЕРХУ
-            openTasks.sort((a, b) => {
-                if (a.createdDate && b.createdDate) {
-                    return new Date(b.createdDate) - new Date(a.createdDate);
-                }
-                return 0;
-            });
-            
-            // СОРТИРУЕМ ЗАКРЫТЫЕ ЗАДАЧИ: НОВЫЕ СВЕРХУ
-            closedTasks.sort((a, b) => {
-                if (a.completedDate && b.completedDate) {
-                    return new Date(b.completedDate) - new Date(a.createdDate);
-                }
-                return 0;
-            });
-            
-            // ОБЪЕДИНЯЕМ: сначала открытые, потом закрытые
-            const sortedJournal = [...openTasks, ...closedTasks];
-            
-            totalJournalPages = Math.ceil(sortedJournal.length / CARDS_PER_PAGE);
+            totalJournalPages = Math.ceil(journal.length / CARDS_PER_PAGE);
             if (currentJournalPage > totalJournalPages) {
                 currentJournalPage = 1;
             }
             
-            const currentJournal = getCurrentPageData(sortedJournal, currentJournalPage);
+            const currentJournal = getCurrentPageData(journal, currentJournalPage);
             
             let html = '';
             
@@ -1970,49 +1953,91 @@
                 const taskId = task.id || task.driveLink || '';
                 
                 if (!task.isCompleted) {
-                    html += `
-                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
-                            <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
+                    // ДЛЯ СТАРЫХ ЗАДАЧ НЕ ПОКАЗЫВАЕМ КНОПКУ ВЫПОЛНЕНИЯ
+                    if (currentFilter === 'old') {
+                        html += `
+                            <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                                <div class="task-header">
+                                    <div class="task-title">${task.task}</div>
                                 </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate || '-'}</span>
+                                
+                                <div class="card-content">
+                                    <div class="content-row">
+                                        <span class="row-label">Дата появления:</span>
+                                        <span class="row-value">${task.createdDate}</span>
+                                    </div>
+                                    <div class="content-row">
+                                        <span class="row-label">Статус:</span>
+                                        <span class="row-value">
+                                            <span class="status-badge warning">ОТКРЫТА</span>
+                                        </span>
+                                    </div>
+                                    <div class="content-row">
+                                        <span class="row-label">Дней открыто:</span>
+                                        <span class="row-value">
+                                            ${calculateDaysOpen(task.createdDate)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">
-                                        <select class="executor-select" id="executor-${taskId}">
-                                            <option value="" selected disabled>Кто выполнил?</option>
-                                            <option value="Вадим">Вадим</option>
-                                            <option value="Гена">Гена</option>
-                                            <option value="Саша">Саша</option>
-                                            <option value="Данил">Данил</option>
-                                        </select>
-                                    </span>
+                                
+                                <div class="buttons-container">
+                                    ${hasLink 
+                                        ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                            <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                          </a>`
+                                        : '<div class="no-open">Недоступно</div>'
+                                    }
+                                    <div class="no-open">Не требует выполнения</div>
                                 </div>
                             </div>
-                            
-                            <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
-                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
-                                </button>
+                        `;
+                    } else {
+                        // ОБЫЧНАЯ ОТКРЫТАЯ ЗАДАЧА (для режима "Все задачи")
+                        html += `
+                            <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                                <div class="task-header">
+                                    <div class="task-title">${task.task}</div>
+                                </div>
+                                
+                                <div class="card-content">
+                                    <div class="content-row">
+                                        <span class="row-label">Дата появления:</span>
+                                        <span class="row-value">${task.createdDate}</span>
+                                    </div>
+                                    <div class="content-row">
+                                        <span class="row-label">Дата выполнения:</span>
+                                        <span class="row-value">${task.completedDate || '-'}</span>
+                                    </div>
+                                    <div class="content-row">
+                                        <span class="row-label">Выполнил:</span>
+                                        <span class="row-value">
+                                            <select class="executor-select" id="executor-${taskId}">
+                                                <option value="" selected disabled>Кто выполнил?</option>
+                                                <option value="Вадим">Вадим</option>
+                                                <option value="Гена">Гена</option>
+                                                <option value="Саша">Саша</option>
+                                                <option value="Данил">Данил</option>
+                                            </select>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="buttons-container">
+                                    ${hasLink 
+                                        ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                            <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                          </a>`
+                                        : '<div class="no-open">Недоступно</div>'
+                                    }
+                                    <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
+                                        <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                 } else {
+                    // ВЫПОЛНЕННАЯ ЗАДАЧА
                     html += `
                         <div class="task-card completed">
                             <div class="task-header">
@@ -2052,23 +2077,40 @@
             
             journalCards.innerHTML = html;
             
-            // Добавляем обработчики для селектов исполнителей
-            document.querySelectorAll('.executor-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const card = this.closest('.task-card');
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !this.value || this.value === '';
-                    }
-                    event.stopPropagation();
+            // Добавляем обработчики для селектов исполнителей только для обычных открытых задач
+            if (currentFilter !== 'old') {
+                document.querySelectorAll('.executor-select').forEach(select => {
+                    select.addEventListener('change', function() {
+                        const card = this.closest('.task-card');
+                        const submitBtn = card.querySelector('.submit-btn');
+                        if (submitBtn) {
+                            submitBtn.disabled = !this.value || this.value === '';
+                        }
+                        event.stopPropagation();
+                    });
+                    
+                    select.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                    });
                 });
-                
-                select.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                });
-            });
+            }
             
             updatePagination('journal', currentJournalPage, totalJournalPages);
+        }
+
+        // Функция для расчета количества дней, сколько задача открыта
+        function calculateDaysOpen(createdDate) {
+            if (!createdDate) return '?';
+            
+            try {
+                const created = new Date(createdDate);
+                const now = new Date();
+                const diffTime = Math.abs(now - created);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays + ' дн.';
+            } catch (e) {
+                return '?';
+            }
         }
 
         function submitTask(event, taskId, rowIndex) {
@@ -2161,7 +2203,9 @@
                         loadTasks();
                     } else if (tabId === 'tab1') {
                         currentJournalPage = 1;
-                        loadJournal();
+                        currentFilter = 'all';
+                        updateOpenTasksCounter();
+                        applyFilterToJournal();
                     }
                 });
             });
