@@ -1,2714 +1,2214 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>PARTS STORE</title>
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Identity Script -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- jspdf and html2canvas libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    /* Стили для выпадающего списка SKYMALL */
-    .site-name-dropdown {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-    }
-    
-    .site-name {
-      flex: 1;
-      text-align: center;
-      font-size: 48px;
-      font-weight: bold;
-      color: white;
-      position: relative;
-    }
-    
-    /* Увеличиваем надпись SKYMALL в 2 раза */
-    .site-name-dropdown .site-name {
-      font-size: 96px; /* Увеличение в 2 раза */
-      margin-bottom: 20px; /* Отступ снизу для визуального разделения */
-    }
-    
-    .dropdown-sites {
-      display: none;
-      position: absolute;
-      top: calc(100% + 50px); /* Опускаем ниже шапки */
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #1f2937;
-      border: 2px solid #444;
-      border-radius: 16px;
-      overflow: hidden;
-      z-index: 1001;
-      min-width: 300px;
-      margin-top: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    
-    .dropdown-sites a {
-      display: block;
-      padding: 20px 100px;
-      font-size: 40px;
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-      transition: background 0.3s;
-      text-align: center;
-      white-space: nowrap;
-    }
-    
-    .dropdown-sites a:hover {
-      background-color: #374151;
-    }
-
-    header {
-      background-color: #1f2937;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 30px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      user-select: none;
-      z-index: 1000;
-      height: 140px;
-    }
-
-    .logo img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 0;
-    }
-
-    .menu-button {
-      width: 70px;
-      height: 50px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .menu-button div {
-      height: 8px;
-      background-color: white;
-      border-radius: 4px;
-    }
-
-    .dropdown {
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 170px;
-      right: 30px;
-      background-color: #1f2937;
-      border: 2px solid #444;
-      border-radius: 16px;
-      overflow: hidden;
-      z-index: 9999;
-      min-width: 350px;
-    }
-
-    .dropdown a {
-      padding: 25px 30px;
-      font-size: 34px;
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-      transition: background 0.3s;
-    }
-
-    .dropdown a:hover {
-      background-color: #374151;
-    }
-
-    .icon-space {
-      margin-right: 16px;
-      width: 40px;
-      text-align: center;
-      font-size: 24px;
-    }
-
-    /* Стили для авторизации */
-    #login {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      padding: 20px;
-    }
-    
-    #login h2 {
-      color: #1a2f40;
-      margin-bottom: 20px;
-    }
-    
-    #content {
-      display: none;
-      width: 100%;
-      margin-top: 170px;
-    }
-
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #d1d5da;
-      font-family: Arial, sans-serif;
-    }
-
-    .top-controls {
-      display: flex;
-      flex-wrap: nowrap;
-      justify-content: space-between; 
-      gap: 8px;
-      max-width: 900px;
-      margin: 0 auto 20px;
-      align-items: center;
-      padding-bottom: 8px;
-      box-sizing: border-box;
-      overflow-x: auto;
-    }
-
-    .top-controls .btn-top {
-      height: 56px;
-      font-size: 18px;
-      border-radius: 14px;
-      border: none;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-grow: 1;
-      min-width: 90px;
-      max-width: 220px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-family: inherit;
-      padding: 0 16px;
-      transition: all 0.3s ease;
-      box-sizing: border-box;
-      gap: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .top-controls button.btn-top {
-      background: linear-gradient(to bottom, #1a2f40, #0d1a26);
-      color: #fff;
-    }
-
-    .top-controls button.btn-top:hover {
-      background: linear-gradient(to bottom, #223a51, #0f2233);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-    }
-
-    .select-wrapper {
-      position: relative;
-      min-width: 120px;
-      max-width: 150px;
-      height: 56px;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      flex-shrink: 0;
-    }
-
-    .select-wrapper select {
-      width: 100%;
-      height: 100%;
-      padding: 0 45px 0 16px;
-      border: none;
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      color: transparent;
-      font-weight: 600;
-      font-size: 18px;
-      cursor: pointer;
-      appearance: none;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    .select-wrapper::before {
-      content: "\f0b0 Фильтр";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 90%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 600;
-      font-size: 18px;
-      font-family: "Font Awesome 6 Free", Arial, sans-serif;
-      pointer-events: none;
-      gap: 8px;
-    }
-
-    .select-wrapper::after {
-      content: "\f078";
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      position: absolute;
-      top: 50%;
-      right: 16px;
-      transform: translateY(-50%);
-      color: #fff;
-      pointer-events: none;
-      transition: transform 0.3s ease;
-    }
-
-    .select-wrapper:hover::after {
-      color: #ffccd5;
-    }
-
-    .select-wrapper.active::after {
-      transform: translateY(-50%) rotate(180deg);
-    }
-
-    .select-wrapper select option {
-      padding: 12px 16px;
-      background: #1a2f40;
-      color: #fff;
-      transition: background 0.2s ease;
-    }
-
-    .select-wrapper select option:hover {
-      background: #223a51 !important;
-    }
-
-    .select-wrapper select option:checked {
-      background: #dc143c;
-      color: white;
-      font-weight: bold;
-    }
-
-    .cards {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 900px;
-      background: #f0f2f5;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      box-sizing: border-box;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-    }
-
-    .media-block {
-      position: relative;
-      width: 100%;
-      padding-top: 75%;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    .media-block img,
-    .media-block iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border: none;
-      z-index: 0;
-    }
-
-    .media-block .img-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      z-index: 1;
-    }
-
-    .media-block .icon {
-      position: absolute;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #dc143c;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 28px;
-      color: #fff;
-      z-index: 2;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .media-block .icon:hover {
-      background: #ff1940;
-      transform: scale(1.1);
-    }
-
-    .remove {
-      top: 8px;
-      right: 8px;
-    }
-
-    /* Стили для названия детали */
-    .part-name-container {
-      display: flex;
-      align-items: center;
-      margin: 12px 0;
-      padding: 0 12px;
-      background: #ffffff;
-      border-radius: 16px;
-      min-height: 60px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-
-    .part-name-container.editing {
-      padding: 0 8px;
-    }
-
-    .part-name-text {
-      flex: 1;
-      font-size: 18px;
-      font-weight: 600;
-      text-align: left;
-      padding: 16px 0;
-      cursor: default;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .part-name-input {
-      flex: 1;
-      height: 52px;
-      border: 2px solid #dc143c;
-      border-radius: 12px;
-      outline: none;
-      font-size: 18px;
-      font-weight: 600;
-      padding: 0 12px;
-      background: transparent;
-      font-family: inherit;
-    }
-
-    .part-name-edit-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #dc143c;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      color: #fff;
-      transition: all 0.2s ease;
-      margin-left: 8px;
-      flex-shrink: 0;
-    }
-
-    .part-name-edit-btn:hover {
-      background: #ff1940;
-      transform: scale(1.05);
-    }
-
-    .part-name-save-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #2a3648;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      color: #fff;
-      transition: all 0.2s ease;
-      margin-left: 8px;
-      flex-shrink: 0;
-    }
-
-    .part-name-save-btn:hover {
-      background: #34ce57;
-      transform: scale(1.05);
-    }
-
-    .part-name-cancel-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #dc143c;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      color: #fff;
-      transition: all 0.2s ease;
-      margin-left: 8px;
-      flex-shrink: 0;
-    }
-
-    .part-name-cancel-btn:hover {
-      background: #5a6268;
-      transform: scale(1.05);
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 16px;
-      gap: 8px;
-      padding: 10px 0;
-    }
-
-    .pill {
-      background: #fff;
-      border-radius: 20px;
-      padding: 0 20px;
-      font-size: 20px;
-      font-weight: bold;
-      flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-
-    .controls input {
-      width: 60px;
-      height: 60px;
-      padding: 0 12px;
-      border: none;
-      border-radius: 16px;
-      text-align: center;
-      background: #fff;
-      font-size: 20px;
-      font-weight: bold;
-      flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-
-    .controls input:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
-    }
-
-    .btn {
-      height: 60px;
-      padding: 0 24px;
-      border: none;
-      border-radius: 16px;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-    }
-
-    .btn:active {
-      transform: translateY(1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .btn-add {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-      color: #fff;
-      min-width: 140px;
-    }
-
-    .btn-add:hover {
-      background: linear-gradient(to bottom, #2a3648, #111b29);
-    }
-
-    .btn-info {
-      background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-      color: #000;
-      min-width: 60px;
-      justify-content: center;
-    }
-
-    .btn-info:hover {
-      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
-    }
-
-    .btn-take {
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      color: #fff;
-      min-width: 140px;
-    }
-
-    .btn-take:hover {
-      background: linear-gradient(to bottom, #e51c47, #c01238);
-    }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      backdrop-filter: blur(5px);
-    }
-
-    .modal {
-      position: relative;
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px;
-      width: 80vw;
-      max-width: 800px;
-      max-height: 80vh;
-      overflow: auto;
-      z-index: 10000;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes modalAppear {
-      from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      cursor: pointer;
-      font-size: 40px;
-      font-weight: bold;
-      color: #dc143c;
-      transition: all 0.2s ease;
-    }
-
-    .modal-close:hover {
-      color: #ff1940;
-      transform: scale(1.1);
-    }
-
-    .modal h3 {
-      margin-top: 0;
-      font-size: 24px;
-      color: #1a2f40;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f0f2f5;
-    }
-
-    .modal pre {
-      white-space: pre-wrap;
-      font-size: 26px;
-      line-height: 1.6;
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 4px solid #dc143c;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 50px 0;
-      gap: 10px;
-      flex-wrap: nowrap;
-      width: 100%;
-      max-width: 900px;
-      margin: 50px auto;
-    }
-
-    .pagination button {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 10px;
-      padding: 18px 30px;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      min-width: 140px;
-      height: 60px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .pagination button:hover:not(:disabled) {
-      background: linear-gradient(to bottom, #2a3648, #111b29);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-    }
-
-    .pagination button:active:not(:disabled) {
-      transform: translateY(1px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .pagination button:disabled {
-      background: #a0aec0;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-
-    .pagination button i {
-      font-size: 24px;
-    }
-
-    .page-numbers {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: nowrap;
-    }
-
-    .page-numbers button {
-      min-width: 40px;
-      height: 60px;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      border-radius: 16px;
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      color: white;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .pagination button {
-      margin: 0 6px;
-    }
-
-    .page-numbers button:hover {
-      background: linear-gradient(to bottom, #e51c47, #c01238);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .page-numbers button.active {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-      transform: scale(1.1);
-    }
-
-    .no-data {
-      padding: 20px;
-      text-align: center;
-      font-size: 18px;
-      color: #666;
-    }
-
-    /* Стили для индикатора загрузки */
-    .loader-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 99999;
-      display: none;
-    }
-
-    .loader {
-      width: 50px;
-      height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #dc143c;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Стили для ограниченного доступа */
-    .limited-access .controls {
-      display: none;
-    }
-    
-    .limited-access .part-info-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: stretch;
-      margin: 12px 0;
-      gap: 12px;
-      min-height: 60px;
-    }
-    
-    .limited-access .part-info-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: bold;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      min-height: 50px;
-      flex-shrink: 0;
-    }
-    
-    .limited-access .part-number {
-      background: linear-gradient(135deg, #1a2f40, #0d1a26);
-      color: white;
-      min-width: 140px;
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .limited-access .part-name {
-      background: linear-gradient(135deg, #ffffff, #f8f9fa);
-      color: #1a2f40;
-      flex: 1;
-      min-width: 120px;
-      text-align: center;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    
-    .limited-access .part-quantity {
-      background: linear-gradient(135deg, #dc143c, #b01030);
-      color: white;
-      min-width: 60px;
-      max-width: 80px;
-      font-size: 20px;
-      font-weight: 800;
-    }
-    
-    /* Стиль для кнопки Отчет */
-    #btnReport {
-      background: linear-gradient(to bottom, #1565c0, #0d47a1) !important;
-      color: white !important;
-    }
-
-    #btnReport:hover {
-      background: linear-gradient(to bottom, #1976d2, #1565c0) !important;
-    }
-    
-    /* Стили для прогресс-бара */
-    .progress-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100000;
-      backdrop-filter: blur(3px);
-    }
-    
-    .progress-content {
-      background: white;
-      border-radius: 16px;
-      padding: 40px;
-      width: 400px;
-      max-width: 90%;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      animation: modalAppear 0.3s ease;
-    }
-    
-    .progress-title {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 20px;
-      color: #1a2f40;
-    }
-    
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      background: #e0e0e0;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #1565c0, #42a5f5);
-      border-radius: 10px;
-      transition: width 0.3s ease;
-      width: 0%;
-    }
-    
-    .progress-text {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 20px;
-    }
-    
-    .progress-stats {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      color: #777;
-      margin-top: 10px;
-    }
-    
-    .progress-details {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
-      text-align: left;
-    }
-    
-    .progress-detail {
-      margin: 5px 0;
-      font-size: 14px;
-      color: #555;
-    }
-    
-    /* Стили для модального окна с опциями PDF */
-    .pdf-options-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      align-items: center;
-      justify-content: center;
-      z-index: 100001;
-    }
-    
-    .pdf-options-content {
-      background: white;
-      border-radius: 16px;
-      padding: 30px;
-      width: 400px;
-      max-width: 90%;
-    }
-    
-    .pdf-option-group {
-      margin: 15px 0;
-    }
-    
-    .pdf-option-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #1a2f40;
-    }
-    
-    .pdf-option-checkbox {
-      margin-right: 10px;
-    }
-    
-    .pdf-option-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 25px;
-    }
-    
-    .pdf-option-btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    
-    .pdf-option-btn-cancel {
-      background: #dc3545;
-      color: white;
-    }
-    
-    .pdf-option-btn-generate {
-      background: #28a745;
-      color: white;
-    }
-    
-    /* Стили для PDF контента */
-    .pdf-content {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: white;
-      width: 210mm; /* A4 width */
-      min-height: 297mm; /* A4 height */
-      box-sizing: border-box;
-      margin: 0 auto;
-    }
-    
-    .pdf-header {
-      text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #1a2f40;
-      padding-bottom: 20px;
-    }
-    
-    .pdf-header h1 {
-      color: #1a2f40;
-      font-size: 24px;
-      margin: 0 0 10px 0;
-    }
-    
-    .pdf-header .report-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #666;
-      margin-top: 10px;
-    }
-    
-    .pdf-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-      font-size: 11px;
-    }
-    
-    .pdf-table th {
-      background: #1a2f40;
-      color: white;
-      padding: 8px;
-      border: 1px solid #444;
-      text-align: left;
-      font-weight: bold;
-    }
-    
-    .pdf-table td {
-      padding: 6px;
-      border: 1px solid #ddd;
-    }
-    
-    .pdf-table tr:nth-child(even) {
-      background: #f8f9fa;
-    }
-    
-    .pdf-part-header {
-      background: #e8f5e8 !important;
-      font-weight: bold;
-    }
-    
-    .pdf-total-row {
-      background: #e3f2fd !important;
-      font-weight: bold;
-    }
-    
-    .pdf-summary {
-      margin-top: 40px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-    }
-    
-    .pdf-summary h3 {
-      color: #1a2f40;
-      margin-top: 0;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 10px;
-    }
-    
-    .pdf-summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 8px 0;
-    }
-    
-    .pdf-summary-label {
-      font-weight: bold;
-      color: #1565c0;
-    }
-    
-    .pdf-summary-value {
-      font-weight: bold;
-    }
-    
-    .pdf-page-break {
-      page-break-after: always;
-    }
-    
-    /* Стили для видимого контейнера PDF */
-    #pdfPreviewContainer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: white;
-      z-index: 100002;
-      overflow: auto;
-      display: none;
-    }
-    
-    .pdf-preview-controls {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 100003;
-      display: flex;
-      gap: 10px;
-    }
-    
-    .pdf-preview-btn {
-      padding: 10px 20px;
-      background: #1565c0;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    
-    .pdf-preview-btn:hover {
-      background: #1976d2;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SMB-LS-KH</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --light-bg: #fefefe;
+            --dark-bg: #1a1a1a;
+            --accent: #dc143c;
+            --text-dark: #1a1a1a;
+            --text-light: #ffffff;
+            --text-gray: #FFF;
+            --text-light-gray: #999999;
+            --border-radius: 8px;
+            --input-padding: 12px;
+            --surface: #ffffff;
+            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
+            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background-color: #f4f6f9;
+            width: 100%;
+            position: fixed;
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        body {
+            color: #1a2f40;
+            padding: 0;
+            line-height: 1.5;
+            min-height: 100vh;
+            height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            font-weight: 700;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            -webkit-text-size-adjust: 100%; /* Предотвращает автоматическое изменение размера текста */
+        }
+
+        /* НОВАЯ ШАПКА ИЗ ВТОРОГО КОДА */
+        header {
+            background-color: #1f2937;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px; /* Увеличено с 10px */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            user-select: none;
+            z-index: 1000;
+            padding-top: max(14px, env(safe-area-inset-top)); /* Увеличено с 10px */
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            min-height: 65px; /* Добавлена минимальная высота */
+        }
+
+        .logo img {
+            width: 42px; /* Увеличено с 40px */
+            height: 42px; /* Увеличено с 40px */
+            object-fit: cover;
+            border-radius: 0;
+            transform: translateY(4px);
+        }
+
+        .site-name {
+            flex: 1;
+            text-align: center;
+            font-size: 21px; /* Увеличено с 20px */
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .site-name-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1f2937;
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 1001;
+            min-width: 150px;
+            margin-top: 25px;
+            width: 90%;
+        }
+
+        .site-name-dropdown a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.3s;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            justify-content: center;
+        }
+
+        .site-name-dropdown a:hover {
+            background-color: #374151;
+        }
+
+        .menu-button {
+            width: 32px; /* Увеличено с 30px */
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 22px; /* Увеличено с 20px */
+        }
+
+        .menu-button div {
+            height: 4px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        .dropdown {
+            display: none;
+            flex-direction: column;
+            position: absolute;
+            top: 70px;
+            right: 15px;
+            background-color: #1f2937;
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 9999;
+            min-width: 150px;
+        }
+
+        .dropdown a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.3s;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown a:hover {
+            background-color: #374151;
+        }
+
+        .icon-space {
+            margin-right: 6px;
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ ИЗ ПРЕДОСТАВЛЕННОГО КОДА */
+        .loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            gap: 20px;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #dc143c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #1a2f40;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background-color: var(--surface);
+            border-radius: 0;
+            box-shadow: none;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border: none;
+            min-height: -webkit-fill-available;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-top: 80px; /* УВЕЛИЧЕНО: было 70px, теперь 80px чтобы кнопки были под шапкой */
+        }
+
+        .tabs {
+            display: flex;
+            background-color: var(--surface);
+            padding: 16px 0;
+            gap: 8px;
+            flex-shrink: 0;
+            border-bottom: 1px solid #f0f0f0;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 100%;
+            margin-top: 0;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        .tab-btn {
+            background: var(--surface);
+            border: 1px solid #e5e5e5;
+            color: var(--text-dark);
+            padding: 14px 12px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: 700;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .tab-btn:hover {
+            background-color: #fafafa;
+            border-color: #d0d0d0;
+            color: var(--text-dark);
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent);
+            color: var(--text-light);
+            border-color: var(--accent);
+        }
+
+        /* СТИЛИ ДЛЯ СТРОКИ С КОЛИЧЕСТВОМ ОТКРЫТЫХ ЗАДАЧ */
+        .open-tasks-counter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background-color: #1a2f40;
+            color: white;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 15px;
+            margin: 8px 0 16px;
+            width: 100%;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .open-tasks-counter .label {
+            flex: 1;
+            text-align: left;
+        }
+
+        .open-tasks-counter .count {
+            background-color: #dc143c;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        /* ВЫПАДАЮЩЕЕ МЕНЮ ДЛЯ ОТКРЫТЫХ ЗАДАЧ */
+        .tasks-filter-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .tasks-filter-dropdown button {
+            width: 100%;
+            padding: 14px 16px;
+            text-align: left;
+            background: none;
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a2f40;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tasks-filter-dropdown button:last-child {
+            border-bottom: none;
+        }
+
+        .tasks-filter-dropdown button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .tasks-filter-dropdown button.active {
+            background-color: #1a2f40;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .task-card {
+            background: white;
+            margin: 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+            width: 100%;
+            min-height: 280px;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .task-card.selected {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
+        }
+
+        .task-header {
+            padding: 16px 16px 12px;
+            border-bottom: 2px solid #dc143c;
+            margin-bottom: 0;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000000;
+            line-height: 1.4;
+            text-align: left; /* ИЗМЕНЕНИЕ: выравнивание по левому краю */
+            padding: 0 5px; /* Добавлено небольшое внутреннее отступление */
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+        }
+
+        .content-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 48px;
+            height: 48px;
+        }
+
+        .content-row:last-child {
+            border-bottom: none;
+        }
+
+        .row-label {
+            font-size: 14px;
+            color: #000000;
+            font-weight: 700;
+            flex-shrink: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .row-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #000000;
+            text-align: right;
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: 100%;
+            line-height: 1;
+        }
+
+        .executor-select {
+            background: white;
+            border: 2px solid #FFFFFF;
+            border-radius: 15px;
+            padding: 10px 10px; /* Увеличено с 8px 10px */
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a2f40;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            width: auto;
+            max-width: 160px;
+            min-width: 140px;
+            height: 42px; /* Увеличено с 36px */
+            display: flex;
+            align-items: center;
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .executor-select:focus {
+            outline: none;
+            border-color: #FFFFFF;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 16px; /* Увеличено с 12px 16px */
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
+            min-height: 74px; /* Добавлено */
+        }
+
+        .schema-button {
+            background-color: #1a2f40;
+            color: white;
+            padding: 11px 14px; /* Увеличено с 8px 12px */
+            font-weight: 700;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+            height: 42px; /* Увеличено с 36px */
+            min-height: 42px; /* Добавлено */
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .schema-button:hover {
+            background-color: #0d1f2d;
+            transform: translateY(-1px);
+        }
+
+        .submit-btn {
+            background-color: #dc143c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 4px;
+            padding: 11px 14px; /* Увеличено с 8px 12px */
+            font-weight: 700;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            height: 42px; /* Увеличено с 36px */
+            min-height: 42px; /* Добавлено */
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .submit-btn:hover {
+            background-color: #a90e2e;
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submitted-text {
+            color: #000;
+            font-weight: 700;
+            padding: 11px 14px; /* Увеличено с 8px 12px */
+            border: 1px solid #FFFFFF;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+            background: #FFFFFF;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            height: 42px; /* Увеличено с 36px */
+            min-height: 42px; /* Добавлено */
+            gap: 6px;
+        }
+
+        .catalog-buttons-container {
+            display: flex;
+            align-items: center;
+            padding: 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
+            position: relative;
+            min-height: 66px; /* Увеличено с 60px */
+        }
+
+        .catalog-button-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+            padding: 10px 0;
+        }
+
+        .catalog-button-wrapper::before,
+        .catalog-button-wrapper::after {
+            display: none;
+        }
+
+        .open-button {
+            background-color: #1a2f40;
+            color: white;
+            padding: 13px 24px; /* Увеличено с 10px 24px */
+            font-weight: 700;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+            height: 46px; /* Увеличено с 40px */
+            min-height: 46px; /* Добавлено */
+            min-width: 140px;
+            width: auto;
+            flex: 0 0 auto;
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .open-button:hover {
+            background-color: #0d1f2d;
+            transform: translateY(-1px);
+        }
+
+        .no-open {
+            color: #999;
+            font-style: italic;
+            padding: 13px 24px; /* Увеличено тоже */
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: center;
+            background: #f8f9fa;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            height: 46px; /* Увеличено тоже */
+            min-height: 46px; /* Добавлено */
+            min-width: 140px;
+            width: auto;
+            flex: 0 0 auto;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 11px;
+            min-width: 30px;
+            background: transparent;
+            border: 1px solid;
+            line-height: 1;
+        }
+
+        .status-badge.warning { 
+            border-color: #8e6a1e; 
+            color: #8e6a1e; 
+        }
+        .status-badge.success { 
+            border-color: #2d5a2d; 
+            color: #2d5a2d; 
+        }
+        .status-badge.danger { 
+            border-color: #7a2a2a; 
+            color: #7a2a2a; 
+        }
+
+        /* СТИЛИ ЗАГРУЗКИ В КАРТОЧКАХ */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            gap: 16px;
+        }
+
+        .loading-card-text {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #7a2a2a;
+            background: rgba(122,42,42,0.05);
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+            border: 1px solid rgba(122,42,42,0.2);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s ease;
+            background-color: var(--text-dark);
+            font-size: 13px;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: #2d5a2d;
+        }
+
+        .notification.error {
+            background-color: #7a2a2a;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 80px;
+            padding: 20px 10px;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid #e5e5e5;
+            color: #1a2f40;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+            position: relative;
+            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background-color: #f5f5f5;
+            border-color: #d0d0d0;
+        }
+
+        .page-btn.active {
+            background-color: #dc143c;
+            color: white;
+            border-color: #dc143c;
+        }
+
+        .page-btn:disabled {
+            background-color: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #e5e5e5;
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+
+        /* АДАПТИВНОСТЬ ДЛЯ НОВОЙ ШАПКИ */
+        @media (max-width: 767px) {
+            header {
+                padding: 12px 15px; /* Увеличено с 8px */
+                padding-top: max(12px, env(safe-area-inset-top));
+                padding-left: max(15px, env(safe-area-inset-left));
+                padding-right: max(15px, env(safe-area-inset-right));
+            }
+            
+            .logo img {
+                width: 38px; /* Увеличено */
+                height: 38px; /* Увеличено */
+            }
+            
+            .site-name {
+                font-size: 19px; /* Увеличено */
+            }
+            
+            .header-section {
+                padding-top: 75px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            /* Увеличим кнопки для мобильных */
+            .schema-button,
+            .submit-btn,
+            .submitted-text {
+                height: 38px; /* Увеличено с 34px */
+                min-height: 38px;
+                padding: 9px 12px; /* Увеличено */
+                font-size: 12px;
+            }
+            
+            .open-button,
+            .no-open {
+                height: 42px; /* Увеличено с 36px */
+                min-height: 42px;
+                padding: 11px 20px; /* Увеличено */
+                font-size: 12px;
+            }
+            
+            .buttons-container {
+                padding: 14px 12px; /* Увеличено */
+                min-height: 68px;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 62px; /* Увеличено с 56px */
+            }
+            
+            .executor-select {
+                height: 38px; /* Увеличено с 34px */
+                padding: 9px 8px; /* Увеличено */
+                font-size: 12px;
+            }
+            
+            .open-tasks-counter {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .open-tasks-counter .count {
+                font-size: 15px;
+                padding: 5px 10px;
+                min-width: 36px;
+            }
+            
+            .task-title {
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px 12px; /* Увеличено */
+                padding-top: max(10px, env(safe-area-inset-top));
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+            
+            .logo img {
+                width: 36px; /* Увеличено */
+                height: 36px; /* Увеличено */
+            }
+            
+            .site-name {
+                font-size: 17px; /* Увеличено */
+            }
+            
+            .header-section {
+                padding-top: 70px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            .schema-button,
+            .submit-btn,
+            .submitted-text {
+                height: 36px; /* Увеличено с 32px */
+                min-height: 36px;
+                padding: 8px 10px; /* Увеличено */
+                font-size: 11px;
+            }
+            
+            .open-button,
+            .no-open {
+                height: 40px; /* Увеличено с 34px */
+                min-height: 40px;
+                padding: 10px 18px; /* Увеличено */
+                font-size: 11px;
+            }
+            
+            .buttons-container {
+                padding: 12px 12px; /* Увеличено */
+                min-height: 64px;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 58px; /* Увеличено с 52px */
+            }
+            
+            .executor-select {
+                height: 36px; /* Увеличено с 32px */
+                padding: 8px 7px; /* Увеличено */
+                font-size: 11px;
+            }
+            
+            .menu-button {
+                width: 28px; /* Увеличено */
+                height: 20px; /* Увеличено */
+            }
+            
+            .open-tasks-counter {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .open-tasks-counter .count {
+                font-size: 14px;
+                padding: 4px 8px;
+                min-width: 32px;
+            }
+            
+            .task-title {
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+        }
+
+        @media (max-width: 360px) {
+            header {
+                padding: 9px 10px; /* Увеличено */
+                padding-top: max(9px, env(safe-area-inset-top));
+                padding-left: max(10px, env(safe-area-inset-left));
+                padding-right: max(10px, env(safe-area-inset-right));
+            }
+            
+            .site-name {
+                font-size: 16px; /* Увеличено */
+            }
+            
+            .header-section {
+                padding-top: 68px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            .schema-button,
+            .submit-btn,
+            .submitted-text {
+                height: 34px; /* Увеличено с 30px */
+                min-height: 34px;
+                padding: 7px 8px; /* Увеличено */
+                font-size: 10px;
+            }
+            
+            .open-button,
+            .no-open {
+                height: 38px; /* Увеличено с 32px */
+                min-height: 38px;
+                padding: 9px 16px; /* Увеличено */
+                font-size: 10px;
+            }
+            
+            .buttons-container {
+                padding: 10px 8px; /* Увеличено */
+                min-height: 60px;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 54px; /* Увеличено с 48px */
+            }
+            
+            .executor-select {
+                height: 34px; /* Увеличено с 30px */
+                padding: 7px 6px; /* Увеличено */
+                font-size: 10px;
+            }
+            
+            .open-tasks-counter {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            
+            .open-tasks-counter .count {
+                font-size: 13px;
+                padding: 3px 6px;
+                min-width: 28px;
+            }
+            
+            .task-title {
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+        }
+
+        /* ОСТАЛЬНАЯ АДАПТИВНОСТЬ */
+        @media (min-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .header-section {
+                padding: 0;
+                padding-top: 80px; /* УВЕЛИЧЕНО */
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header-section {
+                padding: 0 16px;
+                padding-top: 80px; /* УВЕЛИЧЕНО */
+            }
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                height: 100vh;
+            }
+            
+            .header-section {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-top: 75px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            .tabs {
+                padding: 12px 0;
+                gap: 6px;
+                margin-top: 0;
+            }
+            
+            .tab-btn {
+                padding: 12px 8px;
+                font-size: 14px;
+                min-width: calc(50% - 10px);
+                flex: 1 1 calc(50% - 10px);
+            }
+            
+            .open-tasks-counter {
+                margin: 6px 0 12px;
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .tab-content {
+                padding: 12px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .task-card {
+                min-height: auto;
+            }
+            
+            .content-row {
+                padding: 0 12px;
+                min-height: 44px;
+                height: 44px;
+            }
+            
+            .row-label {
+                font-size: 13px;
+                padding-right: 8px;
+                flex-shrink: 0;
+                min-width: 80px;
+            }
+            
+            .row-value {
+                font-size: 13px;
+                justify-content: flex-end;
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 62px; /* Увеличено */
+            }
+            
+            .executor-select {
+                max-width: 140px;
+                min-width: 120px;
+                font-size: 12px;
+                padding: 9px 8px; /* Увеличено */
+                height: 38px; /* Увеличено */
+            }
+            
+            .row-label {
+                font-size: 13px;
+                min-width: 80px;
+            }
+            
+            .loader {
+                width: 22px;
+                height: 22px;
+                border-width: 2.5px;
+            }
+            
+            .loading-card-text {
+                font-size: 13px;
+            }
+            
+            .task-title {
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-section {
+                padding-left: max(10px, env(safe-area-inset-left));
+                padding-right: max(10px, env(safe-area-inset-right));
+                padding-top: 70px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            .tabs {
+                padding: 10px 0;
+                gap: 4px;
+            }
+            
+            .tab-btn {
+                padding: 10px 6px;
+                font-size: 13px;
+                min-width: calc(50% - 6px);
+                flex: 1 1 calc(50% - 6px);
+            }
+            
+            .open-tasks-counter {
+                margin: 4px 0 10px;
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .tab-content {
+                padding: 10px;
+            }
+            
+            .task-card {
+                padding: 0;
+            }
+            
+            .content-row {
+                padding: 0 10px;
+                min-height: 42px;
+                height: 42px;
+            }
+            
+            .task-title {
+                font-size: 15px;
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+            
+            .row-label, .row-value {
+                font-size: 12px;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 58px; /* Увеличено */
+            }
+            
+            .executor-select {
+                max-width: 120px;
+                min-width: 100px;
+                font-size: 11px;
+                padding: 8px 7px; /* Увеличено */
+                height: 36px; /* Увеличено */
+            }
+            
+            .row-label {
+                font-size: 12px;
+                min-width: 70px;
+            }
+            
+            .loader {
+                width: 20px;
+                height: 20px;
+                border-width: 2px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .tabs {
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .tab-btn {
+                flex: 1 1 auto;
+                min-height: 44px;
+                min-width: 100%;
+                margin: 0;
+            }
+            
+            .header-section {
+                padding-left: max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+                padding-top: 68px; /* УВЕЛИЧЕНО для мобильных */
+            }
+            
+            .executor-select {
+                max-width: 110px;
+                min-width: 90px;
+                font-size: 10px;
+                padding: 7px 6px; /* Увеличено */
+                height: 34px; /* Увеличено */
+            }
+            
+            .row-label {
+                font-size: 11px;
+                min-width: 65px;
+            }
+            
+            .content-row {
+                min-height: 40px;
+                height: 40px;
+            }
+            
+            .catalog-buttons-container {
+                min-height: 54px; /* Увеличено */
+            }
+            
+            .loader {
+                width: 18px;
+                height: 18px;
+                border-width: 2px;
+            }
+            
+            .loading-card-text {
+                font-size: 11px;
+            }
+            
+            .task-title {
+                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
+            }
+        }
+    </style>
 </head>
 <body>
-<!-- Индикатор загрузки -->
-<div class="loader-container" id="loader">
-  <div class="loader"></div>
-</div>
-
-<!-- Контейнер для предпросмотра PDF -->
-<div id="pdfPreviewContainer"></div>
-
-<!-- Модальное окно с опциями PDF -->
-<div class="pdf-options-modal" id="pdfOptionsModal">
-  <div class="pdf-options-content">
-    <h3>Настройки экспорта в PDF</h3>
-    
-    <div class="pdf-option-group">
-      <label class="pdf-option-label">
-        <input type="checkbox" class="pdf-option-checkbox" id="includeSummary" checked>
-        Включать итоговую информацию
-      </label>
+    <!-- НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
+    <div class="loader-container" id="loader">
+        <div class="loader"></div>
+        <div class="loading-text"></div>
     </div>
     
-    <div class="pdf-option-group">
-      <label class="pdf-option-label">
-        <input type="checkbox" class="pdf-option-checkbox" id="includeDates" checked>
-        Включать даты отправок
-      </label>
-    </div>
+    <div class="notification" id="notification"></div>
     
-    <div class="pdf-option-group">
-      <label class="pdf-option-label">
-        <input type="checkbox" class="pdf-option-checkbox" id="groupByPart" checked>
-        Группировать по деталям
-      </label>
-    </div>
-    
-    <div class="pdf-option-group">
-      <label class="pdf-option-label">
-        <input type="radio" class="pdf-option-checkbox" name="orientation" value="portrait" checked>
-        Книжная ориентация
-      </label>
-      <label class="pdf-option-label">
-        <input type="radio" class="pdf-option-checkbox" name="orientation" value="landscape">
-        Альбомная ориентация
-      </label>
-    </div>
-    
-    <div class="pdf-option-group">
-      <label class="pdf-option-label">
-        <input type="checkbox" class="pdf-option-checkbox" id="showPreview">
-        Показать предпросмотр перед сохранением
-      </label>
-    </div>
-    
-    <div class="pdf-option-buttons">
-      <button class="pdf-option-btn pdf-option-btn-cancel" onclick="closePdfOptions()">Отмена</button>
-      <button class="pdf-option-btn pdf-option-btn-generate" onclick="generatePdfReport()">Создать PDF</button>
-    </div>
-  </div>
-</div>
-
-<!-- Шапка -->
-<header>
-  <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
-  <div class="site-name">
-    <div class="site-name-dropdown" onclick="toggleSitesDropdown(event)">
-      PARTS STORE
-      <div class="dropdown-sites" id="sitesDropdown">
-        <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">SKYMALL</a>
-        <a href="https://smart-bowling.github.io/PARTS-BB/">BLOCKBUSTER</a>
-        <a href="https://smart-bowling.github.io/PARTS-KH/">LUCKY STRIKE KH</a>
-      </div>
-    </div>
-  </div>
-  <div class="menu-button" onclick="toggleDropdown()">
-    <div></div><div></div><div></div>
-  </div>
-  <div class="dropdown" id="dropdownMenu">
-    <a href="https://smart-bowling.github.io/MANUALS-HTML/">
-      <i class="fas fa-book"></i> МАНУАЛЫ
-    </a>
-  </div>
-</header>
-
-<!-- Блок авторизации -->
-<div id="login">
-  <h2>Вход на сайт</h2>
-  <div id="g_id_onload"
-       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
-       data-callback="handleCredentialResponse"
-       data-auto_prompt="false">
-  </div>
-  <div class="g_id_signin" data-type="standard"></div>
-</div>
-
-<!-- Контент для авторизованных -->
-<div id="content" style="display:none">
-  <div class="top-controls" id="topControls">
-    <div class="select-wrapper">
-      <select id="sortSelect" title="Фильтр">
-        <option value="all">Все детали</option>
-        <option value="popular">Пос. взят. за 30 дней</option>
-        <option value="mostPopular">Популярные</option>
-        <option value="sortByQty">Остатки</option>
-      </select>
-    </div>
-    
-    <button id="btnSearch" class="btn-top">
-      <i class="fas fa-search"></i> Поиск
-    </button>
-
-    <button id="btnReset" class="btn-top">
-      <i class="fas fa-sync-alt"></i> Сбросить
-    </button>
-
-    <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-STORE/', '_blank')" class="btn-top" id="btnAddPart">
-      <i class="fas fa-plus-circle"></i> Добавить деталь
-    </button>
-  </div>
-
-  <div class="cards" id="cardsContainer"></div>
-
-  <div class="pagination" id="paginationContainer">
-    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
-    <div class="page-numbers" id="pageNumbers"></div>
-    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
-  </div>
-
-  <div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-      <div id="modalClose" class="modal-close">×</div>
-      <h3>История изменений</h3>
-      <pre id="modalContent"></pre>
-    </div>
-  </div>
-</div>
-
-<script>
-  // Глобальные переменные
-  const { jsPDF } = window.jspdf;
-  let currentReportData = null;
-
-  // Функция для показа/скрытия индикатора загрузки
-  function showLoader(show) {
-    document.getElementById('loader').style.display = show ? 'flex' : 'none';
-  }
-
-  // Функция для выпадающего меню
-  function toggleDropdown() {
-    const menu = document.getElementById("dropdownMenu");
-    menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-  }
-
-  // Функция для выпадающего списка сайтов
-  function toggleSitesDropdown(event) {
-    event.stopPropagation();
-    const dropdown = document.getElementById("sitesDropdown");
-    dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-  }
-
-  // Закрытие выпадающего списка при клике вне его
-  document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById("sitesDropdown");
-    const siteName = document.querySelector('.site-name-dropdown');
-    
-    if (dropdown.style.display === 'block' && !siteName.contains(e.target)) {
-      dropdown.style.display = 'none';
-    }
-  });
-
-  // Настройки авторизации
-  const allowedEmails = ["vadiksss900@gmail.com", "sashavolobuev123890@gmail.com"];
-  const limitedAccessEmails = ["nikoshina16@gmail.com", "bowlingblock.b@gmail.com"];
-
-  // Обработчик ответа от Google
-  function handleCredentialResponse(response) {
-    showLoader(true);
-    try {
-      const data = parseJwt(response.credential);
-      const email = data.email;
-
-      if (allowedEmails.includes(email) || limitedAccessEmails.includes(email)) {
-        localStorage.setItem("userEmail", email);
-        location.reload();
-      } else {
-        alert("Доступ запрещён для: " + email);
-      }
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  // Проверка авторизации при загрузке страницы
-  window.onload = () => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (userEmail && (allowedEmails.includes(userEmail) || limitedAccessEmails.includes(userEmail))) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("content").style.display = "block";
-      initApp();
-    }
-  };
-
-  // Функция для разбора JWT токена
-  function parseJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    return JSON.parse(jsonPayload);
-  }
-
-  // Глобальный объект для пагинации
-  const pagination = {
-    prevPage: function() {},
-    nextPage: function() {}
-  };
-
-  // Проверка, имеет ли пользователь ограниченный доступ
-  function hasLimitedAccess() {
-    const userEmail = localStorage.getItem("userEmail");
-    return limitedAccessEmails.includes(userEmail);
-  }
-
-  // ============= ФУНКЦИИ ДЛЯ PDF ЭКСПОРТА =============
-
-  // Функция для открытия модального окна с опциями PDF
-  function openPdfOptions() {
-    if (!currentReportData || currentReportData.length === 0) {
-      alert('Сначала сформируйте отчет, нажав кнопку "Отчет"');
-      return;
-    }
-    document.getElementById('pdfOptionsModal').style.display = 'flex';
-  }
-
-  // Функция для закрытия модального окна с опциями PDF
-  function closePdfOptions() {
-    document.getElementById('pdfOptionsModal').style.display = 'none';
-  }
-
-  // Основная функция генерации PDF
-  async function generatePdfReport() {
-    closePdfOptions();
-    
-    if (!currentReportData || currentReportData.length === 0) {
-      alert('Нет данных для экспорта в PDF');
-      return;
-    }
-    
-    showLoader(true);
-    
-    try {
-      const options = {
-        includeSummary: document.getElementById('includeSummary').checked,
-        includeDates: document.getElementById('includeDates').checked,
-        groupByPart: document.getElementById('groupByPart').checked,
-        orientation: document.querySelector('input[name="orientation"]:checked').value,
-        showPreview: document.getElementById('showPreview').checked
-      };
-      
-      // Создаем HTML для PDF
-      const pdfHtml = createPdfHtml(currentReportData, options);
-      
-      // Если выбран предпросмотр, показываем его
-      if (options.showPreview) {
-        showPdfPreview(pdfHtml, options);
-      } else {
-        // Иначе сразу генерируем и скачиваем PDF
-        await generateAndDownloadPdf(pdfHtml, options);
-      }
-      
-    } catch (error) {
-      console.error('Ошибка при генерации PDF:', error);
-      alert('Произошла ошибка при создании PDF: ' + error.message);
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  // Показать предпросмотр PDF
-  function showPdfPreview(pdfHtml, options) {
-    const previewContainer = document.getElementById('pdfPreviewContainer');
-    previewContainer.innerHTML = `
-      <div class="pdf-preview-controls">
-        <button class="pdf-preview-btn" onclick="downloadPdfFromPreview()">
-          <i class="fas fa-download"></i> Скачать PDF
-        </button>
-        <button class="pdf-preview-btn" onclick="closePdfPreview()" style="background: #dc3545;">
-          <i class="fas fa-times"></i> Закрыть
-        </button>
-      </div>
-      <div id="pdfContentForPreview" class="pdf-content">
-        ${pdfHtml}
-      </div>
-    `;
-    
-    // Сохраняем данные для генерации PDF
-    window.pdfPreviewData = { pdfHtml, options };
-    
-    previewContainer.style.display = 'block';
-    document.body.style.overflow = 'hidden';
-  }
-
-  // Закрыть предпросмотр PDF
-  function closePdfPreview() {
-    document.getElementById('pdfPreviewContainer').style.display = 'none';
-    document.body.style.overflow = 'auto';
-    delete window.pdfPreviewData;
-  }
-
-  // Скачать PDF из предпросмотра
-  async function downloadPdfFromPreview() {
-    if (!window.pdfPreviewData) return;
-    
-    showLoader(true);
-    try {
-      await generateAndDownloadPdf(window.pdfPreviewData.pdfHtml, window.pdfPreviewData.options);
-      closePdfPreview();
-    } catch (error) {
-      console.error('Ошибка при скачивании PDF:', error);
-      alert('Ошибка при создании PDF: ' + error.message);
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  // Генерация и скачивание PDF
-  async function generateAndDownloadPdf(pdfHtml, options) {
-    // Создаем временный элемент для рендеринга
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.width = options.orientation === 'landscape' ? '297mm' : '210mm';
-    tempDiv.style.padding = '20px';
-    tempDiv.style.background = 'white';
-    tempDiv.innerHTML = pdfHtml;
-    document.body.appendChild(tempDiv);
-    
-    try {
-      // Ждем загрузки всех ресурсов
-      await waitForImages(tempDiv);
-      
-      // Создаем canvas из HTML
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: tempDiv.offsetWidth,
-        height: tempDiv.offsetHeight
-      });
-      
-      // Создаем PDF
-      const pdf = new jsPDF({
-        orientation: options.orientation,
-        unit: 'mm',
-        format: options.orientation === 'landscape' ? [297, 210] : [210, 297]
-      });
-      
-      // Добавляем изображение в PDF
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Масштабируем изображение под размер страницы
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
-      
-      pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      
-      // Сохраняем PDF
-      pdf.save(`отчет_отправок_${new Date().toISOString().split('T')[0]}.pdf`);
-      
-    } finally {
-      // Удаляем временный элемент
-      document.body.removeChild(tempDiv);
-    }
-  }
-
-  // Ожидание загрузки изображений
-  function waitForImages(element) {
-    return new Promise((resolve) => {
-      const images = element.getElementsByTagName('img');
-      let loaded = 0;
-      const total = images.length;
-      
-      if (total === 0) {
-        resolve();
-        return;
-      }
-      
-      const onLoad = () => {
-        loaded++;
-        if (loaded === total) {
-          resolve();
-        }
-      };
-      
-      Array.from(images).forEach(img => {
-        if (img.complete) {
-          onLoad();
-        } else {
-          img.addEventListener('load', onLoad);
-          img.addEventListener('error', onLoad); // Продолжаем даже если ошибка
-        }
-      });
-    });
-  }
-
-  // Создание HTML для PDF
-  function createPdfHtml(reportData, options) {
-    const totalShipped = reportData.reduce((sum, item) => sum + item.totalShipped, 0);
-    const totalRecipients = reportData.reduce((sum, item) => sum + item.shipments.length, 0);
-    const totalParts = reportData.length;
-    
-    let html = `
-      <div class="pdf-header">
-        <h1>Отчет по отправкам деталей</h1>
-        <div class="report-info">
-          <div><strong>Дата формирования:</strong> ${new Date().toLocaleString('ru-RU')}</div>
-          <div><strong>Всего деталей:</strong> ${totalParts}</div>
-          <div><strong>Всего получателей:</strong> ${totalRecipients}</div>
-          <div><strong>Общее количество:</strong> ${totalShipped} шт.</div>
+    <!-- НОВАЯ ШАПКА -->
+    <header>
+        <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+        <div class="site-name" onclick="toggleSiteNameDropdown()">
+            LUCKY STRIKE KH
+            <div class="site-name-dropdown" id="siteNameDropdown">
+                <a href="https://smart-bowling.github.io/SMB-SKYMALL/" class="dropdown-button">
+                    <span>SKYMALL</span>
+                </a>
+              <a href="https://smart-bowling.github.io/SMB-BB/" class="dropdown-button">
+                    <span>BLOCKBUSTER</span>
+                </a>
+            </div>
         </div>
-      </div>
-    `;
-    
-    if (options.groupByPart) {
-      // Группированный отчет по деталям
-      let partCounter = 0;
-      reportData.forEach((item, index) => {
-        partCounter++;
-        html += createPartSection(item, partCounter, options);
-        
-        // Добавляем разрыв страницы после каждых 3 деталей
-        if ((index + 1) % 3 === 0 && index !== reportData.length - 1) {
-          html += '<div style="page-break-after: always;"></div>';
-        }
-      });
-    } else {
-      // Плоский список всех отправок
-      html += createFlatTable(reportData, options);
-    }
-    
-    // Добавляем итоговую информацию
-    if (options.includeSummary) {
-      html += `
-        <div class="pdf-summary">
-          <h3>Итоговая информация</h3>
-          <div class="pdf-summary-row">
-            <span class="pdf-summary-label">Всего деталей в отчете:</span>
-            <span class="pdf-summary-value">${totalParts}</span>
-          </div>
-          <div class="pdf-summary-row">
-            <span class="pdf-summary-label">Всего получателей:</span>
-            <span class="pdf-summary-value">${totalRecipients}</span>
-          </div>
-          <div class="pdf-summary-row">
-            <span class="pdf-summary-label">Общее количество отправок:</span>
-            <span class="pdf-summary-value">${reportData.reduce((sum, item) => sum + item.shipments.reduce((s, ship) => s + ship.shipments.length, 0), 0)}</span>
-          </div>
-          <div class="pdf-summary-row">
-            <span class="pdf-summary-label">Общее количество отправленного:</span>
-            <span class="pdf-summary-value">${totalShipped} шт.</span>
-          </div>
-          <div class="pdf-summary-row">
-            <span class="pdf-summary-label">Среднее количество на деталь:</span>
-            <span class="pdf-summary-value">${(totalShipped / totalParts).toFixed(1)} шт.</span>
-          </div>
+        <div class="menu-button" onclick="toggleDropdown()">
+            <div></div><div></div><div></div>
         </div>
-      `;
-    }
-    
-    return html;
-  }
-
-  // Создание секции для детали
-  function createPartSection(item, counter, options) {
-    let html = `
-      <h3 style="color: #1a2f40; margin: 25px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #eee;">
-        ${counter}. ${item.partNumber} - ${item.partName}
-        <span style="float: right; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold;">
-          Остаток: ${item.currentQuantity} шт.
-        </span>
-      </h3>
-    `;
-    
-    if (item.shipments.length > 0) {
-      html += `
-        <table class="pdf-table">
-          <thead>
-            <tr>
-              <th>Получатель</th>
-              <th style="width: 80px; text-align: center">Отправок</th>
-              <th style="width: 100px; text-align: center">Всего отправлено</th>
-              ${options.includeDates ? '<th style="width: 120px">Дата последней</th>' : ''}
-              ${options.includeDates ? '<th>Все даты отправок</th>' : ''}
-            </tr>
-          </thead>
-          <tbody>
-      `;
-      
-      item.shipments.forEach((shipment, shipIndex) => {
-        const shipmentDates = shipment.shipments
-          .map(s => `${s.date.split(' ')[0]}: ${s.quantity} шт.`)
-          .join(', ');
-        
-        html += `
-          <tr>
-            <td>${shipment.recipient}</td>
-            <td style="text-align: center">${shipment.shipments.length}</td>
-            <td style="text-align: center; font-weight: bold">${shipment.total} шт.</td>
-            ${options.includeDates ? `<td>${shipment.lastShipmentDate || 'Неизвестно'}</td>` : ''}
-            ${options.includeDates ? `<td style="font-size: 10px">${shipmentDates}</td>` : ''}
-          </tr>
-        `;
-      });
-      
-      // Итоговая строка для детали
-      html += `
-          <tr class="pdf-total-row">
-            <td colspan="${options.includeDates ? '3' : '2'}" style="text-align: right; padding-right: 20px">
-              <strong>Итого по детали:</strong>
-            </td>
-            <td style="text-align: center">
-              <strong>${item.totalShipped} шт.</strong>
-            </td>
-            ${options.includeDates ? `<td colspan="2" style="font-size: 10px">
-              Отправлено ${item.shipments.length} получателям
-            </td>` : ''}
-          </tr>
-        </tbody>
-      </table>
-      `;
-    } else {
-      html += `<p style="font-style: italic; color: #666; margin: 10px 0 20px 0;">Нет данных об отправках</p>`;
-    }
-    
-    return html;
-  }
-
-  // Создание плоской таблицы
-  function createFlatTable(reportData, options) {
-    let html = `
-      <h3 style="color: #1a2f40; margin: 20px 0 15px 0;">Все отправки</h3>
-      <table class="pdf-table">
-        <thead>
-          <tr>
-            <th style="width: 100px">№ детали</th>
-            <th>Название</th>
-            <th style="width: 70px; text-align: center">Остаток</th>
-            <th>Получатель</th>
-            <th style="width: 80px; text-align: center">Отправок</th>
-            <th style="width: 100px; text-align: center">Всего</th>
-            ${options.includeDates ? '<th style="width: 120px">Дата последней</th>' : ''}
-          </tr>
-        </thead>
-        <tbody>
-    `;
-    
-    let rowIndex = 0;
-    reportData.forEach(item => {
-      if (item.shipments.length > 0) {
-        item.shipments.forEach((shipment, shipIndex) => {
-          html += `
-            <tr>
-              <td>${item.partNumber}</td>
-              <td>${item.partName}</td>
-              <td style="text-align: center; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold">${item.currentQuantity}</td>
-              <td>${shipment.recipient}</td>
-              <td style="text-align: center">${shipment.shipments.length}</td>
-              <td style="text-align: center; font-weight: bold">${shipment.total} шт.</td>
-              ${options.includeDates ? `<td>${shipment.lastShipmentDate || 'Неизвестно'}</td>` : ''}
-            </tr>
-          `;
-          rowIndex++;
-        });
-      } else {
-        html += `
-          <tr>
-            <td>${item.partNumber}</td>
-            <td>${item.partName}</td>
-            <td style="text-align: center; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}; font-weight: bold">${item.currentQuantity}</td>
-            <td colspan="${options.includeDates ? '4' : '3'}" style="font-style: italic; color: #666">Нет данных об отправках</td>
-          </tr>
-        `;
-        rowIndex++;
-      }
-    });
-    
-    html += `
-        </tbody>
-      </table>
-    `;
-    
-    return html;
-  }
-
-  // ============= ОСТАЛЬНЫЕ ФУНКЦИИ ОТЧЕТА =============
-
-  // Создаем прогресс-модальное окно
-  function createProgressModal() {
-    const modal = document.createElement('div');
-    modal.className = 'progress-modal';
-    modal.id = 'progressModal';
-    modal.innerHTML = `
-      <div class="progress-content">
-        <div class="progress-title">Формирование отчета</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
+        <div class="dropdown" id="dropdownMenu">
+            <a href="https://smart-bowling.github.io/PARTS-KH/">
+                <span class="icon-space"><i class="fas fa-cube"></i></span>ДЕТАЛИ
+            </a>
+            <a href="https://smart-bowling.github.io/PS-STOP-KH/">
+                <span class="icon-space"><i class="fas fa-exclamation-triangle"></i></span>STOP LANE
+            </a>
         </div>
-        <div class="progress-text" id="progressText">Подготовка данных...</div>
-        <div class="progress-stats">
-          <span id="processedItems">0</span>
-          <span id="totalItems">0</span>
-        </div>
-        <div class="progress-details" id="progressDetails">
-          <div class="progress-detail">Сбор информации о деталях...</div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  // Добавляем кнопку отчета
-  function addReportButton() {
-    const topControls = document.getElementById('topControls');
+    </header>
     
-    if (document.getElementById('btnReport')) {
-      return;
-    }
-    
-    const reportBtn = document.createElement('button');
-    reportBtn.className = 'btn-top';
-    reportBtn.id = 'btnReport';
-    reportBtn.innerHTML = '<i class="fas fa-file-alt"></i> Отчет';
-    reportBtn.onclick = generateEnhancedReport;
-    
-    const searchBtn = document.getElementById('btnSearch');
-    const resetBtn = document.getElementById('btnReset');
-    searchBtn.parentNode.insertBefore(reportBtn, resetBtn);
-  }
-
-  // Функция для показа/скрытия прогресса
-  function showProgressModal(show) {
-    const modal = document.getElementById('progressModal');
-    if (modal) {
-      modal.style.display = show ? 'flex' : 'none';
-    }
-  }
-
-  // Функция для обновления прогресса
-  function updateProgress(step, total, message, details) {
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-    const processedItems = document.getElementById('processedItems');
-    const totalItems = document.getElementById('totalItems');
-    const progressDetails = document.getElementById('progressDetails');
-    
-    if (progressFill && total > 0) {
-      const percent = Math.round((step / total) * 100);
-      progressFill.style.width = percent + '%';
-    }
-    if (progressText) progressText.textContent = message;
-    if (processedItems) processedItems.textContent = `Обработано: ${step}`;
-    if (totalItems) totalItems.textContent = `Всего: ${total}`;
-    
-    if (details && progressDetails) {
-      progressDetails.innerHTML = details.map(detail => 
-        `<div class="progress-detail">${detail}</div>`
-      ).join('');
-    }
-  }
-
-  // Улучшенная функция генерации отчета
-  async function generateEnhancedReport() {
-    showProgressModal(true);
-    
-    try {
-      updateProgress(1, 6, "Подготовка данных...");
-      const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
-      
-      updateProgress(2, 6, "Загрузка списка деталей...");
-      const res = await fetch(`${API_URL}?action=getEntries`);
-      const allEntries = await res.json();
-      
-      const reportData = [];
-      let processed = 0;
-      
-      for (const entry of allEntries) {
-        processed++;
-        updateProgress(
-          3 + (processed / allEntries.length), 
-          6, 
-          `Обработка детали ${processed} из ${allEntries.length}: ${entry.partNumber}`
-        );
-        
-        const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
-        const historyText = await historyRes.text();
-        
-        const shipments = parseShipmentsFromHistory(historyText);
-        const groupedShipments = groupShipmentsByRecipient(shipments);
-        
-        if (groupedShipments.length > 0) {
-          reportData.push({
-            partNumber: entry.partNumber,
-            partName: entry.partName || 'Не указано',
-            currentQuantity: entry.quantity,
-            shipments: groupedShipments,
-            totalShipped: groupedShipments.reduce((sum, item) => sum + item.total, 0)
-          });
-        }
-        
-        if (processed % 5 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      }
-      
-      updateProgress(5, 6, "Сортировка данных...");
-      reportData.sort((a, b) => {
-        if (a.partNumber !== b.partNumber) {
-          return a.partNumber.localeCompare(b.partNumber);
-        }
-        return b.totalShipped - a.totalShipped;
-      });
-      
-      updateProgress(6, 6, "Формирование отчета...");
-      showProgressModal(false);
-      
-      // Сохраняем данные отчета в глобальную переменную
-      currentReportData = reportData;
-      
-      // Показываем отчет в модальном окне
-      displayEnhancedReport(reportData);
-      
-    } catch (error) {
-      console.error('Ошибка при генерации отчета:', error);
-      showProgressModal(false);
-      alert('Произошла ошибка при формировании отчета: ' + error.message);
-    }
-  }
-
-  // Функция для парсинга отправок из истории
-  function parseShipmentsFromHistory(historyText) {
-    const shipments = [];
-    const lines = historyText.split('\n').filter(line => line.trim());
-    
-    lines.forEach(line => {
-      const patterns = [
-        /Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+\d+/,
-        /\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2}\s+Взято\s+(\d+).\s+для\s+(.+?)\s+Ост\.\s+\d+/,
-        /Взято\s+(\d+).\s+для\s+(\+\d[\d\s\-\(\)]+)/,
-        /Взято\s+(\d+).\s+для\s+([А-Я][а-я]+\s+[А-Я][а-я]+)/,
-      ];
-      
-      for (const pattern of patterns) {
-        const match = line.match(pattern);
-        if (match) {
-          const quantity = parseInt(match[1]);
-          const recipient = match[2].trim();
-          
-          let date = 'Неизвестно';
-          const dateMatch = line.match(/(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2}:\d{2})/);
-          if (dateMatch) {
-            date = `${dateMatch[1]} ${dateMatch[2]}`;
-          }
-          
-          shipments.push({
-            date,
-            quantity,
-            recipient,
-            rawLine: line
-          });
-          break;
-        }
-      }
-    });
-    
-    return shipments;
-  }
-
-  // Группировка отправок по получателям
-  function groupShipmentsByRecipient(shipments) {
-    const grouped = {};
-    
-    shipments.forEach(shipment => {
-      const recipient = shipment.recipient;
-      
-      if (!grouped[recipient]) {
-        grouped[recipient] = {
-          recipient: recipient,
-          total: 0,
-          shipments: [],
-          lastShipmentDate: ''
-        };
-      }
-      
-      grouped[recipient].total += shipment.quantity;
-      grouped[recipient].shipments.push({
-        date: shipment.date,
-        quantity: shipment.quantity
-      });
-      
-      if (shipment.date !== 'Неизвестно') {
-        const shipmentDate = new Date(shipment.date.replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$3-$2-$1'));
-        if (!grouped[recipient].lastShipmentDate || shipmentDate > new Date(grouped[recipient].lastShipmentDate)) {
-          grouped[recipient].lastShipmentDate = shipment.date;
-        }
-      }
-    });
-    
-    return Object.values(grouped)
-      .sort((a, b) => {
-        if (b.total !== a.total) {
-          return b.total - a.total;
-        }
-        if (a.lastShipmentDate && b.lastShipmentDate) {
-          return new Date(b.lastShipmentDate.replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$3-$2-$1')) - 
-                 new Date(a.lastShipmentDate.replace(/(\d{2})\.(\d{2})\.(\d{4})/, '$3-$2-$1'));
-        }
-        return 0;
-      });
-  }
-
-  // Функция для отображения улучшенного отчета
-  function displayEnhancedReport(reportData) {
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-    modalOverlay.id = 'reportModal';
-    modalOverlay.style.display = 'flex';
-    
-    const totalShipped = reportData.reduce((sum, item) => sum + item.totalShipped, 0);
-    const totalRecipients = reportData.reduce((sum, item) => sum + item.shipments.length, 0);
-    
-    modalOverlay.innerHTML = `
-      <div class="modal" style="max-width: 95%; max-height: 90vh; width: 95%;">
-        <div class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</div>
-        <h3>Отчет по отправкам деталей</h3>
-        <div style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px;">
-          <button onclick="exportReportToCSV()" class="btn" style="background: #2e7d32; color: white; min-width: 180px;">
-            <i class="fas fa-file-csv"></i> Экспорт в CSV
-          </button>
-          <button onclick="openPdfOptions()" class="btn" style="background: #d32f2f; color: white; min-width: 180px;">
-            <i class="fas fa-file-pdf"></i> Экспорт в PDF
-          </button>
-          <button onclick="printReport()" class="btn" style="background: #1565c0; color: white; min-width: 140px;">
-            <i class="fas fa-print"></i> Печать
-          </button>
-          <div style="flex: 1; text-align: right; color: #666; font-size: 14px; padding-top: 15px;">
-            Всего: ${reportData.length} деталей, ${totalRecipients} получателей, ${totalShipped} шт.
-          </div>
-        </div>
-        <div style="overflow-x: auto; max-height: 70vh;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1000px;">
-            <thead>
-              <tr style="background: #1a2f40; color: white; position: sticky; top: 0;">
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 120px;">№ детали</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 200px;">Название</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Остаток</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 200px;">Кому отправлено</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 120px;">Отправок</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: center; width: 100px;">Всего</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 150px;">Дата последней</th>
-                <th style="padding: 12px; border: 1px solid #444; text-align: left; width: 150px;">Детали отправок</th>
-              </tr>
-            </thead>
-            <tbody id="reportTableBody">
-              ${generateReportTableRows(reportData)}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modalOverlay);
-  }
-
-  // Генерация строк таблицы отчета
-  function generateReportTableRows(reportData) {
-    let rows = '';
-    
-    reportData.forEach(item => {
-      rows += `
-        <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd;">
-          <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">
-            ${item.partNumber}
-          </td>
-          <td style="padding: 10px; border: 1px solid #ddd;">
-            ${item.partName}
-          </td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: ${item.currentQuantity < 5 ? '#d32f2f' : '#2e7d32'}">
-            ${item.currentQuantity}
-          </td>
-          <td style="padding: 10px; border: 1px solid #ddd;" colspan="5">
-            <strong>Отправки для этой детали:</strong>
-          </td>
-        </tr>
-      `;
-      
-      item.shipments.forEach((shipment, index) => {
-        const rowColor = index % 2 === 0 ? '#fff' : '#f5f5f5';
-        
-        const shipmentDetails = shipment.shipments
-          .map(s => `${s.date.split(' ')[0]}: ${s.quantity} шт.`)
-          .join('<br>');
-        
-        rows += `
-          <tr style="background: ${rowColor};">
-            <td colspan="3" style="padding: 10px; border: 1px solid #ddd;"></td>
-            <td style="padding: 10px; border: 1px solid #ddd;">
-              ${shipment.recipient}
-            </td>
-            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
-              ${shipment.shipments.length}
-            </td>
-            <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">
-              ${shipment.total} шт.
-            </td>
-            <td style="padding: 10px; border: 1px solid #ddd;">
-              ${shipment.lastShipmentDate || 'Неизвестно'}
-            </td>
-            <td style="padding: 10px; border: 1px solid #ddd; font-size: 12px;">
-              ${shipmentDetails}
-            </td>
-          </tr>
-        `;
-      });
-      
-      rows += `
-        <tr style="background: #e3f2fd;">
-          <td colspan="5" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">
-            Итого по детали ${item.partNumber}:
-          </td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">
-            ${item.totalShipped} шт.
-          </td>
-          <td colspan="2" style="padding: 10px; border: 1px solid #ddd; font-size: 12px;">
-            Отправлено ${item.shipments.length} получателям
-          </td>
-        </tr>
-      `;
-    });
-    
-    return rows;
-  }
-
-  // Функция экспорта отчета в CSV
-  function exportReportToCSV() {
-    if (!currentReportData || currentReportData.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
-    }
-    
-    let csv = '№ детали;Название;Текущий остаток;Получатель;Количество отправок;Всего отправлено;Дата последней отправки\n';
-    
-    currentReportData.forEach(item => {
-      if (item.shipments.length === 0) {
-        csv += `${item.partNumber};"${item.partName}";${item.currentQuantity};;0;0;\n`;
-      } else {
-        item.shipments.forEach(shipment => {
-          csv += `${item.partNumber};"${item.partName}";${item.currentQuantity};"${shipment.recipient}";${shipment.shipments.length};${shipment.total};"${shipment.lastShipmentDate || ''}"\n`;
-        });
-      }
-    });
-    
-    const totalShipped = currentReportData.reduce((sum, item) => sum + item.totalShipped, 0);
-    const totalRecipients = currentReportData.reduce((sum, item) => sum + item.shipments.length, 0);
-    
-    csv += `\nИтого;\n`;
-    csv += `Всего деталей;${currentReportData.length}\n`;
-    csv += `Всего получателей;${totalRecipients}\n`;
-    csv += `Общее количество отправленного;${totalShipped} шт.\n`;
-    csv += `Дата формирования;${new Date().toLocaleString('ru-RU')}\n`;
-    
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `отчет_отправок_${new Date().toISOString().split('T')[0]}.csv`;
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 100);
-  }
-
-  // Функция для печати отчета
-  function printReport() {
-    const printContent = document.querySelector('#reportModal .modal').innerHTML;
-    const printWindow = window.open('', '_blank');
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Отчет по отправкам деталей</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .total-row { background-color: #e6f3ff; font-weight: bold; }
-            @media print {
-              body { margin: 10px; font-size: 12px; }
-              table { font-size: 11px; }
-              th, td { padding: 6px; }
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Отчет по отправкам деталей</h2>
-          <p><strong>Сформировано:</strong> ${new Date().toLocaleString('ru-RU')}</p>
-          ${printContent}
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          <\/script>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
-  }
-
-  // Инициализация кнопки отчета
-  function initReportButton() {
-    const userEmail = localStorage.getItem("userEmail");
-    const limitedAccessEmails = ["nikoshina16@gmail.com", "bowlingblock.b@gmail.com"];
-    
-    if (userEmail && !limitedAccessEmails.includes(userEmail)) {
-      addReportButton();
-      createProgressModal();
-    }
-  }
-
-  // ============= ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =============
-
-  // Инициализация приложения
-  function initApp() {
-    const API_URL = "https://script.google.com/macros/s/AKfycbw-0OOaPe8sCCHW6BEhmcCJi0nRK00b3WF3dprlBcXqQIS1toSOhNhGUqFkx9AOs3pg/exec";
-
-    let allEntries = [];
-    let currentEntries = [];
-    let currentPage = 1;
-    let totalPages = 1;
-    const cardsPerPage = 5;
-
-    // Инициализируем кнопку отчета
-    initReportButton();
-
-    // Основные функции приложения
-    async function getEntries() {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=getEntries`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function updateQuantity(partNumber, delta) {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function updateQuantityWithName(partNumber, delta, name) {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=updateQuantityWithName&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}&name=${encodeURIComponent(name)}`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function deleteEntry(rowIndex) {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function getHistory(partNumber) {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
-        return await res.text();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function getPopularEntries() {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=getPopularEntries`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function getMostPopularEntries() {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    async function updatePartName(partNumber, newName) {
-      showLoader(true);
-      try {
-        const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
-        return await res.json();
-      } finally {
-        showLoader(false);
-      }
-    }
-
-    function createCard(entry) {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.dataset.row = entry.rowIndex;
-      div.dataset.partNumber = entry.partNumber.toLowerCase();
-
-      if (hasLimitedAccess()) {
-        div.classList.add('limited-access');
-      }
-
-      const media = document.createElement('div');
-      media.className = 'media-block';
-
-      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
-        const iframe = document.createElement('iframe');
-        iframe.src = entry.fileUrl;
-        media.appendChild(iframe);
-      } else if (entry.fileUrl) {
-        const img = document.createElement('img');
-        img.src = entry.fileUrl;
-        media.appendChild(img);
-      }
-
-      const overlay = document.createElement('div');
-      overlay.className = 'img-overlay';
-      media.appendChild(overlay);
-
-      if (!hasLimitedAccess()) {
-        const rem = document.createElement('div');
-        rem.className = 'icon remove';
-        rem.textContent = 'Х';
-        media.append(rem);
-
-        rem.onclick = async () => {
-          if (confirm('Удалить эту запись?')) {
-            await deleteEntry(entry.rowIndex);
-            allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
-            currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
-            updateTotalPages();
-            if (currentPage > totalPages) currentPage = totalPages;
-            renderPage(currentPage);
-          }
-        };
-      }
-
-      div.append(media);
-
-      if (hasLimitedAccess()) {
-        const partInfoContainer = document.createElement('div');
-        partInfoContainer.className = 'part-info-container';
-        
-        const partNumberItem = document.createElement('div');
-        partNumberItem.className = 'part-info-item part-number';
-        partNumberItem.textContent = entry.partNumber;
-        
-        const partNameItem = document.createElement('div');
-        partNameItem.className = 'part-info-item part-name';
-        partNameItem.textContent = entry.partName || 'Название детали';
-        
-        const partQuantityItem = document.createElement('div');
-        partQuantityItem.className = 'part-info-item part-quantity';
-        partQuantityItem.textContent = entry.quantity;
-        
-        partInfoContainer.appendChild(partNumberItem);
-        partInfoContainer.appendChild(partNameItem);
-        partInfoContainer.appendChild(partQuantityItem);
-        
-        div.appendChild(partInfoContainer);
-      } else {
-        const partNameContainer = document.createElement('div');
-        partNameContainer.className = 'part-name-container';
-        partNameContainer.dataset.partNumber = entry.partNumber;
-        
-        const partNameText = document.createElement('div');
-        partNameText.className = 'part-name-text';
-        partNameText.textContent = entry.partName || 'Название детали';
-        
-        const editButton = document.createElement('button');
-        editButton.className = 'part-name-edit-btn';
-        editButton.innerHTML = '<i class="fas fa-edit"></i>';
-        editButton.title = 'Редактировать название';
-        
-        partNameContainer.appendChild(partNameText);
-        partNameContainer.appendChild(editButton);
-
-        editButton.addEventListener('click', function() {
-          const partNumber = partNameContainer.dataset.partNumber;
-          const currentName = partNameText.textContent;
-          
-          partNameContainer.classList.add('editing');
-          
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.className = 'part-name-input';
-          input.value = currentName;
-          
-          const saveButton = document.createElement('button');
-          saveButton.className = 'part-name-save-btn';
-          saveButton.innerHTML = '<i class="fas fa-check"></i>';
-          saveButton.title = 'Сохранить';
-          
-          const cancelButton = document.createElement('button');
-          cancelButton.className = 'part-name-cancel-btn';
-          cancelButton.innerHTML = '<i class="fas fa-times"></i>';
-          cancelButton.title = 'Отменить';
-          
-          partNameText.style.display = 'none';
-          editButton.style.display = 'none';
-          
-          partNameContainer.appendChild(input);
-          partNameContainer.appendChild(saveButton);
-          partNameContainer.appendChild(cancelButton);
-          
-          input.focus();
-          input.select();
-          
-          const finishEdit = async (save = false) => {
-            const newName = save ? input.value.trim() : currentName;
+    <div class="container" id="main-container" style="display: none;">
+        <div class="header-section">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tab1">РЕЕСТР ЗАДАЧ</button>
+                <button class="tab-btn" data-tab="tab2">КАТАЛОГ ЗАДАЧ</button>
+            </div>
             
-            partNameContainer.classList.remove('editing');
-            input.remove();
-            saveButton.remove();
-            cancelButton.remove();
+            <!-- ДОБАВЛЕН ВЫПАДАЮЩИЙ ФИЛЬТР -->
+            <div class="open-tasks-counter" id="open-tasks-counter" onclick="toggleTasksFilter()">
+                <span class="label">Открытых задач:</span>
+                <span class="count">0</span>
+                <div class="tasks-filter-dropdown" id="tasksFilterDropdown">
+                    <button onclick="filterTasks('all')" class="active">
+                        <i class="fas fa-layer-group"></i>
+                        Все задачи
+                    </button>
+                    <button onclick="filterTasks('pending')">
+                        <i class="fas fa-clock"></i>
+                        Открытые задачи
+                    </button>
+                    <button onclick="filterTasks('completed')">
+                        <i class="fas fa-history"></i>
+                        Последние выполненные
+                    </button>
+                    <button onclick="filterTasks('old')">
+                        <i class="fas fa-archive"></i>
+                        Старые задачи
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content active" id="tab1">
+            <div class="cards-grid" id="journal-cards">
+                <div class="task-card">
+                    <div class="loading-container">
+                        <div class="loader"></div>
+                        <div class="loading-card-text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination" id="journal-pagination" style="display: none;">
+                <button class="page-btn first-btn" onclick="goToPage('journal', 1)">
+                    <i class="fas fa-fast-backward"></i>
+                </button>
+                <button class="page-btn prev-btn" onclick="changePage('journal', -1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    Страница <span id="journal-current-page">1</span> из <span id="journal-total-pages">1</span>
+                </div>
+                <button class="page-btn next-btn" onclick="changePage('journal', 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="page-btn last-btn" onclick="goToPage('journal', totalJournalPages)">
+                    <i class="fas fa-fast-forward"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab2">
+            <div class="cards-grid" id="tasks-cards">
+                <div class="task-card">
+                    <div class="loading-container">
+                        <div class="loader"></div>
+                        <div class="loading-card-text"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pagination" id="tasks-pagination" style="display: none;">
+                <button class="page-btn first-btn" onclick="goToPage('tasks', 1)">
+                    <i class="fas fa-fast-backward"></i>
+                </button>
+                <button class="page-btn prev-btn" onclick="changePage('tasks', -1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    Страница <span id="tasks-current-page">1</span> из <span id="tasks-total-pages">1</span>
+                </div>
+                <button class="page-btn next-btn" onclick="changePage('tasks', 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="page-btn last-btn" onclick="goToPage('tasks', totalTasksPages)">
+                    <i class="fas fa-fast-forward"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ФУНКЦИИ ДЛЯ РАБОТЫ ШАПКИ
+        function toggleSiteNameDropdown() {
+            const dropdown = document.getElementById("siteNameDropdown");
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
             
-            partNameText.style.display = '';
-            editButton.style.display = '';
+            const menu = document.getElementById("dropdownMenu");
+            if (menu.style.display === "flex") {
+                menu.style.display = "none";
+            }
             
-            if (save && newName && newName !== currentName) {
-              const res = await updatePartName(partNumber, newName);
-              if (res.status === 'success') {
-                partNameText.textContent = newName;
-                const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
-                if (updatedEntry) updatedEntry.partName = newName;
-              } else {
-                alert(res.message || 'Ошибка при обновлении названия');
-              }
+            event.stopPropagation();
+        }
+
+        function toggleDropdown() {
+            const menu = document.getElementById("dropdownMenu");
+            menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+            
+            const dropdown = document.getElementById("siteNameDropdown");
+            if (dropdown.style.display === "block") {
+                dropdown.style.display = "none";
             }
-          };
-          
-          saveButton.addEventListener('click', () => finishEdit(true));
-          cancelButton.addEventListener('click', () => finishEdit(false));
-          
-          input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-              finishEdit(true);
+            
+            event.stopPropagation();
+        }
+
+        // ФУНКЦИИ ДЛЯ ФИЛЬТРАЦИИ ЗАДАЧ
+        let currentFilter = 'all'; // all, pending, completed, old
+        let allJournalData = []; // Сохраняем все данные журнала
+        
+        function toggleTasksFilter() {
+            const dropdown = document.getElementById("tasksFilterDropdown");
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+            event.stopPropagation();
+        }
+        
+        function filterTasks(filterType) {
+            currentFilter = filterType;
+            const dropdown = document.getElementById("tasksFilterDropdown");
+            const buttons = dropdown.querySelectorAll('button');
+            
+            // Обновляем активную кнопку
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(getFilterButtonText(filterType))) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Обновляем счетчик в зависимости от фильтра
+            updateOpenTasksCounter();
+            
+            // Применяем фильтр к данным
+            applyFilterToJournal();
+            
+            // Скрываем выпадающее меню
+            dropdown.style.display = 'none';
+        }
+        
+        function getFilterButtonText(filterType) {
+            switch(filterType) {
+                case 'all': return 'Все задачи';
+                case 'pending': return 'Открытые задачи';
+                case 'completed': return 'Последние выполненные';
+                case 'old': return 'Старые задачи';
+                default: return 'Все задачи';
             }
-          });
-          
-          input.addEventListener('blur', () => {});
-        });
+        }
+        
+        function updateOpenTasksCounter() {
+            const counter = document.getElementById("open-tasks-counter");
+            const countSpan = counter.querySelector('.count');
+            const labelSpan = counter.querySelector('.label');
+            
+            if (!allJournalData || allJournalData.length === 0) {
+                countSpan.textContent = '0';
+                labelSpan.textContent = 'Открытых задач:';
+                return;
+            }
+            
+            let count = 0;
+            let label = 'Открытых задач:';
+            
+            switch(currentFilter) {
+                case 'all':
+                    count = allJournalData.length;
+                    label = 'Всего задач:';
+                    break;
+                case 'pending':
+                    count = allJournalData.filter(task => !task.isCompleted).length;
+                    label = 'Открытых задач:';
+                    break;
+                case 'completed':
+                    // Подсчитываем выполненные задачи
+                    count = allJournalData.filter(task => task.isCompleted).length;
+                    label = 'Выполненных задач:';
+                    break;
+                case 'old':
+                    // Фильтруем старые задачи (например, старше 30 дней)
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    
+                    count = allJournalData.filter(task => {
+                        if (task.isCompleted) return false;
+                        if (!task.createdDate) return false;
+                        
+                        const taskDate = new Date(task.createdDate);
+                        return taskDate < thirtyDaysAgo;
+                    }).length;
+                    label = 'Старых задач:';
+                    break;
+            }
+            
+            countSpan.textContent = count;
+            labelSpan.textContent = label;
+        }
+        
+        function applyFilterToJournal() {
+            if (!allJournalData || allJournalData.length === 0) return;
+            
+            let filteredData = [];
+            
+            switch(currentFilter) {
+                case 'all':
+                    filteredData = [...allJournalData];
+                    break;
+                case 'pending':
+                    filteredData = allJournalData.filter(task => !task.isCompleted);
+                    break;
+                case 'completed':
+                    // Берем только выполненные задачи
+                    filteredData = allJournalData.filter(task => task.isCompleted);
+                    break;
+                case 'old':
+                    // Фильтруем старые задачи (старше 30 дней)
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    
+                    filteredData = allJournalData.filter(task => {
+                        if (task.isCompleted) return false;
+                        if (!task.createdDate) return false;
+                        
+                        const taskDate = new Date(task.createdDate);
+                        return taskDate < thirtyDaysAgo;
+                    });
+                    break;
+            }
+            
+            // Обновляем отображение с отфильтрованными данными
+            renderJournalCards(filteredData);
+        }
 
-        div.append(partNameContainer);
+        // ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
+        const CARDS_PER_PAGE = 6;
 
-        const controls = document.createElement('div');
-        controls.className = 'controls';
+        let isInitialLoad = true;
+        let tasksData = null;
+        let journalData = null;
+        
+        let currentJournalPage = 1;
+        let currentTasksPage = 1;
+        let totalJournalPages = 1;
+        let totalTasksPages = 1;
 
-        const pill = document.createElement('div');
-        pill.className = 'pill';
-        pill.textContent = entry.partNumber;
+        // Функция для показа загрузки
+        function showLoader(message = 'Загрузка...') {
+            const loader = document.getElementById('loader');
+            const mainContainer = document.getElementById('main-container');
+            const loadingText = loader.querySelector('.loading-text');
+            
+            loadingText.textContent = message;
+            loader.style.display = 'flex';
+            mainContainer.style.display = 'none';
+        }
 
-        const qtyInput = document.createElement('input');
-        qtyInput.type = 'text';
-        qtyInput.value = entry.quantity;
-        qtyInput.readOnly = true;
+        // Функция для скрытия загрузки
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            const mainContainer = document.getElementById('main-container');
+            
+            loader.style.display = 'none';
+            mainContainer.style.display = 'flex';
+        }
 
-        const btnAdd = document.createElement('button');
-        btnAdd.className = 'btn btn-add';
-        btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> ДОБАВИТЬ';
+        // Функция для показа загрузки при операциях
+        function showOperationLoading(message) {
+            showLoader(message);
+        }
 
-        const btnInfo = document.createElement('button');
-        btnInfo.className = 'btn btn-info';
-        btnInfo.innerHTML = '<i class="fas fa-history"></i> ИСТОРИЯ';
+        function convertGoogleDriveLink(driveLink) {
+            if (!driveLink) return null;
+            
+            if (driveLink.includes('drive.google.com/file/d/')) {
+                const match = driveLink.match(/\/d\/([^\/]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+            }
+            
+            if (driveLink.includes('uc?export=view')) {
+                return driveLink;
+            }
+            
+            return null;
+        }
 
-        const btnTake = document.createElement('button');
-        btnTake.className = 'btn btn-take';
-        btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> ВЗЯТЬ';
-
-        controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
-        div.append(controls);
-
-        btnAdd.onclick = async () => {
-          const deltaStr = prompt('Введите число для добавления:');
-          const delta = Number(deltaStr);
-          if (deltaStr !== null && !isNaN(delta)) {
-            const res = await updateQuantity(entry.partNumber, delta);
-            if (res.status === 'success') {
-              qtyInput.value = res.quantity;
-              entry.quantity = res.quantity;
+        function openDriveLink(driveLink) {
+            if (!driveLink) return;
+            
+            const viewLink = convertGoogleDriveLink(driveLink);
+            if (viewLink) {
+                window.open(viewLink, '_blank');
             } else {
-              alert(res.message);
+                window.open(driveLink, '_blank');
             }
-          }
-        };
-
-        btnTake.onclick = async () => {
-          const quantity = prompt('Введите количество для вычитания:');
-          if (quantity === null) return;
-          
-          const qtyNum = parseInt(quantity);
-          if (isNaN(qtyNum) || qtyNum <= 0) {
-            alert('Пожалуйста, введите корректное число');
-            return;
-          }
-          
-          const name = prompt('Введите имя или номер телефона:');
-          if (name === null) return;
-          
-          if (!name.trim()) {
-            alert('Пожалуйста, введите имя или номер телефона');
-            return;
-          }
-          
-          const res = await updateQuantityWithName(entry.partNumber, -qtyNum, name.trim());
-          if (res.status === 'success') {
-            qtyInput.value = res.quantity;
-            entry.quantity = res.quantity;
-          } else {
-            alert(res.message);
-          }
-        };
-
-        btnInfo.onclick = async () => {
-          const hist = await getHistory(entry.partNumber);
-          document.getElementById('modalContent').textContent = hist;
-          document.getElementById('modalOverlay').style.display = 'flex';
-        };
-      }
-
-      return div;
-    }
-
-    function updateTotalPages() {
-      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
-    }
-
-    function renderPage(page) {
-      const container = document.getElementById('cardsContainer');
-      if (!container) return;
-      
-      container.innerHTML = '';
-
-      const start = (page - 1) * cardsPerPage;
-      const end = start + cardsPerPage;
-      const pageData = currentEntries.slice(start, end);
-
-      if (pageData.length === 0) {
-        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
-        return;
-      }
-
-      pageData.forEach(entry => {
-        const card = createCard(entry);
-        container.appendChild(card);
-      });
-
-      if (!hasLimitedAccess()) {
-        renderPageNumbers();
-        updatePaginationControls();
-      }
-      window.scrollTo(0, 0);
-    }
-
-    function renderPageNumbers() {
-      const pageContainer = document.getElementById('pageNumbers');
-      if (!pageContainer) return;
-      
-      pageContainer.innerHTML = '';
-      
-      const maxVisiblePages = 5;
-      let startPage = Math.max(currentPage - 2, 1);
-      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
-      
-      if (startPage > 1) {
-        addPageButton(1);
-        if (startPage > 2) {
-          addDots();
         }
-      }
-      
-      for (let i = startPage; i <= endPage; i++) {
-        addPageButton(i);
-      }
-      
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          addDots();
-        }
-        addPageButton(totalPages);
-      }
-      
-      function addPageButton(page) {
-        const btn = document.createElement('button');
-        btn.textContent = page;
-        if (page === currentPage) {
-          btn.classList.add('active');
-        }
-        btn.onclick = () => goToPage(page);
-        pageContainer.appendChild(btn);
-      }
-      
-      function addDots() {
-        const dots = document.createElement('span');
-        dots.textContent = '...';
-        dots.style.padding = '0 10px';
-        pageContainer.appendChild(dots);
-      }
-    }
 
-    function goToPage(page) {
-      if (page < 1 || page > totalPages) return;
-      
-      currentPage = page;
-      renderPage(currentPage);
-      updatePaginationControls();
-    }
-
-    // Обновляем глобальные функции пагинации
-    pagination.nextPage = function() {
-      if (currentPage < totalPages) {
-        goToPage(currentPage + 1);
-      }
-    };
-
-    pagination.prevPage = function() {
-      if (currentPage > 1) {
-        goToPage(currentPage - 1);
-      }
-    };
-
-    function updatePaginationControls() {
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      
-      if (prevBtn) prevBtn.disabled = currentPage <= 1;
-      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-    }
-
-    function resetSearch() {
-      currentEntries = [...allEntries];
-      updateTotalPages();
-      currentPage = 1;
-      renderPage(currentPage);
-      document.getElementById('sortSelect').value = 'all';
-    }
-
-    // Инициализация событий
-    document.getElementById('btnSearch')?.addEventListener('click', () => {
-      const term = prompt('Введите номер детали для поиска:');
-      if (term !== null) {
-        const searchTerm = term.toLowerCase().trim();
-        currentEntries = searchTerm.length === 0 
-          ? [...allEntries] 
-          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
-        updateTotalPages();
-        currentPage = 1;
-        renderPage(currentPage);
-        document.getElementById('sortSelect').value = 'all';
-      }
-    });
-
-    document.getElementById('btnReset')?.addEventListener('click', () => {
-      currentEntries = [...allEntries];
-      updateTotalPages();
-      currentPage = 1;
-      renderPage(currentPage);
-      document.getElementById('sortSelect').value = 'all';
-    });
-
-    document.getElementById('sortSelect')?.addEventListener('change', async function() {
-      showLoader(true);
-      try {
-        if (this.value === 'all') {
-          currentEntries = [...allEntries];
-        } else if (this.value === 'popular') {
-          currentEntries = await getPopularEntries();
-          if (currentEntries && currentEntries[0]?.lastChangeDate) {
-            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
-          }
-        } else if (this.value === 'mostPopular') {
-          currentEntries = await getMostPopularEntries();
-          if (!currentEntries?.length) {
-            alert('Нет данных для сортировки "всё время"');
-            return;
-          }
-        } else if (this.value === 'sortByQty') {
-          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
-        }
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
         
-        updateTotalPages();
-        currentPage = 1;
-        renderPage(currentPage);
-      } finally {
-        showLoader(false);
-      }
-    });
-
-    document.getElementById('modalClose')?.addEventListener('click', () => {
-      document.getElementById('modalOverlay').style.display = 'none';
-    });
-
-    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
-      if (e.target === document.getElementById('modalOverlay')) {
-        document.getElementById('modalOverlay').style.display = 'none';
-      }
-    });
-
-    // Загрузка данных
-    async function loadData() {
-      showLoader(true);
-      try {
-        allEntries = await getEntries();
-        currentEntries = [...allEntries];
-        
-        if (hasLimitedAccess()) {
-          const container = document.getElementById('cardsContainer');
-          container.innerHTML = '';
-          
-          allEntries.forEach(entry => {
-            const card = createCard(entry);
-            container.appendChild(card);
-          });
-        } else {
-          updateTotalPages();
-          renderPage(currentPage);
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
         }
-      } finally {
-        showLoader(false);
-      }
-    }
 
-    loadData();
-  }
-</script>
+        async function makeRequest(url, options = {}) {
+            try {
+                if (!options.method || options.method === 'GET') {
+                    const separator = url.includes('?') ? '&' : '?';
+                    url = `${url}${separator}_=${Date.now()}`;
+                }
+                
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Ошибка запроса:', error);
+                throw error;
+            }
+        }
+
+        function goToPage(type, pageNumber) {
+            if (type === 'journal') {
+                if (pageNumber >= 1 && pageNumber <= totalJournalPages && pageNumber !== currentJournalPage) {
+                    currentJournalPage = pageNumber;
+                    renderJournalCards(journalData);
+                    updatePagination('journal', currentJournalPage, totalJournalPages);
+                }
+            } else if (type === 'tasks') {
+                if (pageNumber >= 1 && pageNumber <= totalTasksPages && pageNumber !== currentTasksPage) {
+                    currentTasksPage = pageNumber;
+                    renderTasksCards(tasksData);
+                    updatePagination('tasks', currentTasksPage, totalTasksPages);
+                }
+            }
+        }
+
+        function updatePagination(type, currentPage, totalPages) {
+            const pagination = document.getElementById(`${type}-pagination`);
+            const currentPageSpan = document.getElementById(`${type}-current-page`);
+            const totalPagesSpan = document.getElementById(`${type}-total-pages`);
+            const firstBtn = pagination.querySelector('.first-btn');
+            const prevBtn = pagination.querySelector('.prev-btn');
+            const nextBtn = pagination.querySelector('.next-btn');
+            const lastBtn = pagination.querySelector('.last-btn');
+            
+            currentPageSpan.textContent = currentPage;
+            totalPagesSpan.textContent = totalPages;
+            
+            // Обновляем состояние кнопок
+            firstBtn.disabled = currentPage === 1;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            lastBtn.disabled = currentPage === totalPages;
+            
+            // Обновляем обработчики для кнопки "Последняя"
+            lastBtn.onclick = function() {
+                goToPage(type, totalPages);
+            };
+            
+            pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+        }
+
+        function changePage(type, direction) {
+            if (type === 'journal') {
+                const newPage = currentJournalPage + direction;
+                goToPage('journal', newPage);
+            } else if (type === 'tasks') {
+                const newPage = currentTasksPage + direction;
+                goToPage('tasks', newPage);
+            }
+        }
+
+        function getCurrentPageData(data, currentPage) {
+            const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
+            const endIndex = startIndex + CARDS_PER_PAGE;
+            return data.slice(startIndex, endIndex);
+        }
+
+        async function loadTasks() {
+            try {
+                if (tasksData && !isInitialLoad) {
+                    renderTasksCards(tasksData);
+                    return;
+                }
+                
+                const tasksCards = document.getElementById('tasks-cards');
+                tasksCards.innerHTML = `
+                    <div class="task-card">
+                        <div class="loading-container">
+                            <div class="loader"></div>
+                            <div class="loading-card-text"></div>
+                        </div>
+                    </div>
+                `;
+                
+                const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
+                tasksData = tasks;
+                renderTasksCards(tasks);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки задач:', error);
+                const tasksCards = document.getElementById('tasks-cards');
+                tasksCards.innerHTML = `
+                    <div class="task-card error">
+                        Ошибка загрузки: ${error.message}
+                    </div>
+                `;
+                showNotification('Ошибка загрузки задач', 'error');
+            }
+        }
+
+        async function loadJournal() {
+            try {
+                if (journalData && !isInitialLoad) {
+                    renderJournalCards(journalData);
+                    return;
+                }
+                
+                const journalCards = document.getElementById('journal-cards');
+                journalCards.innerHTML = `
+                    <div class="task-card">
+                        <div class="loading-container">
+                            <div class="loader"></div>
+                            <div class="loading-card-text"></div>
+                        </div>
+                    </div>
+                `;
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
+                
+                // Сохраняем все данные
+                allJournalData = journal;
+                journalData = journal;
+                
+                // Обновляем счетчик
+                updateOpenTasksCounter();
+                
+                // Применяем текущий фильтр
+                applyFilterToJournal();
+                
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                const journalCards = document.getElementById('journal-cards');
+                journalCards.innerHTML = `
+                    <div class="task-card error">
+                        Ошибка загрузки: ${error.message}
+                    </div>
+                `;
+                showNotification('Ошибка загрузки журнала', 'error');
+            }
+        }
+
+        async function completeTask(taskId, executor, rowIndex) {
+            showOperationLoading('');
+            
+            try {
+                const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
+                const result = await makeRequest(updateUrl);
+                
+                if (result.success) {
+                    const immediateUpdateResult = await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
+                    
+                    if (immediateUpdateResult === 'SUCCESS') {
+                        showNotification('Задача выполнена! Данные обновлены мгновенно.', 'success');
+                        
+                        const card = document.querySelector(`[data-task-id="${taskId}"]`);
+                        if (card) {
+                            const submitBtn = card.querySelector('.submit-btn');
+                            if (submitBtn) {
+                                const submittedText = document.createElement('div');
+                                submittedText.className = 'submitted-text';
+                                submittedText.innerHTML = '<i class="fas fa-check-circle"></i>ОТПРАВЛЕНО';
+                                submitBtn.parentNode.replaceChild(submittedText, submitBtn);
+                            }
+                            
+                            const select = card.querySelector('.executor-select');
+                            if (select) {
+                                const executorName = document.createElement('span');
+                                executorName.className = 'row-value';
+                                executorName.textContent = executor;
+                                select.parentNode.replaceChild(executorName, select);
+                            }
+                        }
+                        
+                        journalData = null;
+                        tasksData = null;
+                        allJournalData = [];
+                        
+                        setTimeout(() => {
+                            loadJournal();
+                            loadTasks();
+                            hideLoader();
+                        }, 1000);
+                    } else {
+                        showNotification('Задача выполнена, но обновление даты займет до 1 минуты', 'warning');
+                        setTimeout(() => {
+                            loadJournal();
+                            loadTasks();
+                            hideLoader();
+                        }, 1000);
+                    }
+                } else {
+                    hideLoader();
+                    showNotification('Ошибка: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка выполнения задачи:', error);
+                hideLoader();
+                showNotification('Ошибка выполнения задачи: ' + error.message, 'error');
+            }
+        }
+
+        function renderTasksCards(tasks) {
+            const tasksCards = document.getElementById('tasks-cards');
+            
+            if (!tasks || tasks.length === 0) {
+                tasksCards.innerHTML = `
+                    <div class="task-card">
+                        <div class="loading-container">
+                            <div class="loader"></div>
+                            <div class="loading-card-text">Нет задач</div>
+                        </div>
+                    </div>
+                `;
+                updatePagination('tasks', 1, 1);
+                return;
+            }
+            
+            totalTasksPages = Math.ceil(tasks.length / CARDS_PER_PAGE);
+            if (currentTasksPage > totalTasksPages) {
+                currentTasksPage = 1;
+            }
+            
+            const currentTasks = getCurrentPageData(tasks, currentTasksPage);
+            
+            tasksCards.innerHTML = currentTasks.map(task => {
+                let statusClass = 'success';
+                if (task.daysLeft <= 0) {
+                    statusClass = 'danger';
+                } else if (task.daysLeft <= 2) {
+                    statusClass = 'warning';
+                }
+                
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                
+                return `
+                    <div class="task-card catalog-task">
+                        <div class="task-header">
+                            <div class="task-title">${task.task}</div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <div class="content-row">
+                                <span class="row-label">Последнее выполнение:</span>
+                                <span class="row-value">${task.lastDate || '-'}</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Прошло дней:</span>
+                                <span class="row-value">${task.daysPassed}</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Интервал:</span>
+                                <span class="row-value">${task.frequency} дн.</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Остаток дней:</span>
+                                <span class="row-value">
+                                    <span class="status-badge ${statusClass}">${task.daysLeft}</span>
+                                </span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Следующее выполнение:</span>
+                                <span class="row-value">${task.nextDate || '-'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="catalog-buttons-container">
+                            <div class="catalog-button-wrapper">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="open-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updatePagination('tasks', currentTasksPage, totalTasksPages);
+        }
+
+        function renderJournalCards(journal) {
+            const journalCards = document.getElementById('journal-cards');
+            
+            if (!journal || journal.length === 0) {
+                journalCards.innerHTML = `
+                    <div class="task-card">
+                        <div class="loading-container">
+                            <div class="loader"></div>
+                            <div class="loading-card-text">Нет данных</div>
+                        </div>
+                    </div>
+                `;
+                
+                updatePagination('journal', 1, 1);
+                return;
+            }
+            
+            // РАЗДЕЛЯЕМ ЗАДАЧИ НА ОТКРЫТЫЕ И ЗАКРЫТЫЕ
+            const openTasks = [];
+            const closedTasks = [];
+            
+            journal.forEach(task => {
+                if (!task.isCompleted) {
+                    openTasks.push(task);
+                } else {
+                    closedTasks.push(task);
+                }
+            });
+            
+            // СОРТИРУЕМ ОТКРЫТЫЕ ЗАДАЧИ: НОВЫЕ СВЕРХУ
+            openTasks.sort((a, b) => {
+                if (a.createdDate && b.createdDate) {
+                    return new Date(b.createdDate) - new Date(a.createdDate);
+                }
+                return 0;
+            });
+            
+            // СОРТИРУЕМ ЗАКРЫТЫЕ ЗАДАЧИ: НОВЫЕ СВЕРХУ
+            closedTasks.sort((a, b) => {
+                if (a.completedDate && b.completedDate) {
+                    return new Date(b.completedDate) - new Date(a.createdDate);
+                }
+                return 0;
+            });
+            
+            // ОБЪЕДИНЯЕМ: сначала открытые, потом закрытые
+            const sortedJournal = [...openTasks, ...closedTasks];
+            
+            totalJournalPages = Math.ceil(sortedJournal.length / CARDS_PER_PAGE);
+            if (currentJournalPage > totalJournalPages) {
+                currentJournalPage = 1;
+            }
+            
+            const currentJournal = getCurrentPageData(sortedJournal, currentJournalPage);
+            
+            let html = '';
+            
+            currentJournal.forEach((task, index) => {
+                const rowIndex = task.rowIndex || (index + 2);
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                const taskId = task.id || task.driveLink || '';
+                
+                if (!task.isCompleted) {
+                    html += `
+                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">
+                                        <select class="executor-select" id="executor-${taskId}">
+                                            <option value="" selected disabled>Кто выполнил?</option>
+                                            <option value="Вадим">Вадим</option>
+                                            <option value="Гена">Гена</option>
+                                            <option value="Саша">Саша</option>
+                                            <option value="Данил">Данил</option>
+                                        </select>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
+                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="task-card completed">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">${task.executor}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <div class="submitted-text">
+                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            journalCards.innerHTML = html;
+            
+            // Добавляем обработчики для селектов исполнителей
+            document.querySelectorAll('.executor-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const card = this.closest('.task-card');
+                    const submitBtn = card.querySelector('.submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !this.value || this.value === '';
+                    }
+                    event.stopPropagation();
+                });
+                
+                select.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
+            
+            updatePagination('journal', currentJournalPage, totalJournalPages);
+        }
+
+        function submitTask(event, taskId, rowIndex) {
+            const button = event.currentTarget;
+            const card = button.closest('.task-card');
+            
+            if (!card) {
+                showNotification('Ошибка: карточка задачи не найдена', 'error');
+                return;
+            }
+            
+            const select = card.querySelector('.executor-select');
+            
+            if (!select) {
+                showNotification('Ошибка: поле выбора исполнителя не найдена', 'error');
+                return;
+            }
+            
+            if (!select.value || select.value === '' || select.value === 'Кто выполнил?') {
+                showNotification('Выберите исполнителя перед отправкой', 'error');
+                return;
+            }
+            
+            completeTask(taskId, select.value, rowIndex);
+            event.stopPropagation();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // ПРЕДОТВРАЩЕНИЕ ДВОЙНОГО ТАПА ДЛЯ МАСШТАБИРОВАНИЯ
+            let lastTouchEnd = 0;
+            
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+            
+            // ОБРАБОТЧИКИ ДЛЯ ЗАКРЫТИЯ МЕНЮ ПРИ КЛИКЕ ВНЕ
+            document.addEventListener('click', function(e) {
+                const siteNameDropdown = document.getElementById('siteNameDropdown');
+                const dropdownMenu = document.getElementById('dropdownMenu');
+                const tasksFilterDropdown = document.getElementById('tasksFilterDropdown');
+                
+                if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
+                    siteNameDropdown.style.display = 'none';
+                }
+                
+                if (!e.target.closest('.menu-button') && dropdownMenu.style.display === 'flex') {
+                    dropdownMenu.style.display = 'none';
+                }
+                
+                if (!e.target.closest('.open-tasks-counter') && tasksFilterDropdown.style.display === 'block') {
+                    tasksFilterDropdown.style.display = 'none';
+                }
+            });
+            
+            // Показываем загрузку при старте
+            showLoader('');
+            
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Загружаем данные и скрываем загрузку когда все готово
+            Promise.all([
+                loadJournal(),
+                loadTasks()
+            ]).then(() => {
+                setTimeout(() => {
+                    hideLoader();
+                }, 500);
+            }).catch(error => {
+                console.error('Ошибка загрузки:', error);
+                hideLoader();
+            });
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    button.classList.add('active');
+                    
+                    const tabId = button.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    if (tabId === 'tab2') {
+                        currentTasksPage = 1;
+                        loadTasks();
+                    } else if (tabId === 'tab1') {
+                        currentJournalPage = 1;
+                        loadJournal();
+                    }
+                });
+            });
+
+            setInterval(() => {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab.id === 'tab2') {
+                    loadTasks();
+                } else if (activeTab.id === 'tab1') {
+                    loadJournal();
+                }
+            }, 30000);
+
+            setTimeout(() => {
+                isInitialLoad = false;
+            }, 1000);
+
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.task-card')) {
+                    const card = e.target.closest('.task-card');
+                    
+                    if (e.target.tagName === 'BUTTON' || 
+                        e.target.tagName === 'SELECT' || 
+                        e.target.tagName === 'OPTION' ||
+                        e.target.tagName === 'A' ||
+                        e.target.tagName === 'I') {
+                        return;
+                    }
+                    
+                    document.querySelectorAll('.task-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    card.classList.add('selected');
+                }
+            });
+            
+            document.addEventListener('change', function(e) {
+                if (e.target && e.target.classList.contains('executor-select')) {
+                    const card = e.target.closest('.task-card');
+                    const submitBtn = card.querySelector('.submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !e.target.value || e.target.value === '';
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
