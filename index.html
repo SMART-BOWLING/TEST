@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -6,19 +6,23 @@
   <title>БРОНИ БИЛЬЯРД</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png" />
   <!-- Google Identity Script -->
- <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --cell-size: 50px;
-      --main-color: #1a1a1a;
-      --highlight-color: #ff4444;
-      --confirmed-color: #00cc44;
-      --rejected-color: #cc0000;
-      --background-color: #ffffff;
-      --card-color: #f5f5f5;
-      --border-color: #e0e0e0;
-      --text-color: #333333;
-      --text-light: #666666;
+      --background: #ffffff;
+      --surface: #f8f9fa;
+      --border: #e0e0e0;
+      --text-primary: #2c3e50;
+      --text-secondary: #7f8c8d;
+      --primary: #3498db;
+      --primary-light: #ebf5fb;
+      --secondary: #95a5a6;
+      --accent: #e74c3c;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --card-bg: #f8f9fa;
+      --shadow: rgba(0, 0, 0, 0.08);
     }
 
     @media (max-width: 768px) {
@@ -69,14 +73,16 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--background-color);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--surface);
       padding: 10px;
       margin: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      color: var(--text-color);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .table-container {
@@ -87,57 +93,61 @@
       margin: 0 auto;
       display: flex;
       justify-content: center;
-      background: white;
-      border-radius: 0;
-      box-shadow: none;
+      background: var(--background);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      border: 1px solid var(--border);
     }
 
     table {
       border-collapse: separate;
-      border-spacing: 1px 0;
+      border-spacing: 2px 0;
       table-layout: fixed;
       max-width: 100vw;
       user-select: none;
       touch-action: manipulation;
       margin: 0 auto;
-      background: white;
-      border-radius: 0;
+      background: var(--background);
+      border-radius: 8px;
+      font-weight: 400;
     }
 
     thead th {
       position: sticky;
       top: 0;
-      color: white;
+      color: var(--text-primary);
       z-index: 2;
       transition: background-color 0.2s;
       font-weight: 500;
-      background: var(--main-color) !important;
-      border: none;
+      background: var(--surface) !important;
+      border-bottom: 2px solid var(--border);
     }
 
-    /* Единый цвет для всех заголовков */
+    /* Упрощенные цвета для заголовков */
     thead th {
-      background: var(--main-color);
+      background: var(--surface) !important;
+      color: var(--text-primary);
     }
 
     th.time-col, .time-right {
-      background: var(--main-color);
-      color: white;
+      background: var(--surface) !important;
+      color: var(--text-primary);
       font-weight: 500;
       cursor: pointer;
+      border-left: 1px solid var(--border);
     }
 
-    /* Минималистичные цвета для ячеек столбцов */
+    /* Цвета для ячеек столбцов */
     td.slot[data-lane="0"],
     td.slot[data-lane="1"],
     td.slot[data-lane="2"],
     td.slot[data-lane="4"],
     td.slot[data-lane="5"] {
-      background-color: #f8f8f8;
+      background-color: var(--primary-light);
     }
 
     td.slot[data-lane="3"] {
-      background-color: #f0f0f0;
+      background-color: rgba(39, 174, 96, 0.1);
     }
 
     td.slot[data-lane="6"],
@@ -146,12 +156,12 @@
     td.slot[data-lane="9"],
     td.slot[data-lane="10"],
     td.slot[data-lane="11"] {
-      background-color: #f8f8f8;
+      background-color: rgba(231, 76, 60, 0.1);
     }
 
-    /* Подсветка заголовков выбранных столбцов */
+    /* Подсветка заголовков */
     th.highlight-header {
-      background: var(--highlight-color) !important;
+      background: var(--primary) !important;
       color: white !important;
     }
 
@@ -163,7 +173,7 @@
       top: 0;
       bottom: 0;
       width: 1px;
-      background-color: var(--highlight-color);
+      background-color: var(--primary);
       z-index: 10;
     }
     td.vertical-line::before { left: 0; }
@@ -172,28 +182,26 @@
     th, td {
       width: var(--cell-size);
       height: var(--cell-size);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
       text-align: center;
       vertical-align: middle;
       box-sizing: border-box;
-      background: white;
+      background: var(--background);
       font-size: 12px;
       position: relative;
+      transition: background-color 0.2s;
     }
 
     td.slot { 
       cursor: pointer; 
-      transition: background-color 0.1s ease;
     }
     
     td.slot:hover {
-      background-color: #f0f0f0;
+      background-color: var(--primary-light) !important;
     }
 
     td.selected {
-      background: var(--highlight-color) !important;
-      border: 1px solid var(--highlight-color) !important;
-      z-index: 1;
+      background: var(--primary) !important;
       color: white;
       font-weight: 500;
     }
@@ -201,48 +209,47 @@
     td.selected.rounded-top {
       border-top-left-radius: 4px;
       border-top-right-radius: 4px;
-      z-index: 1;
     }
 
     td.selected.rounded-bottom {
       border-bottom-left-radius: 4px;
       border-bottom-right-radius: 4px;
-      z-index: 1;
     }
 
     td.start-time-chosen {
-      background: var(--highlight-color) !important;
-      border: 2px solid var(--highlight-color) !important;
+      background: var(--accent) !important;
+      color: white;
+      border: 2px solid var(--accent) !important;
       z-index: 2;
     }
 
-#cardsContainer {
-  margin: 15px auto 10px;
-  padding: 0;
-  max-width: 100vw;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  box-sizing: border-box;
-}
+    #cardsContainer {
+      margin: 20px auto 10px;
+      padding: 0;
+      max-width: 100vw;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      box-sizing: border-box;
+    }
 
     .booking-card {
       position: relative;
-      background: var(--card-color);
-      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 6px;
       padding: 10px 35px 10px 12px;
-      color: var(--text-color);
-      font-weight: 500;
+      color: var(--text-primary);
+      font-weight: 400;
       font-size: 13px;
       white-space: nowrap;
       user-select: none;
-      transition: border-color 0.2s;
+      box-shadow: 0 1px 3px var(--shadow);
     }
     
     .booking-card:hover {
-      border-color: var(--main-color);
+      box-shadow: 0 2px 6px var(--shadow);
     }
     
     .booking-card .close-btn {
@@ -250,43 +257,46 @@
       top: 0;
       right: 0;
       transform: translate(50%, -50%);
-      color: var(--text-light);
-      background: white;
-      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      background: var(--background);
+      border: 1px solid var(--border);
       border-radius: 50%;
-      font-weight: normal;
+      font-weight: 400;
       font-size: 16px;
       line-height: 1;
       cursor: pointer;
       user-select: none;
       padding: 4px 8px;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
     .booking-card .close-btn:hover {
-      background-color: var(--main-color);
+      background-color: var(--accent);
       color: white;
-      border-color: var(--main-color);
+      border-color: var(--accent);
     }
 
     .booking-button {
       padding: 10px 20px;
       font-size: 14px;
       font-weight: 500;
-      background: var(--main-color);
+      background: var(--primary);
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.2s;
-      letter-spacing: 0.3px;
+      transition: all 0.2s;
     }
     .booking-button:hover { 
-      background: #333333;
+      background: #2980b9;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px var(--shadow);
+    }
+    .booking-button:active {
+      transform: translateY(0);
     }
     
-    /* Стиль для нажатой кнопки */
     .booking-button.pressed {
-      background: var(--highlight-color);
+      background: var(--accent);
     }
 
     #modal {
@@ -296,73 +306,73 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.4);
       justify-content: center;
       align-items: center;
       z-index: 1000;
     }
     #modal > div {
-      background: white;
+      background: var(--background);
       padding: 20px;
       border-radius: 8px;
       width: 90%;
-      max-width: 380px;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     #modal h3 { 
       margin-top: 0; 
-      color: var(--main-color);
+      color: var(--text-primary);
       text-align: center;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 500;
+      margin-bottom: 20px;
     }
     #modal label { 
       display: block; 
       margin-bottom: 12px; 
-      color: var(--text-color);
-      font-weight: 500;
-      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 400;
     }
     #modal input, #modal textarea {
       width: 100%;
-      padding: 8px 10px;
+      padding: 8px 12px;
       box-sizing: border-box;
       margin-top: 4px;
       font-size: 14px;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border);
       border-radius: 4px;
       transition: border 0.2s;
+      background: var(--background);
+      color: var(--text-primary);
     }
     #modal input:focus, #modal textarea:focus {
       outline: none;
-      border-color: var(--main-color);
+      border-color: var(--primary);
     }
     #modal textarea { 
       resize: vertical; 
-      min-height: 70px;
+      min-height: 60px;
     }
     #modal button {
       padding: 8px 16px;
       border-radius: 4px;
-      border: none;
+      border: 1px solid var(--border);
       cursor: pointer;
       font-weight: 500;
-      transition: background-color 0.2s;
-      font-size: 14px;
+      transition: all 0.2s;
+      background: var(--surface);
+      color: var(--text-primary);
     }
     #modal button:first-of-type {
-      background: var(--main-color);
+      background: var(--primary);
       color: white;
+      border-color: var(--primary);
     }
     #modal button:first-of-type:hover {
-      background: #333333;
-    }
-    #modal button:last-of-type {
-      margin-left: 8px;
-      background: var(--card-color);
-      color: var(--text-color);
+      background: #2980b9;
     }
     #modal button:last-of-type:hover {
-      background: #e0e0e0;
+      background: var(--surface);
     }
 
     #controls {
@@ -376,23 +386,23 @@
     #dateInput {
       padding: 10px 16px;
       font-size: 14px;
-      background: white;
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
+      background: var(--background);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
       border-radius: 4px;
       cursor: pointer;
-      transition: border-color 0.2s;
-      font-weight: 500;
+      transition: all 0.2s;
+      font-weight: 400;
     }
     #dateInput:hover { 
-      border-color: var(--main-color);
+      border-color: var(--primary);
     }
     #dateInput:focus {
       outline: none;
-      border-color: var(--main-color);
+      border-color: var(--primary);
     }
     #dateInput::-webkit-calendar-picker-indicator {
-      filter: invert(0.5);
+      opacity: 0.6;
       cursor: pointer;
     }
 
@@ -400,14 +410,14 @@
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.9);
+      background-color: rgba(0,0,0,0.8);
       z-index: 10000;
       justify-content: center;
       align-items: center;
     }
     .image-popup .popup-content {
       position: relative;
-      background: white;
+      background: var(--background);
       padding: 15px;
       border-radius: 8px;
       max-width: 90vw;
@@ -419,23 +429,22 @@
     }
     .image-popup .close-popup {
       position: absolute;
-      top: 8px; right: 8px;
-      background: var(--main-color);
+      top: 10px; right: 10px;
+      background: var(--primary);
       color: white;
       border: none;
       border-radius: 50%;
       width: 30px; height: 30px; font-size: 18px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .image-popup .close-popup:hover {
-      background: var(--highlight-color);
+      background: var(--accent);
     }
 
-    /* Слой для ползунков существующих броней */
     #slidersContainer {
       position: absolute;
       top: 0;
@@ -447,36 +456,35 @@
     }
     .existing-slider {
       position: absolute;
-      background: var(--main-color);
+      background: var(--primary);
       border: none;
       color: white;
-      border-radius: 4px;
+      border-radius: 3px;
       pointer-events: auto;
       box-sizing: border-box;
       cursor: pointer;
-      font-size: 9px;
-      font-weight: 500;
-      padding: 2px 4px;
+      font-size: 10px;
+      font-weight: 400;
+      padding: 1px 3px;
       user-select: none;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      opacity: 0.9;
       transition: opacity 0.2s;
     }
     
     .existing-slider:hover {
-      opacity: 0.9;
+      opacity: 1;
     }
 
-    /* Стили для разных статусов брони */
     .existing-slider.confirmed {
-      background: var(--confirmed-color);
+      background: var(--success);
     }
     .existing-slider.rejected {
-      background: var(--rejected-color);
+      background: var(--warning);
     }
 
-    /* Модальное окно информации о брони */
     .booking-info-popup {
       display: none;
       position: fixed;
@@ -488,63 +496,63 @@
     }
     .booking-info-popup .popup-content {
       position: relative;
-      background: white;
+      background: var(--background);
       padding: 20px;
       border-radius: 8px;
       max-width: 90vw;
-      width: 380px;
+      width: 350px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
 
     .booking-info-popup .close-btn {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: var(--main-color);
-      color: white;
-      border: none;
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
       border-radius: 50%;
       width: 28px;
       height: 28px; 
       font-size: 18px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     
     .booking-info-popup .close-btn:hover {
-      background: var(--highlight-color);
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
     }
 
     .booking-info-popup h3 {
       margin-top: 0;
-      color: var(--main-color);
+      color: var(--text-primary);
       text-align: center;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 500;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
       margin-bottom: 15px;
     }
     .booking-info-popup .info-row {
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
-      font-size: 14px;
+      font-size: 13px;
     }
     .booking-info-popup .info-label {
       font-weight: 500;
-      color: var(--text-color);
-      min-width: 110px;
+      color: var(--text-secondary);
+      min-width: 100px;
     }
     .booking-info-popup .info-value {
       text-align: right;
       flex-grow: 1;
-      color: var(--text-light);
+      color: var(--text-primary);
     }
     
-    /* Стили для кнопок подтверждения брони */
     .confirmation-buttons {
       display: flex;
       justify-content: space-between;
@@ -558,43 +566,37 @@
       cursor: pointer;
       font-weight: 500;
       flex: 1;
-      transition: background-color 0.2s;
-      font-size: 14px;
+      transition: all 0.2s;
+      background: var(--surface);
+      color: var(--text-primary);
     }
     .confirm-yes {
-      background: var(--confirmed-color);
-      color: white;
-    }
-    .confirm-yes:hover {
-      background: #00aa33;
+      background: var(--success) !important;
+      color: white !important;
     }
     .confirm-no {
-      background: var(--rejected-color);
-      color: white;
-    }
-    .confirm-no:hover {
-      background: #aa0000;
+      background: var(--warning) !important;
+      color: white !important;
     }
     
-    /* Стили для кнопки удаления */
     .delete-btn {
-      background: var(--main-color);
-      color: white;
+      background: var(--surface);
+      color: var(--text-primary);
       padding: 10px;
       border-radius: 4px;
-      border: none;
+      border: 1px solid var(--border);
       cursor: pointer;
       font-weight: 500;
       margin-top: 15px;
       width: 100%;
-      transition: background-color 0.2s;
-      font-size: 14px;
+      transition: all 0.2s;
     }
     .delete-btn:hover {
-      background: var(--highlight-color);
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
     }
     
-    /* Анимация загрузки */
     .loading-overlay {
       position: fixed;
       top: 0;
@@ -611,8 +613,8 @@
     .loading-spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid #f0f0f0;
-      border-top: 3px solid var(--main-color);
+      border: 3px solid var(--surface);
+      border-top: 3px solid var(--primary);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -622,14 +624,13 @@
       100% { transform: rotate(360deg); }
     }
     
-    /* Стили для авторизации */
     #login {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: white;
+      background: var(--background);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -639,9 +640,9 @@
     }
     
     #login h2 {
-      color: var(--main-color);
+      color: var(--text-primary);
       margin-bottom: 20px;
-      font-weight: 500;
+      font-weight: 400;
     }
     
     #content {
@@ -656,11 +657,11 @@
   <!-- Блок авторизации -->
   <div id="login">
     <h2>Вход на сайт</h2>
-<div id="g_id_onload"
-     data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
-     data-callback="handleCredentialResponse"
-     data-auto_prompt="false">
-</div>
+    <div id="g_id_onload"
+         data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
     <div class="g_id_signin" data-type="standard"></div>
   </div>
 
@@ -674,8 +675,9 @@
             <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
             <th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
             <th class="time-col">
-              <button id="openImage" style="padding:4px 8px; border:1px solid white;
-                background:transparent; color:white; border-radius:3px; cursor:pointer; font-size:12px;">
+              <button id="openImage" style="padding:4px 8px; border:1px solid var(--border);
+                background:var(--surface); color:var(--text-primary); border-radius:3px; cursor:pointer;
+                font-size:12px;">
                 СТОЛЫ
               </button>
             </th>
@@ -756,22 +758,22 @@
 
 <script>
   // Настройки авторизации
- const allowedEmails = [
-"vadiksss900@gmail.com",
-  "sergey99belov@gmail.com", 
-  "popadinecvasil3@gmail.com", 
-  "veronicadiakova04@gmail.com",
-  "info.luckystrike.kh@gmail.com", 
-  "sashavolobuev123890@gmail.com", 
-  "egorgorbushko@gmail.com", 
-  "shatrava.o@gmail.com", 
-  "Craftmax30@gmail.com", 
-  "bowlingblock.b@gmail.com",
-  "lana.arnaut@gmail.com",
-   "polosinnikita1224@gmail.com",
-  "sofialat1506@gmail.com",
-  "ken040888@gmail.com"
- ];
+  const allowedEmails = [
+    "vadiksss900@gmail.com",
+    "sergey99belov@gmail.com", 
+    "popadinecvasil3@gmail.com", 
+    "veronicadiakova04@gmail.com",
+    "info.luckystrike.kh@gmail.com", 
+    "sashavolobuev123890@gmail.com", 
+    "egorgorbushko@gmail.com", 
+    "shatrava.o@gmail.com", 
+    "Craftmax30@gmail.com", 
+    "bowlingblock.b@gmail.com",
+    "lana.arnaut@gmail.com",
+    "polosinnikita1224@gmail.com",
+    "sofialat1506@gmail.com",
+    "ken040888@gmail.com"
+  ];
 
   // Обработчик ответа от Google
   function handleCredentialResponse(response) {
@@ -785,7 +787,6 @@
       alert("Доступ запрещён для: " + email);
     }
   }
-
 
   // Проверка авторизации при загрузке страницы
   window.onload = () => {
@@ -807,16 +808,13 @@
     return JSON.parse(jsonPayload);
   }
 
-  // JavaScript код с изменениями
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxfRLDGA29FrqKS61HmYN_FUnDwOydeCaEdeW4oc4wyroQzvb4h1OnwQ5HeotIHhcj9/exec";
 
-  // Инициализация календаря
   const dateInput = document.getElementById('dateInput');
   const today = new Date().toISOString().split('T')[0];
   dateInput.min = today;
   dateInput.value = today;
 
-  // Изменяем время работы до 22:00 включительно
   const startHour = 11, endHour = 22, lanes = 12;
   const tableBody = document.getElementById("tableBody"),
         cardsContainer = document.getElementById("cardsContainer"),
@@ -825,10 +823,8 @@
         tableContainer = document.querySelector(".table-container"),
         loadingOverlay = document.getElementById("loadingOverlay");
 
-  // Создаем временные слоты с 11:00 до 22:00 включительно
   const timeSlots = [];
   for (let h = startHour; h <= endHour; h++) {
-    // Добавляем только 00 для последнего часа (22:00)
     if (h < endHour) {
       timeSlots.push({ display: `${h}:00`, key: h });
       timeSlots.push({ display: `${h}:30`, key: h + 0.5 });
@@ -837,7 +833,6 @@
     }
   }
 
-  // Заполняем таблицу
   timeSlots.forEach(slot => {
     const row = document.createElement("tr");
     for (let lane = 0; lane < lanes; lane++) {
@@ -857,9 +852,8 @@
 
   const intervalsByLane = {};
   let currentLane = null, currentStart = null;
-  let currentBookingId = null; // Для хранения ID текущей брони
+  let currentBookingId = null;
 
-  // --- Работа с визуалом выбора интервалов ---
   function clearStartTimeHighlight() {
     document.querySelectorAll('td.start-time-chosen').forEach(c => c.classList.remove('start-time-chosen'));
   }
@@ -879,7 +873,6 @@
     document.querySelectorAll(`td.slot[data-lane="${lane}"]`).forEach(td => td.classList.add('vertical-line'));
   }
   function updateTableSelection() {
-    // Сброс выделений
     document.querySelectorAll("td.selected").forEach(c => c.classList.remove("selected","rounded-top","rounded-bottom"));
 
     for (let laneStr in intervalsByLane) {
@@ -898,7 +891,6 @@
       });
     }
 
-    // Рендер карточек выбранных интервалов
     cardsContainer.innerHTML = "";
     function fmt(v) {
       const h = Math.floor(v), m = v % 1 === 0.5 ? "30" : "00";
@@ -927,7 +919,6 @@
     }
   }
 
-  // Обработка клика по ячейкам таблицы
   tableBody.addEventListener("click", e => {
     if (e.target.classList.contains("slot")) {
       const lane = +e.target.dataset.lane;
@@ -961,7 +952,6 @@
     }
   });
 
-  // Удаление интервала по двойному клику
   tableBody.addEventListener("dblclick", e => {
     if (!e.target.classList.contains("slot")) return;
     const lane = +e.target.dataset.lane;
@@ -977,14 +967,12 @@
     }
   });
 
-  // Модалка брони
   function openModal() {
     if (!Object.values(intervalsByLane).some(a => a.length)) {
       return alert("Сначала выберите время.");
     }
     document.getElementById("modal").style.display = "flex";
     
-    // Добавляем эффект нажатия на кнопку
     const btn = document.querySelector('.booking-button');
     btn.classList.add('pressed');
     setTimeout(() => btn.classList.remove('pressed'), 200);
@@ -993,7 +981,6 @@
     document.getElementById("modal").style.display = "none";
   }
 
-  // Отправка брони на сервер
   async function submitForm() {
     const name = document.getElementById("nameInput").value.trim();
     const phone = document.getElementById("phoneInput").value.trim();
@@ -1017,10 +1004,8 @@
     if (!bookings.length) return alert("Нет выбранных интервалов.");
 
     try {
-      // Показываем анимацию загрузки
       loadingOverlay.style.display = 'flex';
       
-      // Отправляем все бронирования
       await Promise.all(bookings.map(b => {
         return fetch(GAS_URL, {
           method: "POST",
@@ -1029,10 +1014,8 @@
         });
       }));
       
-      // Скрываем анимацию загрузки
       loadingOverlay.style.display = 'none';
       
-      // Очищаем форму
       closeModal();
       for (let l in intervalsByLane) intervalsByLane[l] = [];
       currentLane = currentStart = null;
@@ -1044,7 +1027,6 @@
       document.getElementById("phoneInput").value = "";
       document.getElementById("commentInput").value = "";
       
-      // Обновляем существующие брони
       await loadExisting();
     } catch (error) {
       loadingOverlay.style.display = 'none';
@@ -1053,7 +1035,6 @@
     }
   }
 
-  // Функция для отображения информации о брони
   function showBookingInfo(booking) {
     document.getElementById('info-table').textContent = `№${booking.table}`;
     document.getElementById('info-date').textContent = booking.date.split('-').reverse().join('.');
@@ -1063,24 +1044,20 @@
     document.getElementById('info-comment').textContent = booking.comment || 'нет комментария';
     document.getElementById('info-confirmed').textContent = booking.confirmed || '';
     document.getElementById('bookingInfoPopup').style.display = 'flex';
-    currentBookingId = booking.id; // Сохраняем ID брони для подтверждения
+    currentBookingId = booking.id;
   }
 
-  // Функция для закрытия окна информации
   function closeBookingInfoPopup() {
     document.getElementById('bookingInfoPopup').style.display = 'none';
     currentBookingId = null;
   }
 
-  // Функция подтверждения брони (да/нет)
   async function confirmBooking(confirmed) {
     if (!currentBookingId) return;
     
     try {
-      // Показываем анимацию загрузки
       loadingOverlay.style.display = 'flex';
       
-      // Отправляем данные на сервер
       await fetch(GAS_URL, {
         method: "POST",
         mode: "no-cors",
@@ -1091,11 +1068,10 @@
         })
       });
       
-      // Скрываем анимацию загрузки
       loadingOverlay.style.display = 'none';
       
       closeBookingInfoPopup();
-      await loadExisting(); // Обновляем список броней
+      await loadExisting();
     } catch(error) {
       loadingOverlay.style.display = 'none';
       console.error("Ошибка при обновлении статуса брони:", error);
@@ -1103,17 +1079,14 @@
     }
   }
   
-  // Функция удаления брони
   async function deleteBooking() {
     if (!currentBookingId) return;
     
     if (!confirm("Вы уверены, что хотите удалить эту бронь?")) return;
     
     try {
-      // Показываем анимацию загрузки
       loadingOverlay.style.display = 'flex';
       
-      // Отправляем запрос на удаление
       await fetch(GAS_URL, {
         method: "POST",
         mode: "no-cors",
@@ -1123,11 +1096,10 @@
         })
       });
       
-      // Скрываем анимацию загрузки
       loadingOverlay.style.display = 'none';
       
       closeBookingInfoPopup();
-      await loadExisting(); // Обновляем список броней
+      await loadExisting();
     } catch(error) {
       loadingOverlay.style.display = 'none';
       console.error("Ошибка при удалении брони:", error);
@@ -1135,28 +1107,20 @@
     }
   }
 
-  // Загрузка существующих броней с сервера
   async function loadExisting() {
     try {
-      // Показываем анимацию загрузки
       loadingOverlay.style.display = 'flex';
       
       slidersContainer.innerHTML = "";
       const res = await fetch(GAS_URL + "?action=get&date=" + dateInput.value);
       const data = await res.json();
       
-      // Скрываем анимацию загрузки
       loadingOverlay.style.display = 'none';
       
       if (!data.bookings || !data.bookings.length) return;
 
-      // Получаем все ячейки времени (правый столбец)
       const timeCells = Array.from(document.querySelectorAll('th.time-right'));
-      
-      // Получаем все ячейки таблицы
       const tableCells = Array.from(document.querySelectorAll('td.slot'));
-      
-      // Получаем позицию контейнера таблиции
       const containerRect = tableContainer.getBoundingClientRect();
       const tableRect = bookingTable.getBoundingClientRect();
       
@@ -1166,13 +1130,11 @@
           const start = parseFloat(b.start);
           const end = parseFloat(b.end);
           
-          // Находим индексы временных слотов
           const startIndex = timeSlots.findIndex(ts => ts.key === start);
           const endIndex = timeSlots.findIndex(ts => ts.key === end);
           
           if (startIndex === -1 || endIndex === -1) return;
           
-          // Находим ячейку начала брони
           const startCell = tableCells.find(cell => 
             parseInt(cell.dataset.lane) === laneIndex && 
             parseFloat(cell.dataset.time) === start
@@ -1180,23 +1142,17 @@
           
           if (!startCell) return;
           
-          // Получаем позицию ячейки начала относительно контейнера
           const startCellRect = startCell.getBoundingClientRect();
-          
-          // Рассчитываем высоту блока брони
           const startTimeCell = timeCells[startIndex];
           const endTimeCell = timeCells[endIndex];
           const height = endTimeCell.offsetTop + endTimeCell.offsetHeight - startTimeCell.offsetTop;
           
-          // Рассчитываем позицию ползунка относительно контейнера
           const left = startCellRect.left - containerRect.left;
           const top = startTimeCell.offsetTop;
           
-          // Создаем ползунок
           const slider = document.createElement("div");
           slider.className = "existing-slider";
           
-          // Добавляем класс в зависимости от статуса брони
           if (b.confirmed === "Да") {
             slider.classList.add("confirmed");
           } else if (b.confirmed === "Нет") {
@@ -1208,7 +1164,6 @@
           slider.style.width = `${startCellRect.width}px`;
           slider.style.height = `${height}px`;
           
-          // Добавляем обработчик клика
           slider.addEventListener('click', (e) => {
             e.stopPropagation();
             showBookingInfo(b);
@@ -1218,7 +1173,6 @@
         }
       });
     } catch(e) {
-      // Скрываем анимацию загрузки в случае ошибки
       loadingOverlay.style.display = 'none';
       console.error("Ошибка загрузки бронирований:", e);
     }
@@ -1230,10 +1184,8 @@
     return `${h}:${m}`;
   }
 
-  // При изменении даты обновляем брони
   dateInput.addEventListener('change', async () => {
     await loadExisting();
-    // Сброс выборов
     currentLane = currentStart = null;
     for (let k in intervalsByLane) intervalsByLane[k] = [];
     clearStartTimeHighlight();
@@ -1242,7 +1194,6 @@
     updateTableSelection();
   });
 
-  // Инициализация
   document.addEventListener('DOMContentLoaded', async () => {
     await loadExisting();
     updateTableSelection();
