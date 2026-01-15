@@ -1,2258 +1,1300 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>SMB-LS-KH</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
-        :root {
-            --light-bg: #fefefe;
-            --dark-bg: #1a1a1a;
-            --accent: #dc143c;
-            --text-dark: #1a1a1a;
-            --text-light: #ffffff;
-            --text-gray: #FFF;
-            --text-light-gray: #999999;
-            --border-radius: 8px;
-            --input-padding: 12px;
-            --surface: #ffffff;
-            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
-            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            background-color: #f4f6f9;
-            width: 100%;
-            position: fixed;
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        body {
-            color: #1a2f40;
-            padding: 0;
-            line-height: 1.5;
-            min-height: 100vh;
-            height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            font-weight: 700;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-            -webkit-text-size-adjust: 100%; /* Предотвращает автоматическое изменение размера текста */
-        }
-
-        /* НОВАЯ ШАПКА ИЗ ВТОРОГО КОДА */
-        header {
-            background-color: #1f2937;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 20px; /* Увеличено с 10px */
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            user-select: none;
-            z-index: 1000;
-            padding-top: max(14px, env(safe-area-inset-top)); /* Увеличено с 10px */
-            padding-left: max(20px, env(safe-area-inset-left));
-            padding-right: max(20px, env(safe-area-inset-right));
-            min-height: 65px; /* Добавлена минимальная высота */
-        }
-
-        .logo img {
-            width: 42px; /* Увеличено с 40px */
-            height: 42px; /* Увеличено с 40px */
-            object-fit: cover;
-            border-radius: 0;
-            transform: translateY(4px);
-        }
-
-        .site-name {
-            flex: 1;
-            text-align: center;
-            font-size: 21px; /* Увеличено с 20px */
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .site-name-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #1f2937;
-            border: 1px solid #444;
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 1001;
-            min-width: 150px;
-            margin-top: 25px;
-            width: 90%;
-        }
-
-        .site-name-dropdown a {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            transition: background 0.3s;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            justify-content: center;
-        }
-
-        .site-name-dropdown a:hover {
-            background-color: #374151;
-        }
-
-        .menu-button {
-            width: 32px; /* Увеличено с 30px */
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 22px; /* Увеличено с 20px */
-        }
-
-        .menu-button div {
-            height: 4px;
-            background-color: white;
-            border-radius: 2px;
-        }
-
-        .dropdown {
-            display: none;
-            flex-direction: column;
-            position: absolute;
-            top: 70px;
-            right: 15px;
-            background-color: #1f2937;
-            border: 1px solid #444;
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 9999;
-            min-width: 150px;
-        }
-
-        .dropdown a {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            transition: background 0.3s;
-            user-select: none;
-            display: flex;
-            align-items: center;
-        }
-
-        .dropdown a:hover {
-            background-color: #374151;
-        }
-
-        .icon-space {
-            margin-right: 6px;
-            width: 20px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        /* НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ ИЗ ПРЕДОСТАВЛЕННОГО КОДА */
-        .loader-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            gap: 20px;
-        }
-
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #dc143c;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 16px;
-            color: #1a2f40;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0;
-            background-color: var(--surface);
-            border-radius: 0;
-            box-shadow: none;
-            overflow: hidden;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            border: none;
-            min-height: -webkit-fill-available;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-        }
-
-        .header-section {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 16px;
-            padding-left: max(16px, env(safe-area-inset-left));
-            padding-right: max(16px, env(safe-area-inset-right));
-            padding-top: 80px; /* УВЕЛИЧЕНО: было 70px, теперь 80px чтобы кнопки были под шапкой */
-        }
-
-        .tabs {
-            display: flex;
-            background-color: var(--surface);
-            padding: 16px 0;
-            gap: 8px;
-            flex-shrink: 0;
-            border-bottom: 1px solid #f0f0f0;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            width: 100%;
-            margin-top: 0;
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-        }
-
-        .tab-btn {
-            background: var(--surface);
-            border: 1px solid #e5e5e5;
-            color: var(--text-dark);
-            padding: 14px 12px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            flex: 1;
-            min-width: 0;
-            text-align: center;
-            border-radius: 6px;
-            font-weight: 700;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .tab-btn:hover {
-            background-color: #fafafa;
-            border-color: #d0d0d0;
-            color: var(--text-dark);
-        }
-
-        .tab-btn.active {
-            background-color: var(--accent);
-            color: var(--text-light);
-            border-color: var(--accent);
-        }
-
-        /* СТИЛИ ДЛЯ СТРОКИ С КОЛИЧЕСТВОМ ОТКРЫТЫХ ЗАДАЧ */
-        .open-tasks-counter {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            background-color: #1a2f40;
-            color: white;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 15px;
-            margin: 8px 0 16px;
-            width: 100%;
-            cursor: pointer;
-            position: relative;
-            user-select: none;
-        }
-
-        .open-tasks-counter .label {
-            flex: 1;
-            text-align: left;
-        }
-
-        .open-tasks-counter .count {
-            background-color: #dc143c;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 16px;
-            min-width: 40px;
-            text-align: center;
-        }
-
-        /* ВЫПАДАЮЩЕЕ МЕНЮ ДЛЯ ОТКРЫТЫХ ЗАДАЧ */
-        .tasks-filter-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background-color: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 100;
-            overflow: hidden;
-        }
-
-        .tasks-filter-dropdown button {
-            width: 100%;
-            padding: 14px 16px;
-            text-align: left;
-            background: none;
-            border: none;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1a2f40;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tasks-filter-dropdown button:last-child {
-            border-bottom: none;
-        }
-
-        .tasks-filter-dropdown button:hover {
-            background-color: #f5f5f5;
-        }
-
-        .tasks-filter-dropdown button.active {
-            background-color: #1a2f40;
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 16px;
-            flex: 1;
-            overflow-y: auto;
-            flex-direction: column;
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .task-card {
-            background: white;
-            margin: 0;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            padding: 0;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            user-select: none;
-            width: 100%;
-            min-height: 280px;
-        }
-
-        .task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-        }
-
-        .task-card.selected {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
-        }
-
-        .task-header {
-            padding: 16px 16px 12px;
-            border-bottom: 2px solid #dc143c;
-            margin-bottom: 0;
-        }
-
-        .task-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #000000;
-            line-height: 1.4;
-            text-align: left; /* ИЗМЕНЕНИЕ: выравнивание по левому краю */
-            padding: 0 5px; /* Добавлено небольшое внутреннее отступление */
-        }
-
-        .card-content {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            padding: 0;
-        }
-
-        .content-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid #e0e0e0;
-            min-height: 48px;
-            height: 48px;
-        }
-
-        .content-row:last-child {
-            border-bottom: none;
-        }
-
-        .row-label {
-            font-size: 14px;
-            color: #000000;
-            font-weight: 700;
-            flex-shrink: 0;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
-
-        .row-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: #000000;
-            text-align: right;
-            flex: 1;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            height: 100%;
-            line-height: 1;
-        }
-
-        .executor-select {
-            background: white;
-            border: 2px solid #FFFFFF;
-            border-radius: 15px;
-            padding: 10px 10px; /* Увеличено с 8px 10px */
-            font-size: 16px;
-            font-weight: 700;
-            color: #1a2f40;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.3s ease;
-            width: auto;
-            max-width: 160px;
-            min-width: 140px;
-            height: 42px; /* Увеличено с 36px */
-            display: flex;
-            align-items: center;
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .executor-select:focus {
-            outline: none;
-            border-color: #FFFFFF;
-        }
-
-        .buttons-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 16px; /* Увеличено с 12px 16px */
-            border-top: 1px solid #e0e0e0;
-            margin-top: auto;
-            min-height: 74px; /* Добавлено */
-        }
-
-        .schema-button {
-            background-color: #1a2f40;
-            color: white;
-            padding: 11px 14px; /* Увеличено с 8px 12px */
-            font-weight: 700;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-            flex: 1;
-            text-align: center;
-            white-space: nowrap;
-            height: 42px; /* Увеличено с 36px */
-            min-height: 42px; /* Добавлено */
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .schema-button:hover {
-            background-color: #0d1f2d;
-            transform: translateY(-1px);
-        }
-
-        .submit-btn {
-            background-color: #dc143c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            user-select: none;
-            border-radius: 4px;
-            padding: 11px 14px; /* Увеличено с 8px 12px */
-            font-weight: 700;
-            font-size: 13px;
-            transition: all 0.3s ease;
-            flex: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            white-space: nowrap;
-            height: 42px; /* Увеличено с 36px */
-            min-height: 42px; /* Добавлено */
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .submit-btn:hover {
-            background-color: #a90e2e;
-            transform: translateY(-1px);
-        }
-
-        .submit-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .submitted-text {
-            color: #000;
-            font-weight: 700;
-            padding: 11px 14px; /* Увеличено с 8px 12px */
-            border: 1px solid #FFFFFF;
-            border-radius: 4px;
-            font-size: 13px;
-            text-align: center;
-            background: #FFFFFF;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-            height: 42px; /* Увеличено с 36px */
-            min-height: 42px; /* Добавлено */
-            gap: 6px;
-        }
-
-        .catalog-buttons-container {
-            display: flex;
-            align-items: center;
-            padding: 0;
-            border-top: 1px solid #e0e0e0;
-            margin-top: auto;
-            position: relative;
-            min-height: 66px; /* Увеличено с 60px */
-        }
-
-        .catalog-button-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            position: relative;
-            padding: 10px 0;
-        }
-
-        .catalog-button-wrapper::before,
-        .catalog-button-wrapper::after {
-            display: none;
-        }
-
-        .open-button {
-            background-color: #1a2f40;
-            color: white;
-            padding: 13px 24px; /* Увеличено с 10px 24px */
-            font-weight: 700;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-            text-align: center;
-            white-space: nowrap;
-            height: 46px; /* Увеличено с 40px */
-            min-height: 46px; /* Добавлено */
-            min-width: 140px;
-            width: auto;
-            flex: 0 0 auto;
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .open-button:hover {
-            background-color: #0d1f2d;
-            transform: translateY(-1px);
-        }
-
-        .no-open {
-            color: #999;
-            font-style: italic;
-            padding: 13px 24px; /* Увеличено тоже */
-            border: 1px dashed #ddd;
-            border-radius: 4px;
-            font-size: 11px;
-            text-align: center;
-            background: #f8f9fa;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-            height: 46px; /* Увеличено тоже */
-            min-height: 46px; /* Добавлено */
-            min-width: 140px;
-            width: auto;
-            flex: 0 0 auto;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 8px;
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 11px;
-            min-width: 30px;
-            background: transparent;
-            border: 1px solid;
-            line-height: 1;
-        }
-
-        .status-badge.warning { 
-            border-color: #8e6a1e; 
-            color: #8e6a1e; 
-        }
-        .status-badge.success { 
-            border-color: #2d5a2d; 
-            color: #2d5a2d; 
-        }
-        .status-badge.danger { 
-            border-color: #7a2a2a; 
-            color: #7a2a2a; 
-        }
-
-        /* СТИЛИ ЗАГРУЗКИ В КАРТОЧКАХ */
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-            gap: 16px;
-        }
-
-        .loading-card-text {
-            font-size: 14px;
-            color: #666;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .error {
-            text-align: center;
-            padding: 20px;
-            color: #7a2a2a;
-            background: rgba(122,42,42,0.05);
-            border-radius: var(--border-radius);
-            margin: 10px 0;
-            border: 1px solid rgba(122,42,42,0.2);
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 16px;
-            border-radius: 6px;
-            color: white;
-            font-weight: 500;
-            z-index: 1000;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.4s ease;
-            background-color: var(--text-dark);
-            font-size: 13px;
-        }
-
-        .notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            background-color: #2d5a2d;
-        }
-
-        .notification.error {
-            background-color: #7a2a2a;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            margin-bottom: 80px;
-            padding: 20px 10px;
-            flex-wrap: wrap;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-        }
-
-        .page-btn {
-            background: white;
-            border: 1px solid #e5e5e5;
-            color: #1a2f40;
-            padding: 8px 12px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 4px;
-            font-weight: 600;
-            min-width: 40px;
-            text-align: center;
-            position: relative;
-            touch-action: manipulation; /* Предотвращает масштабирование при двойном тапе */
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background-color: #f5f5f5;
-            border-color: #d0d0d0;
-        }
-
-        .page-btn.active {
-            background-color: #dc143c;
-            color: white;
-            border-color: #dc143c;
-        }
-
-        .page-btn:disabled {
-            background-color: #f0f0f0;
-            color: #999;
-            cursor: not-allowed;
-            border-color: #e5e5e5;
-        }
-
-        .page-info {
-            font-size: 14px;
-            color: #666;
-            font-weight: 600;
-            margin: 0 10px;
-        }
-
-        /* АДАПТИВНОСТЬ ДЛЯ НОВОЙ ШАПКИ */
-        @media (max-width: 767px) {
-            header {
-                padding: 12px 15px; /* Увеличено с 8px */
-                padding-top: max(12px, env(safe-area-inset-top));
-                padding-left: max(15px, env(safe-area-inset-left));
-                padding-right: max(15px, env(safe-area-inset-right));
-            }
-            
-            .logo img {
-                width: 38px; /* Увеличено */
-                height: 38px; /* Увеличено */
-            }
-            
-            .site-name {
-                font-size: 19px; /* Увеличено */
-            }
-            
-            .header-section {
-                padding-top: 75px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            /* Увеличим кнопки для мобильных */
-            .schema-button,
-            .submit-btn,
-            .submitted-text {
-                height: 38px; /* Увеличено с 34px */
-                min-height: 38px;
-                padding: 9px 12px; /* Увеличено */
-                font-size: 12px;
-            }
-            
-            .open-button,
-            .no-open {
-                height: 42px; /* Увеличено с 36px */
-                min-height: 42px;
-                padding: 11px 20px; /* Увеличено */
-                font-size: 12px;
-            }
-            
-            .buttons-container {
-                padding: 14px 12px; /* Увеличено */
-                min-height: 68px;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 62px; /* Увеличено с 56px */
-            }
-            
-            .executor-select {
-                height: 38px; /* Увеличено с 34px */
-                padding: 9px 8px; /* Увеличено */
-                font-size: 12px;
-            }
-            
-            .open-tasks-counter {
-                padding: 12px 14px;
-                font-size: 14px;
-            }
-            
-            .open-tasks-counter .count {
-                font-size: 15px;
-                padding: 5px 10px;
-                min-width: 36px;
-            }
-            
-            .task-title {
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-        }
-
-        @media (max-width: 480px) {
-            header {
-                padding: 10px 12px; /* Увеличено */
-                padding-top: max(10px, env(safe-area-inset-top));
-                padding-left: max(12px, env(safe-area-inset-left));
-                padding-right: max(12px, env(safe-area-inset-right));
-            }
-            
-            .logo img {
-                width: 36px; /* Увеличено */
-                height: 36px; /* Увеличено */
-            }
-            
-            .site-name {
-                font-size: 17px; /* Увеличено */
-            }
-            
-            .header-section {
-                padding-top: 70px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            .schema-button,
-            .submit-btn,
-            .submitted-text {
-                height: 36px; /* Увеличено с 32px */
-                min-height: 36px;
-                padding: 8px 10px; /* Увеличено */
-                font-size: 11px;
-            }
-            
-            .open-button,
-            .no-open {
-                height: 40px; /* Увеличено с 34px */
-                min-height: 40px;
-                padding: 10px 18px; /* Увеличено */
-                font-size: 11px;
-            }
-            
-            .buttons-container {
-                padding: 12px 12px; /* Увеличено */
-                min-height: 64px;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 58px; /* Увеличено с 52px */
-            }
-            
-            .executor-select {
-                height: 36px; /* Увеличено с 32px */
-                padding: 8px 7px; /* Увеличено */
-                font-size: 11px;
-            }
-            
-            .menu-button {
-                width: 28px; /* Увеличено */
-                height: 20px; /* Увеличено */
-            }
-            
-            .open-tasks-counter {
-                padding: 10px 12px;
-                font-size: 13px;
-            }
-            
-            .open-tasks-counter .count {
-                font-size: 14px;
-                padding: 4px 8px;
-                min-width: 32px;
-            }
-            
-            .task-title {
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-        }
-
-        @media (max-width: 360px) {
-            header {
-                padding: 9px 10px; /* Увеличено */
-                padding-top: max(9px, env(safe-area-inset-top));
-                padding-left: max(10px, env(safe-area-inset-left));
-                padding-right: max(10px, env(safe-area-inset-right));
-            }
-            
-            .site-name {
-                font-size: 16px; /* Увеличено */
-            }
-            
-            .header-section {
-                padding-top: 68px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            .schema-button,
-            .submit-btn,
-            .submitted-text {
-                height: 34px; /* Увеличено с 30px */
-                min-height: 34px;
-                padding: 7px 8px; /* Увеличено */
-                font-size: 10px;
-            }
-            
-            .open-button,
-            .no-open {
-                height: 38px; /* Увеличено с 32px */
-                min-height: 38px;
-                padding: 9px 16px; /* Увеличено */
-                font-size: 10px;
-            }
-            
-            .buttons-container {
-                padding: 10px 8px; /* Увеличено */
-                min-height: 60px;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 54px; /* Увеличено с 48px */
-            }
-            
-            .executor-select {
-                height: 34px; /* Увеличено с 30px */
-                padding: 7px 6px; /* Увеличено */
-                font-size: 10px;
-            }
-            
-            .open-tasks-counter {
-                padding: 8px 10px;
-                font-size: 12px;
-            }
-            
-            .open-tasks-counter .count {
-                font-size: 13px;
-                padding: 3px 6px;
-                min-width: 28px;
-            }
-            
-            .task-title {
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-        }
-
-        /* ОСТАЛЬНАЯ АДАПТИВНОСТЬ */
-        @media (min-width: 1200px) {
-            .cards-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .header-section {
-                padding: 0;
-                padding-top: 80px; /* УВЕЛИЧЕНО */
-            }
-        }
-
-        @media (min-width: 768px) and (max-width: 1199px) {
-            .cards-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .header-section {
-                padding: 0 16px;
-                padding-top: 80px; /* УВЕЛИЧЕНО */
-            }
-        }
-
-        @media (max-width: 767px) {
-            .container {
-                height: 100vh;
-            }
-            
-            .header-section {
-                padding-left: max(12px, env(safe-area-inset-left));
-                padding-right: max(12px, env(safe-area-inset-right));
-                padding-top: 75px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            .tabs {
-                padding: 12px 0;
-                gap: 6px;
-                margin-top: 0;
-            }
-            
-            .tab-btn {
-                padding: 12px 8px;
-                font-size: 14px;
-                min-width: calc(50% - 10px);
-                flex: 1 1 calc(50% - 10px);
-            }
-            
-            .open-tasks-counter {
-                margin: 6px 0 12px;
-                padding: 12px 14px;
-                font-size: 14px;
-            }
-            
-            .tab-content {
-                padding: 12px;
-            }
-            
-            .cards-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            
-            .task-card {
-                min-height: auto;
-            }
-            
-            .content-row {
-                padding: 0 12px;
-                min-height: 44px;
-                height: 44px;
-            }
-            
-            .row-label {
-                font-size: 13px;
-                padding-right: 8px;
-                flex-shrink: 0;
-                min-width: 80px;
-            }
-            
-            .row-value {
-                font-size: 13px;
-                justify-content: flex-end;
-                flex: 1;
-                min-width: 0;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 62px; /* Увеличено */
-            }
-            
-            .executor-select {
-                max-width: 140px;
-                min-width: 120px;
-                font-size: 12px;
-                padding: 9px 8px; /* Увеличено */
-                height: 38px; /* Увеличено */
-            }
-            
-            .row-label {
-                font-size: 13px;
-                min-width: 80px;
-            }
-            
-            .loader {
-                width: 22px;
-                height: 22px;
-                border-width: 2.5px;
-            }
-            
-            .loading-card-text {
-                font-size: 13px;
-            }
-            
-            .task-title {
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-section {
-                padding-left: max(10px, env(safe-area-inset-left));
-                padding-right: max(10px, env(safe-area-inset-right));
-                padding-top: 70px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            .tabs {
-                padding: 10px 0;
-                gap: 4px;
-            }
-            
-            .tab-btn {
-                padding: 10px 6px;
-                font-size: 13px;
-                min-width: calc(50% - 6px);
-                flex: 1 1 calc(50% - 6px);
-            }
-            
-            .open-tasks-counter {
-                margin: 4px 0 10px;
-                padding: 10px 12px;
-                font-size: 13px;
-            }
-            
-            .tab-content {
-                padding: 10px;
-            }
-            
-            .task-card {
-                padding: 0;
-            }
-            
-            .content-row {
-                padding: 0 10px;
-                min-height: 42px;
-                height: 42px;
-            }
-            
-            .task-title {
-                font-size: 15px;
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-            
-            .row-label, .row-value {
-                font-size: 12px;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 58px; /* Увеличено */
-            }
-            
-            .executor-select {
-                max-width: 120px;
-                min-width: 100px;
-                font-size: 11px;
-                padding: 8px 7px; /* Увеличено */
-                height: 36px; /* Увеличено */
-            }
-            
-            .row-label {
-                font-size: 12px;
-                min-width: 70px;
-            }
-            
-            .loader {
-                width: 20px;
-                height: 20px;
-                border-width: 2px;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .tabs {
-                flex-direction: column;
-                gap: 6px;
-            }
-            
-            .tab-btn {
-                flex: 1 1 auto;
-                min-height: 44px;
-                min-width: 100%;
-                margin: 0;
-            }
-            
-            .header-section {
-                padding-left: max(8px, env(safe-area-inset-left));
-                padding-right: max(8px, env(safe-area-inset-right));
-                padding-top: 68px; /* УВЕЛИЧЕНО для мобильных */
-            }
-            
-            .executor-select {
-                max-width: 110px;
-                min-width: 90px;
-                font-size: 10px;
-                padding: 7px 6px; /* Увеличено */
-                height: 34px; /* Увеличено */
-            }
-            
-            .row-label {
-                font-size: 11px;
-                min-width: 65px;
-            }
-            
-            .content-row {
-                min-height: 40px;
-                height: 40px;
-            }
-            
-            .catalog-buttons-container {
-                min-height: 54px; /* Увеличено */
-            }
-            
-            .loader {
-                width: 18px;
-                height: 18px;
-                border-width: 2px;
-            }
-            
-            .loading-card-text {
-                font-size: 11px;
-            }
-            
-            .task-title {
-                text-align: left; /* ИЗМЕНЕНИЕ: для мобильных тоже по левому краю */
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>БРОНИ БИЛЬЯРД</title>
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png" />
+  <!-- Google Identity Script -->
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --cell-size: 50px;
+      --main-color: #1e3a8a;
+      --highlight-color: #ef4444;
+      --highlight-bg: #ef4444; 
+      --confirmed-color: #16a34a;
+      --rejected-color: #b91c1c;
+      --background-color: #f8fafc;
+      --card-color: #e0f2fe;
+      --blue-color: #2563eb;   /* насыщенный синий */
+--red-color: #ef4444;    /* ярко-красный */
+--green-color: #22c55e;  /* ярко-зеленый */
+    }
+
+    @media (max-width: 768px) {
+      :root { 
+        --cell-size: calc((100vw - 20px) / 13); 
+      }
+      
+      table {
+        width: auto !important;
+        margin: 0 auto;
+      }
+      
+      td, th {
+        aspect-ratio: 1;
+        width: var(--cell-size) !important;
+        height: var(--cell-size) !important;
+        min-width: auto !important;
+        max-width: none !important;
+      }
+      
+      body {
+        padding: 5px;
+      }
+      
+      .table-container {
+        padding: 0;
+        width: 100%;
+      }
+      
+      #controls {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 0 5px;
+        box-sizing: border-box;
+      }
+      
+      #dateInput {
+        flex: 1;
+        margin: 5px 0;
+      }
+      
+      .booking-button {
+        flex: 1;
+        margin: 5px 0;
+      }
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--background-color);
+      padding: 10px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .table-container {
+      position: relative;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: auto;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 2px 0;
+      table-layout: fixed;
+      max-width: 100vw;
+      user-select: none;
+      touch-action: manipulation;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      color: white;
+      z-index: 2;
+      transition: background-color 0.2s, color 0.2s;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Цвета для заголовков столбцов */
+    thead th:nth-child(1),
+    thead th:nth-child(2),
+    thead th:nth-child(3),
+    thead th:nth-child(5),
+    thead th:nth-child(6) {
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+    }
+
+    thead th:nth-child(4) {
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+    }
+
+    thead th:nth-child(7),
+    thead th:nth-child(8),
+    thead th:nth-child(9),
+    thead th:nth-child(10),
+    thead th:nth-child(11),
+    thead th:nth-child(12) {
+     background: linear-gradient(to right, #1e3c72, #2a5298);
+    }
+
+    th, td {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      vertical-align: middle;
+      box-sizing: border-box;
+      background: white;
+      font-size: 12px;
+      position: relative;
+    }
+
+    th.time-col, .time-right {
+      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Цвета для ячеек столбцов */
+    td.slot[data-lane="0"],
+    td.slot[data-lane="1"],
+    td.slot[data-lane="2"],
+    td.slot[data-lane="4"],
+    td.slot[data-lane="5"] {
+      background-color: rgba(167, 199, 231, 0.7);
+    }
+
+    td.slot[data-lane="3"] {
+      background-color: rgba(181, 228, 140, 0.7);
+    }
+
+    td.slot[data-lane="6"],
+    td.slot[data-lane="7"],
+    td.slot[data-lane="8"],
+    td.slot[data-lane="9"],
+    td.slot[data-lane="10"],
+    td.slot[data-lane="11"] {
+      background-color: rgba(248, 173, 157, 0.7);
+    }
+
+    /* Подсветка заголовков выбранных столбцов */
+    th.highlight-header {
+      background: var(--highlight-bg) !important;
+      color: white !important;
+    }
+
+    /* Вертикальные красные линии при выборе столбца */
+    td.vertical-line::before,
+    td.vertical-line::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: var(--highlight-color);
+      z-index: 10;
+    }
+    td.vertical-line::before { left: 0; }
+    td.vertical-line::after  { right: 0; }
+
+    td.slot { 
+      cursor: pointer; 
+      transition: all 0.2s ease;
+    }
+    
+    td.slot:hover {
+      background-color: #f0f9ff;
+    }
+
+    td.selected {
+      background: var(--highlight-bg) !important; /* Убрали градиент */
+      border: none !important;
+      z-index: 1;
+      color: #7f1d1d;
+      font-weight: 500;
+    }
+
+    td.selected.rounded-top {
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      z-index: 1;
+    }
+
+    td.selected.rounded-bottom {
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      z-index: 1;
+    }
+
+    td.start-time-chosen {
+      background: radial-gradient(circle, #fee2e2, #f87171) !important;
+      border: 2px solid var(--highlight-color) !important;
+      z-index: 2;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+#cardsContainer {
+  margin: 20px auto 10px; /* авто по бокам */
+  padding: 0; /* убрать padding */
+  max-width: 100vw;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+    .booking-card {
+      position: relative;
+      background: var(--card-color);
+      border: 1px solid var(--main-color);
+      border-radius: 12px;
+      padding: 12px 45px 12px 15px;
+      color: var(--main-color);
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      user-select: none;
+      box-shadow: 0 3px 8px rgba(30, 58, 138, 0.15);
+      transition: transform 0.2s;
+    }
+    
+    .booking-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(30, 58, 138, 0.2);
+    }
+    
+    .booking-card .close-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: translate(50%, -50%);
+      color: var(--main-color);
+      background: white;
+      border: 1px solid var(--main-color);
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 10px;
+      box-shadow: 0 0 8px rgba(30, 58, 138, 0.3);
+      transition: all 0.2s ease;
+    }
+    .booking-card .close-btn:hover {
+      background-color: var(--main-color);
+      color: white;
+      transform: translate(50%, -50%) scale(1.1);
+    }
+
+    .booking-button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2);
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+    .booking-button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(30, 58, 138, 0.3);
+    }
+    .booking-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
+    }
+    
+    /* Стиль для нажатой кнопки */
+    .booking-button.pressed {
+      background: var(--highlight-bg);
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #00000066;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #modal > div {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    #modal h3 { 
+      margin-top: 0; 
+      color: var(--main-color);
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    #modal label { 
+      display: block; 
+      margin-bottom: 15px; 
+      color: #334155;
+      font-weight: 500;
+    }
+    #modal input, #modal textarea {
+      width: 100%;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      margin-top: 6px;
+      font-size: 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      transition: border 0.3s;
+    }
+    #modal input:focus, #modal textarea:focus {
+      outline: none;
+      border-color: var(--main-color);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+    #modal textarea { 
+      resize: vertical; 
+      min-height: 80px;
+    }
+    #modal button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    #modal button:first-of-type {
+      background: linear-gradient(145deg, var(--main-color), #0f2a5f);
+      color: white;
+      box-shadow: 0 3px 6px rgba(30, 58, 138, 0.2);
+    }
+    #modal button:first-of-type:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(30, 58, 138, 0.3);
+    }
+    #modal button:last-of-type {
+      margin-left: 10px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    #modal button:last-of-type:hover {
+      background: #e2e8f0;
+    }
+
+    #controls {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    #dateInput {
+      padding: 12px 20px;
+      font-size: 16px;
+      background: white;
+      color: #334155;
+      border: 2px solid var(--main-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      box-shadow: 0 2px 5px rgba(30, 58, 138, 0.1);
+    }
+    #dateInput:hover { 
+      background: #f8fafc; 
+      box-shadow: 0 3px 8px rgba(30, 58, 138, 0.15);
+    }
+    #dateInput:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+    }
+    #dateInput::-webkit-calendar-picker-indicator {
+      filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(202deg) brightness(104%) contrast(97%);
+      cursor: pointer;
+    }
+
+    .image-popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.8);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+    .image-popup .popup-content {
+      position: relative;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .image-popup .popup-content img {
+      width: 100%; height: auto; border-radius: 8px;
+    }
+    .image-popup .close-popup {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: var(--main-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 35px; height: 35px; font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-popup .close-popup:hover {
+      transform: scale(1.1);
+      background: var(--highlight-color);
+    }
+
+    /* Слой для ползунков существующих броней */
+    #slidersContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .existing-slider {
+      position: absolute;
+      background: var(--main-color);
+      border: none;
+      color: white;
+      border-radius: 6px;
+      pointer-events: auto;
+      box-sizing: border-box;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 4px;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    
+    .existing-slider:hover {
+      transform: scale(1.02);
+      z-index: 10;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Стили для разных статусов брони */
+    .existing-slider.confirmed {
+      background: var(--confirmed-color); /* Убрали градиент */
+    }
+    .existing-slider.rejected {
+      background: var(--rejected-color); /* Убрали градиент */
+    }
+
+    /* Модальное окно информации о брони */
+    .booking-info-popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .booking-info-popup .popup-content {
+      position: relative;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 90vw;
+      width: 400px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+
+    .booking-info-popup .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--main-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px; 
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .booking-info-popup .close-btn:hover {
+      background: var(--highlight-color);
+      transform: scale(1.1);
+    }
+
+    .booking-info-popup h3 {
+      margin-top: 0;
+      color: var(--main-color);
+      text-align: center;
+      font-size: 1.5rem;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    .booking-info-popup .info-row {
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .booking-info-popup .info-label {
+      font-weight: 600;
+      color: var(--main-color);
+      min-width: 120px;
+    }
+    .booking-info-popup .info-value {
+      text-align: right;
+      flex-grow: 1;
+    }
+    
+    /* Стили для кнопок подтверждения брони */
+    .confirmation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 25px;
+      gap: 15px;
+    }
+    .confirmation-buttons button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      flex: 1;
+      transition: all 0.2s;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .confirm-yes {
+      background: var(--confirmed-color); /* Убрали градиент */
+      color: white;
+    }
+    .confirm-yes:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(22, 163, 74, 0.3);
+    }
+    .confirm-no {
+      background: var(--rejected-color); /* Убрали градиент */
+      color: white;
+    }
+    .confirm-no:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(185, 28, 28, 0.3);
+    }
+    
+    /* Стили для кнопки удаления */
+    .delete-btn {
+      background: linear-gradient(145deg, #475569, #334155);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 20px;
+      width: 100%;
+      transition: all 0.3s;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .delete-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+      background: var(--highlight-bg); /* Убрали градиент */
+    }
+    
+    /* Анимация загрузки */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--main-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Стили для авторизации */
+    #login {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+    
+    #login h2 {
+      color: var(--main-color);
+      margin-bottom: 20px;
+    }
+    
+    #content {
+      display: none;
+      width: 100%;
+    }
+    
+  </style>
 </head>
 <body>
-    <!-- НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
-    <div class="loader-container" id="loader">
-        <div class="loader"></div>
-        <div class="loading-text"></div>
-    </div>
-    
-    <div class="notification" id="notification"></div>
-    
-    <!-- НОВАЯ ШАПКА -->
-    <header>
-        <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
-        <div class="site-name" onclick="toggleSiteNameDropdown()">
-            LUCKY STRIKE KH
-            <div class="site-name-dropdown" id="siteNameDropdown">
-                <a href="https://smart-bowling.github.io/SMB-SKYMALL/" class="dropdown-button">
-                    <span>SKYMALL</span>
-                </a>
-              <a href="https://smart-bowling.github.io/SMB-BB/" class="dropdown-button">
-                    <span>BLOCKBUSTER</span>
-                </a>
-            </div>
-        </div>
-        <div class="menu-button" onclick="toggleDropdown()">
-            <div></div><div></div><div></div>
-        </div>
-        <div class="dropdown" id="dropdownMenu">
-            <a href="https://smart-bowling.github.io/PARTS-KH/">
-                <span class="icon-space"><i class="fas fa-cube"></i></span>ДЕТАЛИ
-            </a>
-            <a href="https://smart-bowling.github.io/PS-STOP-KH/">
-                <span class="icon-space"><i class="fas fa-exclamation-triangle"></i></span>STOP LANE
-            </a>
-        </div>
-    </header>
-    
-    <div class="container" id="main-container" style="display: none;">
-        <div class="header-section">
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="tab1">РЕЕСТР ЗАДАЧ</button>
-                <button class="tab-btn" data-tab="tab2">КАТАЛОГ ЗАДАЧ</button>
-            </div>
-            
-            <!-- ДОБАВЛЕН ВЫПАДАЮЩИЙ ФИЛЬТР -->
-            <div class="open-tasks-counter" id="open-tasks-counter" onclick="toggleTasksFilter()">
-                <span class="label">Все задачи:</span>
-                <span class="count">0</span>
-                <div class="tasks-filter-dropdown" id="tasksFilterDropdown">
-                    <button onclick="filterTasks('all')" class="active">
-                        <i class="fas fa-layer-group"></i>
-                        Все задачи
-                    </button>
-                    <button onclick="filterTasks('old')">
-                        <i class="fas fa-archive"></i>
-                        Старые задачи
-                    </button>
-                    <button onclick="filterTasks('completed')">
-                        <i class="fas fa-history"></i>
-                        Последние выполненные
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-content active" id="tab1">
-            <div class="cards-grid" id="journal-cards">
-                <div class="task-card">
-                    <div class="loading-container">
-                        <div class="loader"></div>
-                        <div class="loading-card-text"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="pagination" id="journal-pagination" style="display: none;">
-                <button class="page-btn first-btn" onclick="goToPage('journal', 1)">
-                    <i class="fas fa-fast-backward"></i>
-                </button>
-                <button class="page-btn prev-btn" onclick="changePage('journal', -1)">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div class="page-info">
-                    Страница <span id="journal-current-page">1</span> из <span id="journal-total-pages">1</span>
-                </div>
-                <button class="page-btn next-btn" onclick="changePage('journal', 1)">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-                <button class="page-btn last-btn" onclick="goToPage('journal', totalJournalPages)">
-                    <i class="fas fa-fast-forward"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="tab-content" id="tab2">
-            <div class="cards-grid" id="tasks-cards">
-                <div class="task-card">
-                    <div class="loading-container">
-                        <div class="loader"></div>
-                        <div class="loading-card-text"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="pagination" id="tasks-pagination" style="display: none;">
-                <button class="page-btn first-btn" onclick="goToPage('tasks', 1)">
-                    <i class="fas fa-fast-backward"></i>
-                </button>
-                <button class="page-btn prev-btn" onclick="changePage('tasks', -1)">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div class="page-info">
-                    Страница <span id="tasks-current-page">1</span> из <span id="tasks-total-pages">1</span>
-                </div>
-                <button class="page-btn next-btn" onclick="changePage('tasks', 1)">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-                <button class="page-btn last-btn" onclick="goToPage('tasks', totalTasksPages)">
-                    <i class="fas fa-fast-forward"></i>
-                </button>
-            </div>
-        </div>
+
+  <!-- Блок авторизации -->
+  <div id="login">
+    <h2>Вход на сайт</h2>
+<div id="g_id_onload"
+     data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+     data-callback="handleCredentialResponse"
+     data-auto_prompt="false">
+</div>
+    <div class="g_id_signin" data-type="standard"></div>
+  </div>
+
+  <!-- Контент для авторизованных -->
+  <div id="content" style="display:none">
+
+    <div class="table-container">
+      <table id="bookingTable">
+        <thead>
+          <tr>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
+            <th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+            <th class="time-col">
+              <button id="openImage" style="padding:5px 10px; border:1px solid var(--main-color);
+                background:var(--main-color); color:white; border-radius:5px; cursor:pointer;">
+                СТОЛЫ
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="slidersContainer"></div>
     </div>
 
-    <script>
-        // ФУНКЦИИ ДЛЯ РАБОТЫ ШАПКИ
-        function toggleSiteNameDropdown() {
-            const dropdown = document.getElementById("siteNameDropdown");
-            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-            
-            const menu = document.getElementById("dropdownMenu");
-            if (menu.style.display === "flex") {
-                menu.style.display = "none";
-            }
-            
-            event.stopPropagation();
-        }
+    <div id="cardsContainer"></div>
 
-        function toggleDropdown() {
-            const menu = document.getElementById("dropdownMenu");
-            menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-            
-            const dropdown = document.getElementById("siteNameDropdown");
-            if (dropdown.style.display === "block") {
-                dropdown.style.display = "none";
-            }
-            
-            event.stopPropagation();
-        }
+    <div id="controls">
+      <input type="date" id="dateInput" />
+      <button class="booking-button" onclick="openModal()">ЗАБРОНИРОВАТЬ</button>
+    </div>
 
-        // ФУНКЦИИ ДЛЯ ФИЛЬТРАЦИИ ЗАДАЧ
-        let currentFilter = 'all'; // all, old, completed
-        let allJournalData = []; // Сохраняем все данные журнала
-        
-        function toggleTasksFilter() {
-            const dropdown = document.getElementById("tasksFilterDropdown");
-            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-            event.stopPropagation();
-        }
-        
-        function filterTasks(filterType) {
-            currentFilter = filterType;
-            const dropdown = document.getElementById("tasksFilterDropdown");
-            const buttons = dropdown.querySelectorAll('button');
-            
-            // Обновляем активную кнопку
-            buttons.forEach(btn => {
-                if (btn.textContent.includes(getFilterButtonText(filterType))) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            
-            // Обновляем счетчик в зависимости от фильтра
-            updateOpenTasksCounter();
-            
-            // Применяем фильтр к данным
-            applyFilterToJournal();
-            
-            // Скрываем выпадающее меню
-            dropdown.style.display = 'none';
-        }
-        
-        function getFilterButtonText(filterType) {
-            switch(filterType) {
-                case 'all': return 'Все задачи';
-                case 'old': return 'Старые задачи';
-                case 'completed': return 'Последние выполненные';
-                default: return 'Все задачи';
-            }
-        }
-        
-        function updateOpenTasksCounter() {
-            const counter = document.getElementById("open-tasks-counter");
-            const countSpan = counter.querySelector('.count');
-            const labelSpan = counter.querySelector('.label');
-            
-            if (!allJournalData || allJournalData.length === 0) {
-                countSpan.textContent = '0';
-                labelSpan.textContent = 'Все задачи:';
-                return;
-            }
-            
-            let count = 0;
-            let label = 'Все задачи:';
-            
-            switch(currentFilter) {
-                case 'all':
-                    count = allJournalData.length;
-                    label = 'Все задачи:';
-                    break;
-                case 'old':
-                    // Фильтруем старые задачи (самые старые сверху)
-                    const oldTasks = allJournalData.filter(task => !task.isCompleted);
-                    oldTasks.sort((a, b) => {
-                        if (a.createdDate && b.createdDate) {
-                            return new Date(a.createdDate) - new Date(b.createdDate);
-                        }
-                        return 0;
-                    });
-                    count = oldTasks.length;
-                    label = 'Старые задачи:';
-                    break;
-                case 'completed':
-                    // Подсчитываем выполненные задачи (самые новые сверху)
-                    const completedTasks = allJournalData.filter(task => task.isCompleted);
-                    completedTasks.sort((a, b) => {
-                        if (a.completedDate && b.completedDate) {
-                            return new Date(b.completedDate) - new Date(a.completedDate);
-                        }
-                        return 0;
-                    });
-                    count = completedTasks.length;
-                    label = 'Выполненные задачи:';
-                    break;
-            }
-            
-            countSpan.textContent = count;
-            labelSpan.textContent = label;
-        }
-        
-        function applyFilterToJournal() {
-            if (!allJournalData || allJournalData.length === 0) return;
-            
-            let filteredData = [];
-            
-            switch(currentFilter) {
-                case 'all':
-                    filteredData = [...allJournalData];
-                    // В режиме "Все задачи" сортируем: открытые сверху (новые), потом закрытые
-                    filteredData.sort((a, b) => {
-                        if (!a.isCompleted && b.isCompleted) return -1;
-                        if (a.isCompleted && !b.isCompleted) return 1;
-                        
-                        if (!a.isCompleted && !b.isCompleted) {
-                            // Обе открытые - новые сверху
-                            if (a.createdDate && b.createdDate) {
-                                return new Date(b.createdDate) - new Date(a.createdDate);
-                            }
-                        } else {
-                            // Обе закрытые - новые сверху
-                            if (a.completedDate && b.completedDate) {
-                                return new Date(b.completedDate) - new Date(a.completedDate);
-                            }
-                        }
-                        return 0;
-                    });
-                    break;
-                case 'old':
-                    // Только открытые задачи, отсортированные по самой старой дате сверху
-                    filteredData = allJournalData.filter(task => !task.isCompleted);
-                    filteredData.sort((a, b) => {
-                        if (a.createdDate && b.createdDate) {
-                            return new Date(a.createdDate) - new Date(b.createdDate);
-                        }
-                        return 0;
-                    });
-                    break;
-                case 'completed':
-                    // Только выполненные задачи, отсортированные по самой новой дате сверху
-                    filteredData = allJournalData.filter(task => task.isCompleted);
-                    filteredData.sort((a, b) => {
-                        if (a.completedDate && b.completedDate) {
-                            return new Date(b.completedDate) - new Date(a.completedDate);
-                        }
-                        return 0;
-                    });
-                    break;
-            }
-            
-            // Обновляем отображение с отфильтрованными данными
-            renderJournalCards(filteredData);
-        }
+    <div id="modal">
+      <div>
+        <h3>Введите данные</h3>
+        <label>Имя:<br><input id="nameInput" autocomplete="off"></label>
+        <label>Телефон:<br><input id="phoneInput" type="tel" inputmode="tel" autocomplete="tel"></label>
+        <label>Комментарий:<br><textarea id="commentInput"></textarea></label>
+        <div style="text-align: right;">
+          <button onclick="submitForm()">ЗАБРОНИРОВАТЬ</button>
+          <button onclick="closeModal()">ОТМЕНА</button>
+        </div>
+      </div>
+    </div>
 
-        // ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
-        const CARDS_PER_PAGE = 6;
+    <div id="imagePopup" class="image-popup">
+      <div class="popup-content">
+        <button class="close-popup" onclick="closeImagePopup()">&times;</button>
+        <img src="https://i.postimg.cc/52ZDKDDw/55.png" />
+      </div>
+    </div>
 
-        let isInitialLoad = true;
-        let tasksData = null;
-        let journalData = null;
-        
-        let currentJournalPage = 1;
-        let currentTasksPage = 1;
-        let totalJournalPages = 1;
-        let totalTasksPages = 1;
+    <!-- Модальное окно информации о брони -->
+    <div id="bookingInfoPopup" class="booking-info-popup">
+      <div class="popup-content">
+        <button class="close-btn" onclick="closeBookingInfoPopup()">&times;</button>
+        <h3>Информация о бронировании</h3>
+        <div class="info-row">
+          <span class="info-label">Стол:</span> <span id="info-table" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Дата:</span> <span id="info-date" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Время:</span> <span id="info-time" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Имя:</span> <span id="info-name" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Телефон:</span> <span id="info-phone" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Комментарий:</span> <span id="info-comment" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Посещение состоялось?</span>
+          <span id="info-confirmed" class="info-value"></span>
+        </div>
+        <div class="confirmation-buttons">
+          <button class="confirm-yes" onclick="confirmBooking(true)">Да</button>
+          <button class="confirm-no" onclick="confirmBooking(false)">Нет</button>
+        </div>
+        <button class="delete-btn" onclick="deleteBooking()">УДАЛИТЬ БРОНЬ</button>
+      </div>
+    </div>
+    
+    <!-- Оверлей загрузки -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+      <div class="loading-spinner"></div>
+    </div>
+  </div>
 
-        // Функция для показа загрузки
-        function showLoader(message = 'Загрузка...') {
-            const loader = document.getElementById('loader');
-            const mainContainer = document.getElementById('main-container');
-            const loadingText = loader.querySelector('.loading-text');
-            
-            loadingText.textContent = message;
-            loader.style.display = 'flex';
-            mainContainer.style.display = 'none';
-        }
+<script>
+  // Настройки авторизации
+ const allowedEmails = [
+"vadiksss900@gmail.com",
+  "sergey99belov@gmail.com", 
+  "popadinecvasil3@gmail.com", 
+  "veronicadiakova04@gmail.com",
+  "info.luckystrike.kh@gmail.com", 
+  "sashavolobuev123890@gmail.com", 
+  "egorgorbushko@gmail.com", 
+  "shatrava.o@gmail.com", 
+  "Craftmax30@gmail.com", 
+  "bowlingblock.b@gmail.com",
+  "lana.arnaut@gmail.com",
+   "polosinnikita1224@gmail.com",
+  "sofialat1506@gmail.com",
+  "ken040888@gmail.com"
+ ];
 
-        // Функция для скрытия загрузки
-        function hideLoader() {
-            const loader = document.getElementById('loader');
-            const mainContainer = document.getElementById('main-container');
-            
-            loader.style.display = 'none';
-            mainContainer.style.display = 'flex';
-        }
+  // Обработчик ответа от Google
+  function handleCredentialResponse(response) {
+    const data = parseJwt(response.credential);
+    const email = data.email;
 
-        // Функция для показа загрузки при операциях
-        function showOperationLoading(message) {
-            showLoader(message);
-        }
+    if (allowedEmails.includes(email)) {
+      localStorage.setItem("userEmail", email);
+      location.reload();
+    } else {
+      alert("Доступ запрещён для: " + email);
+    }
+  }
 
-        function convertGoogleDriveLink(driveLink) {
-            if (!driveLink) return null;
-            
-            if (driveLink.includes('drive.google.com/file/d/')) {
-                const match = driveLink.match(/\/d\/([^\/]+)/);
-                if (match && match[1]) {
-                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-                }
-            }
-            
-            if (driveLink.includes('uc?export=view')) {
-                return driveLink;
-            }
-            
-            return null;
-        }
 
-        function openDriveLink(driveLink) {
-            if (!driveLink) return;
-            
-            const viewLink = convertGoogleDriveLink(driveLink);
-            if (viewLink) {
-                window.open(viewLink, '_blank');
-            } else {
-                window.open(driveLink, '_blank');
-            }
-        }
+  // Проверка авторизации при загрузке страницы
+  window.onload = () => {
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail && allowedEmails.includes(userEmail)) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("content").style.display = "block";
+    }
+  };
 
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-        
-            notification.className = `notification ${type}`;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
+  // Функция для разбора JWT токена
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
 
-        async function makeRequest(url, options = {}) {
-            try {
-                if (!options.method || options.method === 'GET') {
-                    const separator = url.includes('?') ? '&' : '?';
-                    url = `${url}${separator}_=${Date.now()}`;
-                }
-                
-                const response = await fetch(url, options);
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('Ошибка запроса:', error);
-                throw error;
-            }
-        }
+    return JSON.parse(jsonPayload);
+  }
 
-        function goToPage(type, pageNumber) {
-            if (type === 'journal') {
-                if (pageNumber >= 1 && pageNumber <= totalJournalPages && pageNumber !== currentJournalPage) {
-                    currentJournalPage = pageNumber;
-                    applyFilterToJournal();
-                    updatePagination('journal', currentJournalPage, totalJournalPages);
-                }
-            } else if (type === 'tasks') {
-                if (pageNumber >= 1 && pageNumber <= totalTasksPages && pageNumber !== currentTasksPage) {
-                    currentTasksPage = pageNumber;
-                    renderTasksCards(tasksData);
-                    updatePagination('tasks', currentTasksPage, totalTasksPages);
-                }
-            }
-        }
+  // JavaScript код с изменениями
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxfRLDGA29FrqKS61HmYN_FUnDwOydeCaEdeW4oc4wyroQzvb4h1OnwQ5HeotIHhcj9/exec";
 
-        function updatePagination(type, currentPage, totalPages) {
-            const pagination = document.getElementById(`${type}-pagination`);
-            const currentPageSpan = document.getElementById(`${type}-current-page`);
-            const totalPagesSpan = document.getElementById(`${type}-total-pages`);
-            const firstBtn = pagination.querySelector('.first-btn');
-            const prevBtn = pagination.querySelector('.prev-btn');
-            const nextBtn = pagination.querySelector('.next-btn');
-            const lastBtn = pagination.querySelector('.last-btn');
-            
-            currentPageSpan.textContent = currentPage;
-            totalPagesSpan.textContent = totalPages;
-            
-            // Обновляем состояние кнопок
-            firstBtn.disabled = currentPage === 1;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-            lastBtn.disabled = currentPage === totalPages;
-            
-            // Обновляем обработчики для кнопки "Последняя"
-            lastBtn.onclick = function() {
-                goToPage(type, totalPages);
-            };
-            
-            pagination.style.display = totalPages > 1 ? 'flex' : 'none';
-        }
+  // Инициализация календаря
+  const dateInput = document.getElementById('dateInput');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.min = today;
+  dateInput.value = today;
 
-        function changePage(type, direction) {
-            if (type === 'journal') {
-                const newPage = currentJournalPage + direction;
-                goToPage('journal', newPage);
-            } else if (type === 'tasks') {
-                const newPage = currentTasksPage + direction;
-                goToPage('tasks', newPage);
-            }
-        }
+  // Изменяем время работы до 22:00 включительно
+  const startHour = 11, endHour = 22, lanes = 12;
+  const tableBody = document.getElementById("tableBody"),
+        cardsContainer = document.getElementById("cardsContainer"),
+        slidersContainer = document.getElementById("slidersContainer"),
+        bookingTable = document.getElementById("bookingTable"),
+        tableContainer = document.querySelector(".table-container"),
+        loadingOverlay = document.getElementById("loadingOverlay");
 
-        function getCurrentPageData(data, currentPage) {
-            const startIndex = (currentPage - 1) * CARDS_PER_PAGE;
-            const endIndex = startIndex + CARDS_PER_PAGE;
-            return data.slice(startIndex, endIndex);
-        }
+  // Создаем временные слоты с 11:00 до 22:00 включительно
+  const timeSlots = [];
+  for (let h = startHour; h <= endHour; h++) {
+    // Добавляем только 00 для последнего часа (22:00)
+    if (h < endHour) {
+      timeSlots.push({ display: `${h}:00`, key: h });
+      timeSlots.push({ display: `${h}:30`, key: h + 0.5 });
+    } else {
+      timeSlots.push({ display: `${h}:00`, key: h });
+    }
+  }
 
-        async function loadTasks() {
-            try {
-                if (tasksData && !isInitialLoad) {
-                    renderTasksCards(tasksData);
-                    return;
-                }
-                
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loader"></div>
-                            <div class="loading-card-text"></div>
-                        </div>
-                    </div>
-                `;
-                
-                const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
-                tasksData = tasks;
-                renderTasksCards(tasks);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки задач:', error);
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
-                showNotification('Ошибка загрузки задач', 'error');
-            }
-        }
+  // Заполняем таблицу
+  timeSlots.forEach(slot => {
+    const row = document.createElement("tr");
+    for (let lane = 0; lane < lanes; lane++) {
+      const cell = document.createElement("td");
+      cell.className = "slot";
+      cell.dataset.lane = lane;
+      cell.dataset.time = slot.key;
+      cell.dataset.display = slot.display;
+      row.appendChild(cell);
+    }
+    const timeCell = document.createElement("th");
+    timeCell.className = "time-right";
+    timeCell.textContent = slot.display;
+    row.appendChild(timeCell);
+    tableBody.appendChild(row);
+  });
 
-        async function loadJournal() {
-            try {
-                if (journalData && !isInitialLoad) {
-                    applyFilterToJournal();
-                    return;
-                }
-                
-                const journalCards = document.getElementById('journal-cards');
-                journalCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loader"></div>
-                            <div class="loading-card-text"></div>
-                        </div>
-                    </div>
-                `;
-                
-                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
-                
-                // Сохраняем все данные
-                allJournalData = journal;
-                journalData = journal;
-                
-                // Обновляем счетчик
-                updateOpenTasksCounter();
-                
-                // Применяем текущий фильтр
-                applyFilterToJournal();
-                
-            } catch (error) {
-                console.error('Ошибка загрузки журнала:', error);
-                const journalCards = document.getElementById('journal-cards');
-                journalCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
-                showNotification('Ошибка загрузки журнала', 'error');
-            }
-        }
+  const intervalsByLane = {};
+  let currentLane = null, currentStart = null;
+  let currentBookingId = null; // Для хранения ID текущей брони
 
-        async function completeTask(taskId, executor, rowIndex) {
-            showOperationLoading('');
-            
-            try {
-                const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
-                const result = await makeRequest(updateUrl);
-                
-                if (result.success) {
-                    const immediateUpdateResult = await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
-                    
-                    if (immediateUpdateResult === 'SUCCESS') {
-                        showNotification('Задача выполнена! Данные обновлены мгновенно.', 'success');
-                        
-                        const card = document.querySelector(`[data-task-id="${taskId}"]`);
-                        if (card) {
-                            const submitBtn = card.querySelector('.submit-btn');
-                            if (submitBtn) {
-                                const submittedText = document.createElement('div');
-                                submittedText.className = 'submitted-text';
-                                submittedText.innerHTML = '<i class="fas fa-check-circle"></i>ОТПРАВЛЕНО';
-                                submitBtn.parentNode.replaceChild(submittedText, submitBtn);
-                            }
-                            
-                            const select = card.querySelector('.executor-select');
-                            if (select) {
-                                const executorName = document.createElement('span');
-                                executorName.className = 'row-value';
-                                executorName.textContent = executor;
-                                select.parentNode.replaceChild(executorName, select);
-                            }
-                        }
-                        
-                        journalData = null;
-                        tasksData = null;
-                        allJournalData = [];
-                        
-                        setTimeout(() => {
-                            loadJournal();
-                            loadTasks();
-                            hideLoader();
-                        }, 1000);
-                    } else {
-                        showNotification('Задача выполнена, но обновление даты займет до 1 минуты', 'warning');
-                        setTimeout(() => {
-                            loadJournal();
-                            loadTasks();
-                            hideLoader();
-                        }, 1000);
-                    }
-                } else {
-                    hideLoader();
-                    showNotification('Ошибка: ' + result.error, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка выполнения задачи:', error);
-                hideLoader();
-                showNotification('Ошибка выполнения задачи: ' + error.message, 'error');
-            }
-        }
+  // --- Работа с визуалом выбора интервалов ---
+  function clearStartTimeHighlight() {
+    document.querySelectorAll('td.start-time-chosen').forEach(c => c.classList.remove('start-time-chosen'));
+  }
+  function clearHeaderHighlight() {
+    document.querySelectorAll('thead th.highlight-header').forEach(th => th.classList.remove('highlight-header'));
+  }
+  function clearVerticalLines() {
+    document.querySelectorAll('td.vertical-line').forEach(td => td.classList.remove('vertical-line'));
+  }
+  function highlightHeader(lane) {
+    clearHeaderHighlight();
+    const headerCells = document.querySelectorAll('thead th');
+    if (lane >= 0 && lane < lanes) headerCells[lane].classList.add('highlight-header');
+  }
+  function highlightColumn(lane) {
+    clearVerticalLines();
+    document.querySelectorAll(`td.slot[data-lane="${lane}"]`).forEach(td => td.classList.add('vertical-line'));
+  }
+  function updateTableSelection() {
+    // Сброс выделений
+    document.querySelectorAll("td.selected").forEach(c => c.classList.remove("selected","rounded-top","rounded-bottom"));
 
-        function renderTasksCards(tasks) {
-            const tasksCards = document.getElementById('tasks-cards');
-            
-            if (!tasks || tasks.length === 0) {
-                tasksCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loader"></div>
-                            <div class="loading-card-text">Нет задач</div>
-                        </div>
-                    </div>
-                `;
-                updatePagination('tasks', 1, 1);
-                return;
-            }
-            
-            totalTasksPages = Math.ceil(tasks.length / CARDS_PER_PAGE);
-            if (currentTasksPage > totalTasksPages) {
-                currentTasksPage = 1;
-            }
-            
-            const currentTasks = getCurrentPageData(tasks, currentTasksPage);
-            
-            tasksCards.innerHTML = currentTasks.map(task => {
-                let statusClass = 'success';
-                if (task.daysLeft <= 0) {
-                    statusClass = 'danger';
-                } else if (task.daysLeft <= 2) {
-                    statusClass = 'warning';
-                }
-                
-                const hasLink = task.driveLink && task.driveLink.trim() !== '';
-                
-                return `
-                    <div class="task-card catalog-task">
-                        <div class="task-header">
-                            <div class="task-title">${task.task}</div>
-                        </div>
-                        
-                        <div class="card-content">
-                            <div class="content-row">
-                                <span class="row-label">Последнее выполнение:</span>
-                                <span class="row-value">${task.lastDate || '-'}</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Прошло дней:</span>
-                                <span class="row-value">${task.daysPassed}</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Интервал:</span>
-                                <span class="row-value">${task.frequency} дн.</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Остаток дней:</span>
-                                <span class="row-value">
-                                    <span class="status-badge ${statusClass}">${task.daysLeft}</span>
-                                </span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Следующее выполнение:</span>
-                                <span class="row-value">${task.nextDate || '-'}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="catalog-buttons-container">
-                            <div class="catalog-button-wrapper">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="open-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            updatePagination('tasks', currentTasksPage, totalTasksPages);
-        }
-
-        function renderJournalCards(journal) {
-            const journalCards = document.getElementById('journal-cards');
-            
-            if (!journal || journal.length === 0) {
-                journalCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loader"></div>
-                            <div class="loading-card-text">Нет данных</div>
-                        </div>
-                    </div>
-                `;
-                
-                updatePagination('journal', 1, 1);
-                return;
-            }
-            
-            totalJournalPages = Math.ceil(journal.length / CARDS_PER_PAGE);
-            if (currentJournalPage > totalJournalPages) {
-                currentJournalPage = 1;
-            }
-            
-            const currentJournal = getCurrentPageData(journal, currentJournalPage);
-            
-            let html = '';
-            
-            currentJournal.forEach((task, index) => {
-                const rowIndex = task.rowIndex || (index + 2);
-                const hasLink = task.driveLink && task.driveLink.trim() !== '';
-                const taskId = task.id || task.driveLink || '';
-                
-                if (!task.isCompleted) {
-                    // ДЛЯ СТАРЫХ ЗАДАЧ НЕ ПОКАЗЫВАЕМ КНОПКУ ВЫПОЛНЕНИЯ
-                    if (currentFilter === 'old') {
-                        html += `
-                            <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                                <div class="task-header">
-                                    <div class="task-title">${task.task}</div>
-                                </div>
-                                
-                                <div class="card-content">
-                                    <div class="content-row">
-                                        <span class="row-label">Дата появления:</span>
-                                        <span class="row-value">${task.createdDate}</span>
-                                    </div>
-                                    <div class="content-row">
-                                        <span class="row-label">Статус:</span>
-                                        <span class="row-value">
-                                            <span class="status-badge warning">ОТКРЫТА</span>
-                                        </span>
-                                    </div>
-                                    <div class="content-row">
-                                        <span class="row-label">Дней открыто:</span>
-                                        <span class="row-value">
-                                            ${calculateDaysOpen(task.createdDate)}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="buttons-container">
-                                    ${hasLink 
-                                        ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                            <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                          </a>`
-                                        : '<div class="no-open">Недоступно</div>'
-                                    }
-                                    <div class="no-open">Не требует выполнения</div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        // ОБЫЧНАЯ ОТКРЫТАЯ ЗАДАЧА (для режима "Все задачи")
-                        html += `
-                            <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                                <div class="task-header">
-                                    <div class="task-title">${task.task}</div>
-                                </div>
-                                
-                                <div class="card-content">
-                                    <div class="content-row">
-                                        <span class="row-label">Дата появления:</span>
-                                        <span class="row-value">${task.createdDate}</span>
-                                    </div>
-                                    <div class="content-row">
-                                        <span class="row-label">Дата выполнения:</span>
-                                        <span class="row-value">${task.completedDate || '-'}</span>
-                                    </div>
-                                    <div class="content-row">
-                                        <span class="row-label">Выполнил:</span>
-                                        <span class="row-value">
-                                            <select class="executor-select" id="executor-${taskId}">
-                                                <option value="" selected disabled>Кто выполнил?</option>
-                                                <option value="Вадим">Вадим</option>
-                                                <option value="Гена">Гена</option>
-                                                <option value="Саша">Саша</option>
-                                                <option value="Данил">Данил</option>
-                                            </select>
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="buttons-container">
-                                    ${hasLink 
-                                        ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                            <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                          </a>`
-                                        : '<div class="no-open">Недоступно</div>'
-                                    }
-                                    <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
-                                        <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }
-                } else {
-                    // ВЫПОЛНЕННАЯ ЗАДАЧА
-                    html += `
-                        <div class="task-card completed">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
-                            <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">${task.executor}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <div class="submitted-text">
-                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            
-            journalCards.innerHTML = html;
-            
-            // Добавляем обработчики для селектов исполнителей только для обычных открытых задач
-            if (currentFilter !== 'old') {
-                document.querySelectorAll('.executor-select').forEach(select => {
-                    select.addEventListener('change', function() {
-                        const card = this.closest('.task-card');
-                        const submitBtn = card.querySelector('.submit-btn');
-                        if (submitBtn) {
-                            submitBtn.disabled = !this.value || this.value === '';
-                        }
-                        event.stopPropagation();
-                    });
-                    
-                    select.addEventListener('click', function(event) {
-                        event.stopPropagation();
-                    });
-                });
-            }
-            
-            updatePagination('journal', currentJournalPage, totalJournalPages);
-        }
-
-        // Функция для расчета количества дней, сколько задача открыта
-        function calculateDaysOpen(createdDate) {
-            if (!createdDate) return '?';
-            
-            try {
-                const created = new Date(createdDate);
-                const now = new Date();
-                const diffTime = Math.abs(now - created);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                return diffDays + ' дн.';
-            } catch (e) {
-                return '?';
-            }
-        }
-
-        function submitTask(event, taskId, rowIndex) {
-            const button = event.currentTarget;
-            const card = button.closest('.task-card');
-            
-            if (!card) {
-                showNotification('Ошибка: карточка задачи не найдена', 'error');
-                return;
-            }
-            
-            const select = card.querySelector('.executor-select');
-            
-            if (!select) {
-                showNotification('Ошибка: поле выбора исполнителя не найдена', 'error');
-                return;
-            }
-            
-            if (!select.value || select.value === '' || select.value === 'Кто выполнил?') {
-                showNotification('Выберите исполнителя перед отправкой', 'error');
-                return;
-            }
-            
-            completeTask(taskId, select.value, rowIndex);
-            event.stopPropagation();
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // ПРЕДОТВРАЩЕНИЕ ДВОЙНОГО ТАПА ДЛЯ МАСШТАБИРОВАНИЯ
-            let lastTouchEnd = 0;
-            
-            document.addEventListener('touchend', function(event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-            
-            // ОБРАБОТЧИКИ ДЛЯ ЗАКРЫТИЯ МЕНЮ ПРИ КЛИКЕ ВНЕ
-            document.addEventListener('click', function(e) {
-                const siteNameDropdown = document.getElementById('siteNameDropdown');
-                const dropdownMenu = document.getElementById('dropdownMenu');
-                const tasksFilterDropdown = document.getElementById('tasksFilterDropdown');
-                
-                if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
-                    siteNameDropdown.style.display = 'none';
-                }
-                
-                if (!e.target.closest('.menu-button') && dropdownMenu.style.display === 'flex') {
-                    dropdownMenu.style.display = 'none';
-                }
-                
-                if (!e.target.closest('.open-tasks-counter') && tasksFilterDropdown.style.display === 'block') {
-                    tasksFilterDropdown.style.display = 'none';
-                }
-            });
-            
-            // Показываем загрузку при старте
-            showLoader('');
-            
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            // Загружаем данные и скрываем загрузку когда все готово
-            Promise.all([
-                loadJournal(),
-                loadTasks()
-            ]).then(() => {
-                setTimeout(() => {
-                    hideLoader();
-                }, 500);
-            }).catch(error => {
-                console.error('Ошибка загрузки:', error);
-                hideLoader();
-            });
-            
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    button.classList.add('active');
-                    
-                    const tabId = button.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    if (tabId === 'tab2') {
-                        currentTasksPage = 1;
-                        loadTasks();
-                    } else if (tabId === 'tab1') {
-                        currentJournalPage = 1;
-                        currentFilter = 'all';
-                        updateOpenTasksCounter();
-                        applyFilterToJournal();
-                    }
-                });
-            });
-
-            setInterval(() => {
-                const activeTab = document.querySelector('.tab-content.active');
-                if (activeTab.id === 'tab2') {
-                    loadTasks();
-                } else if (activeTab.id === 'tab1') {
-                    loadJournal();
-                }
-            }, 30000);
-
-            setTimeout(() => {
-                isInitialLoad = false;
-            }, 1000);
-
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.task-card')) {
-                    const card = e.target.closest('.task-card');
-                    
-                    if (e.target.tagName === 'BUTTON' || 
-                        e.target.tagName === 'SELECT' || 
-                        e.target.tagName === 'OPTION' ||
-                        e.target.tagName === 'A' ||
-                        e.target.tagName === 'I') {
-                        return;
-                    }
-                    
-                    document.querySelectorAll('.task-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    
-                    card.classList.add('selected');
-                }
-            });
-            
-            document.addEventListener('change', function(e) {
-                if (e.target && e.target.classList.contains('executor-select')) {
-                    const card = e.target.closest('.task-card');
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !e.target.value || e.target.value === '';
-                    }
-                }
-            });
+    for (let laneStr in intervalsByLane) {
+      const lane = +laneStr;
+      intervalsByLane[lane].forEach(interval => {
+        const start = Math.min(interval.start, interval.end),
+              end = Math.max(interval.start, interval.end);
+        document.querySelectorAll(`td.slot[data-lane="${lane}"]`).forEach(cell => {
+          const t = parseFloat(cell.dataset.time);
+          if (t >= start && t <= end) cell.classList.add("selected");
         });
-    </script>
+        const sc = document.querySelector(`td.slot[data-lane="${lane}"][data-time="${start}"]`);
+        const ec = document.querySelector(`td.slot[data-lane="${lane}"][data-time="${end}"]`);
+        if (sc) sc.classList.add("rounded-top");
+        if (ec && end !== start) ec.classList.add("rounded-bottom");
+      });
+    }
+
+    // Рендер карточек выбранных интервалов
+    cardsContainer.innerHTML = "";
+    function fmt(v) {
+      const h = Math.floor(v), m = v % 1 === 0.5 ? "30" : "00";
+      return `${h}:${m}`;
+    }
+    const selDate = dateInput.value.split("-").reverse().join(".");
+    for (let laneStr in intervalsByLane) {
+      const lane = +laneStr;
+      intervalsByLane[lane].forEach((interval, idx) => {
+        const s = Math.min(interval.start, interval.end),
+              e = Math.max(interval.start, interval.end);
+        const card = document.createElement("div");
+        card.className = "booking-card";
+        card.textContent = `Стол № ${lane+1} | ${selDate} | с ${fmt(s)} по ${fmt(e)}`;
+        const btn = document.createElement("button");
+        btn.className = "close-btn";
+        btn.innerHTML = "&times;";
+        btn.onclick = ev => {
+          ev.stopPropagation();
+          intervalsByLane[lane].splice(idx,1);
+          updateTableSelection();
+        };
+        card.appendChild(btn);
+        cardsContainer.appendChild(card);
+      });
+    }
+  }
+
+  // Обработка клика по ячейкам таблицы
+  tableBody.addEventListener("click", e => {
+    if (e.target.classList.contains("slot")) {
+      const lane = +e.target.dataset.lane;
+      if (currentStart === null) {
+        currentLane = lane;
+        clearStartTimeHighlight();
+        highlightHeader(lane);
+        highlightColumn(lane);
+      }
+    }
+    if (e.target.classList.contains("time-right")) {
+      if (currentLane === null) return alert("Сначала выберите столбец.");
+      const txt = e.target.textContent;
+      const time = parseFloat(txt.includes(":30") ? txt.replace(":30",".5") : txt.replace(":00",".0"));
+      if (currentStart === null) {
+        currentStart = time;
+        clearStartTimeHighlight();
+        const sc = document.querySelector(`td.slot[data-lane="${currentLane}"][data-time="${currentStart}"]`);
+        if (sc) sc.classList.add("start-time-chosen");
+      } else {
+        if (time <= currentStart) return alert("Время конца должно быть больше времени начала.");
+        if (!intervalsByLane[currentLane]) intervalsByLane[currentLane] = [];
+        intervalsByLane[currentLane].push({ start: currentStart, end: time });
+        currentLane = null;
+        currentStart = null;
+        clearStartTimeHighlight();
+        clearHeaderHighlight();
+        clearVerticalLines();
+        updateTableSelection();
+      }
+    }
+  });
+
+  // Удаление интервала по двойному клику
+  tableBody.addEventListener("dblclick", e => {
+    if (!e.target.classList.contains("slot")) return;
+    const lane = +e.target.dataset.lane;
+    const time = parseFloat(e.target.dataset.time);
+    if (!intervalsByLane[lane]) return;
+    const idx = intervalsByLane[lane].findIndex(iv => {
+      const s = Math.min(iv.start, iv.end), t = Math.max(iv.start, iv.end);
+      return time >= s && time <= t;
+    });
+    if (idx !== -1) {
+      intervalsByLane[lane].splice(idx, 1);
+      updateTableSelection();
+    }
+  });
+
+  // Модалка брони
+  function openModal() {
+    if (!Object.values(intervalsByLane).some(a => a.length)) {
+      return alert("Сначала выберите время.");
+    }
+    document.getElementById("modal").style.display = "flex";
+    
+    // Добавляем эффект нажатия на кнопку
+    const btn = document.querySelector('.booking-button');
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 200);
+  }
+  function closeModal() {
+    document.getElementById("modal").style.display = "none";
+  }
+
+  // Отправка брони на сервер
+  async function submitForm() {
+    const name = document.getElementById("nameInput").value.trim();
+    const phone = document.getElementById("phoneInput").value.trim();
+    const comment = document.getElementById("commentInput").value.trim();
+    const date = dateInput.value;
+    if (!name || !phone) return alert("Введите имя и телефон.");
+    if (!date) return alert("Выберите дату.");
+
+    const bookings = [];
+    for (let lane in intervalsByLane) {
+      intervalsByLane[lane].forEach(iv => {
+        bookings.push({
+          date,
+          tableNumber: +lane + 1,
+          start: iv.start,
+          end: iv.end,
+          name, phone, comment
+        });
+      });
+    }
+    if (!bookings.length) return alert("Нет выбранных интервалов.");
+
+    try {
+      // Показываем анимацию загрузки
+      loadingOverlay.style.display = 'flex';
+      
+      // Отправляем все бронирования
+      await Promise.all(bookings.map(b => {
+        return fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({ bookings: [b] })
+        });
+      }));
+      
+      // Скрываем анимацию загрузки
+      loadingOverlay.style.display = 'none';
+      
+      // Очищаем форму
+      closeModal();
+      for (let l in intervalsByLane) intervalsByLane[l] = [];
+      currentLane = currentStart = null;
+      clearStartTimeHighlight();
+      clearHeaderHighlight();
+      clearVerticalLines();
+      updateTableSelection();
+      document.getElementById("nameInput").value = "";
+      document.getElementById("phoneInput").value = "";
+      document.getElementById("commentInput").value = "";
+      
+      // Обновляем существующие брони
+      await loadExisting();
+    } catch (error) {
+      loadingOverlay.style.display = 'none';
+      console.error("Ошибка при отправке бронирования:", error);
+      alert("Произошла ошибка при отправке бронирования");
+    }
+  }
+
+  // Функция для отображения информации о брони
+  function showBookingInfo(booking) {
+    document.getElementById('info-table').textContent = `№${booking.table}`;
+    document.getElementById('info-date').textContent = booking.date.split('-').reverse().join('.');
+    document.getElementById('info-time').textContent = `${formatTime(booking.start)} - ${formatTime(booking.end)}`;
+    document.getElementById('info-name').textContent = booking.name;
+    document.getElementById('info-phone').textContent = booking.phone;
+    document.getElementById('info-comment').textContent = booking.comment || 'нет комментария';
+    document.getElementById('info-confirmed').textContent = booking.confirmed || '';
+    document.getElementById('bookingInfoPopup').style.display = 'flex';
+    currentBookingId = booking.id; // Сохраняем ID брони для подтверждения
+  }
+
+  // Функция для закрытия окна информации
+  function closeBookingInfoPopup() {
+    document.getElementById('bookingInfoPopup').style.display = 'none';
+    currentBookingId = null;
+  }
+
+  // Функция подтверждения брони (да/нет)
+  async function confirmBooking(confirmed) {
+    if (!currentBookingId) return;
+    
+    try {
+      // Показываем анимацию загрузки
+      loadingOverlay.style.display = 'flex';
+      
+      // Отправляем данные на сервер
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ 
+          action: "confirm",
+          id: currentBookingId,
+          confirmed: confirmed
+        })
+      });
+      
+      // Скрываем анимацию загрузки
+      loadingOverlay.style.display = 'none';
+      
+      closeBookingInfoPopup();
+      await loadExisting(); // Обновляем список броней
+    } catch(error) {
+      loadingOverlay.style.display = 'none';
+      console.error("Ошибка при обновлении статуса брони:", error);
+      alert("Произошла ошибка при обновлении статуса брони");
+    }
+  }
+  
+  // Функция удаления брони
+  async function deleteBooking() {
+    if (!currentBookingId) return;
+    
+    if (!confirm("Вы уверены, что хотите удалить эту бронь?")) return;
+    
+    try {
+      // Показываем анимацию загрузки
+      loadingOverlay.style.display = 'flex';
+      
+      // Отправляем запрос на удаление
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({ 
+          action: "delete",
+          id: currentBookingId
+        })
+      });
+      
+      // Скрываем анимацию загрузки
+      loadingOverlay.style.display = 'none';
+      
+      closeBookingInfoPopup();
+      await loadExisting(); // Обновляем список броней
+    } catch(error) {
+      loadingOverlay.style.display = 'none';
+      console.error("Ошибка при удалении брони:", error);
+      alert("Произошла ошибка при удалении брони");
+    }
+  }
+
+  // Загрузка существующих броней с сервера
+  async function loadExisting() {
+    try {
+      // Показываем анимацию загрузки
+      loadingOverlay.style.display = 'flex';
+      
+      slidersContainer.innerHTML = "";
+      const res = await fetch(GAS_URL + "?action=get&date=" + dateInput.value);
+      const data = await res.json();
+      
+      // Скрываем анимацию загрузки
+      loadingOverlay.style.display = 'none';
+      
+      if (!data.bookings || !data.bookings.length) return;
+
+      // Получаем все ячейки времени (правый столбец)
+      const timeCells = Array.from(document.querySelectorAll('th.time-right'));
+      
+      // Получаем все ячейки таблицы
+      const tableCells = Array.from(document.querySelectorAll('td.slot'));
+      
+      // Получаем позицию контейнера таблиции
+      const containerRect = tableContainer.getBoundingClientRect();
+      const tableRect = bookingTable.getBoundingClientRect();
+      
+      data.bookings.forEach(b => {
+        if (b.date === dateInput.value) {
+          const laneIndex = b.table - 1;
+          const start = parseFloat(b.start);
+          const end = parseFloat(b.end);
+          
+          // Находим индексы временных слотов
+          const startIndex = timeSlots.findIndex(ts => ts.key === start);
+          const endIndex = timeSlots.findIndex(ts => ts.key === end);
+          
+          if (startIndex === -1 || endIndex === -1) return;
+          
+          // Находим ячейку начала брони
+          const startCell = tableCells.find(cell => 
+            parseInt(cell.dataset.lane) === laneIndex && 
+            parseFloat(cell.dataset.time) === start
+          );
+          
+          if (!startCell) return;
+          
+          // Получаем позицию ячейки начала относительно контейнера
+          const startCellRect = startCell.getBoundingClientRect();
+          
+          // Рассчитываем высоту блока брони
+          const startTimeCell = timeCells[startIndex];
+          const endTimeCell = timeCells[endIndex];
+          const height = endTimeCell.offsetTop + endTimeCell.offsetHeight - startTimeCell.offsetTop;
+          
+          // Рассчитываем позицию ползунка относительно контейнера
+          const left = startCellRect.left - containerRect.left;
+          const top = startTimeCell.offsetTop;
+          
+          // Создаем ползунок
+          const slider = document.createElement("div");
+          slider.className = "existing-slider";
+          
+          // Добавляем класс в зависимости от статуса брони
+          if (b.confirmed === "Да") {
+            slider.classList.add("confirmed");
+          } else if (b.confirmed === "Нет") {
+            slider.classList.add("rejected");
+          }
+          
+          slider.style.top = `${top}px`;
+          slider.style.left = `${left}px`;
+          slider.style.width = `${startCellRect.width}px`;
+          slider.style.height = `${height}px`;
+          
+          // Добавляем обработчик клика
+          slider.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showBookingInfo(b);
+          });
+          
+          slidersContainer.appendChild(slider);
+        }
+      });
+    } catch(e) {
+      // Скрываем анимацию загрузки в случае ошибки
+      loadingOverlay.style.display = 'none';
+      console.error("Ошибка загрузки бронирований:", e);
+    }
+  }
+
+  function formatTime(v) {
+    const h = Math.floor(v);
+    const m = v % 1 === 0.5 ? "30" : "00";
+    return `${h}:${m}`;
+  }
+
+  // При изменении даты обновляем брони
+  dateInput.addEventListener('change', async () => {
+    await loadExisting();
+    // Сброс выборов
+    currentLane = currentStart = null;
+    for (let k in intervalsByLane) intervalsByLane[k] = [];
+    clearStartTimeHighlight();
+    clearHeaderHighlight();
+    clearVerticalLines();
+    updateTableSelection();
+  });
+
+  // Инициализация
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadExisting();
+    updateTableSelection();
+  });
+
+  document.getElementById("openImage").onclick = () => {
+    document.getElementById("imagePopup").style.display = "flex";
+  };
+  function closeImagePopup() {
+    document.getElementById("imagePopup").style.display = "none";
+  }
+</script>
+
 </body>
 </html>
