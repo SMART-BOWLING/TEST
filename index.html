@@ -136,6 +136,39 @@
       font-size: 24px;
     }
 
+    /* Стили для кнопки предзагрузки */
+    .preload-images-btn {
+      background: linear-gradient(to bottom, #4CAF50, #45a049);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      margin-left: 15px;
+      height: 36px;
+      white-space: nowrap;
+    }
+
+    .preload-images-btn:hover {
+      background: linear-gradient(to bottom, #5dbf61, #4CAF50);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .preload-images-btn:active {
+      transform: translateY(0);
+    }
+
+    .preload-images-btn i {
+      font-size: 16px;
+    }
+
     /* Стили для авторизации */
     #login {
       position: fixed;
@@ -790,50 +823,6 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
-    /* Стили для прогресс-бара загрузки */
-    .preload-progress {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      z-index: 10010;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      min-width: 300px;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      background: #f0f0f0;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 15px 0;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(to right, #4CAF50, #8BC34A);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    .progress-text {
-      font-size: 16px;
-      font-weight: bold;
-      color: #333;
-      margin-top: 10px;
-    }
-
-    .btn-top i {
-      margin-right: 8px;
-    }
   </style>
 </head>
 <body>
@@ -854,6 +843,12 @@
       </div>
     </div>
   </div>
+  
+  <!-- Кнопка предзагрузки изображений -->
+  <button id="preloadImagesBtn" class="preload-images-btn" title="Загрузить все изображения заранее">
+    <i class="fas fa-bolt"></i> Быстрая загрузка
+  </button>
+  
   <div class="menu-button" onclick="toggleDropdown()">
     <div></div><div></div><div></div>
   </div>
@@ -892,27 +887,23 @@
       </select>
     </div>
     
-    <button id="btnSearch" class="btn-top">
-      <i class="fas fa-search"></i> Поиск
-    </button>
+  <button id="btnSearch" class="btn-top">
+    <i class="fas fa-search"></i> Поиск
+  </button>
 
-    <button id="btnReset" class="btn-top">
-      <i class="fas fa-sync-alt"></i> Сбросить
-    </button>
+  <button id="btnReset" class="btn-top">
+    <i class="fas fa-sync-alt"></i> Сбросить
+  </button>
 
-    <!-- НОВАЯ КНОПКА ДЛЯ ЗАГРУЗКИ ВСЕХ ИЗОБРАЖЕНИЙ -->
-    <button id="btnPreload" class="btn-top">
-      <i class="fas fa-images"></i> Загрузить картинки
-    </button>
-
-    <button onclick="window.location.href='https://smart-bowling.github.io/PARTS-STORE/'" class="btn-top">
-      <i class="fas fa-store"></i> Магазин
-    </button>
+<button onclick="window.location.href='https://smart-bowling.github.io/PARTS-STORE/'" class="btn-top">
+  <i class="fas fa-store"></i> Магазин
+</button>
     
-    <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-BB/', '_blank')" class="btn-top">
-      <i class="fas fa-plus-circle"></i> Добавить деталь
-    </button>
-  </div>
+  <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-BB/', '_blank')" class="btn-top">
+    <i class="fas fa-plus-circle"></i> Добавить деталь
+  </button>
+</div>
+
 
   <div class="cards" id="cardsContainer"></div>
 
@@ -1008,133 +999,56 @@
     nextPage: function() {}
   };
 
-  // Глобальные переменные для предзагрузки
-  let preloadController = null;
-  let isPreloading = false;
+  // Глобальная переменная для хранения всех записей
+  let allEntriesGlobal = [];
 
-  // Функция для отображения прогресса
-  function showProgress(percent, loaded, total) {
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-    const progressContainer = document.getElementById('preloadProgress');
-    
-    if (progressFill) progressFill.style.width = percent + '%';
-    if (progressText) progressText.textContent = `${Math.round(percent)}% (${loaded}/${total})`;
-    if (progressContainer) progressContainer.style.display = 'flex';
-  }
-
-  // Функция для скрытия прогресса
-  function hideProgress() {
-    const progressContainer = document.getElementById('preloadProgress');
-    if (progressContainer) progressContainer.style.display = 'none';
-  }
-
-  // Функция отмены загрузки
-  function cancelPreload() {
-    if (preloadController) {
-      preloadController.abort();
-      preloadController = null;
-    }
-    isPreloading = false;
-    hideProgress();
-  }
-
-  // Основная функция предварительной загрузки
-  async function preloadAllImages(allEntries) {
-    if (!allEntries || allEntries.length === 0) {
-      alert('Нет данных для загрузки изображений');
-      return;
-    }
-    
-    if (isPreloading) {
-      alert('Загрузка уже выполняется!');
-      return;
-    }
-    
-    // Собираем все URL изображений
-    const imageUrls = [];
-    
-    // Собираем URL из всех записей
-    allEntries.forEach(entry => {
-      if (entry.fileUrl && !entry.fileUrl.includes('/preview')) {
-        // Добавляем параметр для предотвращения кэширования
-        const url = entry.fileUrl + (entry.fileUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
-        imageUrls.push(url);
-      }
-    });
-    
-    if (imageUrls.length === 0) {
-      alert('Нет картинок для загрузки');
-      return;
-    }
-    
-    isPreloading = true;
-    preloadController = new AbortController();
-    
-    let loaded = 0;
-    const total = imageUrls.length;
-    
-    showProgress(0, 0, total);
-    
+  // Функция предзагрузки изображений
+  async function preloadAllImages() {
+    showLoader(true);
     try {
-      // Загружаем изображения последовательно для избежания блокировки
-      for (let i = 0; i < imageUrls.length; i++) {
-        if (preloadController.signal.aborted) {
-          break;
-        }
-        
-        const url = imageUrls[i];
-        
-        try {
-          // Создаем скрытое изображение для предзагрузки
-          const img = new Image();
-          
-          // Обработчики для отслеживания загрузки
-          img.onload = () => {
-            loaded++;
-            const percent = (loaded / total) * 100;
-            showProgress(percent, loaded, total);
-            
-            // Обновляем кэш браузера
-            if ('caches' in window) {
-              caches.open('images-cache').then(cache => {
-                cache.add(url).catch(() => {});
-              });
-            }
-          };
-          
-          img.onerror = () => {
-            loaded++;
-            const percent = (loaded / total) * 100;
-            showProgress(percent, loaded, total);
-          };
-          
-          img.src = url;
-          
-          // Небольшая задержка между загрузками
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-        } catch (error) {
-          console.error('Ошибка загрузки:', url, error);
-          loaded++;
-          const percent = (loaded / total) * 100;
-          showProgress(percent, loaded, total);
-        }
-      }
+      // Собираем все уникальные URL изображений
+      const imageUrls = new Set();
       
-      if (!preloadController.signal.aborted) {
-        alert(`Загрузка завершена! Загружено: ${loaded}/${total} изображений`);
+      allEntriesGlobal.forEach(entry => {
+        if (entry.fileUrl && !entry.fileUrl.includes('/preview')) {
+          imageUrls.add(entry.fileUrl);
+        }
+      });
+
+      const totalImages = imageUrls.size;
+      let loadedImages = 0;
+      
+      if (totalImages === 0) {
+        alert('Нет изображений для загрузки');
+        return;
       }
+
+      // Создаем элементы Image для предзагрузки
+      const promises = Array.from(imageUrls).map(url => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            loadedImages++;
+            resolve();
+          };
+          img.onerror = () => {
+            loadedImages++;
+            resolve(); // Все равно разрешаем промис при ошибке
+          };
+          img.src = url;
+        });
+      });
+
+      // Ждем загрузки всех изображений
+      await Promise.all(promises);
+      
+      alert(`Загружено ${loadedImages} из ${totalImages} изображений\nТеперь все изображения кэшированы в браузере.`);
       
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Ошибка при загрузке изображений:', error);
-        alert('Произошла ошибка при загрузке изображений');
-      }
+      console.error('Ошибка при предзагрузке изображений:', error);
+      alert('Произошла ошибка при загрузке изображений');
     } finally {
-      isPreloading = false;
-      preloadController = null;
-      hideProgress();
+      showLoader(false);
     }
   }
 
@@ -1147,22 +1061,6 @@
     let currentPage = 1;
     let totalPages = 1;
     const cardsPerPage = 5;
-
-    // Добавляем HTML для прогресс-бара
-    const progressHTML = `
-      <div class="preload-progress" id="preloadProgress">
-        <h3>Загрузка картинок</h3>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-text" id="progressText">0% (0/0)</div>
-        <button class="btn" onclick="cancelPreload()" style="margin-top: 15px;">
-          <i class="fas fa-times"></i> Отмена
-        </button>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', progressHTML);
 
     // Основные функции приложения
     async function getEntries() {
@@ -1202,7 +1100,7 @@
         return await res.text();
       } finally {
         showLoader(false);
-      }
+    }
     }
 
     async function getPopularEntries() {
@@ -1394,6 +1292,7 @@
         if (confirm('Удалить эту запись?')) {
           await deleteEntry(entry.rowIndex);
           allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          allEntriesGlobal = allEntriesGlobal.filter(e => e.rowIndex !== entry.rowIndex);
           currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
           updateTotalPages();
           if (currentPage > totalPages) currentPage = totalPages;
@@ -1409,6 +1308,11 @@
           if (res.status === 'success') {
             qtyInput.value = res.quantity;
             entry.quantity = res.quantity;
+            // Обновляем глобальную копию
+            const globalEntry = allEntriesGlobal.find(e => e.partNumber === entry.partNumber);
+            if (globalEntry) {
+              globalEntry.quantity = res.quantity;
+            }
           } else {
             alert(res.message);
           }
@@ -1423,6 +1327,11 @@
           if (res.status === 'success') {
             qtyInput.value = res.quantity;
             entry.quantity = res.quantity;
+            // Обновляем глобальную копию
+            const globalEntry = allEntriesGlobal.find(e => e.partNumber === entry.partNumber);
+            if (globalEntry) {
+              globalEntry.quantity = res.quantity;
+            }
           } else {
             alert(res.message);
           }
@@ -1575,10 +1484,8 @@
       resetSearch();
     });
 
-    // Обработчик для кнопки загрузки картинок
-    document.getElementById('btnPreload')?.addEventListener('click', () => {
-      preloadAllImages(allEntries);
-    });
+    // Добавляем обработчик для кнопки предзагрузки изображений
+    document.getElementById('preloadImagesBtn')?.addEventListener('click', preloadAllImages);
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
       showLoader(true);
@@ -1623,6 +1530,7 @@
       showLoader(true);
       try {
         allEntries = await getEntries();
+        allEntriesGlobal = [...allEntries]; // Сохраняем глобальную копию
         currentEntries = [...allEntries];
         updateTotalPages();
         renderPage(currentPage);
