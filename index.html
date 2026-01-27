@@ -271,13 +271,13 @@
       transform: rotate(180deg);
     }
 
-    /* Кнопка ВЫПОЛНЕННЫЕ ЗАДАЧИ */
-    .completed-tasks-button {
+    /* Карточка с открытыми задачами - теперь кликабельная */
+    .task-summary-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background-color: #dc143c;
-      color: white;
+      background-color: #fff;
+      color: #000;
       font-weight: 700;
       font-size: 16px;
       padding: 12px 16px;
@@ -292,24 +292,22 @@
       user-select: none;
     }
 
-    .completed-tasks-button:hover {
-      background-color: #a90e2e;
+    .task-summary-card:hover {
+      background-color: #f9f9f9;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .completed-tasks-button:active {
+    .task-summary-card:active {
       transform: translateY(0);
       box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
 
-    .completed-tasks-button i {
-      font-size: 18px;
-      transition: transform 0.3s ease;
-    }
-
-    .completed-tasks-button.expanded i {
-      transform: rotate(180deg);
+    .task-summary-card.expanded {
+      margin-bottom: 0;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom: 2px solid #dc143c;
     }
 
     /* Контейнер для фильтра по дате */
@@ -317,14 +315,15 @@
       display: none;
       padding: 16px;
       background-color: #f8f9fa;
-      border-radius: 12px;
+      border-radius: 0 0 12px 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      margin: 15px auto;
+      margin: 0 auto 15px;
       width: 96%;
       max-width: 500px;
       box-sizing: border-box;
       flex-direction: column;
       gap: 12px;
+      border-top: none;
     }
 
     .date-filter-container.show {
@@ -430,23 +429,6 @@
       padding: 15px;
       box-sizing: border-box;
       display: none; /* Скрыто по умолчанию */
-    }
-
-    .task-summary-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #fff;
-      color: #000;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 12px 16px;
-      margin: 15px auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      width: 96%;
-      max-width: 500px;
-      box-sizing: border-box;
     }
 
     .winner-section {
@@ -996,10 +978,10 @@ BLOCKBUSTER
     <div><i class="fas fa-chevron-down"></i></div>
   </div>
 
-  <!-- Кнопка ВЫПОЛНЕННЫЕ ЗАДАЧИ -->
-  <div class="completed-tasks-button" id="completedTasksButton" onclick="toggleDateFilter()" style="display: none;">
-    <div>ВЫПОЛНЕННЫЕ ЗАДАЧИ ПО ДАТЕ</div>
-    <div><i class="fas fa-chevron-down"></i></div>
+  <!-- Карточка с открытыми задачами - теперь кликабельная -->
+  <div class="task-summary-card" id="openTasksCard" onclick="toggleDateFilter()" style="display: none;">
+    <div>Открытых задач</div>
+    <div id="openTaskCount">0</div>
   </div>
 
   <!-- Контейнер для фильтрации по дате -->
@@ -1025,11 +1007,6 @@ BLOCKBUSTER
   <div class="winner-section" id="winnerSection">
     <h3><i class="fas fa-crown"></i> Победитель прошлого месяца</h3>
     <div id="winnerContent"></div>
-  </div>
-
-  <div class="task-summary-card">
-    <div>Открытых задач</div>
-    <div id="openTaskCount">0</div>
   </div>
 
   <!-- Кнопка "Показать все задачи" -->
@@ -1143,7 +1120,7 @@ BLOCKBUSTER
         const siteNameDropdown = document.getElementById('siteNameDropdown');
         const dropdownMenu = document.getElementById('dropdownMenu');
         const dateFilterContainer = document.getElementById('date-filter-container');
-        const completedTasksButton = document.getElementById('completedTasksButton');
+        const openTasksCard = document.getElementById('openTasksCard');
         
         if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
           siteNameDropdown.style.display = 'none';
@@ -1154,7 +1131,7 @@ BLOCKBUSTER
         }
         
         // Закрываем фильтр дат при клике вне его области
-        if (!e.target.closest('#completedTasksButton') && 
+        if (!e.target.closest('#openTasksCard') && 
             !e.target.closest('#date-filter-container') && 
             dateFilterContainer.classList.contains('show')) {
           toggleDateFilter();
@@ -1174,7 +1151,7 @@ BLOCKBUSTER
         document.getElementById('login').style.display = 'none';
         document.getElementById('app-content').style.display = 'block';
         document.getElementById('ratingButton').style.display = 'flex';
-        document.getElementById('completedTasksButton').style.display = 'flex';
+        document.getElementById('openTasksCard').style.display = 'flex';
         loadSheetData();
       } else {
         document.getElementById('login').style.display = 'flex';
@@ -1270,16 +1247,16 @@ BLOCKBUSTER
     }
 
     function toggleDateFilter() {
-      const completedTasksButton = document.getElementById('completedTasksButton');
+      const openTasksCard = document.getElementById('openTasksCard');
       const dateFilterContainer = document.getElementById('date-filter-container');
       
       isDateFilterVisible = !isDateFilterVisible;
       
       if (isDateFilterVisible) {
-        completedTasksButton.classList.add('expanded');
+        openTasksCard.classList.add('expanded');
         dateFilterContainer.classList.add('show');
       } else {
-        completedTasksButton.classList.remove('expanded');
+        openTasksCard.classList.remove('expanded');
         dateFilterContainer.classList.remove('show');
         // При закрытии сбрасываем фильтр
         if (isDateFilterActive) {
@@ -1431,6 +1408,11 @@ BLOCKBUSTER
       } finally {
         hideLoader();
       }
+    }
+
+    function updateOpenTaskCard(data) {
+      const openCount = data.filter(row => !row[5]).length;
+      document.getElementById("openTaskCount").textContent = openCount;
     }
 
     function updateMechanicsRating(data) {
@@ -1977,11 +1959,6 @@ BLOCKBUSTER
           renderPage(currentPage, true);
         }
       }
-    }
-
-    function updateOpenTaskCard(data) {
-      const openCount = data.filter(row => !row[5]).length;
-      document.getElementById("openTaskCount").textContent = openCount;
     }
 
     // Функции для работы с фильтрацией из карточек
