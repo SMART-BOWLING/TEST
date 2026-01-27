@@ -290,6 +290,7 @@
       cursor: pointer;
       transition: all 0.3s ease;
       user-select: none;
+      min-height: 50px;
     }
 
     .task-summary-card:hover {
@@ -344,8 +345,8 @@
     }
 
     .date-filter-input {
-      padding: 10px 12px;
-      padding-left: 40px;
+      padding: 12px 16px;
+      padding-left: 45px;
       border: 1px solid #d0d0d0;
       border-radius: 6px;
       font-size: 14px;
@@ -357,6 +358,9 @@
       -webkit-appearance: none;
       appearance: none;
       box-sizing: border-box;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
     }
 
     .date-filter-input:focus {
@@ -366,15 +370,16 @@
 
     .calendar-icon {
       position: absolute;
-      left: 12px;
+      left: 14px;
       top: 50%;
       transform: translateY(-50%);
       color: #666;
       pointer-events: none;
+      font-size: 16px;
     }
 
     .clear-filter-btn {
-      padding: 10px 16px;
+      padding: 12px 16px;
       background-color: #1a2f40;
       color: white;
       border: none;
@@ -384,35 +389,23 @@
       cursor: pointer;
       transition: all 0.3s ease;
       width: 100%;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .clear-filter-btn:hover {
       background-color: #0d1f2d;
     }
 
-    .date-task-count {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #1a2f40;
-      color: white;
-      font-weight: 700;
-      font-size: 14px;
-      padding: 10px 14px;
-      border-radius: 6px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .date-task-count .label {
-      flex: 1;
-      text-align: left;
-    }
-
-    .date-task-count .count {
+    /* Счетчик задач в карточке */
+    .task-count {
       background-color: #dc143c;
+      color: white;
       padding: 4px 10px;
-      border-radius: 4px;
+      border-radius: 20px;
+      font-weight: 700;
       font-size: 14px;
       min-width: 30px;
       text-align: center;
@@ -488,17 +481,6 @@
     .winner-name {
       font-weight: 600;
       color: #1a2f40;
-    }
-
-    .task-count {
-      background-color: #dc143c;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 14px;
-      min-width: 30px;
-      text-align: center;
     }
 
     .winner-count {
@@ -978,10 +960,10 @@ BLOCKBUSTER
     <div><i class="fas fa-chevron-down"></i></div>
   </div>
 
-  <!-- Карточка с открытыми задачами - теперь кликабельная -->
+  <!-- Карточка с задачами - теперь кликабельная -->
   <div class="task-summary-card" id="openTasksCard" onclick="toggleDateFilter()" style="display: none;">
-    <div>Открытых задач</div>
-    <div id="openTaskCount">0</div>
+    <div id="task-summary-label">Открытых задач</div>
+    <div class="task-count" id="openTaskCount">0</div>
   </div>
 
   <!-- Контейнер для фильтрации по дате -->
@@ -992,10 +974,6 @@ BLOCKBUSTER
       <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
     </div>
     <button class="clear-filter-btn" id="clear-filter-btn">Сбросить фильтр</button>
-    <div class="date-task-count" id="date-task-count" style="display: none;">
-      <span class="label">Выполненные задачи за дату:</span>
-      <span class="count">0</span>
-    </div>
   </div>
 
   <!-- КАРТОЧКИ С ОДИНАКОВОЙ ШИРИНОЙ -->
@@ -1304,14 +1282,8 @@ BLOCKBUSTER
       // Считаем выполненные задачи за эту дату
       const completedTasksCount = countCompletedTasksByDate(date);
       
-      // Обновляем счетчик
-      const dateTaskCount = document.getElementById('date-task-count');
-      const countSpan = dateTaskCount.querySelector('.count');
-      const labelSpan = dateTaskCount.querySelector('.label');
-      
-      labelSpan.textContent = `Выполненные задачи за дату: ${date}`;
-      countSpan.textContent = completedTasksCount;
-      dateTaskCount.style.display = 'flex';
+      // Обновляем карточку с задачами
+      updateTaskSummaryCard(date, completedTasksCount);
       
       // Фильтруем данные: показываем только выполненные задачи за выбранную дату
       filteredData = fullData.filter(row => {
@@ -1370,12 +1342,22 @@ BLOCKBUSTER
         dateInput.value = '';
       }
       
-      // Скрываем счетчик
-      const dateTaskCount = document.getElementById('date-task-count');
-      dateTaskCount.style.display = 'none';
+      // Восстанавливаем карточку с открытыми задачами
+      updateOpenTaskCard(fullData);
       
       // Сбрасываем фильтр
       showAllTasks();
+    }
+
+    function updateOpenTaskCard(data) {
+      const openCount = data.filter(row => !row[5]).length;
+      document.getElementById("openTaskCount").textContent = openCount;
+      document.getElementById("task-summary-label").textContent = "Открытых задач";
+    }
+
+    function updateTaskSummaryCard(date, count) {
+      document.getElementById("openTaskCount").textContent = count;
+      document.getElementById("task-summary-label").textContent = `Выполненные задачи за дату: ${date}`;
     }
 
     async function loadSheetData() {
@@ -1408,11 +1390,6 @@ BLOCKBUSTER
       } finally {
         hideLoader();
       }
-    }
-
-    function updateOpenTaskCard(data) {
-      const openCount = data.filter(row => !row[5]).length;
-      document.getElementById("openTaskCount").textContent = openCount;
     }
 
     function updateMechanicsRating(data) {
