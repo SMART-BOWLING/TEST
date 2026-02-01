@@ -177,6 +177,27 @@
       flex-direction: column;
       align-items: center;
     }
+    
+    /* Преимум для изображения */
+    .image-preview {
+      display: none;
+      margin-top: 10px;
+      max-width: 100%;
+      text-align: center;
+    }
+    
+    .image-preview img {
+      max-width: 100%;
+      max-height: 150px;
+      border-radius: var(--border-radius);
+      border: 2px solid #ddd;
+    }
+    
+    .preview-title {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 5px;
+    }
 
     /* Медиа-запросы для адаптивности */
     @media (max-width: 480px) {
@@ -300,12 +321,16 @@
 
         <div class="form-group">
           <label for="qty">Количество</label>
-          <input type="number" id="qty" min="1" value="" required>
+          <input type="number" id="qty" min="1" value="1" required>
         </div>
 
         <div class="form-group">
           <label for="photo">Фотография</label>
           <input type="file" id="photo" accept="image/*" required>
+          <div class="image-preview" id="imagePreview">
+            <div class="preview-title">Предпросмотр:</div>
+            <img id="previewImage" src="" alt="Предпросмотр">
+          </div>
         </div>
 
         <button type="submit" id="submit-btn">Отправить</button>
@@ -317,18 +342,43 @@
   <div class="loader" id="loader">
     <div class="loader-content">
       <div class="spinner"></div>
-      <div class="loader-text">Загрузка в Cloudinary...</div>
+      <div class="loader-text" id="loaderMessage">Загрузка в Cloudinary...</div>
     </div>
   </div>
 
   <script>
     // URL вашего веб-приложения Google Apps Script
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBMeK6l1uXBTkXCxYllECStEK0DYGQ939fr1zfsZK5Js8HyurHU5r_gBkOWBjoi8l_-w/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDLSgPGQIDvLbVKKcqz-bW1t2Yd8pHGEZl_U3uwd0OPev-BR5Him0VX6Bg9e283m1AwA/exec';
+    
+    // Cloudinary настройки
+    const CLOUDINARY_CLOUD_NAME = 'dplmdnxvk';
+    const CLOUDINARY_UPLOAD_PRESET = 'ADD_KH_LS';
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
     
     // Элементы DOM
     const form = document.getElementById('form');
     const submitBtn = document.getElementById('submit-btn');
     const loader = document.getElementById('loader');
+    const loaderMessage = document.getElementById('loaderMessage');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImage = document.getElementById('previewImage');
+    const fileInput = document.getElementById('photo');
+    
+    // Предпросмотр изображения
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        imagePreview.style.display = 'none';
+        previewImage.src = '';
+      }
+    });
     
     // Функция для проверки, помещается ли форма на экране
     function checkFormFitsScreen() {
@@ -354,7 +404,6 @@
       
       const number = document.getElementById('number').value.trim();
       const qty = document.getElementById('qty').value;
-      const fileInput = document.getElementById('photo');
       
       if (!number || !qty || fileInput.files.length === 0) {
         alert('Заполните все поля и выберите фото.');
@@ -364,7 +413,6 @@
       // Блокируем кнопку и показываем индикатор загрузки
       submitBtn.disabled = true;
       loader.style.display = 'flex';
-      loader.querySelector('.loader-text').textContent = 'Загрузка в Cloudinary...';
       
       const file = fileInput.files[0];
       const reader = new FileReader();
@@ -376,7 +424,43 @@
         const base64 = parts[1];
         
         try {
-          // Отправляем данные на сервер Google Apps Script
+          // Шаг 1: Загружаем изображение в Cloudinary
+          loaderMessage.textContent = 'Загрузка изображения в Cloudinary...';
+          
+          const timestamp = Math.floor(Date.now() / 1000);
+          const publicId = 'KH_part_' + number.replace(/\s+/g, '_') + '_' + timestamp;
+          
+          // Создаем FormData для Cloudinary
+          const formData = new FormData();
+          formData.append('file', dataUrl);
+          formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+          formData.append('public_id', publicId);
+          formData.append('folder', 'samples/ecommerce');
+          formData.append('timestamp', timestamp.toString());
+          formData.append('context', `app=KH_Parts|part_number=${number}`);
+          
+          // Отправляем в Cloudinary
+          const cloudinaryResponse = await fetch(CLOUDINARY_UPLOAD_URL, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!cloudinaryResponse.ok) {
+            const errorText = await cloudinaryResponse.text();
+            throw new Error(`Cloudinary error: ${errorText}`);
+          }
+          
+          const cloudinaryResult = await cloudinaryResponse.json();
+          
+          if (cloudinaryResult.error) {
+            throw new Error(`Cloudinary: ${cloudinaryResult.error.message}`);
+          }
+          
+          const imageUrl = cloudinaryResult.secure_url;
+          
+          // Шаг 2: Отправляем данные в Google Таблицу
+          loaderMessage.textContent = 'Сохранение данных в таблицу...';
+          
           const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             headers: {
@@ -385,16 +469,11 @@
             body: JSON.stringify({
               number: number,
               qty: qty,
-              mimeType: mimeType,
-              base64: base64,
-              name: file.name,
-              timestamp: Date.now()
+              imageUrl: imageUrl,
+              publicId: publicId,
+              cloudinaryData: cloudinaryResult
             })
           });
-          
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
           
           const result = await response.json();
           
@@ -404,10 +483,11 @@
           
           if (result.result === 'success') {
             // Показываем сообщение об успехе
-            alert('✅ Данные отправлены!\nИзображение загружено в Cloudinary.');
+            alert(`✅ Данные успешно сохранены!\n\nНомер: ${number}\nКоличество: ${qty}\nИзображение загружено`);
             document.getElementById('form').reset();
+            imagePreview.style.display = 'none';
           } else {
-            throw new Error(result.message || 'Ошибка сервера');
+            throw new Error(result.message || 'Ошибка сохранения в таблицу');
           }
         } catch (error) {
           // Скрываем индикатор загрузки в случае ошибки
@@ -415,7 +495,7 @@
           submitBtn.disabled = false;
           
           console.error('Ошибка:', error);
-          alert('❌ Произошла ошибка при отправке данных: ' + error.message);
+          alert(`❌ Произошла ошибка:\n${error.message}`);
         }
       };
       
