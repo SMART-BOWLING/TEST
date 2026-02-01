@@ -380,7 +380,7 @@
     const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
     
     // Google Apps Script URL
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyd3-Fd3xqGiBiUW3ZzOqbHmax2TE6YQO9oF_ElWh9j2pbcNBfHy2cQcE9shiHJuHlkoQ/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwwW9lGhyVjBp639dpK3ryxV7teYt0Q6Zl8dosK3KCmQ_OYoijhJ6Jma9P-NmjGX0vO3w/exec';
     
     // Элементы DOM
     const form = document.getElementById('form');
@@ -465,6 +465,7 @@
           loaderMessage.textContent = 'Загрузка в Cloudinary...';
           
           const timestamp = Math.floor(Date.now() / 1000);
+          // Создаем publicId для Cloudinary, но не отправляем его в Google Sheets
           const publicId = 'KH_part_' + number.replace(/[^\w]/g, '_') + '_' + timestamp;
           
           // Создаем FormData для Cloudinary
@@ -495,10 +496,11 @@
           const imageUrl = cloudinaryResult.secure_url;
           
           // Шаг 2: Отправляем данные в Google Sheets через JSONP
+          // ОТПРАВЛЯЕМ ТОЛЬКО нужные данные (без publicId)
           loaderMessage.textContent = 'Сохранение данных...';
           
           // Используем JSONP для обхода CORS
-          const jsonpResult = await saveViaJsonp(number, qty, imageUrl, publicId);
+          const jsonpResult = await saveViaJsonp(number, qty, imageUrl);
           
           // Скрываем индикатор загрузки
           loader.style.display = 'none';
@@ -537,7 +539,8 @@
     });
     
     // Функция для сохранения через JSONP
-    function saveViaJsonp(number, qty, imageUrl, publicId) {
+    // ОТПРАВЛЯЕМ ТОЛЬКО 3 параметра: number, qty, imageUrl
+    function saveViaJsonp(number, qty, imageUrl) {
       return new Promise((resolve, reject) => {
         // Создаем уникальное имя callback функции
         const callbackName = 'googleSheetsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2);
@@ -555,13 +558,12 @@
           }
         };
         
-        // Создаем URL с параметрами
+        // Создаем URL с параметрами (ТОЛЬКО нужные параметры)
         const params = new URLSearchParams({
           callback: callbackName,
           number: number,
           qty: qty,
           imageUrl: imageUrl,
-          publicId: publicId,
           source: 'github_pages',
           timestamp: Date.now()
         });
