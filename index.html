@@ -401,7 +401,7 @@
     const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
     
     // Google Apps Script URL
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyYzIxbcp9aF37DKDSU-xJGwYuzDgXvfuX2xn8sZc2t8PBQy38-R2_HCf6aat5EHtxOog/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwcoehpA9ryAF8QfmWA41SS-Qmijzf5SgBDA46Kxh3fUm_rKa3icb5SjrgqZ50gaGHe/exec';
     
     // Конфигурация оптимизации
     const OPTIMIZATION_CONFIG = {
@@ -526,7 +526,7 @@
       });
     }
     
-    // Функция загрузки в Cloudinary с оптимизацией
+    // Функция загрузки в Cloudinary (ИСПРАВЛЕННАЯ - без transformation параметра)
     async function uploadToCloudinary(file, number) {
       const timestamp = Math.floor(Date.now() / 1000);
       const publicId = 'KH_' + number.replace(/[^\w]/g, '_') + '_' + timestamp;
@@ -539,8 +539,7 @@
       formData.append('folder', 'kh_parts');
       formData.append('timestamp', timestamp.toString());
       
-      // Параметры оптимизации Cloudinary
-      formData.append('transformation', 'f_auto,q_auto:eco'); // Автоформат + эко-качество
+      // ДОБАВЛЯЕМ ТОЛЬКО РАЗРЕШЕННЫЕ ПАРАМЕТРЫ:
       formData.append('context', `part_number=${number}`);
       formData.append('tags', 'kh_parts,auto_parts');
       
@@ -556,6 +555,18 @@
       }
       
       return await response.json();
+    }
+    
+    // Функция для генерации оптимизированного URL Cloudinary
+    function generateOptimizedCloudinaryUrl(originalUrl) {
+      // Извлекаем public_id из URL Cloudinary
+      const urlParts = originalUrl.split('/upload/');
+      if (urlParts.length < 2) return originalUrl;
+      
+      // Добавляем параметры оптимизации в URL
+      const optimizedUrl = `${urlParts[0]}/upload/w_${OPTIMIZATION_CONFIG.maxWidth},c_limit,q_${Math.round(OPTIMIZATION_CONFIG.quality * 100)},f_auto/${urlParts[1]}`;
+      
+      return optimizedUrl;
     }
     
     // Показать сообщение
@@ -624,19 +635,17 @@
           throw new Error(`Cloudinary: ${cloudinaryResult.error.message}`);
         }
         
-        // Используем оптимизированный URL
-        let imageUrl = cloudinaryResult.secure_url;
+        // Получаем оригинальный URL от Cloudinary
+        const originalImageUrl = cloudinaryResult.secure_url;
         
-        // Добавляем параметры оптимизации для будущих запросов
-        const optimizedUrl = imageUrl.replace(
-          '/upload/',
-          `/upload/w_${OPTIMIZATION_CONFIG.maxWidth},c_limit,q_${Math.round(OPTIMIZATION_CONFIG.quality * 100)},f_auto/`
-        );
+        // Генерируем оптимизированный URL для отображения
+        const optimizedImageUrl = generateOptimizedCloudinaryUrl(originalImageUrl);
         
         // Шаг 3: Отправляем данные в Google Sheets
         loaderMessage.textContent = 'Сохранение данных...';
         
-        const jsonpResult = await saveViaJsonp(number, qty, optimizedUrl);
+        // Сохраняем ОБА URL - оригинальный и оптимизированный
+        const jsonpResult = await saveViaJsonp(number, qty, originalImageUrl, optimizedImageUrl);
         
         // Скрываем индикатор загрузки
         loader.style.display = 'none';
@@ -668,7 +677,7 @@
     });
     
     // Функция для сохранения через JSONP
-    function saveViaJsonp(number, qty, imageUrl) {
+    function saveViaJsonp(number, qty, originalImageUrl, optimizedImageUrl) {
       return new Promise((resolve, reject) => {
         // Создаем уникальное имя callback функции
         const callbackName = 'googleSheetsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2);
@@ -691,7 +700,8 @@
           callback: callbackName,
           number: number,
           qty: qty,
-          imageUrl: imageUrl,
+          imageUrl: optimizedImageUrl, // Используем оптимизированный URL для отображения
+          originalImageUrl: originalImageUrl, // Сохраняем также оригинальный URL
           timestamp: Date.now(),
           source: 'optimized_upload'
         });
