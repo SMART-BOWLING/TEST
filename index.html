@@ -13,6 +13,8 @@
       --text-light: #ffffff;
       --input-padding: 14px;
       --border-radius: 8px;
+      --success: #28a745;
+      --warning: #ffc107;
     }
     * { 
       box-sizing: border-box; 
@@ -199,6 +201,28 @@
       margin-bottom: 5px;
     }
 
+    /* Сообщения о статусе */
+    .status-message {
+      display: none;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      margin: 10px 0;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    
+    .status-success {
+      background-color: rgba(40, 167, 69, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+    
+    .status-error {
+      background-color: rgba(220, 20, 60, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
     /* Медиа-запросы для адаптивности */
     @media (max-width: 480px) {
       body {
@@ -312,6 +336,9 @@
     <header>
       <h1>ADD PART LS KH</h1>
     </header>
+    
+    <div class="status-message" id="statusMessage"></div>
+    
     <form id="form">
       <div class="form-content">
         <div class="form-group">
@@ -347,13 +374,13 @@
   </div>
 
   <script>
-    // URL вашего веб-приложения Google Apps Script
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDLSgPGQIDvLbVKKcqz-bW1t2Yd8pHGEZl_U3uwd0OPev-BR5Him0VX6Bg9e283m1AwA/exec';
-    
     // Cloudinary настройки
     const CLOUDINARY_CLOUD_NAME = 'dplmdnxvk';
     const CLOUDINARY_UPLOAD_PRESET = 'ADD_KH_LS';
     const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+    
+    // Google Apps Script URL
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyd3-Fd3xqGiBiUW3ZzOqbHmax2TE6YQO9oF_ElWh9j2pbcNBfHy2cQcE9shiHJuHlkoQ/exec';
     
     // Элементы DOM
     const form = document.getElementById('form');
@@ -363,11 +390,19 @@
     const imagePreview = document.getElementById('imagePreview');
     const previewImage = document.getElementById('previewImage');
     const fileInput = document.getElementById('photo');
+    const statusMessage = document.getElementById('statusMessage');
     
     // Предпросмотр изображения
     fileInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
+        // Проверяем размер файла (макс 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          showMessage('Файл слишком большой. Максимальный размер: 10MB', 'error');
+          e.target.value = '';
+          return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
           previewImage.src = e.target.result;
@@ -380,23 +415,15 @@
       }
     });
     
-    // Функция для проверки, помещается ли форма на экране
-    function checkFormFitsScreen() {
-      const formHeight = document.querySelector('.container').offsetHeight;
-      const windowHeight = window.innerHeight;
+    // Показать сообщение
+    function showMessage(text, type = 'success') {
+      statusMessage.textContent = text;
+      statusMessage.className = `status-message status-${type}`;
+      statusMessage.style.display = 'block';
       
-      if (formHeight > windowHeight) {
-        // Если форма не помещается, немного уменьшаем отступы
-        document.querySelector('.container').style.padding = '10px';
-        document.querySelector('header').style.padding = '8px';
-        document.querySelector('header').style.marginBottom = '8px';
-        document.querySelectorAll('input').forEach(input => {
-          input.style.padding = '10px';
-          input.style.minHeight = '40px';
-        });
-        document.querySelector('button').style.padding = '10px';
-        document.querySelector('button').style.minHeight = '45px';
-      }
+      setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, 5000);
     }
     
     form.addEventListener('submit', async function(e) {
@@ -405,30 +432,40 @@
       const number = document.getElementById('number').value.trim();
       const qty = document.getElementById('qty').value;
       
-      if (!number || !qty || fileInput.files.length === 0) {
-        alert('Заполните все поля и выберите фото.');
+      if (!number) {
+        showMessage('Введите номер детали', 'error');
+        document.getElementById('number').focus();
+        return;
+      }
+      
+      if (!qty || qty < 1) {
+        showMessage('Введите корректное количество', 'error');
+        document.getElementById('qty').focus();
+        return;
+      }
+      
+      if (fileInput.files.length === 0) {
+        showMessage('Выберите фотографию', 'error');
         return;
       }
       
       // Блокируем кнопку и показываем индикатор загрузки
       submitBtn.disabled = true;
       loader.style.display = 'flex';
+      loaderMessage.textContent = 'Загрузка изображения...';
       
       const file = fileInput.files[0];
       const reader = new FileReader();
       
       reader.onload = async function(evt) {
-        const dataUrl = evt.target.result;
-        const parts = dataUrl.split(',');
-        const mimeType = parts[0].match(/data:(.*);base64/)[1];
-        const base64 = parts[1];
-        
         try {
+          const dataUrl = evt.target.result;
+          
           // Шаг 1: Загружаем изображение в Cloudinary
-          loaderMessage.textContent = 'Загрузка изображения в Cloudinary...';
+          loaderMessage.textContent = 'Загрузка в Cloudinary...';
           
           const timestamp = Math.floor(Date.now() / 1000);
-          const publicId = 'KH_part_' + number.replace(/\s+/g, '_') + '_' + timestamp;
+          const publicId = 'KH_part_' + number.replace(/[^\w]/g, '_') + '_' + timestamp;
           
           // Создаем FormData для Cloudinary
           const formData = new FormData();
@@ -437,7 +474,6 @@
           formData.append('public_id', publicId);
           formData.append('folder', 'samples/ecommerce');
           formData.append('timestamp', timestamp.toString());
-          formData.append('context', `app=KH_Parts|part_number=${number}`);
           
           // Отправляем в Cloudinary
           const cloudinaryResponse = await fetch(CLOUDINARY_UPLOAD_URL, {
@@ -447,7 +483,7 @@
           
           if (!cloudinaryResponse.ok) {
             const errorText = await cloudinaryResponse.text();
-            throw new Error(`Cloudinary error: ${errorText}`);
+            throw new Error(`Ошибка Cloudinary: ${errorText}`);
           }
           
           const cloudinaryResult = await cloudinaryResponse.json();
@@ -458,66 +494,104 @@
           
           const imageUrl = cloudinaryResult.secure_url;
           
-          // Шаг 2: Отправляем данные в Google Таблицу
-          loaderMessage.textContent = 'Сохранение данных в таблицу...';
+          // Шаг 2: Отправляем данные в Google Sheets через JSONP
+          loaderMessage.textContent = 'Сохранение данных...';
           
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              number: number,
-              qty: qty,
-              imageUrl: imageUrl,
-              publicId: publicId,
-              cloudinaryData: cloudinaryResult
-            })
-          });
-          
-          const result = await response.json();
+          // Используем JSONP для обхода CORS
+          const jsonpResult = await saveViaJsonp(number, qty, imageUrl, publicId);
           
           // Скрываем индикатор загрузки
           loader.style.display = 'none';
           submitBtn.disabled = false;
           
-          if (result.result === 'success') {
-            // Показываем сообщение об успехе
-            alert(`✅ Данные успешно сохранены!\n\nНомер: ${number}\nКоличество: ${qty}\nИзображение загружено`);
+          if (jsonpResult.result === 'success') {
+            showMessage(`✅ Данные сохранены! Номер: ${number}, Количество: ${qty}`, 'success');
+            
+            // Сбрасываем форму
             document.getElementById('form').reset();
             imagePreview.style.display = 'none';
+            
+            // Автофокус на первом поле
+            document.getElementById('number').focus();
           } else {
-            throw new Error(result.message || 'Ошибка сохранения в таблицу');
+            throw new Error(jsonpResult.message || 'Ошибка сохранения');
           }
+          
         } catch (error) {
           // Скрываем индикатор загрузки в случае ошибки
           loader.style.display = 'none';
           submitBtn.disabled = false;
           
           console.error('Ошибка:', error);
-          alert(`❌ Произошла ошибка:\n${error.message}`);
+          showMessage(`❌ ${error.message}`, 'error');
         }
       };
       
       reader.onerror = function() {
-        // Скрываем индикатор загрузки в случае ошибки чтения файла 
         loader.style.display = 'none';
         submitBtn.disabled = false;
-        alert('❌ Ошибка при чтении файла.');
+        showMessage('❌ Ошибка при чтении файла', 'error');
       };
       
       reader.readAsDataURL(file);
     });
-
+    
+    // Функция для сохранения через JSONP
+    function saveViaJsonp(number, qty, imageUrl, publicId) {
+      return new Promise((resolve, reject) => {
+        // Создаем уникальное имя callback функции
+        const callbackName = 'googleSheetsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2);
+        
+        // Определяем callback функцию
+        window[callbackName] = function(response) {
+          // Очищаем
+          delete window[callbackName];
+          document.body.removeChild(script);
+          
+          if (response && response.result === 'success') {
+            resolve(response);
+          } else {
+            reject(new Error(response ? response.message : 'Неизвестная ошибка'));
+          }
+        };
+        
+        // Создаем URL с параметрами
+        const params = new URLSearchParams({
+          callback: callbackName,
+          number: number,
+          qty: qty,
+          imageUrl: imageUrl,
+          publicId: publicId,
+          source: 'github_pages',
+          timestamp: Date.now()
+        });
+        
+        // Создаем и добавляем script тег
+        const script = document.createElement('script');
+        script.src = `${GAS_URL}?${params.toString()}`;
+        
+        // Таймаут на случай если скрипт не загрузится
+        const timeoutId = setTimeout(() => {
+          document.body.removeChild(script);
+          delete window[callbackName];
+          reject(new Error('Таймаут загрузки данных'));
+        }, 10000);
+        
+        script.onload = () => clearTimeout(timeoutId);
+        script.onerror = () => {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          reject(new Error('Ошибка загрузки скрипта'));
+        };
+        
+        document.body.appendChild(script);
+      });
+    }
+    
     // Улучшение UX: фокус на первом поле при загрузке
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('number').focus();
-      // Проверяем, помещается ли форма на экране
-      setTimeout(checkFormFitsScreen, 100);
     });
-    
-    // Также проверяем при изменении размера окна
-    window.addEventListener('resize', checkFormFitsScreen);
   </script>
 </body>
 </html>
