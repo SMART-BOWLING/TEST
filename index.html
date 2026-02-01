@@ -2,95 +2,141 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Добавить деталь KH</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --light-bg: #d7dce3;
+      --dark-bg: #1a2f40;
+      --accent: #dc143c;
+      --text-dark: #1a2f40;
+      --text-light: #ffffff;
+      --input-padding: 14px;
+      --border-radius: 8px;
     }
-    
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #d7dce3;
-      color: #1a2f40;
-      padding: 20px;
-      min-height: 100vh;
+      background-color: var(--light-bg);
+      color: var(--text-dark);
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 10px;
+      min-height: 100vh;
+      height: 100vh;
     }
-    
     .container {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background-color: var(--text-light);
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
-      padding: 20px;
-    }
-    
-    header {
-      background: #1a2f40;
-      color: white;
       padding: 15px;
-      border-radius: 8px;
-      text-align: center;
-      margin-bottom: 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      max-height: 96vh;
     }
-    
+    header {
+      background-color: var(--dark-bg);
+      padding: 12px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      margin: 0 0 15px 0;
+      flex-shrink: 0;
+    }
     header h1 {
       font-size: 1.3rem;
+      color: var(--text-light);
       font-weight: 600;
     }
-    
-    .form-group {
-      margin-bottom: 15px;
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      overflow: hidden;
     }
-    
+    .form-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      overflow: hidden;
+      justify-content: space-between;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
     label {
-      display: block;
-      margin-bottom: 5px;
       font-weight: 500;
+      font-size: 0.9rem;
       color: #444;
     }
-    
-    input {
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    
-    input:focus {
+      padding: var(--input-padding);
+      border: 2px solid #ccc;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
       outline: none;
-      border-color: #dc143c;
+      transition: border-color 0.2s;
+      min-height: 44px;
     }
-    
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #dc143c;
+    input:focus {
+      border-color: var(--accent);
+    }
+    input[type="file"] {
+      padding: 10px;
+      background-color: #f8f9fa;
+    }
+    input[type="file"]::file-selector-button {
+      padding: 8px 12px;
+      background-color: var(--dark-bg);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    button {
+      padding: 14px;
+      background-color: var(--accent);
+      color: var(--text-light);
+      border: none;
+      border-radius: var(--border-radius);
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 10px;
+      transition: background-color 0.2s;
+      min-height: 50px;
+      flex-shrink: 0;
+      margin-top: auto;
     }
-    
-    button:hover {
-      background: #b0102f;
+    button:hover, button:active {
+      background-color: #b0102f;
     }
-    
     button:disabled {
-      background: #ccc;
+      background-color: #cccccc;
       cursor: not-allowed;
     }
     
+    /* Стили для индикатора загрузки */
     .loader {
       display: none;
       position: fixed;
@@ -98,7 +144,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.7);
+      background-color: rgba(0, 0, 0, 0.7);
       z-index: 1000;
       justify-content: center;
       align-items: center;
@@ -108,9 +154,9 @@
     .spinner {
       width: 40px;
       height: 40px;
-      border: 4px solid rgba(255,255,255,0.3);
+      border: 4px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
-      border-top: 4px solid #dc143c;
+      border-top: 4px solid var(--accent);
       animation: spin 1s linear infinite;
     }
     
@@ -121,7 +167,122 @@
     
     .loader-text {
       color: white;
-      margin-top: 15px;
+      margin-top: 12px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    
+    .loader-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Медиа-запросы для адаптивности */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      
+      .container {
+        padding: 12px;
+        max-height: 98vh;
+      }
+      
+      header {
+        padding: 10px;
+        margin-bottom: 12px;
+      }
+      
+      header h1 {
+        font-size: 1.2rem;
+      }
+      
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        padding: 12px;
+        font-size: 16px;
+      }
+      
+      button {
+        padding: 12px;
+        font-size: 1rem;
+      }
+      
+      .spinner {
+        width: 35px;
+        height: 35px;
+        border-width: 3px;
+      }
+      
+      .loader-text {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 350px) and (max-height: 650px) {
+      header h1 {
+        font-size: 1.1rem;
+      }
+      
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        padding: 10px;
+        min-height: 40px;
+      }
+      
+      button {
+        padding: 10px;
+        font-size: 0.95rem;
+        min-height: 45px;
+      }
+      
+      .form-group {
+        gap: 4px;
+      }
+      
+      label {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* Для landscape ориентации */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        align-items: flex-start;
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+      
+      .container {
+        max-height: 98vh;
+        overflow-y: auto;
+      }
+      
+      header {
+        padding: 8px;
+      }
+      
+      header h1 {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* Для очень высоких экранов */
+    @media (min-height: 800px) {
+      .container {
+        max-height: 90vh;
+      }
+      
+      form {
+        gap: 16px;
+      }
+      
+      .form-group {
+        gap: 8px;
+      }
     }
   </style>
 </head>
@@ -130,107 +291,153 @@
     <header>
       <h1>ADD PART LS KH</h1>
     </header>
-    
-    <form id="uploadForm">
-      <div class="form-group">
-        <label for="number">Номер детали:</label>
-        <input type="text" id="number" placeholder="000-000-000" required>
+    <form id="form">
+      <div class="form-content">
+        <div class="form-group">
+          <label for="number">Номер детали</label>
+          <input type="text" id="number" placeholder="000-000-000" required>
+        </div>
+
+        <div class="form-group">
+          <label for="qty">Количество</label>
+          <input type="number" id="qty" min="1" value="" required>
+        </div>
+
+        <div class="form-group">
+          <label for="photo">Фотография</label>
+          <input type="file" id="photo" accept="image/*" required>
+        </div>
+
+        <button type="submit" id="submit-btn">Отправить</button>
       </div>
-      
-      <div class="form-group">
-        <label for="qty">Количество:</label>
-        <input type="number" id="qty" min="1" value="1" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="photo">Фотография:</label>
-        <input type="file" id="photo" accept="image/*" required>
-      </div>
-      
-      <button type="submit" id="submitBtn">Отправить</button>
     </form>
   </div>
   
-  <div id="loader" class="loader">
-    <div class="spinner"></div>
-    <div class="loader-text">Отправка данных...</div>
+  <!-- Индикатор загрузки -->
+  <div class="loader" id="loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div class="loader-text">Загрузка в Cloudinary...</div>
+    </div>
   </div>
-  
+
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxE6RxXwkE-k4DUXZWzEH3tsGdrPJHHBHt9ZoZcaiSMI0EAUVSmVTutQbBxBx61Eylk3g/exec';
+    // URL вашего веб-приложения Google Apps Script
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxBMeK6l1uXBTkXCxYllECStEK0DYGQ939fr1zfsZK5Js8HyurHU5r_gBkOWBjoi8l_-w/exec';
     
-    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    // Элементы DOM
+    const form = document.getElementById('form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loader = document.getElementById('loader');
+    
+    // Функция для проверки, помещается ли форма на экране
+    function checkFormFitsScreen() {
+      const formHeight = document.querySelector('.container').offsetHeight;
+      const windowHeight = window.innerHeight;
+      
+      if (formHeight > windowHeight) {
+        // Если форма не помещается, немного уменьшаем отступы
+        document.querySelector('.container').style.padding = '10px';
+        document.querySelector('header').style.padding = '8px';
+        document.querySelector('header').style.marginBottom = '8px';
+        document.querySelectorAll('input').forEach(input => {
+          input.style.padding = '10px';
+          input.style.minHeight = '40px';
+        });
+        document.querySelector('button').style.padding = '10px';
+        document.querySelector('button').style.minHeight = '45px';
+      }
+    }
+    
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const number = document.getElementById('number').value.trim();
       const qty = document.getElementById('qty').value;
       const fileInput = document.getElementById('photo');
-      const submitBtn = document.getElementById('submitBtn');
-      const loader = document.getElementById('loader');
       
-      if (!number || !qty || !fileInput.files.length) {
-        alert('Пожалуйста, заполните все поля');
+      if (!number || !qty || fileInput.files.length === 0) {
+        alert('Заполните все поля и выберите фото.');
         return;
       }
       
-      // Подготовка к отправке
+      // Блокируем кнопку и показываем индикатор загрузки
       submitBtn.disabled = true;
       loader.style.display = 'flex';
+      loader.querySelector('.loader-text').textContent = 'Загрузка в Cloudinary...';
       
       const file = fileInput.files[0];
       const reader = new FileReader();
       
-      reader.onload = async function(event) {
+      reader.onload = async function(evt) {
+        const dataUrl = evt.target.result;
+        const parts = dataUrl.split(',');
+        const mimeType = parts[0].match(/data:(.*);base64/)[1];
+        const base64 = parts[1];
+        
         try {
-          const dataUrl = event.target.result;
-          const base64 = dataUrl.split(',')[1];
-          
-          // Создаем FormData для отправки
-          const formData = new FormData();
-          formData.append('number', number);
-          formData.append('qty', qty);
-          formData.append('base64', base64);
-          formData.append('mimeType', file.type);
-          formData.append('name', file.name);
-          
-          // Отправка на сервер
+          // Отправляем данные на сервер Google Apps Script
           const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: formData
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              number: number,
+              qty: qty,
+              mimeType: mimeType,
+              base64: base64,
+              name: file.name,
+              timestamp: Date.now()
+            })
           });
+          
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
           
           const result = await response.json();
           
-          if (result.success) {
-            alert('✅ Данные успешно отправлены!\nНомер: ' + number + '\nКоличество: ' + qty);
-            document.getElementById('uploadForm').reset();
-            document.getElementById('qty').value = 1;
-          } else {
-            alert('❌ Ошибка: ' + result.message);
-          }
-          
-        } catch (error) {
-          console.error('Ошибка:', error);
-          alert('❌ Ошибка отправки');
-        } finally {
-          submitBtn.disabled = false;
+          // Скрываем индикатор загрузки
           loader.style.display = 'none';
+          submitBtn.disabled = false;
+          
+          if (result.result === 'success') {
+            // Показываем сообщение об успехе
+            alert('✅ Данные отправлены!\nИзображение загружено в Cloudinary.');
+            document.getElementById('form').reset();
+          } else {
+            throw new Error(result.message || 'Ошибка сервера');
+          }
+        } catch (error) {
+          // Скрываем индикатор загрузки в случае ошибки
+          loader.style.display = 'none';
+          submitBtn.disabled = false;
+          
+          console.error('Ошибка:', error);
+          alert('❌ Произошла ошибка при отправке данных: ' + error.message);
         }
       };
       
       reader.onerror = function() {
-        alert('Ошибка чтения файла');
-        submitBtn.disabled = false;
+        // Скрываем индикатор загрузки в случае ошибки чтения файла 
         loader.style.display = 'none';
+        submitBtn.disabled = false;
+        alert('❌ Ошибка при чтении файла.');
       };
       
       reader.readAsDataURL(file);
     });
-    
-    // Фокус на первом поле
-    window.addEventListener('DOMContentLoaded', function() {
+
+    // Улучшение UX: фокус на первом поле при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('number').focus();
+      // Проверяем, помещается ли форма на экране
+      setTimeout(checkFormFitsScreen, 100);
     });
+    
+    // Также проверяем при изменении размера окна
+    window.addEventListener('resize', checkFormFitsScreen);
   </script>
 </body>
 </html>
