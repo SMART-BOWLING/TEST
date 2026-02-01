@@ -15,7 +15,6 @@
       --border-radius: 8px;
       --success: #28a745;
       --warning: #ffc107;
-      --info: #17a2b8;
     }
     * { 
       box-sizing: border-box; 
@@ -223,23 +222,6 @@
       border: 1px solid var(--accent);
       color: var(--accent);
     }
-    
-    .status-info {
-      background-color: rgba(23, 162, 184, 0.1);
-      border: 1px solid var(--info);
-      color: var(--info);
-    }
-
-    /* Индикатор сжатия */
-    .compression-info {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 5px;
-      padding: 5px;
-      background-color: #f8f9fa;
-      border-radius: 4px;
-      display: none;
-    }
 
     /* Медиа-запросы для адаптивности */
     @media (max-width: 480px) {
@@ -370,11 +352,8 @@
         </div>
 
         <div class="form-group">
-          <label for="photo">Фотография (макс. 10MB)</label>
+          <label for="photo">Фотография</label>
           <input type="file" id="photo" accept="image/*" required>
-          <div class="compression-info" id="compressionInfo">
-            Изображение будет оптимизировано до 800px и конвертировано в WebP
-          </div>
           <div class="image-preview" id="imagePreview">
             <div class="preview-title">Предпросмотр:</div>
             <img id="previewImage" src="" alt="Предпросмотр">
@@ -390,7 +369,7 @@
   <div class="loader" id="loader">
     <div class="loader-content">
       <div class="spinner"></div>
-      <div class="loader-text" id="loaderMessage">Оптимизация изображения...</div>
+      <div class="loader-text" id="loaderMessage">Загрузка в Cloudinary...</div>
     </div>
   </div>
 
@@ -401,16 +380,7 @@
     const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
     
     // Google Apps Script URL
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwcoehpA9ryAF8QfmWA41SS-Qmijzf5SgBDA46Kxh3fUm_rKa3icb5SjrgqZ50gaGHe/exec';
-    
-    // Конфигурация оптимизации
-    const OPTIMIZATION_CONFIG = {
-      maxWidth: 800,           // Максимальная ширина
-      maxHeight: 800,          // Максимальная высота
-      quality: 0.65,           // Качество 65%
-      format: 'webp',          // Предпочитаемый формат
-      maxSizeKB: 150           // Целевой максимальный размер
-    };
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyfUz0zcKlmZ4XzbIR73wuUt_XIYo9rw-sVmOYGmpcKR7Wab8Bx1_WKS8ms9KWnPrPobQ/exec';
     
     // Элементы DOM
     const form = document.getElementById('form');
@@ -421,7 +391,6 @@
     const previewImage = document.getElementById('previewImage');
     const fileInput = document.getElementById('photo');
     const statusMessage = document.getElementById('statusMessage');
-    const compressionInfo = document.getElementById('compressionInfo');
     
     // Предпросмотр изображения
     fileInput.addEventListener('change', function(e) {
@@ -431,12 +400,8 @@
         if (file.size > 10 * 1024 * 1024) {
           showMessage('Файл слишком большой. Максимальный размер: 10MB', 'error');
           e.target.value = '';
-          compressionInfo.style.display = 'none';
           return;
         }
-        
-        // Показываем информацию об оптимизации
-        compressionInfo.style.display = 'block';
         
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -447,127 +412,8 @@
       } else {
         imagePreview.style.display = 'none';
         previewImage.src = '';
-        compressionInfo.style.display = 'none';
       }
     });
-    
-    // Функция сжатия изображения
-    async function compressImage(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        
-        reader.onload = function(event) {
-          const img = new Image();
-          img.src = event.target.result;
-          
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            
-            // Рассчитываем новые размеры с сохранением пропорций
-            if (width > height) {
-              if (width > OPTIMIZATION_CONFIG.maxWidth) {
-                height = Math.round((height * OPTIMIZATION_CONFIG.maxWidth) / width);
-                width = OPTIMIZATION_CONFIG.maxWidth;
-              }
-            } else {
-              if (height > OPTIMIZATION_CONFIG.maxHeight) {
-                width = Math.round((width * OPTIMIZATION_CONFIG.maxHeight) / height);
-                height = OPTIMIZATION_CONFIG.maxHeight;
-              }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Улучшаем качество отрисовки
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            
-            // Отрисовываем изображение с новыми размерами
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Конвертируем в WebP с оптимальным качеством
-            canvas.toBlob(
-              function(blob) {
-                console.log(`Оригинал: ${(file.size / 1024).toFixed(2)}KB, Сжато: ${(blob.size / 1024).toFixed(2)}KB`);
-                
-                // Если размер все еще слишком большой, уменьшаем качество
-                if (blob.size > OPTIMIZATION_CONFIG.maxSizeKB * 1024) {
-                  console.log('Изображение все еще большое, дополнительное сжатие...');
-                  canvas.toBlob(
-                    function(blob2) {
-                      resolve(blob2);
-                    },
-                    'image/webp',
-                    OPTIMIZATION_CONFIG.quality * 0.8 // Дополнительное уменьшение качества
-                  );
-                } else {
-                  resolve(blob);
-                }
-              },
-              OPTIMIZATION_CONFIG.format,
-              OPTIMIZATION_CONFIG.quality
-            );
-          };
-          
-          img.onerror = function() {
-            reject(new Error('Ошибка загрузки изображения'));
-          };
-        };
-        
-        reader.onerror = function() {
-          reject(new Error('Ошибка чтения файла'));
-        };
-      });
-    }
-    
-    // Функция загрузки в Cloudinary (ИСПРАВЛЕННАЯ - без transformation параметра)
-    async function uploadToCloudinary(file, number) {
-      const timestamp = Math.floor(Date.now() / 1000);
-      const publicId = 'KH_' + number.replace(/[^\w]/g, '_') + '_' + timestamp;
-      
-      // Создаем FormData для Cloudinary
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      formData.append('public_id', publicId);
-      formData.append('folder', 'kh_parts');
-      formData.append('timestamp', timestamp.toString());
-      
-      // ДОБАВЛЯЕМ ТОЛЬКО РАЗРЕШЕННЫЕ ПАРАМЕТРЫ:
-      formData.append('context', `part_number=${number}`);
-      formData.append('tags', 'kh_parts,auto_parts');
-      
-      // Отправляем в Cloudinary
-      const response = await fetch(CLOUDINARY_UPLOAD_URL, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cloudinary: ${response.status} - ${errorText}`);
-      }
-      
-      return await response.json();
-    }
-    
-    // Функция для генерации оптимизированного URL Cloudinary
-    function generateOptimizedCloudinaryUrl(originalUrl) {
-      // Извлекаем public_id из URL Cloudinary
-      const urlParts = originalUrl.split('/upload/');
-      if (urlParts.length < 2) return originalUrl;
-      
-      // Добавляем параметры оптимизации в URL
-      const optimizedUrl = `${urlParts[0]}/upload/w_${OPTIMIZATION_CONFIG.maxWidth},c_limit,q_${Math.round(OPTIMIZATION_CONFIG.quality * 100)},f_auto/${urlParts[1]}`;
-      
-      return optimizedUrl;
-    }
     
     // Показать сообщение
     function showMessage(text, type = 'success') {
@@ -580,20 +426,12 @@
       }, 5000);
     }
     
-    // Форматирование размера файла
-    function formatFileSize(bytes) {
-      if (bytes < 1024) return bytes + ' bytes';
-      else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
-      else return (bytes / 1048576).toFixed(2) + ' MB';
-    }
-    
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const number = document.getElementById('number').value.trim();
       const qty = document.getElementById('qty').value;
       
-      // Валидация
       if (!number) {
         showMessage('Введите номер детали', 'error');
         document.getElementById('number').focus();
@@ -614,70 +452,95 @@
       // Блокируем кнопку и показываем индикатор загрузки
       submitBtn.disabled = true;
       loader.style.display = 'flex';
-      loaderMessage.textContent = 'Оптимизация изображения...';
+      loaderMessage.textContent = 'Загрузка изображения...';
       
-      try {
-        const originalFile = fileInput.files[0];
-        const originalSize = formatFileSize(originalFile.size);
-        
-        // Шаг 1: Сжимаем изображение
-        loaderMessage.textContent = 'Сжатие изображения...';
-        const compressedFile = await compressImage(originalFile);
-        const compressedSize = formatFileSize(compressedFile.size);
-        
-        console.log(`Сжатие: ${originalSize} → ${compressedSize}`);
-        
-        // Шаг 2: Загружаем в Cloudinary
-        loaderMessage.textContent = 'Загрузка в Cloudinary...';
-        const cloudinaryResult = await uploadToCloudinary(compressedFile, number);
-        
-        if (cloudinaryResult.error) {
-          throw new Error(`Cloudinary: ${cloudinaryResult.error.message}`);
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = async function(evt) {
+        try {
+          const dataUrl = evt.target.result;
+          
+          // Шаг 1: Загружаем изображение в Cloudinary
+          loaderMessage.textContent = 'Загрузка в Cloudinary...';
+          
+          const timestamp = Math.floor(Date.now() / 1000);
+          const publicId = 'KH_part_' + number.replace(/[^\w]/g, '_') + '_' + timestamp;
+          
+          // Создаем FormData для Cloudinary
+          const formData = new FormData();
+          formData.append('file', dataUrl);
+          formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+          formData.append('public_id', publicId);
+          formData.append('folder', 'samples/ecommerce');
+          formData.append('timestamp', timestamp.toString());
+          
+          // Отправляем в Cloudinary
+          const cloudinaryResponse = await fetch(CLOUDINARY_UPLOAD_URL, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!cloudinaryResponse.ok) {
+            const errorText = await cloudinaryResponse.text();
+            throw new Error(`Ошибка Cloudinary: ${errorText}`);
+          }
+          
+          const cloudinaryResult = await cloudinaryResponse.json();
+          
+          if (cloudinaryResult.error) {
+            throw new Error(`Cloudinary: ${cloudinaryResult.error.message}`);
+          }
+          
+          const imageUrl =
+  `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/` +
+  `f_auto,q_auto,w_800,c_limit/${cloudinaryResult.public_id}`;
+
+          
+          // Шаг 2: Отправляем данные в Google Sheets через JSONP
+          loaderMessage.textContent = 'Сохранение данных...';
+          
+          // Используем JSONP для обхода CORS
+          const jsonpResult = await saveViaJsonp(number, qty, imageUrl);
+          
+          // Скрываем индикатор загрузки
+          loader.style.display = 'none';
+          submitBtn.disabled = false;
+          
+          if (jsonpResult.result === 'success') {
+            showMessage(`✅ Данные сохранены! Номер: ${number}, Количество: ${qty}`, 'success');
+            
+            // Сбрасываем форму
+            document.getElementById('form').reset();
+            imagePreview.style.display = 'none';
+            
+            // Автофокус на первом поле
+            document.getElementById('number').focus();
+          } else {
+            throw new Error(jsonpResult.message || 'Ошибка сохранения');
+          }
+          
+        } catch (error) {
+          // Скрываем индикатор загрузки в случае ошибки
+          loader.style.display = 'none';
+          submitBtn.disabled = false;
+          
+          console.error('Ошибка:', error);
+          showMessage(`❌ ${error.message}`, 'error');
         }
-        
-        // Получаем оригинальный URL от Cloudinary
-        const originalImageUrl = cloudinaryResult.secure_url;
-        
-        // Генерируем оптимизированный URL для отображения
-        const optimizedImageUrl = generateOptimizedCloudinaryUrl(originalImageUrl);
-        
-        // Шаг 3: Отправляем данные в Google Sheets
-        loaderMessage.textContent = 'Сохранение данных...';
-        
-        // Сохраняем ОБА URL - оригинальный и оптимизированный
-        const jsonpResult = await saveViaJsonp(number, qty, originalImageUrl, optimizedImageUrl);
-        
-        // Скрываем индикатор загрузки
+      };
+      
+      reader.onerror = function() {
         loader.style.display = 'none';
         submitBtn.disabled = false;
-        
-        if (jsonpResult.result === 'success') {
-          const successMsg = `✅ Данные сохранены!\nНомер: ${number}\nКоличество: ${qty}\nРазмер: ${compressedSize}`;
-          showMessage(successMsg, 'success');
-          
-          // Сбрасываем форму
-          document.getElementById('form').reset();
-          imagePreview.style.display = 'none';
-          compressionInfo.style.display = 'none';
-          
-          // Автофокус на первом поле
-          document.getElementById('number').focus();
-        } else {
-          throw new Error(jsonpResult.message || 'Ошибка сохранения');
-        }
-        
-      } catch (error) {
-        // Скрываем индикатор загрузки в случае ошибки
-        loader.style.display = 'none';
-        submitBtn.disabled = false;
-        
-        console.error('Ошибка:', error);
-        showMessage(`❌ ${error.message}`, 'error');
-      }
+        showMessage('❌ Ошибка при чтении файла', 'error');
+      };
+      
+      reader.readAsDataURL(file);
     });
     
     // Функция для сохранения через JSONP
-    function saveViaJsonp(number, qty, originalImageUrl, optimizedImageUrl) {
+    function saveViaJsonp(number, qty, imageUrl) {
       return new Promise((resolve, reject) => {
         // Создаем уникальное имя callback функции
         const callbackName = 'googleSheetsCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2);
@@ -700,10 +563,8 @@
           callback: callbackName,
           number: number,
           qty: qty,
-          imageUrl: optimizedImageUrl, // Используем оптимизированный URL для отображения
-          originalImageUrl: originalImageUrl, // Сохраняем также оригинальный URL
-          timestamp: Date.now(),
-          source: 'optimized_upload'
+          imageUrl: imageUrl,
+          timestamp: Date.now()
         });
         
         // Создаем и добавляем script тег
@@ -712,19 +573,14 @@
         
         // Таймаут на случай если скрипт не загрузится
         const timeoutId = setTimeout(() => {
-          if (document.body.contains(script)) {
-            document.body.removeChild(script);
-          }
+          document.body.removeChild(script);
           delete window[callbackName];
           reject(new Error('Таймаут загрузки данных'));
-        }, 15000);
+        }, 10000);
         
         script.onload = () => clearTimeout(timeoutId);
         script.onerror = () => {
           clearTimeout(timeoutId);
-          if (document.body.contains(script)) {
-            document.body.removeChild(script);
-          }
           delete window[callbackName];
           reject(new Error('Ошибка загрузки скрипта'));
         };
@@ -736,19 +592,7 @@
     // Улучшение UX: фокус на первом поле при загрузке
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('number').focus();
-      
-      // Показываем информацию об оптимизации при загрузке
-      compressionInfo.textContent = `Изображение будет оптимизировано до ${OPTIMIZATION_CONFIG.maxWidth}px, формат WebP, ~${OPTIMIZATION_CONFIG.maxSizeKB}KB`;
-    });
-    
-    // Предотвращаем перезагрузку страницы при повторной отправке формы
-    window.addEventListener('beforeunload', function(e) {
-      if (submitBtn.disabled) {
-        e.preventDefault();
-        e.returnValue = 'Идет загрузка данных. Вы уверены, что хотите покинуть страницу?';
-        return e.returnValue;
-      }
     });
   </script>
 </body>
-</html>
+</html> 
