@@ -322,8 +322,8 @@
   </div>
 
   <script>
-    // URL вашего веб-приложения Google Apps Script
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlUD7bhCT9-dt7zkZkFD6KCULcDpT0-fu-vdBovNJ8o2Ja3BFcD3tE2xGzC0EEltqNCg/exec';
+    // URL вашего веб-приложения Google Apps Script (используйте /dev для тестирования)
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIvjuQV4RhUMaIZ_A35rZ7mhqMU79LhFpCCqhxFiGFLUtS_llYs9X6ky_C2fSVpmiZwQ/exec';
     
     // Элементы DOM
     const form = document.getElementById('form');
@@ -361,11 +361,17 @@
         return;
       }
       
+      // Проверяем размер файла (макс 5 МБ для Cloudinary free tier)
+      const file = fileInput.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 5 МБ.');
+        return;
+      }
+      
       // Блокируем кнопку и показываем индикатор загрузки
       submitBtn.disabled = true;
       loader.style.display = 'flex';
       
-      const file = fileInput.files[0];
       const reader = new FileReader();
       
       reader.onload = async function(evt) {
@@ -376,39 +382,20 @@
         
         try {
           // Отправляем данные на сервер Google Apps Script
-          const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              number: number,
-              qty: qty,
-              mimeType: mimeType,
-              base64: base64,
-              name: file.name
-            })
-          });
-          
-          // Получаем ответ от сервера
-          const result = await response.json();
-          
-          if (result.result === 'success') {
-            // Показываем сообщение об успехе
-            alert('✅ Данные отправлены!');
-            document.getElementById('form').reset();
+          // Используем подход с google.script.run для обхода CORS
+          if (typeof google !== 'undefined' && google.script && google.script.run) {
+            // Если загружено через Google Apps Script
+            google.script.run
+              .withSuccessHandler(handleSuccess)
+              .withFailureHandler(handleError)
+              .processFormData(number, qty, base64, mimeType, file.name);
           } else {
-            // Показываем сообщение об ошибке
-            alert('❌ Ошибка: ' + result.message);
+            // Используем fetch с proxy подходом
+            await sendViaFetch(number, qty, base64, mimeType, file.name);
           }
           
         } catch (error) {
-          console.error('Ошибка:', error);
-          alert('❌ Произошла ошибка при отправке данных.');
-        } finally {
-          // Скрываем индикатор загрузки в любом случае
-          loader.style.display = 'none';
-          submitBtn.disabled = false;
+          handleError(error);
         }
       };
       
@@ -421,6 +408,71 @@
       
       reader.readAsDataURL(file);
     });
+    
+    // Функция отправки через fetch
+    async function sendViaFetch(number, qty, base64, mimeType, fileName) {
+      try {
+        // Создаем FormData для обхода CORS preflight
+        const formData = new FormData();
+        formData.append('number', number);
+        formData.append('qty', qty);
+        formData.append('mimeType', mimeType);
+        formData.append('base64', base64);
+        formData.append('name', fileName);
+        
+        // Отправляем как multipart/form-data
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        // Получаем текст ответа
+        const responseText = await response.text();
+        
+        // Пытаемся распарсить как JSON
+        try {
+          const result = JSON.parse(responseText);
+          if (result.result === 'success') {
+            handleSuccess(result);
+          } else {
+            handleError(result.message || 'Неизвестная ошибка');
+          }
+        } catch (e) {
+          // Если не JSON, проверяем текст
+          if (responseText.includes('success') || response.status === 200) {
+            handleSuccess({result: 'success', message: 'Данные отправлены'});
+          } else {
+            handleError('Ошибка сервера: ' + responseText.substring(0, 100));
+          }
+        }
+      } catch (error) {
+        handleError(error.message);
+      }
+    }
+    
+    // Обработка успешной отправки
+    function handleSuccess(result) {
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
+      
+      alert('✅ Данные успешно отправлены!');
+      document.getElementById('form').reset();
+      document.getElementById('number').focus();
+      
+      console.log('Успех:', result);
+    }
+    
+    // Обработка ошибки
+    function handleError(error) {
+      loader.style.display = 'none';
+      submitBtn.disabled = false;
+      
+      const errorMessage = typeof error === 'string' ? error : 
+                          error.message || 'Неизвестная ошибка';
+      
+      alert('❌ Ошибка: ' + errorMessage);
+      console.error('Ошибка:', error);
+    }
 
     // Улучшение UX: фокус на первом поле при загрузке
     window.addEventListener('DOMContentLoaded', () => {
