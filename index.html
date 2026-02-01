@@ -1,2050 +1,436 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SMB SKYMALL</title>
-  
-  <!-- ===================== ССЫЛКИ ДЛЯ УДОБНОГО ИЗМЕНЕНИЯ ===================== -->
-  <script>
-    // ============== ССЫЛКИ НА ИКОНКИ И ШРИФТЫ ==============
-    const LINKS = {
-      // Иконка сайта (favicon)
-      FAVICON: "https://i.postimg.cc/dtSpKx0W/1.png",
-      
-      // Логотип в шапке
-      LOGO: "https://i.postimg.cc/wjGzSY92/1.png",
-      
-      // Шрифты
-      FONT_AWESOME: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
-      GOOGLE_FONT: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap",
-      
-      // ============== ССЫЛКИ НА ПРОЕКТЫ В ВЫПАДАЮЩЕМ МЕНЮ ==============
-      PROJECTS: {
-        // Проекты в основном выпадающем меню (Site Name Dropdown)
-        SKYMALL: {
-          NAME: "BLOCKBUSTER",
-          URL: "https://smart-bowling.github.io/SMB-BB/"
-        },
-        LUCKY_STRIKE_KH: {
-          NAME: "LUCKY STRIKE KH",
-          URL: "https://smart-bowling.github.io/SMB-LS-KH/"
-        }
-      },
-      
-      // ============== ССЫЛКИ В МЕНЮ (Dropdown Menu) ==============
-      MENU_LINKS: [
-        {
-          NAME: "ДЕТАЛИ",
-          URL: "https://smart-bowling.github.io/PARTS-SKYMALL/",
-          ICON: "fas fa-cube"
-        },
-        {
-          NAME: "STOP LANE",
-          URL: "https://smart-bowling.github.io/PS-STOP-SKYMALL/",
-          ICON: "fas fa-exclamation-triangle"
-        }
-      ],
-      
-      // ============== API И АУТЕНТИФИКАЦИЯ ==============
-      GAS_URL: "https://script.google.com/macros/s/AKfycbyB588wg_q1ouNVjuHQzQqM0I096g4VNK_SUs1WcmliKDu5lMhZfklX5JZjodiyZC59qA/exec",
-      GOOGLE_CLIENT_ID: "328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com",
-      
-      // ============== РАЗРЕШЕННЫЕ EMAIL ==============
-      ALLOWED_EMAILS: ["vadiksss900@gmail.com", "mesacevda1986@gmail.com", "bowlingblock.b@gmail.com", "glusg"]
-    };
-  </script>
-  <!-- ===================== КОНЕЦ ССЫЛОК ===================== -->
-  
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Добавить деталь KH</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
-    #login {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
+    :root {
+      --light-bg: #d7dce3;
+      --dark-bg: #1a2f40;
+      --accent: #dc143c;
+      --text-dark: #1a2f40;
+      --text-light: #ffffff;
+      --input-padding: 14px;
+      --border-radius: 8px;
+    }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--light-bg);
+      color: var(--text-dark);
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 10000;
-      padding: 20px;
-      gap: 20px;
+      padding: 10px;
+      min-height: 100vh;
+      height: 100vh;
     }
-
-    .google-btn {
-      background: #4285F4;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-    }
-
-    .google-btn:hover {
-      background: #3367D6;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: "Poppins", sans-serif;
-      background-color: #f4f6f9;
-      color: #1a2f40;
-      font-size: clamp(10px, 3vw, 14px);
-      font-weight: 700;
-    }
-
-    header {
-      background-color: #1f2937;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      user-select: none;
-      z-index: 1000;
-    }
-
-    .logo img {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 0;
-      transform: translateY(4px);
-    }
-
-    .site-name {
-      flex: 1;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-      cursor: pointer;
+    .container {
+      background-color: var(--text-light);
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      padding: 15px;
       position: relative;
-    }
-
-    .site-name-dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #1f2937;
-      border: 1px solid #444;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 1001;
-      min-width: 150px;
-      margin-top: 25px;
-      width: 90%;
-    }
-
-    .site-name-dropdown a {
-      padding: 10px 15px;
-      text-decoration: none;
-      color: white;
-      transition: background 0.3s;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      white-space: nowrap;
-      justify-content: center;
-    }
-
-    .site-name-dropdown a:hover {
-      background-color: #374151;
-    }
-
-    .menu-button {
-      width: 30px;
-      cursor: pointer;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      height: 20px;
+      max-height: 96vh;
     }
-
-    .menu-button div {
-      height: 4px;
-      background-color: white;
-      border-radius: 2px;
-    }
-
-    .dropdown {
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 70px;
-      right: 15px;
-      background-color: #1f2937;
-      border: 1px solid #444;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 9999;
-      min-width: 150px;
-    }
-
-    .dropdown a {
-      padding: 10px 15px;
-      text-decoration: none;
-      color: white;
-      transition: background 0.3s;
-      user-select: none;
-      display: flex;
-      align-items: center;
-    }
-
-    .dropdown a:hover {
-      background-color: #374151;
-    }
-
-    .icon-space {
-      margin-right: 6px;
-      width: 20px;
+    header {
+      background-color: var(--dark-bg);
+      padding: 12px;
+      border-radius: var(--border-radius);
       text-align: center;
-      font-size: 16px;
+      margin: 0 0 15px 0;
+      flex-shrink: 0;
     }
-
-    /* Кнопка РЕЙТИНГ */
-    .rating-button {
+    header h1 {
+      font-size: 1.3rem;
+      color: var(--text-light);
+      font-weight: 600;
+    }
+    form {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #1a2f40;
-      color: white;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 12px 16px;
-      margin: 80px auto 15px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      width: 96%;
-      max-width: 500px;
-      box-sizing: border-box;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      user-select: none;
-    }
-
-    .rating-button:hover {
-      background-color: #2a3648;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .rating-button:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-
-    .rating-button i {
-      font-size: 18px;
-      transition: transform 0.3s ease;
-    }
-
-    .rating-button.expanded i {
-      transform: rotate(180deg);
-    }
-
-    /* Карточка с открытыми задачами - теперь кликабельная */
-    .task-summary-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #fff;
-      color: #000;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 12px 16px;
-      margin: 15px auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      width: 96%;
-      max-width: 500px;
-      box-sizing: border-box;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      user-select: none;
-      min-height: 50px;
-    }
-
-    .task-summary-card:hover {
-      background-color: #f9f9f9;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .task-summary-card:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-
-    .task-summary-card.expanded {
-      margin-bottom: 0;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      border-bottom: 2px solid #dc143c;
-    }
-
-    /* Контейнер для фильтра по дате */
-    .date-filter-container {
-      display: none;
-      padding: 16px;
-      background-color: #f8f9fa;
-      border-radius: 0 0 12px 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      margin: 0 auto 15px;
-      width: 96%;
-      max-width: 500px;
-      box-sizing: border-box;
       flex-direction: column;
       gap: 12px;
-      border-top: none;
-    }
-
-    .date-filter-container.show {
-      display: flex;
-    }
-
-    .date-filter-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a2f40;
-      text-align: center;
-      margin-bottom: 5px;
-    }
-
-    .date-input-wrapper {
-      position: relative;
-      width: 100%;
-    }
-
-    .date-filter-input {
-      padding: 12px 16px;
-      padding-left: 45px;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      background-color: white;
-      color: #1a2f40;
-      cursor: pointer;
-      width: 100%;
-      -webkit-appearance: none;
-      appearance: none;
-      box-sizing: border-box;
-      min-height: 46px;
-      display: flex;
-      align-items: center;
-    }
-
-    .date-filter-input:focus {
-      outline: none;
-      border-color: #dc143c;
-    }
-
-    .calendar-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #666;
-      pointer-events: none;
-      font-size: 16px;
-    }
-
-    .clear-filter-btn {
-      padding: 12px 16px;
-      background-color: #1a2f40;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      width: 100%;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .clear-filter-btn:hover {
-      background-color: #0d1f2d;
-    }
-
-    /* Счетчик задач в карточке */
-    .task-count {
-      background-color: #dc143c;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 14px;
-      min-width: 30px;
-      text-align: center;
-    }
-
-    /* КОНТЕЙНЕР ДЛЯ КАРТОЧЕК В 3 КОЛОНКИ НА ПК */
-    .cards-container {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-      margin: 15px auto;
-      width: 96%;
-      max-width: 500px;
-      box-sizing: border-box;
-    }
-
-    /* АДАПТИВНЫЕ КАРТОЧКИ */
-    .mechanics-rating,
-    .winner-section {
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      padding: 15px;
-      box-sizing: border-box;
-      display: none;
-      width: 100%;
-    }
-
-    /* НА ПК: 3 КОЛОНКИ */
-    @media (min-width: 1024px) {
-      .cards-container {
-        grid-template-columns: repeat(3, 1fr);
-        max-width: 1600px;
-        width: 98%;
-      }
-      
-      .mechanics-rating,
-      .winner-section {
-        height: fit-content;
-      }
-    }
-
-    /* НА ПЛАНШЕТАХ: 2 КОЛОНКИ */
-    @media (min-width: 768px) and (max-width: 1023px) {
-      .cards-container {
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 900px;
-        width: 98%;
-      }
-    }
-
-    .mechanics-rating h3 {
-      margin: 0 0 12px 0;
-      text-align: center;
-      color: #1a2f40;
-      font-size: 16px;
-      border-bottom: 2px solid #dc143c;
-      padding-bottom: 8px;
-    }
-
-    .winner-section h3 {
-      margin: 0 0 12px 0;
-      text-align: center;
-      color: #1a2f40;
-      font-size: 16px;
-      border-bottom: 2px solid #dc143c;
-      padding-bottom: 8px;
-    }
-
-    .rating-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-    }
-
-    .rating-item:last-child {
-      border-bottom: none;
-    }
-
-    .winner-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-    }
-
-    .mechanic-name {
-      font-weight: 600;
-      color: #1a2f40;
-    }
-
-    .winner-name {
-      font-weight: 600;
-      color: #1a2f40;
-    }
-
-    .winner-count {
-      background-color: #dc143c;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 14px;
-      min-width: 30px;
-      text-align: center;
-    }
-
-    .rating-place {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .winner-place {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .place-badge {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 12px;
-      color: white;
-    }
-
-    .wrench-icon {
-      color: #1a2f40;
-      font-size: 16px;
-    }
-
-    .place-1 {
-      background-color: #ffd700;
-      color: #000;
-    }
-
-    .place-2 {
-      background-color: #c0c0c0;
-    }
-
-    .place-3 {
-      background-color: #cd7f32;
-    }
-
-    .place-other {
-      background-color: #1a2f40;
-    }
-
-    /* КОНТЕЙНЕР ТАБЛИЦЫ - ТОЖЕ РЕСПОНСИВНЫЙ */
-    #app-content {
-      width: 96%;
-      max-width: 500px;
-      margin: 20px auto 40px;
-      padding: 0px 5px 10px 5px;
-      box-sizing: border-box;
-      background: transparent;
-      border-radius: 0;
-      box-shadow: none;
-      overflow-x: auto;
-    }
-
-    /* АДАПТИВНАЯ ТАБЛИЦА НА ПК */
-    @media (min-width: 1024px) {
-      #app-content {
-        max-width: 1600px;
-        width: 98%;
-      }
-    }
-
-    table, thead, tbody, th, td, tr {
-      display: block;
-      width: 100%;
-    }
-
-    thead tr {
-      display: none;
-    }
-
-    tbody tr {
-      margin-bottom: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 12px;
-      box-sizing: border-box;
-      user-select: none;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      width: 100%;
-    }
-
-    tbody tr::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(220, 20, 60, 0.1) 0%, rgba(26, 47, 64, 0.1) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 0;
-    }
-
-    tbody tr.selected {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
-      margin-bottom: 60px;
-    }
-
-    tbody tr.selected::before {
-      opacity: 1;
-    }
-
-    tbody tr:nth-child(even) {
-      background-color: white;
-    }
-
-    tbody tr:hover {
-      background-color: #f9f9f9;
-    }
-
-    tbody td:nth-child(1) {
-      display: none;
-    }
-
-    tbody td {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 8px;
-      border-bottom: 1px solid #ddd;
-      font-weight: 700;
-      text-align: left;
-      white-space: normal;
-      font-size: 13px;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 1;
-    }
-
-    tbody td:last-child {
-      padding-right: 0;
-      border-bottom: none;
-    }
-
-    tbody td::before {
-      content: attr(data-label);
-      font-weight: 700;
-      color: #1a2f40;
-      flex-basis: 40%;
-      max-width: 40%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    tbody td[data-label="ОТПРАВИТЬ"]::before {
-      content: none !important;
-    }
-
-    select, button, .schema-button {
-      font-size: 13px;
-      padding: 5px 8px;
-      font-weight: 700;
-    }
-
-    tbody tr > td:last-child {
-      padding: 0;
-      border: none;
-    }
-
-    tbody tr > td:last-child .buttons-row {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 10px;
-      gap: 10px;
-    }
-
-    tbody tr > td:last-child .buttons-row .schema-button,
-    tbody tr > td:last-child .buttons-row button {
       flex: 1;
-      max-width: 48%;
-      padding: 8px 10px;
-      text-align: center;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
+      overflow: hidden;
     }
-
-    tbody tr > td:last-child .buttons-row span.sent-text {
+    .form-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
       flex: 1;
-      max-width: 48%;
-      padding: 8px 10px;
-      font-weight: 700;
+      overflow: hidden;
+      justify-content: space-between;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    label {
+      font-weight: 500;
+      font-size: 0.9rem;
       color: #444;
-      text-align: center;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
-
-    .schema-button {
-      background-color: #1a2f40;
-      color: white;
-      padding: 4px 6px;
-      font-weight: 700;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    button {
-      background-color: #dc143c;
-      color: white;
-      border: none;
-      cursor: pointer;
-      user-select: none;
-      border-radius: 4px;
-    }
-
-    button:hover {
-      background-color: #a90e2e;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 15px;
-      gap: 10px;
-      user-select: none;
-      flex-wrap: nowrap;
-      overflow-x: auto;
+    input[type="text"],
+    input[type="number"],
+    input[type="file"] {
       width: 100%;
-      padding: 5px 0;
+      padding: var(--input-padding);
+      border: 2px solid #ccc;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      min-height: 44px;
     }
-
-    .pagination button {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
+    input:focus {
+      border-color: var(--accent);
+    }
+    input[type="file"] {
+      padding: 10px;
+      background-color: #f8f9fa;
+    }
+    input[type="file"]::file-selector-button {
+      padding: 8px 12px;
+      background-color: var(--dark-bg);
       color: white;
-      font-weight: 700;
       border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
+    }
+    button {
+      padding: 14px;
+      background-color: var(--accent);
+      color: var(--text-light);
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      min-height: 50px;
       flex-shrink: 0;
+      margin-top: auto;
     }
-
-    .pagination button:hover:not(:disabled) {
-      background: linear-gradient(to bottom, #2a3648, #111b29);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    button:hover, button:active {
+      background-color: #b0102f;
     }
-
-    .pagination button:active:not(:disabled) {
-      transform: translateY(1px);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .pagination button:disabled {
-      background: #a0aec0;
+    button:disabled {
+      background-color: #cccccc;
       cursor: not-allowed;
-      opacity: 0.7;
-    }
-
-    .page-numbers {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: nowrap;
-      flex-shrink: 0;
-    }
-
-    .page-numbers button {
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .page-numbers button:hover {
-      background: linear-gradient(to bottom, #e51c47, #c01238);
-      transform: translateY(-1px);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    }
-
-    .page-numbers button.active {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-      transform: scale(1.05);
-    }
-
-    .ellipsis {
-      color: #1a2f40;
-      font-weight: 700;
-      padding: 0 5px;
-    }
-
-    .highlight {
-      background-color: #dc143c !important;
-      color: white !important;
     }
     
-    .schema-button i,
-    .sent-text i,
-    button i {
-      margin-right: 6px;
-    }
-
-    .loader-container {
+    /* Стили для индикатора загрузки */
+    .loader {
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.2);
-      display: flex;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
+      flex-direction: column;
     }
-
-    .loader {
-      width: 25px;
-      height: 25px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #dc143c;
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
+      border-top: 4px solid var(--accent);
       animation: spin 1s linear infinite;
     }
-
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    /* Стили для кнопок фильтрации под карточкой */
-    .card-filter-buttons {
-      display: none;
-      width: 100%;
-      gap: 10px;
-      margin-top: 10px;
-      position: absolute;
-      left: 0;
-      top: 100%;
-      z-index: 2;
-    }
-
-    .card-filter-button {
-      flex: 1;
-      padding: 8px 10px;
-      background-color: #1a2f40;
+    
+    .loader-text {
       color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 12px;
+      margin-top: 12px;
+      font-size: 1rem;
       text-align: center;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .loader-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .card-filter-button:hover {
-      background-color: #2a3648;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    /* Медиа-запросы для адаптивности */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      
+      .container {
+        padding: 12px;
+        max-height: 98vh;
+      }
+      
+      header {
+        padding: 10px;
+        margin-bottom: 12px;
+      }
+      
+      header h1 {
+        font-size: 1.2rem;
+      }
+      
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        padding: 12px;
+        font-size: 16px;
+      }
+      
+      button {
+        padding: 12px;
+        font-size: 1rem;
+      }
+      
+      .spinner {
+        width: 35px;
+        height: 35px;
+        border-width: 3px;
+      }
+      
+      .loader-text {
+        font-size: 0.9rem;
+      }
     }
 
-    .card-filter-button:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    @media (max-width: 350px) and (max-height: 650px) {
+      header h1 {
+        font-size: 1.1rem;
+      }
+      
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        padding: 10px;
+        min-height: 40px;
+      }
+      
+      button {
+        padding: 10px;
+        font-size: 0.95rem;
+        min-height: 45px;
+      }
+      
+      .form-group {
+        gap: 4px;
+      }
+      
+      label {
+        font-size: 0.85rem;
+      }
     }
 
-    /* Контейнер для карточки с относительным позиционированием */
-    .card-container {
-      position: relative;
-      margin-bottom: 20px;
+    /* Для landscape ориентации */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        align-items: flex-start;
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+      
+      .container {
+        max-height: 98vh;
+        overflow-y: auto;
+      }
+      
+      header {
+        padding: 8px;
+      }
+      
+      header h1 {
+        font-size: 1.1rem;
+      }
     }
 
-    /* Убираем нижний отступ у последней ячейки, чтобы было место для кнопок */
-    tbody tr > td:last-child {
-      padding-bottom: 0;
-    }
-
-    /* Добавляем место для кнопок под карточкой */
-    tbody tr.selected {
-      margin-bottom: 60px;
-    }
-
-    /* Стиль для кнопки "Показать все задачи" */
-    .show-all-button {
-      display: none;
-      width: 96%;
-      max-width: 500px;
-      margin: 10px auto;
-      padding: 10px 15px;
-      background-color: #1a2f40;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 14px;
-      text-align: center;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .show-all-button:hover {
-      background-color: #2a3648;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .show-all-button:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    /* АДАПТИВНОСТЬ КНОПОК И КАРТОЧЕК */
-    @media (min-width: 1024px) {
-      .rating-button,
-      .task-summary-card,
-      .date-filter-container,
-      .show-all-button {
-        max-width: 1600px;
-        width: 98%;
+    /* Для очень высоких экранов */
+    @media (min-height: 800px) {
+      .container {
+        max-height: 90vh;
+      }
+      
+      form {
+        gap: 16px;
+      }
+      
+      .form-group {
+        gap: 8px;
       }
     }
   </style>
-  <!-- Подключаем Flatpickr для календаря -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
-  <div id="login">
-    <h2>Вход на сайт</h2>
-    <button class="google-btn" onclick="googleAuth()">
-      <i class="fab fa-google"></i> Войти через Google
-    </button>
-  </div>
+  <div class="container">
+    <header>
+      <h1>ADD PART LS KH</h1>
+    </header>
+    <form id="form">
+      <div class="form-content">
+        <div class="form-group">
+          <label for="number">Номер детали</label>
+          <input type="text" id="number" placeholder="000-000-000" required>
+        </div>
 
-  <div id="loader" class="loader-container" style="display: none;">
-    <div class="loader"></div>
-  </div>
+        <div class="form-group">
+          <label for="qty">Количество</label>
+          <input type="number" id="qty" min="1" value="" required>
+        </div>
 
-  <header>
-    <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
-    <div class="site-name" onclick="toggleSiteNameDropdown()">
-SKYMALL
-      <div class="site-name-dropdown" id="siteNameDropdown">
-        <!-- Проекты будут добавлены через JavaScript -->
+        <div class="form-group">
+          <label for="photo">Фотография</label>
+          <input type="file" id="photo" accept="image/*" required>
+        </div>
+
+        <button type="submit" id="submit-btn">Отправить</button>
       </div>
-    </div>
-    <div class="menu-button" onclick="toggleDropdown()">
-      <div></div><div></div><div></div>
-    </div>
-    <div class="dropdown" id="dropdownMenu">
-      <!-- Меню будет добавлено через JavaScript -->
-    </div>
-  </header>
-
-  <!-- Кнопка РЕЙТИНГ -->
-  <div class="rating-button" id="ratingButton" onclick="toggleRating()" style="display: none;">
-    <div>РЕЙТИНГ</div>
-    <div><i class="fas fa-chevron-down"></i></div>
+    </form>
   </div>
-
-  <!-- Карточка с задачами - теперь кликабельная -->
-  <div class="task-summary-card" id="openTasksCard" onclick="toggleDateFilter()" style="display: none;">
-    <div id="task-summary-label">Открытых задач</div>
-    <div class="task-count" id="openTaskCount">0</div>
-  </div>
-
-  <!-- Контейнер для фильтрации по дате -->
-  <div class="date-filter-container" id="date-filter-container">
-    <div class="date-filter-label">Просмотр выполненных задач по дате</div>
-    <div class="date-input-wrapper">
-      <i class="fas fa-calendar-alt calendar-icon"></i>
-      <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
-    </div>
-    <button class="clear-filter-btn" id="clear-filter-btn">Сбросить фильтр</button>
-  </div>
-
-  <!-- КОНТЕЙНЕР ДЛЯ КАРТОЧЕК В 3 КОЛОНКИ -->
-  <div class="cards-container">
-    <div class="mechanics-rating" id="mechanicsRating">
-      <h3><i class="fas fa-trophy"></i> Рейтинг механиков за текущий месяц</h3>
-      <div id="ratingContent"></div>
-    </div>
-
-    <div class="winner-section" id="winnerSection">
-      <h3><i class="fas fa-crown"></i> Победитель прошлого месяца</h3>
-      <div id="winnerContent"></div>
+  
+  <!-- Индикатор загрузки -->
+  <div class="loader" id="loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <div class="loader-text">Отправка данных...</div>
     </div>
   </div>
 
-  <!-- Кнопка "Показать все задачи" -->
-  <button class="show-all-button" id="showAllButton" onclick="showAllTasks()" style="display: none;">
-    Показать все задачи
-  </button>
-
-  <div id="app-content" style="display:none;">
-    <table>
-      <thead>
-        <tr>
-          <th onclick="startColumnSearch(0)">ЗАДАЧА</th>
-          <th onclick="startColumnSearch(1)">МАШИНА</th>
-          <th onclick="startColumnSearch(2)">ОТКРЫТА</th>
-          <th onclick="startColumnSearch(3)">ЗАКРЫТА</th>
-          <th onclick="startColumnSearch(4)">ВЫПОЛНИЛ</th>
-          <th>ОТПРАВИТЬ</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-
-    <div class="pagination">
-      <button onclick="prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
-      <div class="page-numbers" id="pageNumbers"></div>
-      <button onclick="nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
   <script>
-    // ===================== ИСПОЛЬЗОВАНИЕ ССЫЛОК ИЗ КОНСТАНТ =====================
-    // Обновляем ссылки на основе констант
-    document.querySelector('link[rel="icon"]').href = LINKS.FAVICON;
-    document.querySelector('.logo img').src = LINKS.LOGO;
-
-    // Заполняем выпадающее меню проектами
-    function populateProjectsDropdown() {
-      const siteNameDropdown = document.getElementById('siteNameDropdown');
-      siteNameDropdown.innerHTML = '';
-      
-      // Добавляем проекты
-      for (const key in LINKS.PROJECTS) {
-        const project = LINKS.PROJECTS[key];
-        const link = document.createElement('a');
-        link.href = project.URL;
-        link.className = 'dropdown-button';
-        link.innerHTML = `<span>${project.NAME}</span>`;
-        siteNameDropdown.appendChild(link);
-      }
-    }
-
-    // Заполняем меню ссылками
-    function populateMenuLinks() {
-      const dropdownMenu = document.getElementById('dropdownMenu');
-      dropdownMenu.innerHTML = '';
-      
-      // Добавляем ссылки из меню
-      LINKS.MENU_LINKS.forEach(link => {
-        const menuItem = document.createElement('a');
-        menuItem.href = link.URL;
-        menuItem.innerHTML = `
-          <span class="icon-space"><i class="${link.ICON}"></i></span>${link.NAME}
-        `;
-        dropdownMenu.appendChild(menuItem);
-      });
-    }
-
-    // ===================== ОСНОВНОЙ КОД =====================
+    // URL вашего веб-приложения Google Apps Script
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlUD7bhCT9-dt7zkZkFD6KCULcDpT0-fu-vdBovNJ8o2Ja3BFcD3tE2xGzC0EEltqNCg/exec';
     
-    // Принудительное использование HTTPS
-    (function() {
-      if (window.location.protocol === 'http:' && !window.location.hostname.includes('localhost')) {
-        window.location.href = 'https:' + window.location.href.substring(5);
-      }
-    })();
-
-    const GAS_URL = LINKS.GAS_URL;
-    const allowedEmails = LINKS.ALLOWED_EMAILS;
-
-    let fullData = [];
-    let filteredData = [];
-    let isFiltered = false;
-    let currentFilterType = null;
-    let currentFilterValue = null;
-    let currentPage = 1;
-    const rowsPerPage = 20;
-    let activeSearchColumn = null;
-    let activeSearchText = "";
-    let selectedRowId = null;
-    let selectedRowData = null;
-    let isRatingVisible = false;
-    let isDateFilterVisible = false;
-    let datePicker = null;
-    let isDateFilterActive = false;
-    let currentFilterDate = '';
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // Заполняем меню
-      populateProjectsDropdown();
-      populateMenuLinks();
+    // Элементы DOM
+    const form = document.getElementById('form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loader = document.getElementById('loader');
+    
+    // Функция для проверки, помещается ли форма на экране
+    function checkFormFitsScreen() {
+      const formHeight = document.querySelector('.container').offsetHeight;
+      const windowHeight = window.innerHeight;
       
-      checkAuth();
-      
-      if (window.location.hash) {
-        processAuthResponse();
-      }
-      
-      document.addEventListener('click', function(e) {
-        const siteNameDropdown = document.getElementById('siteNameDropdown');
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        const dateFilterContainer = document.getElementById('date-filter-container');
-        const openTasksCard = document.getElementById('openTasksCard');
-        
-        if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
-          siteNameDropdown.style.display = 'none';
-        }
-        
-        if (!e.target.closest('.menu-button') && dropdownMenu.style.display === 'flex') {
-          dropdownMenu.style.display = 'none';
-        }
-        
-        // Закрываем фильтр дат при клике вне его области
-        if (!e.target.closest('#openTasksCard') && 
-            !e.target.closest('#date-filter-container') && 
-            dateFilterContainer.classList.contains('show')) {
-          toggleDateFilter();
-        }
-      });
-      
-      // Инициализируем календарь
-      initDatePicker();
-      
-      // Обработчик для кнопки сброса фильтра
-      document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
-    });
-
-    function checkAuth() {
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail && allowedEmails.includes(userEmail)) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('app-content').style.display = 'block';
-        document.getElementById('ratingButton').style.display = 'flex';
-        document.getElementById('openTasksCard').style.display = 'flex';
-        loadSheetData();
-      } else {
-        document.getElementById('login').style.display = 'flex';
+      if (formHeight > windowHeight) {
+        // Если форма не помещается, немного уменьшаем отступы
+        document.querySelector('.container').style.padding = '10px';
+        document.querySelector('header').style.padding = '8px';
+        document.querySelector('header').style.marginBottom = '8px';
+        document.querySelectorAll('input').forEach(input => {
+          input.style.padding = '10px';
+          input.style.minHeight = '40px';
+        });
+        document.querySelector('button').style.padding = '10px';
+        document.querySelector('button').style.minHeight = '45px';
       }
     }
-
-    function googleAuth() {
-      const clientId = LINKS.GOOGLE_CLIENT_ID;
-      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-      const scope = encodeURIComponent('email profile');
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+    
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
       
-      window.open(authUrl, 'GoogleAuth', 'width=500,height=600');
-    }
-
-    function processAuthResponse() {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
+      const number = document.getElementById('number').value.trim();
+      const qty = document.getElementById('qty').value;
+      const fileInput = document.getElementById('photo');
       
-      if (accessToken) {
-        showLoader();
-        
-        fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + accessToken)
-          .then(response => response.json())
-          .then(data => {
-            if (data.email && allowedEmails.includes(data.email)) {
-              localStorage.setItem('userEmail', data.email);
-              window.location.href = window.location.origin + window.location.pathname;
-            } else {
-              alert('Доступ запрещен для: ' + data.email);
-              localStorage.removeItem('userEmail');
-            }
-          })
-          .catch(error => {
-            console.error('Ошибка получения данных:', error);
-            alert('Ошибка авторизации');
-          })
-          .finally(() => {
-            hideLoader();
-          });
-      }
-    }
-
-    function toggleSiteNameDropdown() {
-      const dropdown = document.getElementById("siteNameDropdown");
-      dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-      
-      const menu = document.getElementById("dropdownMenu");
-      if (menu.style.display === "flex") {
-        menu.style.display = "none";
-      }
-      
-      event.stopPropagation();
-    }
-
-    function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-      
-      const dropdown = document.getElementById("siteNameDropdown");
-      if (dropdown.style.display === "block") {
-        dropdown.style.display = "none";
-      }
-      
-      event.stopPropagation();
-    }
-
-    function showLoader() {
-      document.getElementById("loader").style.display = "flex";
-    }
-
-    function hideLoader() {
-      document.getElementById("loader").style.display = "none";
-    }
-
-    function toggleRating() {
-      const ratingButton = document.getElementById('ratingButton');
-      const mechanicsRating = document.getElementById('mechanicsRating');
-      const winnerSection = document.getElementById('winnerSection');
-      
-      isRatingVisible = !isRatingVisible;
-      
-      if (isRatingVisible) {
-        ratingButton.classList.add('expanded');
-        mechanicsRating.style.display = 'block';
-        winnerSection.style.display = 'block';
-      } else {
-        ratingButton.classList.remove('expanded');
-        mechanicsRating.style.display = 'none';
-        winnerSection.style.display = 'none';
-      }
-    }
-
-    function toggleDateFilter() {
-      const openTasksCard = document.getElementById('openTasksCard');
-      const dateFilterContainer = document.getElementById('date-filter-container');
-      
-      isDateFilterVisible = !isDateFilterVisible;
-      
-      if (isDateFilterVisible) {
-        openTasksCard.classList.add('expanded');
-        dateFilterContainer.classList.add('show');
-      } else {
-        openTasksCard.classList.remove('expanded');
-        dateFilterContainer.classList.remove('show');
-        // При закрытии сбрасываем фильтр
-        if (isDateFilterActive) {
-          clearDateFilter();
-        }
-      }
-    }
-
-    function initDatePicker() {
-      const dateInput = document.getElementById('date-filter-input');
-      
-      if (datePicker) {
-        datePicker.destroy();
-      }
-      
-      // Инициализируем календарь
-      datePicker = flatpickr(dateInput, {
-        locale: "ru",
-        dateFormat: "d.m.Y",
-        allowInput: false,
-        clickOpens: true,
-        disableMobile: false,
-        onChange: function(selectedDates, dateStr, instance) {
-          if (dateStr) {
-            const formattedDate = dateStr;
-            filterTasksByDate(formattedDate);
-          }
-        }
-      });
-      
-      // Очищаем поле ввода
-      dateInput.value = '';
-    }
-
-    function filterTasksByDate(date) {
-      if (!date || date === '') {
-        clearDateFilter();
+      if (!number || !qty || fileInput.files.length === 0) {
+        alert('Заполните все поля и выберите фото.');
         return;
       }
       
-      // Активируем фильтр по дате
-      isDateFilterActive = true;
-      currentFilterDate = date;
+      // Блокируем кнопку и показываем индикатор загрузки
+      submitBtn.disabled = true;
+      loader.style.display = 'flex';
       
-      // Считаем выполненные задачи за эту дату
-      const completedTasksCount = countCompletedTasksByDate(date);
+      const file = fileInput.files[0];
+      const reader = new FileReader();
       
-      // Обновляем карточку с задачами
-      updateTaskSummaryCard(date, completedTasksCount);
-      
-      // Фильтруем данные: показываем только выполненные задачи за выбранную дату
-      filteredData = fullData.filter(row => {
-        // row[4] - дата выполнения, row[5] - исполнитель
-        return row[4] === date && row[5] && row[5].trim() !== '';
-      });
-      
-      // Сортируем отфильтрованные данные по дате выполнения (новые сверху)
-      filteredData.sort((a, b) => {
-        const dateA = parseDate(a[4]);
-        const dateB = parseDate(b[4]);
-        return dateB - dateA;
-      });
-      
-      // Устанавливаем флаг фильтрации
-      isFiltered = true;
-      currentFilterType = 'date';
-      currentFilterValue = date;
-      
-      // Показываем отфильтрованные данные
-      currentPage = 1;
-      renderFilteredPage(currentPage);
-      
-      // Показываем кнопку "Показать все задачи"
-      document.getElementById('showAllButton').style.display = 'block';
-    }
-
-    function countCompletedTasksByDate(date) {
-      if (!fullData || fullData.length === 0) return 0;
-      
-      return fullData.filter(row => {
-        return row[4] === date && row[5] && row[5].trim() !== '';
-      }).length;
-    }
-
-    function parseDate(dateStr) {
-      if (!dateStr || dateStr === '-') return new Date(0);
-      
-      const parts = dateStr.split('.');
-      if (parts.length !== 3) return new Date(0);
-      
-      const day = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1;
-      const year = parseInt(parts[2]);
-      
-      return new Date(year, month, day);
-    }
-
-    function clearDateFilter() {
-      isDateFilterActive = false;
-      currentFilterDate = '';
-      
-      // Сбрасываем поле ввода календаря
-      const dateInput = document.getElementById('date-filter-input');
-      if (dateInput) {
-        dateInput.value = '';
-      }
-      
-      // Восстанавливаем карточку с открытыми задачами
-      updateOpenTaskCard(fullData);
-      
-      // Сбрасываем фильтр
-      showAllTasks();
-    }
-
-    function updateOpenTaskCard(data) {
-      const openCount = data.filter(row => !row[5]).length;
-      document.getElementById("openTaskCount").textContent = openCount;
-      document.getElementById("task-summary-label").textContent = "Открытых задач";
-    }
-
-    function updateTaskSummaryCard(date, count) {
-      document.getElementById("openTaskCount").textContent = count;
-      document.getElementById("task-summary-label").textContent = `Выполненные задачи за дату: ${date}`;
-    }
-
-    async function loadSheetData() {
-      showLoader();
-      try {
-        const response = await fetch(`${GAS_URL}?action=getData`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        fullData = await response.json();
+      reader.onload = async function(evt) {
+        const dataUrl = evt.target.result;
+        const parts = dataUrl.split(',');
+        const mimeType = parts[0].match(/data:(.*);base64/)[1];
+        const base64 = parts[1];
         
-        // Сортируем данные: сначала открытые задачи, затем закрытые
-        fullData.sort((a, b) => {
-          const aIsOpen = !a[5];
-          const bIsOpen = !b[5];
-          
-          if (aIsOpen && !bIsOpen) return -1;
-          if (!aIsOpen && bIsOpen) return 1;
-          return 0;
-        });
-        
-        updateOpenTaskCard(fullData);
-        updateMechanicsRating(fullData);
-        if (fullData.length === 0) {
-          document.getElementById("tableBody").innerHTML = "<tr><td colspan='6'>Нет задач</td></tr>";
-          return;
-        }
-        renderPage(currentPage);
-      } catch (e) {
-        document.getElementById("tableBody").innerHTML = "<tr><td colspan='6'>Ошибка загрузки данных</td></tr>";
-        console.error(e);
-      } finally {
-        hideLoader();
-      }
-    }
-
-    function updateMechanicsRating(data) {
-      const ratingContent = document.getElementById('ratingContent');
-      const winnerContent = document.getElementById('winnerContent');
-      
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      
-      // Определяем предыдущий месяц
-      let prevMonth = currentMonth - 1;
-      let prevYear = currentYear;
-      if (prevMonth < 0) {
-        prevMonth = 11;
-        prevYear = currentYear - 1;
-      }
-      
-      const monthNames = [
-        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-      ];
-      
-      // Статистика для текущего месяца
-      const currentMonthStats = {};
-      // Статистика для предыдущего месяца
-      const previousMonthStats = {};
-      
-      // Обрабатываем все данные
-      data.forEach(row => {
-        if (row[4] && row[4].trim() !== '') {
-          try {
-            const dateParts = row[4].split('.');
-            if (dateParts.length === 3) {
-              const day = parseInt(dateParts[0]);
-              const month = parseInt(dateParts[1]) - 1;
-              const year = parseInt(dateParts[2]);
-              
-              const mechanic = row[5];
-              
-              if (mechanic && (mechanic === 'МЕХАНИК(1)' || mechanic === 'МЕХАНИК(2)')) {
-                // Текущий месяц
-                if (month === currentMonth && year === currentYear) {
-                  currentMonthStats[mechanic] = (currentMonthStats[mechanic] || 0) + 1;
-                }
-                // Предыдущий месяц
-                if (month === prevMonth && year === prevYear) {
-                  previousMonthStats[mechanic] = (previousMonthStats[mechanic] || 0) + 1;
-                }
-              }
-            }
-          } catch (e) {
-            console.error('Ошибка парсинга даты:', row[4], e);
-          }
-        }
-      });
-      
-      // ОБНОВЛЯЕМ РЕЙТИНГ ТЕКУЩЕГО МЕСЯЦА
-      const currentMonthArray = Object.entries(currentMonthStats).map(([name, count]) => ({
-        name,
-        count
-      }));
-      
-      currentMonthArray.sort((a, b) => b.count - a.count);
-      
-      if (currentMonthArray.length > 0) {
-        ratingContent.innerHTML = '';
-        
-        currentMonthArray.forEach((mechanic, index) => {
-          const place = index + 1;
-          const ratingItem = document.createElement('div');
-          ratingItem.className = 'rating-item';
-          
-          let placeClass = 'place-other';
-          if (place === 1) placeClass = 'place-1';
-          else if (place === 2) placeClass = 'place-2';
-          else if (place === 3) placeClass = 'place-3';
-          
-          ratingItem.innerHTML = `
-            <div class="rating-place">
-              <div class="place-badge ${placeClass}">${place}</div>
-              <span class="mechanic-name">${mechanic.name}</span>
-            </div>
-            <div class="task-count">${mechanic.count}</div>
-          `;
-          
-          ratingContent.appendChild(ratingItem);
-        });
-      } else {
-        ratingContent.innerHTML = `<div style="text-align: center; color: #666; padding: 20px;">Нет данных за ${monthNames[currentMonth]}</div>`;
-      }
-      
-      // ОБНОВЛЯЕМ ПОБЕДИТЕЛЯ ПРЕДЫДУЩЕГО МЕСЯЦА
-      const previousMonthArray = Object.entries(previousMonthStats).map(([name, count]) => ({
-        name,
-        count
-      }));
-      
-      previousMonthArray.sort((a, b) => b.count - a.count);
-      
-      if (previousMonthArray.length > 0 && previousMonthArray[0].count > 0) {
-        const winner = previousMonthArray[0];
-        winnerContent.innerHTML = `
-          <div class="winner-item">
-            <div class="winner-place">
-              <i class="fas fa-wrench wrench-icon"></i>
-              <span class="winner-name">${winner.name}</span>
-            </div>
-            <div class="winner-count">${winner.count}</div>
-          </div>
-        `;
-      } else {
-        winnerContent.innerHTML = `<div style="text-align: center; color: #666; padding: 8px 0;">Нет данных за ${monthNames[prevMonth]}</div>`;
-      }
-    }
-
-    async function updateSheet(rowNumber, doneByValue) {
-      showLoader();
-      try {
-        const params = new URLSearchParams({
-          action: 'update',
-          rowNumber,
-          doneByValue
-        });
-        const response = await fetch(`${GAS_URL}?${params.toString()}`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const updatedRow = await response.json();
-
-        const index = fullData.findIndex(row => row[0] === rowNumber);
-        if (index !== -1) fullData[index] = updatedRow;
-
-        // После обновления снова сортируем данные
-        fullData.sort((a, b) => {
-          const aIsOpen = !a[5];
-          const bIsOpen = !b[5];
-          
-          if (aIsOpen && !bIsOpen) return -1;
-          if (!aIsOpen && bIsOpen) return 1;
-          return 0;
-        });
-
-        // Обновляем отфильтрованные данные, если они активны
-        if (isFiltered) {
-          if (currentFilterType === 'machine') {
-            filteredData = fullData.filter(row => 
-              row[1] === currentFilterValue && !row[5]
-            );
-          } else if (currentFilterType === 'task') {
-            filteredData = fullData.filter(row => 
-              row[2] === currentFilterValue && !row[5]
-            );
-          } else if (currentFilterType === 'date') {
-            filteredData = fullData.filter(row => {
-              return row[4] === currentFilterDate && row[5] && row[5].trim() !== '';
-            });
-          }
-        }
-
-        updateOpenTaskCard(fullData);
-        updateMechanicsRating(fullData);
-        
-        if (isFiltered) {
-          renderFilteredPage(currentPage);
-        } else {
-          renderPage(currentPage, false);
-        }
-        
-        return Promise.resolve();
-      } catch (e) {
-        alert('Ошибка при обновлении данных');
-        console.error(e);
-        return Promise.reject(e);
-      } finally {
-        hideLoader();
-      }
-    }
-
-    function renderPage(page, scrollToTop = true) {
-      if (scrollToTop) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      
-      const tableBody = document.getElementById("tableBody");
-      tableBody.innerHTML = "";
-
-      const start = (page - 1) * rowsPerPage;
-      const end = start + rowsPerPage;
-      const pageData = isFiltered ? filteredData.slice(start, end) : fullData.slice(start, end);
-
-      pageData.forEach((row, index) => {
-        // Создаем контейнер для карточки
-        const cardContainer = document.createElement("div");
-        cardContainer.className = "card-container";
-        cardContainer.id = `card-container-${row[0]}`;
-        
-        // Создаем кнопки фильтрации
-        const filterButtons = document.createElement("div");
-        filterButtons.className = "card-filter-buttons";
-        filterButtons.id = `filter-buttons-${row[0]}`;
-        filterButtons.innerHTML = `
-          <button class="card-filter-button" onclick="filterByMachineFromCard(${row[0]})">
-            Задачи с этой машиной
-          </button>
-          <button class="card-filter-button" onclick="filterByTaskFromCard(${row[0]})">
-            Машины с этой задачей
-          </button>
-        `;
-        
-        // Создаем карточку (строку таблицы)
-        const tr = document.createElement("tr");
-        tr.id = `card-${row[0]}`;
-        const schemaLink = row[2]
-          ? `<a href="${row[2]}" target="_blank" class="schema-button">
-               <i class="fas fa-file-alt"></i>Открыть
-             </a>`
-          : "";
-
-        tr.innerHTML = `
-          <td data-label="ЗАДАЧА">${row[2] ? `
-            <a href="${row[2]}" target="_blank" class="schema-button">
-              <i class="fas fa-file-alt"></i>Открыть
-            </a>` : "Нет схемы"}
-          </td>
-          <td data-label="МАШИНА">${row[1]}</td>
-          <td data-label="ОТКРЫТА">${row[3]}</td>
-          <td data-label="ЗАКРЫТА">${row[4]}</td>
-          ${row[5]
-            ? `<td data-label="ВЫПОЛНИЛ">${row[5]}</td>`
-            : `<td data-label="ВЫПОЛНИЛ" id="gText_${row[0]}">
-                <select id="g_${row[0]}">
-                  <option value="" selected disabled></option>
-                  <option value="МЕХАНИК(1)">МЕХАНИК(1)</option>
-                  <option value="МЕХАНИК(2)">МЕХАНИК(2)</option>
-                </select>
-              </td>`}
-          <td data-label="ОТПРАВИТЬ">
-            <div class="buttons-row">
-              ${schemaLink}
-              ${row[5]
-                ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
-                : `<button id="btn_${row[0]}" onclick="validateAndSend(${row[0]});">
-                     <i class="fas fa-paper-plane"></i>Отправить
-                   </button>`}
-            </div>
-          </td>`;
-        
-        // Собираем все вместе
-        cardContainer.appendChild(tr);
-        cardContainer.appendChild(filterButtons);
-        
-        // Добавляем обработчик клика на карточку
-        tr.addEventListener('click', function(e) {
-          // Не обрабатываем клик по кнопкам или селектам
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
-            return;
-          }
-          
-          const rowId = row[0];
-          
-          // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
-          if (selectedRowId === rowId) {
-            hideCardButtons(rowId);
-            selectedRowId = null;
-            selectedRowData = null;
-            tr.classList.remove('selected');
-            return;
-          }
-          
-          // Скрываем кнопки у предыдущей выбранной карточки
-          if (selectedRowId) {
-            hideCardButtons(selectedRowId);
-            const prevCard = document.getElementById(`card-${selectedRowId}`);
-            if (prevCard) prevCard.classList.remove('selected');
-          }
-          
-          // Сохраняем данные выбранной строки
-          selectedRowData = row;
-          selectedRowId = rowId;
-          
-          // Показываем кнопки у текущей карточки
-          showCardButtons(rowId);
-          
-          // Выделяем карточку
-          tr.classList.add('selected');
-        });
-        
-        // Добавляем обработчик клика на кнопку "Открыть"
-        const openButton = tr.querySelector('.schema-button');
-        if (openButton) {
-          openButton.addEventListener('click', function(e) {
-            const rowId = row[0];
-            
-            // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
-            if (selectedRowId === rowId) {
-              hideCardButtons(rowId);
-              selectedRowId = null;
-              selectedRowData = null;
-              tr.classList.remove('selected');
-              
-              // Открываем ссылку в новой вкладке
-              window.open(this.href, '_blank');
-              e.preventDefault();
-              return;
-            }
-            
-            // Скрываем кнопки у предыдущей выбранной карточки
-            if (selectedRowId) {
-              hideCardButtons(selectedRowId);
-              const prevCard = document.getElementById(`card-${selectedRowId}`);
-              if (prevCard) prevCard.classList.remove('selected');
-            }
-            
-            // Сохраняем данные выбранной строки
-            selectedRowData = row;
-            selectedRowId = rowId;
-            
-            // Показываем кнопки у текущей карточки
-            showCardButtons(rowId);
-            
-            // Выделяем карточку
-            tr.classList.add('selected');
-            
-            // Открываем ссылку в новой вкладке
-            window.open(this.href, '_blank');
-            
-            // Отменяем стандартное поведение, чтобы не открывать ссылку дважды
-            e.preventDefault();
+        try {
+          // Отправляем данные на сервер Google Apps Script
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              number: number,
+              qty: qty,
+              mimeType: mimeType,
+              base64: base64,
+              name: file.name
+            })
           });
-        }
-        
-        // Добавляем карточку в таблицу
-        tableBody.appendChild(cardContainer);
-      });
-
-      applyHighlight();
-      renderPageNumbers();
-      
-      if (isFiltered) {
-        document.getElementById("prevBtn").disabled = currentPage === 1;
-        document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= filteredData.length;
-        // Показываем кнопку "Показать все задачи"
-        document.getElementById('showAllButton').style.display = 'block';
-      } else {
-        document.getElementById("prevBtn").disabled = currentPage === 1;
-        document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
-        // Скрываем кнопку "Показать все задачи"
-        document.getElementById('showAllButton').style.display = 'none';
-      }
-    }
-
-    function showCardButtons(rowId) {
-      const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
-      if (filterButtons) {
-        filterButtons.style.display = 'flex';
-      }
-    }
-
-    function hideCardButtons(rowId) {
-      const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
-      if (filterButtons) {
-        filterButtons.style.display = 'none';
-      }
-    }
-
-    function renderFilteredPage(page) {
-      const dataToUse = isFiltered ? filteredData : fullData;
-      const totalPages = Math.ceil(dataToUse.length / rowsPerPage);
-      
-      if (page > totalPages && totalPages > 0) {
-        currentPage = totalPages;
-      }
-      
-      renderPage(currentPage, true);
-    }
-
-    function validateAndSend(rowNumber) {
-      const gSelect = document.getElementById(`g_${rowNumber}`);
-      const btn = document.getElementById(`btn_${rowNumber}`);
-
-      if (!gSelect || !gSelect.value) {
-        alert("Заполните все формы!");
-        return;
-      }
-
-      // Сохраняем текущую позицию прокрутки
-      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-      
-      updateSheet(rowNumber, gSelect.value).then(() => {
-        // Восстанавливаем позицию прокрутки после обновления
-        window.scrollTo(0, scrollPosition);
-      });
-    }
-
-    function updateSingleRow(rowNumber, rowData) {
-      const rows = document.getElementById("tableBody").getElementsByTagName("tr");
-      
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const btn = row.querySelector(`button[id="btn_${rowNumber}"]`);
-        
-        if (btn) {
-          const schemaLink = rowData[2]
-            ? `<a href="${rowData[2]}" target="_blank" class="schema-button">
-                 <i class="fas fa-file-alt"></i>Открыть
-               </a>`
-            : "";
-
-          row.cells[0].innerHTML = rowData[2] ? `
-            <a href="${rowData[2]}" target="_blank" class="schema-button">
-              <i class="fas fa-file-alt"></i>Открыть
-            </a>` : "Нет схемы";
           
-          row.cells[1].textContent = rowData[1];
-          row.cells[2].textContent = rowData[3];
-          row.cells[3].textContent = rowData[4];
+          // Получаем ответ от сервера
+          const result = await response.json();
           
-          if (rowData[5]) {
-            row.cells[4].innerHTML = rowData[5];
-            row.cells[4].id = "";
+          if (result.result === 'success') {
+            // Показываем сообщение об успехе
+            alert('✅ Данные отправлены!');
+            document.getElementById('form').reset();
           } else {
-            row.cells[4].innerHTML = `
-              <select id="g_${rowData[0]}">
-                <option value="" selected disabled></option>
-                <option value="МЕХАНИК(1)">МЕХАНИК(1)</option>
-                <option value="МЕХАНИК(2)">МЕХАНИК(2)</option>
-              </select>`;
-            row.cells[4].id = `gText_${rowData[0]}`;
+            // Показываем сообщение об ошибке
+            alert('❌ Ошибка: ' + result.message);
           }
           
-          const buttonsRow = row.cells[5].querySelector('.buttons-row');
-          buttonsRow.innerHTML = `
-            ${schemaLink}
-            ${rowData[5]
-              ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
-              : `<button id="btn_${rowData[0]}" onclick="validateAndSend(${rowData[0]});">
-                   <i class="fas fa-paper-plane"></i>Отправить
-                 </button>`}
-          `;
-          
-          break;
-        }
-      }
-      
-      applyHighlight();
-      updateOpenTaskCard(fullData);
-      updateMechanicsRating(fullData);
-    }
-
-    function startColumnSearch(columnIndex) {
-      const searchText = prompt("Введите текст для поиска:");
-      if (searchText === null || searchText.trim() === "") {
-        activeSearchColumn = null;
-        activeSearchText = "";
-      } else {
-        activeSearchColumn = columnIndex;
-        activeSearchText = searchText.trim().toLowerCase();
-      }
-      renderPage(currentPage);
-    }
-
-    function applyHighlight() {
-      if (activeSearchColumn === null || activeSearchText === "") return;
-      const rows = document.getElementById("tableBody").getElementsByTagName("tr");
-      for (let row of rows) {
-        const cells = row.getElementsByTagName("td");
-        if (cells.length > activeSearchColumn) {
-          const cell = cells[activeSearchColumn];
-          const text = cell.textContent || cell.innerText;
-          if (text.toLowerCase().includes(activeSearchText)) {
-            cell.classList.add("highlight");
-          } else {
-            cell.classList.remove("highlight");
-          }
-        }
-      }
-    }
-
-    function renderPageNumbers() {
-      const pageContainer = document.getElementById("pageNumbers");
-      pageContainer.innerHTML = "";
-      const dataToUse = isFiltered ? filteredData : fullData;
-      const totalPages = Math.ceil(dataToUse.length / rowsPerPage);
-      
-      if (totalPages <= 1) return;
-      
-      addPageButton(1, pageContainer);
-      
-      if (currentPage > 3 && totalPages > 3) {
-        const ellipsis = document.createElement("span");
-        ellipsis.className = "ellipsis";
-        ellipsis.textContent = "...";
-        pageContainer.appendChild(ellipsis);
-      }
-      
-      if (currentPage > 1 && currentPage < totalPages) {
-        addPageButton(currentPage, pageContainer);
-      }
-      
-      if (currentPage < totalPages - 2 && totalPages > 3) {
-        const ellipsis = document.createElement("span");
-        ellipsis.className = "ellipsis";
-        ellipsis.textContent = "...";
-        pageContainer.appendChild(ellipsis);
-      }
-      
-      if (totalPages > 1) {
-        addPageButton(totalPages, pageContainer);
-      }
-    }
-
-    function addPageButton(pageNumber, container) {
-      const btn = document.createElement("button");
-      btn.textContent = pageNumber;
-      if (pageNumber === currentPage) btn.classList.add("active");
-      btn.onclick = () => {
-        currentPage = pageNumber;
-        if (isFiltered) {
-          renderFilteredPage(currentPage);
-        } else {
-          renderPage(currentPage, true);
+        } catch (error) {
+          console.error('Ошибка:', error);
+          alert('❌ Произошла ошибка при отправке данных.');
+        } finally {
+          // Скрываем индикатор загрузки в любом случае
+          loader.style.display = 'none';
+          submitBtn.disabled = false;
         }
       };
-      container.appendChild(btn);
-    }
+      
+      reader.onerror = function() {
+        // Скрываем индикатор загрузки в случае ошибки чтения файла 
+        loader.style.display = 'none';
+        submitBtn.disabled = false;
+        alert('❌ Ошибка при чтении файла.');
+      };
+      
+      reader.readAsDataURL(file);
+    });
 
-    function prevPage() {
-      if (currentPage > 1) {
-        currentPage--;
-        if (isFiltered) {
-          renderFilteredPage(currentPage);
-        } else {
-          renderPage(currentPage, true);
-        }
-      }
-    }
-
-    function nextPage() {
-      const dataToUse = isFiltered ? filteredData : fullData;
-      if (currentPage * rowsPerPage < dataToUse.length) {
-        currentPage++;
-        if (isFiltered) {
-          renderFilteredPage(currentPage);
-        } else {
-          renderPage(currentPage, true);
-        }
-      }
-    }
-
-    // Функции для работы с фильтрацией из карточек
-    function filterByMachineFromCard(rowNumber) {
-      const row = fullData.find(r => r[0] === rowNumber);
-      if (!row) return;
-      
-      const machineName = row[1];
-      currentFilterType = 'machine';
-      currentFilterValue = machineName;
-      
-      // Фильтруем только невыполненные задачи с этой машиной
-      filteredData = fullData.filter(row => 
-        row[1] === machineName && !row[5]
-      );
-      
-      isFiltered = true;
-      currentPage = 1;
-      renderFilteredPage(currentPage);
-      
-      // Показываем кнопку "Показать все задачи"
-      document.getElementById('showAllButton').style.display = 'block';
-    }
-
-    function filterByTaskFromCard(rowNumber) {
-      const row = fullData.find(r => r[0] === rowNumber);
-      if (!row) return;
-      
-      const taskName = row[2];
-      currentFilterType = 'task';
-      currentFilterValue = taskName;
-      
-      // Фильтруем только невыполненные задачи с этой задачей (по всем машинам)
-      filteredData = fullData.filter(row => 
-        row[2] === taskName && !row[5]
-      );
-      
-      isFiltered = true;
-      currentPage = 1;
-      renderFilteredPage(currentPage);
-      
-      // Показываем кнопку "Показать все задачи"
-      document.getElementById('showAllButton').style.display = 'block';
-    }
-
-    function showAllTasks() {
-      isFiltered = false;
-      currentFilterType = null;
-      currentFilterValue = null;
-      currentPage = 1;
-      renderPage(currentPage);
-      
-      // Скрываем кнопку "Показать все задачи"
-      document.getElementById('showAllButton').style.display = 'none';
-      
-      // Снимаем выделение с выбранной карточки
-      if (selectedRowId) {
-        hideCardButtons(selectedRowId);
-        const selectedCard = document.getElementById(`card-${selectedRowId}`);
-        if (selectedCard) {
-          selectedCard.classList.remove('selected');
-        }
-        selectedRowId = null;
-        selectedRowData = null;
-      }
-      
-      // Сбрасываем фильтр даты если он был активен
-      if (isDateFilterActive) {
-        clearDateFilter();
-      }
-    }
+    // Улучшение UX: фокус на первом поле при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('number').focus();
+      // Проверяем, помещается ли форма на экране
+      setTimeout(checkFormFitsScreen, 100);
+    });
+    
+    // Также проверяем при изменении размера окна
+    window.addEventListener('resize', checkFormFitsScreen);
   </script>
 </body>
 </html>
