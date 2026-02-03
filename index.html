@@ -790,68 +790,60 @@
       100% { transform: rotate(360deg); }
     }
     
-    /* Стили для десктопной версии */
-    @media (min-width: 769px) {
-      .cards {
-        flex-direction: row !important;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 20px;
-        max-width: 100%;
-        margin: 0 auto;
-      }
-      
-      .card {
-        width: calc((100% - 40px) / 3) !important; /* 3 карточки в ряд с отступами */
-        max-width: none !important;
-        margin: 0 !important;
-        flex: 0 0 auto;
-      }
-      
-      .top-controls {
-        max-width: 100% !important;
-        justify-content: center;
-      }
-      
-      .pagination {
-        max-width: 100% !important;
-      }
-      
-      /* Улучшение читаемости на больших экранах */
-      .part-name-text {
-        font-size: 20px;
-      }
-      
-      .pill {
-        font-size: 22px;
-        padding: 0 25px;
-      }
-      
-      .btn {
-        font-size: 18px;
-      }
+    /* Стили только для десктопной версии (НЕТ медиа-запросов для мобильных!) */
+    /* На мобильных и планшетах всегда 1 карточка в ряд */
+    /* На ПК (только когда ширина больше 1024px) - 3 карточки в ряд */
+    
+    .cards.desktop-layout {
+      flex-direction: row !important;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 20px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    
+    .card.desktop-layout {
+      width: calc((100% - 40px) / 3) !important; /* 3 карточки в ряд с отступами */
+      max-width: none !important;
+      margin: 0 !important;
+      flex: 0 0 auto;
     }
     
     /* Для очень больших экранов */
-    @media (min-width: 1200px) {
-      .cards {
-        gap: 25px;
-      }
-      
-      .card {
-        width: calc((100% - 50px) / 3) !important;
-      }
-      
-      .media-block {
-        padding-top: 65%; /* Более квадратное соотношение */
-      }
+    .cards.desktop-layout.large-screen {
+      gap: 25px;
     }
     
-    /* Для планшетов (2 карточки в ряд) */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .card {
-        width: calc((100% - 20px) / 2) !important; /* 2 карточки в ряд */
-      }
+    .card.desktop-layout.large-screen {
+      width: calc((100% - 50px) / 3) !important;
+    }
+    
+    .desktop-layout .media-block {
+      padding-top: 65%; /* Более квадратное соотношение для ПК */
+    }
+    
+    .desktop-layout .top-controls {
+      max-width: 100% !important;
+      justify-content: center;
+    }
+    
+    .desktop-layout .pagination {
+      max-width: 100% !important;
+    }
+    
+    /* Улучшение читаемости на больших экранах */
+    .desktop-layout .part-name-text {
+      font-size: 20px;
+    }
+    
+    .desktop-layout .pill {
+      font-size: 22px;
+      padding: 0 25px;
+    }
+    
+    .desktop-layout .btn {
+      font-size: 18px;
     }
   </style>
 </head>
@@ -1509,69 +1501,109 @@
   }
   
   // Логика для отображения 3 карточек в ряд на ПК
-  // Функция для определения устройства
-  function isMobileDevice() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-           window.innerWidth <= 768;
+  // Функция для определения устройства - ТОЛЬКО ПК!
+  function isDesktopDevice() {
+    // Проверяем User Agent на мобильные устройства
+    const mobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Проверяем ширину экрана (только большие экраны считаем ПК)
+    const isLargeScreen = window.innerWidth > 1024;
+    
+    // Только если НЕ мобильное устройство И большой экран - считаем ПК
+    return !mobileUserAgent && isLargeScreen;
   }
 
-  // Функция для изменения стилей карточек под ПК
-  function adjustLayoutForDesktop() {
+  // Функция для включения/выключения десктопного layout
+  function toggleDesktopLayout(enable) {
     const cardsContainer = document.getElementById('cardsContainer');
-    if (!cardsContainer) return;
+    const cards = document.querySelectorAll('.card');
+    const topControls = document.querySelector('.top-controls');
+    const pagination = document.querySelector('.pagination');
     
-    // Проверяем, мобильное ли устройство
-    if (isMobileDevice()) {
-      // Для мобильных - одна карточка в ряд (стили по умолчанию)
-      cardsContainer.style.flexDirection = 'column';
-      cardsContainer.style.alignItems = 'center';
+    if (!cardsContainer || cards.length === 0) return;
+    
+    if (enable) {
+      // Включаем десктопный layout
+      cardsContainer.classList.add('desktop-layout');
       
-      const cards = document.querySelectorAll('.card');
+      // Добавляем класс для очень больших экранов
+      if (window.innerWidth > 1400) {
+        cardsContainer.classList.add('large-screen');
+      }
+      
       cards.forEach(card => {
+        card.classList.add('desktop-layout');
+        if (window.innerWidth > 1400) {
+          card.classList.add('large-screen');
+        }
+      });
+      
+      // Перестраиваем layout
+      cardsContainer.style.flexDirection = 'row';
+      cardsContainer.style.flexWrap = 'wrap';
+      cardsContainer.style.justifyContent = 'flex-start';
+      cardsContainer.style.gap = '20px';
+      
+      // Рассчитываем ширину для 3 карточек в ряд с отступами
+      const containerWidth = cardsContainer.offsetWidth || window.innerWidth * 0.9;
+      const cardWidth = Math.floor((containerWidth - 40) / 3); // 40px = gap * 2
+      
+      cards.forEach(card => {
+        card.style.width = cardWidth + 'px';
+        card.style.maxWidth = 'none';
+        card.style.margin = '0';
+        card.style.flex = '0 0 auto';
+      });
+      
+      // Настраиваем верхние контролы
+      if (topControls) {
+        topControls.classList.add('desktop-layout');
+        topControls.style.maxWidth = '100%';
+        topControls.style.justifyContent = 'center';
+      }
+      
+      // Настраиваем пагинацию
+      if (pagination) {
+        pagination.classList.add('desktop-layout');
+        pagination.style.maxWidth = '100%';
+      }
+      
+      // Оптимизируем изображения для ПК
+      optimizeImagesForDesktop();
+      
+    } else {
+      // Выключаем десктопный layout (мобильный вид)
+      cardsContainer.classList.remove('desktop-layout', 'large-screen');
+      
+      cards.forEach(card => {
+        card.classList.remove('desktop-layout', 'large-screen');
         card.style.width = '100%';
         card.style.maxWidth = '900px';
         card.style.margin = '0 auto';
+        card.style.flex = 'none';
       });
       
-      return;
-    }
-    
-    // Для ПК - 3 карточки в ряд
-    cardsContainer.style.flexDirection = 'row';
-    cardsContainer.style.flexWrap = 'wrap';
-    cardsContainer.style.justifyContent = 'flex-start';
-    cardsContainer.style.gap = '20px';
-    
-    // Рассчитываем ширину для 3 карточек в ряд с отступами
-    const containerWidth = cardsContainer.offsetWidth || window.innerWidth * 0.9;
-    const cardWidth = Math.floor((containerWidth - 40) / 3); // 40px = gap * 2
-    
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-      card.style.width = cardWidth + 'px';
-      card.style.maxWidth = 'none';
-      card.style.margin = '0';
-      card.style.flex = '0 0 auto';
-    });
-    
-    // Адаптируем верхние контролы
-    const topControls = document.querySelector('.top-controls');
-    if (topControls) {
-      topControls.style.maxWidth = '100%';
-      topControls.style.justifyContent = 'center';
-    }
-    
-    // Адаптируем пагинацию
-    const pagination = document.querySelector('.pagination');
-    if (pagination) {
-      pagination.style.maxWidth = '100%';
+      if (topControls) {
+        topControls.classList.remove('desktop-layout');
+        topControls.style.maxWidth = '900px';
+        topControls.style.justifyContent = 'space-between';
+      }
+      
+      if (pagination) {
+        pagination.classList.remove('desktop-layout');
+        pagination.style.maxWidth = '900px';
+      }
+      
+      // Возвращаем исходный вид
+      cardsContainer.style.flexDirection = 'column';
+      cardsContainer.style.alignItems = 'center';
+      cardsContainer.style.flexWrap = 'nowrap';
+      cardsContainer.style.justifyContent = 'center';
     }
   }
 
   // Функция для оптимизации изображений на ПК
   function optimizeImagesForDesktop() {
-    if (isMobileDevice()) return;
-    
     const images = document.querySelectorAll('.media-block img');
     images.forEach(img => {
       if (img.src.includes('cloudinary')) {
@@ -1584,24 +1616,34 @@
 
   // Инициализация при загрузке
   document.addEventListener('DOMContentLoaded', function() {
-    adjustLayoutForDesktop();
-    optimizeImagesForDesktop();
+    // Проверяем, ПК ли это
+    if (isDesktopDevice()) {
+      toggleDesktopLayout(true);
+    } else {
+      toggleDesktopLayout(false);
+    }
     
     // Обновляем при изменении размера окна
     let resizeTimer;
     window.addEventListener('resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        adjustLayoutForDesktop();
-        optimizeImagesForDesktop();
+        if (isDesktopDevice()) {
+          toggleDesktopLayout(true);
+        } else {
+          toggleDesktopLayout(false);
+        }
       }, 250);
     });
     
     // Также обновляем после рендеринга карточек
     const observer = new MutationObserver(function() {
       setTimeout(function() {
-        adjustLayoutForDesktop();
-        optimizeImagesForDesktop();
+        if (isDesktopDevice()) {
+          toggleDesktopLayout(true);
+        } else {
+          toggleDesktopLayout(false);
+        }
       }, 100);
     });
     
@@ -1621,8 +1663,11 @@
     
     // Обновляем layout после загрузки данных
     setTimeout(function() {
-      adjustLayoutForDesktop();
-      optimizeImagesForDesktop();
+      if (isDesktopDevice()) {
+        toggleDesktopLayout(true);
+      } else {
+        toggleDesktopLayout(false);
+      }
     }, 500);
     
     // Обновляем при смене страницы
@@ -1632,16 +1677,22 @@
     pagination.nextPage = function() {
       originalPaginationNext();
       setTimeout(function() {
-        adjustLayoutForDesktop();
-        optimizeImagesForDesktop();
+        if (isDesktopDevice()) {
+          toggleDesktopLayout(true);
+        } else {
+          toggleDesktopLayout(false);
+        }
       }, 100);
     };
     
     pagination.prevPage = function() {
       originalPaginationPrev();
       setTimeout(function() {
-        adjustLayoutForDesktop();
-        optimizeImagesForDesktop();
+        if (isDesktopDevice()) {
+          toggleDesktopLayout(true);
+        } else {
+          toggleDesktopLayout(false);
+        }
       }, 100);
     };
   };
