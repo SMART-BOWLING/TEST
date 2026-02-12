@@ -132,12 +132,23 @@ header {
 </div>
 
 <script>
-// Массив с PDF файлами из Cloudinary
+// Массив с PDF файлами из Cloudinary - теперь только ссылки!
+// Имена автоматически берутся из URL
 const PDF_FILES = [
-  {name: "AMF ДВИГАТЕЛИ",
-    url: "https://res.cloudinary.com/dplmdnxvk/image/upload/v1770733764/AMF%20ENGINES.pdf"},
-  {name: "wfxcpkcdfppfeoybxxx2",
-    url: "https://res.cloudinary.com/dplmdnxvk/image/upload/v1770733764/wfxcpkcdfppfeoybxxx2.pdf"}];
+  "https://res.cloudinary.com/dplmdnxvk/image/upload/v1770733764/AMF%20ENGINES.pdf",
+  "https://res.cloudinary.com/dplmdnxvk/image/upload/v1770733731/SKYMALL%20STELTRONIC%20USER%20MANUAL.pdf",
+  "https://res.cloudinary.com/dplmdnxvk/image/upload/v1770733764/wfxcpkcdfppfeoybxxx2.pdf"
+];
+
+// Функция для извлечения имени из URL
+function getFileNameFromUrl(url) {
+  // Декодируем URL (чтобы %20 превратились в пробелы)
+  const decodedUrl = decodeURIComponent(url);
+  // Получаем последнюю часть после последнего слеша
+  const fileName = decodedUrl.substring(decodedUrl.lastIndexOf('/') + 1);
+  // Убираем расширение .pdf
+  return fileName.replace('.pdf', '');
+}
 
 // Выпадающий список
 function toggleDropdown() {
@@ -168,17 +179,16 @@ function loadManuals() {
   
   loadingEl.style.display = 'none';
   
-  PDF_FILES.forEach(file => {
-    // Получаем название PDF из имени файла (без расширения)
-    // Например: wfxcpkcdfppfeoybxxx2
-    const pdfName = file.name.replace('.pdf', '');
+  PDF_FILES.forEach(url => {
+    // Автоматически получаем имя из URL
+    const pdfName = getFileNameFromUrl(url);
     
     const card = document.createElement('div');
     card.className = 'manual';
     card.innerHTML = `<h2>${pdfName}</h2>`;
     
     card.onclick = () => {
-      window.open(file.url, '_blank');
+      window.open(url, '_blank');
     };
     
     container.appendChild(card);
