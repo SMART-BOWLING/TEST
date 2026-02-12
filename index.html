@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Мануалы</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 body {
@@ -118,6 +118,33 @@ header {
   transform: translateY(1px);
 }
 
+/* Кнопки для открытия PDF с поиском */
+.view-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+}
+.view-btn {
+  background-color: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+.view-btn:hover {
+  background-color: #6b7280;
+}
+.view-btn i {
+  font-size: 14px;
+}
+
 .loading { text-align:center; padding:20px; font-size:18px; color: #666; }
 .error { text-align:center; padding:20px; color:#dc2626; background:#fee2e2; border-radius:8px; margin:20px 0; }
 
@@ -128,6 +155,8 @@ header {
   .manual { padding:10px; }
   .manual h2 { font-size:16px; }
   .search-container input { width: 120px; font-size: 14px; }
+  .view-options { flex-direction: column; }
+  .view-btn { justify-content: center; }
 }
 </style>
 </head>
@@ -165,6 +194,9 @@ const PDF_FILES = [
   }
 ];
 
+// Google Docs Viewer URL (есть поиск текста!)
+const GOOGLE_VIEWER = "https://docs.google.com/viewer?url=";
+
 // Выпадающий список
 function toggleDropdown() {
   const dropdown = document.getElementById('manualDropdown');
@@ -181,6 +213,22 @@ window.addEventListener('click', function(e){
   }
 });
 
+// Определяем iPhone
+function isIPhone() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// Открыть PDF с поиском через Google Docs Viewer
+function openPDFWithSearch(url) {
+  const viewerUrl = GOOGLE_VIEWER + encodeURIComponent(url) + "&embedded=false";
+  window.open(viewerUrl, '_blank');
+}
+
+// Открыть PDF напрямую
+function openPDFDirect(url) {
+  window.open(url, '_blank');
+}
+
 // Загрузка PDF из Cloudinary
 function loadManuals() {
   const loadingEl = document.getElementById('loading');
@@ -196,21 +244,49 @@ function loadManuals() {
   
   PDF_FILES.forEach(file => {
     const name = file.title || file.name.replace('.pdf','').replace(/_/g,' ');
+    const isIOS = isIPhone();
     
     const card = document.createElement('div');
     card.className = 'manual';
-    card.innerHTML = `
-      <h2>${name}</h2>
-      <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
-        <i class="fas fa-download"></i> Скачать
-      </button>
-    `;
     
-    card.onclick = (e) => {
-      if (!e.target.closest('.download-btn')) {
-        window.open(file.url, '_blank');
-      }
-    };
+    // Для iPhone показываем специальные кнопки
+    if(isIOS) {
+      card.innerHTML = `
+        <h2>${name}</h2>
+        <div class="view-options">
+          <button class="view-btn" onclick="openPDFWithSearch('${file.url}')">
+            <i class="fas fa-search"></i> Открыть с поиском
+          </button>
+          <button class="view-btn" onclick="openPDFDirect('${file.url}')">
+            <i class="fas fa-file-pdf"></i> Открыть PDF
+          </button>
+        </div>
+        <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
+          <i class="fas fa-download"></i> Скачать
+        </button>
+      `;
+      
+      // При клике на карточку открываем с поиском
+      card.onclick = (e) => {
+        if (!e.target.closest('button')) {
+          openPDFWithSearch(file.url);
+        }
+      };
+    } else {
+      // Для остальных устройств - обычное открытие
+      card.innerHTML = `
+        <h2>${name}</h2>
+        <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
+          <i class="fas fa-download"></i> Скачать
+        </button>
+      `;
+      
+      card.onclick = (e) => {
+        if (!e.target.closest('.download-btn')) {
+          window.open(file.url, '_blank');
+        }
+      };
+    }
     
     container.appendChild(card);
   });
