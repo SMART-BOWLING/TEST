@@ -5,6 +5,9 @@
 <title>Мануалы</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- PDF.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 body {
   margin: 0;
@@ -88,13 +91,38 @@ header {
 }
 
 /* Контейнер и карточки PDF */
-.container { max-width:1200px; margin:30px auto; padding:0 20px; }
-.manuals { display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:20px; }
-.manual { background:white; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:15px; display:flex; flex-direction:column; text-align:center; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;}
-.manual:hover { transform: translateY(-5px); box-shadow:0 5px 15px rgba(0,0,0,0.2);}
-.manual h2 { margin:0; font-size:18px; font-weight:600; }
+.container { 
+  max-width:1200px; 
+  margin:30px auto; 
+  padding:0 20px; 
+}
+.manuals { 
+  display:grid; 
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); 
+  gap:20px; 
+}
+.manual { 
+  background:white; 
+  border-radius:8px; 
+  box-shadow:0 2px 6px rgba(0,0,0,0.1); 
+  padding:15px; 
+  display:flex; 
+  flex-direction:column; 
+  text-align:center; 
+  transition: transform 0.2s, box-shadow 0.2s; 
+  cursor: pointer;
+}
+.manual:hover { 
+  transform: translateY(-5px); 
+  box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+.manual h2 { 
+  margin:0 0 10px 0; 
+  font-size:18px; 
+  font-weight:600; 
+}
 
-/* Кнопка скачивания */
+/* Кнопки */
 .download-btn {
   background-color: #1f2937;
   color: white;
@@ -114,28 +142,19 @@ header {
 .download-btn:hover {
   background-color: #2563eb;
 }
-.download-btn:active {
-  transform: translateY(1px);
-}
 
-/* Кнопки для открытия PDF с поиском */
-.view-options {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  justify-content: center;
-}
 .view-btn {
   background-color: #4b5563;
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 8px 16px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   transition: background-color 0.2s;
 }
 .view-btn:hover {
@@ -145,18 +164,155 @@ header {
   font-size: 14px;
 }
 
-.loading { text-align:center; padding:20px; font-size:18px; color: #666; }
-.error { text-align:center; padding:20px; color:#dc2626; background:#fee2e2; border-radius:8px; margin:20px 0; }
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+}
 
-/* Адаптив для мобильных */
+.loading { 
+  text-align:center; 
+  padding:20px; 
+  font-size:18px; 
+  color: #666; 
+}
+.error { 
+  text-align:center; 
+  padding:20px; 
+  color:#dc2626; 
+  background:#fee2e2; 
+  border-radius:8px; 
+  margin:20px 0; 
+}
+
+/* PDF Просмотрщик */
+#pdfViewerContainer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  z-index: 10000;
+  flex-direction: column;
+}
+
+#pdfViewerContainer.active {
+  display: flex;
+}
+
+.pdf-toolbar {
+  background: #1f2937;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pdf-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pdf-controls button {
+  background: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.pdf-controls button:hover {
+  background: #6b7280;
+}
+
+.pdf-controls input {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #9ca3af;
+  width: 60px;
+  text-align: center;
+}
+
+.pdf-search {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  background: #4b5563;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.pdf-search input {
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  width: 200px;
+}
+
+.pdf-search button {
+  background: #2563eb;
+  padding: 8px 12px;
+}
+
+#pdfViewer {
+  flex: 1;
+  overflow: auto;
+  background: #6b7280;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+#pdfCanvas {
+  width: 100%;
+  height: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+  background: #dc2626 !important;
+}
+
+.close-btn:hover {
+  background: #b91c1c !important;
+}
+
+/* Адаптив */
 @media (max-width: 600px) {
   .site-name { font-size: 16px; }
   .manuals { grid-template-columns:1fr; gap:15px; }
   .manual { padding:10px; }
   .manual h2 { font-size:16px; }
   .search-container input { width: 120px; font-size: 14px; }
-  .view-options { flex-direction: column; }
-  .view-btn { justify-content: center; }
+  .button-group { flex-direction: column; }
+  .pdf-toolbar { flex-direction: column; align-items: stretch; }
+  .pdf-controls { justify-content: center; }
+  .pdf-search input { width: 150px; }
+}
+
+/* Индикатор поиска */
+.search-highlight {
+  background: yellow !important;
+  border: 2px solid orange !important;
+  box-shadow: 0 0 10px rgba(255,165,0,0.5);
+}
+
+.search-current {
+  background: #ff6b6b !important;
+  border: 2px solid red !important;
 }
 </style>
 </head>
@@ -184,7 +340,32 @@ header {
   <div class="manuals" id="container"></div>
 </div>
 
+<!-- PDF Просмотрщик -->
+<div id="pdfViewerContainer">
+  <div class="pdf-toolbar">
+    <div class="pdf-controls">
+      <button onclick="prevPage()"><i class="fas fa-chevron-left"></i> Пред.</button>
+      <span>Страница <span id="pageNum">1</span> из <span id="pageCount">0</span></span>
+      <button onclick="nextPage()"><i class="fas fa-chevron-right"></i> След.</button>
+      <input type="number" id="pageInput" min="1" value="1" onchange="goToPage()">
+    </div>
+    <div class="pdf-search">
+      <input type="text" id="searchText" placeholder="Поиск по тексту..." onkeypress="if(event.key==='Enter') searchText()">
+      <button onclick="searchText()"><i class="fas fa-search"></i> Найти</button>
+      <button onclick="searchNext()"><i class="fas fa-arrow-down"></i></button>
+      <button onclick="searchPrev()"><i class="fas fa-arrow-up"></i></button>
+      <button class="close-btn" onclick="closePDFViewer()"><i class="fas fa-times"></i> Закрыть</button>
+    </div>
+  </div>
+  <div id="pdfViewer">
+    <canvas id="pdfCanvas"></canvas>
+  </div>
+</div>
+
 <script>
+// Инициализация PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 // Массив с PDF файлами из Cloudinary
 const PDF_FILES = [
   {
@@ -194,8 +375,16 @@ const PDF_FILES = [
   }
 ];
 
-// Google Docs Viewer URL (есть поиск текста!)
-const GOOGLE_VIEWER = "https://docs.google.com/viewer?url=";
+let pdfDoc = null;
+let pageNum = 1;
+let pageRendering = false;
+let pageNumPending = null;
+let scale = 1.5;
+let canvas = document.getElementById('pdfCanvas');
+let ctx = canvas.getContext('2d');
+let currentPdfUrl = '';
+let searchMatches = [];
+let currentMatchIndex = -1;
 
 // Выпадающий список
 function toggleDropdown() {
@@ -213,22 +402,6 @@ window.addEventListener('click', function(e){
   }
 });
 
-// Определяем iPhone
-function isIPhone() {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-// Открыть PDF с поиском через Google Docs Viewer
-function openPDFWithSearch(url) {
-  const viewerUrl = GOOGLE_VIEWER + encodeURIComponent(url) + "&embedded=false";
-  window.open(viewerUrl, '_blank');
-}
-
-// Открыть PDF напрямую
-function openPDFDirect(url) {
-  window.open(url, '_blank');
-}
-
 // Загрузка PDF из Cloudinary
 function loadManuals() {
   const loadingEl = document.getElementById('loading');
@@ -244,49 +417,26 @@ function loadManuals() {
   
   PDF_FILES.forEach(file => {
     const name = file.title || file.name.replace('.pdf','').replace(/_/g,' ');
-    const isIOS = isIPhone();
     
     const card = document.createElement('div');
     card.className = 'manual';
+    card.innerHTML = `
+      <h2>${name}</h2>
+      <div class="button-group">
+        <button class="view-btn" onclick="openPDFViewer('${file.url}', '${name}')">
+          <i class="fas fa-book-open"></i> Читать с поиском
+        </button>
+        <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
+          <i class="fas fa-download"></i> Скачать
+        </button>
+      </div>
+    `;
     
-    // Для iPhone показываем специальные кнопки
-    if(isIOS) {
-      card.innerHTML = `
-        <h2>${name}</h2>
-        <div class="view-options">
-          <button class="view-btn" onclick="openPDFWithSearch('${file.url}')">
-            <i class="fas fa-search"></i> Открыть с поиском
-          </button>
-          <button class="view-btn" onclick="openPDFDirect('${file.url}')">
-            <i class="fas fa-file-pdf"></i> Открыть PDF
-          </button>
-        </div>
-        <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
-          <i class="fas fa-download"></i> Скачать
-        </button>
-      `;
-      
-      // При клике на карточку открываем с поиском
-      card.onclick = (e) => {
-        if (!e.target.closest('button')) {
-          openPDFWithSearch(file.url);
-        }
-      };
-    } else {
-      // Для остальных устройств - обычное открытие
-      card.innerHTML = `
-        <h2>${name}</h2>
-        <button class="download-btn" onclick="downloadPDF('${file.url}', '${file.name}')">
-          <i class="fas fa-download"></i> Скачать
-        </button>
-      `;
-      
-      card.onclick = (e) => {
-        if (!e.target.closest('.download-btn')) {
-          window.open(file.url, '_blank');
-        }
-      };
-    }
+    card.onclick = (e) => {
+      if (!e.target.closest('button')) {
+        openPDFViewer(file.url, name);
+      }
+    };
     
     container.appendChild(card);
   });
@@ -302,7 +452,157 @@ function downloadPDF(url, filename) {
   document.body.removeChild(link);
 }
 
-// Поиск PDF
+// Открыть PDF просмотрщик
+function openPDFViewer(url, title) {
+  currentPdfUrl = url;
+  document.getElementById('pdfViewerContainer').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  loadPDF(url);
+}
+
+// Закрыть PDF просмотрщик
+function closePDFViewer() {
+  document.getElementById('pdfViewerContainer').classList.remove('active');
+  document.body.style.overflow = 'auto';
+  pdfDoc = null;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// Загрузка PDF
+function loadPDF(url) {
+  pdfjsLib.getDocument(url).promise.then(function(doc) {
+    pdfDoc = doc;
+    document.getElementById('pageCount').textContent = pdfDoc.numPages;
+    pageNum = 1;
+    document.getElementById('pageNum').textContent = pageNum;
+    document.getElementById('pageInput').value = pageNum;
+    renderPage(pageNum);
+  }).catch(function(error) {
+    alert('Ошибка загрузки PDF: ' + error.message);
+  });
+}
+
+// Рендеринг страницы
+function renderPage(num) {
+  pageRendering = true;
+  
+  pdfDoc.getPage(num).then(function(page) {
+    const viewport = page.getViewport({ scale: scale });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    
+    const renderTask = page.render(renderContext);
+    
+    renderTask.promise.then(function() {
+      pageRendering = false;
+      if (pageNumPending !== null) {
+        renderPage(pageNumPending);
+        pageNumPending = null;
+      }
+    });
+  });
+  
+  document.getElementById('pageNum').textContent = num;
+  document.getElementById('pageInput').value = num;
+}
+
+// Предыдущая страница
+function prevPage() {
+  if (pageNum <= 1) return;
+  pageNum--;
+  renderPage(pageNum);
+}
+
+// Следующая страница
+function nextPage() {
+  if (pageNum >= pdfDoc.numPages) return;
+  pageNum++;
+  renderPage(pageNum);
+}
+
+// Перейти к странице
+function goToPage() {
+  const pageInput = document.getElementById('pageInput');
+  let pageNumber = parseInt(pageInput.value);
+  
+  if (pageNumber < 1) pageNumber = 1;
+  if (pageNumber > pdfDoc.numPages) pageNumber = pdfDoc.numPages;
+  
+  pageNum = pageNumber;
+  renderPage(pageNum);
+}
+
+// Поиск текста
+async function searchText() {
+  const searchTerm = document.getElementById('searchText').value;
+  if (!searchTerm || !pdfDoc) return;
+  
+  searchMatches = [];
+  currentMatchIndex = -1;
+  
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const textContent = await page.getTextContent();
+    
+    textContent.items.forEach((item, index) => {
+      if (item.str.toLowerCase().includes(searchTerm.toLowerCase())) {
+        searchMatches.push({
+          pageNum: i,
+          text: item.str,
+          transform: item.transform,
+          width: item.width,
+          height: item.height
+        });
+      }
+    });
+  }
+  
+  if (searchMatches.length > 0) {
+    alert(`Найдено ${searchMatches.length} совпадений`);
+    searchNext();
+  } else {
+    alert('Текст не найден');
+  }
+}
+
+// Следующее совпадение
+function searchNext() {
+  if (searchMatches.length === 0) return;
+  
+  currentMatchIndex++;
+  if (currentMatchIndex >= searchMatches.length) {
+    currentMatchIndex = 0;
+  }
+  
+  const match = searchMatches[currentMatchIndex];
+  if (pageNum !== match.pageNum) {
+    pageNum = match.pageNum;
+    renderPage(pageNum);
+  }
+}
+
+// Предыдущее совпадение
+function searchPrev() {
+  if (searchMatches.length === 0) return;
+  
+  currentMatchIndex--;
+  if (currentMatchIndex < 0) {
+    currentMatchIndex = searchMatches.length - 1;
+  }
+  
+  const match = searchMatches[currentMatchIndex];
+  if (pageNum !== match.pageNum) {
+    pageNum = match.pageNum;
+    renderPage(pageNum);
+  }
+}
+
+// Поиск PDF в списке
 document.getElementById('searchInput').addEventListener('input', function() {
   const search = this.value.toLowerCase();
   const manuals = document.querySelectorAll('.manual');
