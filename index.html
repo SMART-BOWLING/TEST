@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Детали</title>
 
 <!-- Font Awesome для иконок -->
@@ -35,6 +35,7 @@ header {
   width: 40px;
   height: 40px;
   object-fit: cover;
+  /* Сдвигаем логотип чуть левее */
   margin-left: -10px;
 }
 
@@ -43,6 +44,7 @@ header {
   position: relative;
   flex: 1;
   text-align: center;
+  /* Уменьшаем текст MANUALS */
   font-size: 18px;
   font-weight: bold;
   color: white;
@@ -57,12 +59,14 @@ header {
   background-color: #1f2937;
   border-radius: 6px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  /* Уменьшаем минимальную ширину дропдауна */
   min-width: 180px;
   z-index: 1001;
   flex-direction: column;
 }
 .dropdown-content a {
   color: white;
+  /* Уменьшаем отступы и размер текста в дропдауне */
   padding: 8px 12px;
   text-decoration: none;
   display: block;
@@ -82,6 +86,7 @@ header {
   border-radius: 6px;
   border: none;
   font-size: 16px;
+  /* Уменьшаем ширину строки поиска */
   width: 180px;
 }
 .search-container i {
@@ -122,11 +127,10 @@ header {
   display: block;
   cursor: pointer;
   transition: opacity 0.2s;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.top-image:active {
-  opacity: 0.7;
+.top-image:hover {
+  opacity: 0.9;
 }
 
 .toggle-btn {
@@ -188,7 +192,7 @@ header {
   background-color: #d0d0d0;
 }
 
-/* Сообщение об успешном копировании */
+/* Сообщение об успешном копировании - цвет как у кнопки "Список номеров деталей" */
 .copy-success {
   background-color: #1f2937 !important;
   color: white !important;
@@ -223,7 +227,7 @@ header {
 .count-zero { color: #dc143c; }
 .count-positive { color: #16a34a; }
 
-/* ===== MODAL FOR IMAGE ===== */
+/* ===== MODAL FOR IMAGE ZOOM ===== */
 .image-modal {
   display: none;
   position: fixed;
@@ -232,15 +236,20 @@ header {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.95);
+  background-color: rgba(0, 0, 0, 0.9);
   overflow: auto;
+  cursor: pointer;
 }
 
 .modal-content {
   margin: auto;
   display: block;
-  width: 100%;
-  height: 100%;
+  max-width: 90%;
+  max-height: 90%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   object-fit: contain;
   cursor: default;
 }
@@ -254,21 +263,23 @@ header {
   font-weight: bold;
   cursor: pointer;
   z-index: 2001;
-  background: rgba(0,0,0,0.3);
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
 }
 
 .close-modal:hover {
-  background: rgba(255,255,255,0.2);
+  color: #bbb;
 }
 
-/* Инструкция */
+/* Анимация для модального окна */
+.modal-content {
+  animation: zoom 0.3s ease;
+}
+
+@keyframes zoom {
+  from {transform: translate(-50%, -50%) scale(0.1); opacity: 0;}
+  to {transform: translate(-50%, -50%) scale(1); opacity: 1;}
+}
+
+/* Инструкция по зуму */
 .zoom-hint {
   position: absolute;
   bottom: 20px;
@@ -281,7 +292,6 @@ header {
   font-size: 14px;
   pointer-events: none;
   z-index: 2001;
-  backdrop-filter: blur(5px);
 }
 </style>
 </head>
@@ -300,7 +310,7 @@ header {
   </div>
   
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-input" placeholder="Поиск детали">
+    <input type="text" id="searchInput" class="search-input" placeholder="Поиск детали" style="font-size:16px;">
     <i class="fa-solid fa-magnifying-glass"></i>
   </div>
 </header>
@@ -332,11 +342,11 @@ header {
   <div class="buttons-container" id="list2"></div>
 </div>
 
-<!-- ===== MODAL FOR IMAGE ===== -->
+<!-- ===== MODAL FOR IMAGE ZOOM ===== -->
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
   <span class="close-modal" onclick="closeImageModal(event)">&times;</span>
   <img class="modal-content" id="modalImage" alt="Zoomed image">
-  <div class="zoom-hint">Используйте стандартные жесты браузера для масштабирования</div>
+  <div class="zoom-hint">Используйте два пальца для масштабирования</div>
 </div>
 
 <script>
@@ -358,6 +368,7 @@ window.addEventListener('click', function(e){
 
 // Универсальная функция для копирования текста в буфер обмена
 async function copyToClipboard(text, element) {
+  // Пробуем современный Clipboard API 
   if (navigator.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(text);
@@ -365,12 +376,16 @@ async function copyToClipboard(text, element) {
       return true;
     } catch (err) {
       console.log('Clipboard API failed:', err);
+      // Продолжаем с fallback
     }
   }
   
+  // Fallback на старый метод с textarea 
   try {
     const textarea = document.createElement('textarea');
     textarea.value = text;
+    
+    // Делаем элемент невидимым, но существующим 
     textarea.style.position = 'fixed';
     textarea.style.left = '-9999px';
     textarea.style.top = '0';
@@ -392,11 +407,12 @@ async function copyToClipboard(text, element) {
     console.log('Fallback copy failed:', err);
   }
   
+  // Если ничего не сработало
   alert('Не удалось скопировать. Ваш браузер не поддерживает копирование в буфер обмена.');
   return false;
 }
 
-// Функция для показа успешного копирования
+// Функция для показа успешного копирования - цвет как у кнопки "Список номеров деталей"
 function showCopySuccess(element) {
   const originalText = element.textContent;
   
@@ -453,6 +469,7 @@ createButtons("list1", 20, "000-001");
 createButtons("list2", 40, "000-002");
 
 function toggleDetail(button){
+
   if(button.nextElementSibling && button.nextElementSibling.classList.contains("detail-info")){
     const info = button.nextElementSibling;
     info.classList.remove("open");
@@ -492,7 +509,7 @@ function toggleDetail(button){
   setTimeout(()=> info.classList.add("open"), 10);
 }
 
-/* ===== ПОИСК ===== */
+/* ===== УЛУЧШЕННЫЙ ПОИСК ===== */
 function searchDetail(){
   const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
   if(!searchValue) {
@@ -562,7 +579,7 @@ document.getElementById("searchInput")
     }
   });
 
-/* ===== ФУНКЦИИ ДЛЯ РАБОТЫ С ИЗОБРАЖЕНИЯМИ ===== */
+/* ===== ФУНКЦИИ ДЛЯ ЗУМА ИЗОБРАЖЕНИЙ ===== */
 function openImageModal(imageSrc) {
   const modal = document.getElementById('imageModal');
   const modalImg = document.getElementById('modalImage');
@@ -572,6 +589,15 @@ function openImageModal(imageSrc) {
   
   // Блокируем скролл страницы
   document.body.style.overflow = 'hidden';
+  
+  // Сбрасываем масштаб при открытии
+  modalImg.style.transform = 'translate(-50%, -50%) scale(1)';
+  initialScale = 1;
+  
+  // Добавляем обработчики для жестов зумирования на мобильных устройствах
+  modalImg.addEventListener('touchstart', handleTouchStart, {passive: false});
+  modalImg.addEventListener('touchmove', handleTouchMove, {passive: false});
+  modalImg.addEventListener('touchend', handleTouchEnd);
 }
 
 function closeImageModal(event) {
@@ -584,9 +610,74 @@ function closeImageModal(event) {
   
   // Возвращаем скролл страницы
   document.body.style.overflow = 'auto';
+  
+  // Удаляем обработчики
+  const modalImg = document.getElementById('modalImage');
+  modalImg.removeEventListener('touchstart', handleTouchStart);
+  modalImg.removeEventListener('touchmove', handleTouchMove);
+  modalImg.removeEventListener('touchend', handleTouchEnd);
 }
 
-// Закрытие по клику на фон
+// Переменные для поддержки мультитач зумирования
+let initialDistance = 0;
+let initialScale = 1;
+
+function handleTouchStart(e) {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    initialDistance = Math.hypot(
+      touch2.pageX - touch1.pageX,
+      touch2.pageY - touch1.pageY
+    );
+    
+    // Получаем текущее трансформирование
+    const modalImg = document.getElementById('modalImage');
+    const transform = modalImg.style.transform;
+    if (transform && transform.includes('scale')) {
+      const match = transform.match(/scale\(([^)]+)\)/);
+      initialScale = match ? parseFloat(match[1]) : 1;
+    } else {
+      initialScale = 1;
+    }
+  }
+}
+
+function handleTouchMove(e) {
+  if (e.touches.length === 2) {
+    e.preventDefault();
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const currentDistance = Math.hypot(
+      touch2.pageX - touch1.pageX,
+      touch2.pageY - touch1.pageY
+    );
+    
+    if (initialDistance > 0) {
+      const scale = initialScale * (currentDistance / initialDistance);
+      // Ограничиваем масштаб от 0.5 до 3
+      const constrainedScale = Math.min(Math.max(scale, 0.5), 3);
+      
+      const modalImg = document.getElementById('modalImage');
+      modalImg.style.transform = `translate(-50%, -50%) scale(${constrainedScale})`;
+    }
+  }
+}
+
+function handleTouchEnd(e) {
+  if (e.touches.length < 2) {
+    // Сохраняем текущий масштаб для следующих жестов
+    const modalImg = document.getElementById('modalImage');
+    const transform = modalImg.style.transform;
+    if (transform && transform.includes('scale')) {
+      const match = transform.match(/scale\(([^)]+)\)/);
+      initialScale = match ? parseFloat(match[1]) : 1;
+    }
+  }
+}
+
+// Закрытие модального окна по клику на фон
 document.getElementById('imageModal').addEventListener('click', function(e) {
   if (e.target === this) {
     closeImageModal();
