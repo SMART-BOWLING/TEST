@@ -125,12 +125,6 @@ header {
   max-height: 300px;
   object-fit: cover;
   display: block;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.top-image:hover {
-  opacity: 0.9;
 }
 
 .toggle-btn {
@@ -227,72 +221,6 @@ header {
 .count-zero { color: #dc143c; }
 .count-positive { color: #16a34a; }
 
-/* ===== MODAL FOR IMAGE ZOOM ===== */
-.image-modal {
-  display: none;
-  position: fixed;
-  z-index: 2000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  overflow: auto;
-  cursor: pointer;
-}
-
-.modal-content {
-  margin: auto;
-  display: block;
-  max-width: 90%;
-  max-height: 90%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  cursor: default;
-}
-
-.close-modal {
-  position: absolute;
-  top: 15px;
-  right: 35px;
-  color: #f1f1f1;
-  font-size: 40px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 2001;
-}
-
-.close-modal:hover {
-  color: #bbb;
-}
-
-/* Анимация для модального окна */
-.modal-content {
-  animation: zoom 0.3s ease;
-}
-
-@keyframes zoom {
-  from {transform: translate(-50%, -50%) scale(0.1); opacity: 0;}
-  to {transform: translate(-50%, -50%) scale(1); opacity: 1;}
-}
-
-/* Инструкция по зуму */
-.zoom-hint {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  background: rgba(0,0,0,0.5);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  pointer-events: none;
-  z-index: 2001;
-}
 </style>
 </head>
 <body>
@@ -326,7 +254,7 @@ header {
 
 <!-- ===== BLOCK 1 ===== -->
 <div class="block">
-  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1" onclick="openImageModal(this.src)">
+  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1">
   <button class="toggle-btn" onclick="toggleList('list1')">
     Список номеров деталей (20)
   </button>
@@ -335,18 +263,11 @@ header {
 
 <!-- ===== BLOCK 2 ===== -->
 <div class="block">
-  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2" onclick="openImageModal(this.src)">
+  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2">
   <button class="toggle-btn" onclick="toggleList('list2')">
     Список номеров деталей (40)
   </button>
   <div class="buttons-container" id="list2"></div>
-</div>
-
-<!-- ===== MODAL FOR IMAGE ZOOM ===== -->
-<div id="imageModal" class="image-modal" onclick="closeImageModal()">
-  <span class="close-modal" onclick="closeImageModal(event)">&times;</span>
-  <img class="modal-content" id="modalImage" alt="Zoomed image">
-  <div class="zoom-hint">Используйте два пальца для масштабирования</div>
 </div>
 
 <script>
@@ -416,7 +337,7 @@ async function copyToClipboard(text, element) {
 function showCopySuccess(element) {
   const originalText = element.textContent;
   
-  element.textContent = 'Скопировано!';
+  element.textContent = '✓ Скопировано!';
   element.classList.add('copy-success');
   
   setTimeout(() => {
@@ -579,118 +500,8 @@ document.getElementById("searchInput")
     }
   });
 
-/* ===== ФУНКЦИИ ДЛЯ ЗУМА ИЗОБРАЖЕНИЙ ===== */
-function openImageModal(imageSrc) {
-  const modal = document.getElementById('imageModal');
-  const modalImg = document.getElementById('modalImage');
-  
-  modal.style.display = 'block';
-  modalImg.src = imageSrc;
-  
-  // Блокируем скролл страницы
-  document.body.style.overflow = 'hidden';
-  
-  // Сбрасываем масштаб при открытии
-  modalImg.style.transform = 'translate(-50%, -50%) scale(1)';
-  initialScale = 1;
-  
-  // Добавляем обработчики для жестов зумирования на мобильных устройствах
-  modalImg.addEventListener('touchstart', handleTouchStart, {passive: false});
-  modalImg.addEventListener('touchmove', handleTouchMove, {passive: false});
-  modalImg.addEventListener('touchend', handleTouchEnd);
-}
-
-function closeImageModal(event) {
-  if (event) {
-    event.stopPropagation();
-  }
-  
-  const modal = document.getElementById('imageModal');
-  modal.style.display = 'none';
-  
-  // Возвращаем скролл страницы
-  document.body.style.overflow = 'auto';
-  
-  // Удаляем обработчики
-  const modalImg = document.getElementById('modalImage');
-  modalImg.removeEventListener('touchstart', handleTouchStart);
-  modalImg.removeEventListener('touchmove', handleTouchMove);
-  modalImg.removeEventListener('touchend', handleTouchEnd);
-}
-
-// Переменные для поддержки мультитач зумирования
-let initialDistance = 0;
-let initialScale = 1;
-
-function handleTouchStart(e) {
-  if (e.touches.length === 2) {
-    e.preventDefault();
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    initialDistance = Math.hypot(
-      touch2.pageX - touch1.pageX,
-      touch2.pageY - touch1.pageY
-    );
-    
-    // Получаем текущее трансформирование
-    const modalImg = document.getElementById('modalImage');
-    const transform = modalImg.style.transform;
-    if (transform && transform.includes('scale')) {
-      const match = transform.match(/scale\(([^)]+)\)/);
-      initialScale = match ? parseFloat(match[1]) : 1;
-    } else {
-      initialScale = 1;
-    }
-  }
-}
-
-function handleTouchMove(e) {
-  if (e.touches.length === 2) {
-    e.preventDefault();
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    const currentDistance = Math.hypot(
-      touch2.pageX - touch1.pageX,
-      touch2.pageY - touch1.pageY
-    );
-    
-    if (initialDistance > 0) {
-      const scale = initialScale * (currentDistance / initialDistance);
-      // Ограничиваем масштаб от 0.5 до 3
-      const constrainedScale = Math.min(Math.max(scale, 0.5), 3);
-      
-      const modalImg = document.getElementById('modalImage');
-      modalImg.style.transform = `translate(-50%, -50%) scale(${constrainedScale})`;
-    }
-  }
-}
-
-function handleTouchEnd(e) {
-  if (e.touches.length < 2) {
-    // Сохраняем текущий масштаб для следующих жестов
-    const modalImg = document.getElementById('modalImage');
-    const transform = modalImg.style.transform;
-    if (transform && transform.includes('scale')) {
-      const match = transform.match(/scale\(([^)]+)\)/);
-      initialScale = match ? parseFloat(match[1]) : 1;
-    }
-  }
-}
-
-// Закрытие модального окна по клику на фон
-document.getElementById('imageModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeImageModal();
-  }
-});
-
-// Закрытие по клавише ESC
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeImageModal();
-  }
-});
-
+// Кнопка фильтра (можно добавить в шапку при необходимости)
+// Но пока оставляем как было
 </script>
 
 </body>
