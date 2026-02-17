@@ -222,6 +222,67 @@ header {
 
 .count-zero { color: #dc143c; }
 .count-positive { color: #16a34a; }
+
+/* ===== MODAL FOR IMAGE ===== */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  overflow: auto;
+}
+
+.modal-content {
+  margin: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: default;
+}
+
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 2001;
+  background: rgba(0,0,0,0.3);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-modal:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Инструкция */
+.zoom-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2001;
+  backdrop-filter: blur(5px);
+}
 </style>
 </head>
 <body>
@@ -255,9 +316,7 @@ header {
 
 <!-- ===== BLOCK 1 ===== -->
 <div class="block">
-  <a href="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" target="_blank" rel="noopener noreferrer">
-    <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1">
-  </a>
+  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1" onclick="openImageModal(this.src)">
   <button class="toggle-btn" onclick="toggleList('list1')">
     Список номеров деталей (20)
   </button>
@@ -266,13 +325,18 @@ header {
 
 <!-- ===== BLOCK 2 ===== -->
 <div class="block">
-  <a href="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" target="_blank" rel="noopener noreferrer">
-    <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2">
-  </a>
+  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2" onclick="openImageModal(this.src)">
   <button class="toggle-btn" onclick="toggleList('list2')">
     Список номеров деталей (40)
   </button>
   <div class="buttons-container" id="list2"></div>
+</div>
+
+<!-- ===== MODAL FOR IMAGE ===== -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <span class="close-modal" onclick="closeImageModal(event)">&times;</span>
+  <img class="modal-content" id="modalImage" alt="Zoomed image">
+  <div class="zoom-hint">Используйте стандартные жесты браузера для масштабирования</div>
 </div>
 
 <script>
@@ -498,11 +562,42 @@ document.getElementById("searchInput")
     }
   });
 
-// Предотвращаем навигацию по ссылкам при долгом нажатии на мобильных
-document.querySelectorAll('.block a').forEach(link => {
-  link.addEventListener('touchstart', (e) => {
-    e.stopPropagation();
-  });
+/* ===== ФУНКЦИИ ДЛЯ РАБОТЫ С ИЗОБРАЖЕНИЯМИ ===== */
+function openImageModal(imageSrc) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  
+  modal.style.display = 'block';
+  modalImg.src = imageSrc;
+  
+  // Блокируем скролл страницы
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal(event) {
+  if (event) {
+    event.stopPropagation();
+  }
+  
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+  
+  // Возвращаем скролл страницы
+  document.body.style.overflow = 'auto';
+}
+
+// Закрытие по клику на фон
+document.getElementById('imageModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeImageModal();
+  }
+});
+
+// Закрытие по клавише ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
 });
 
 </script>
