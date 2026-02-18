@@ -16,7 +16,6 @@ body {
   padding-top: 70px;
 }
 
-/* HEADER */
 header {
   background-color: #1f2937;
   color: white;
@@ -27,7 +26,6 @@ header {
   position: fixed;
   top:0; left:0; right:0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  user-select: none;
   z-index:1000;
 }
 
@@ -38,36 +36,10 @@ header {
 }
 
 .site-name {
-  position:relative;
   flex:1;
   text-align:center;
   font-size:18px;
   font-weight:bold;
-  cursor:pointer;
-}
-
-.dropdown-content {
-  display:none;
-  position:absolute;
-  top:200%;
-  left:50%;
-  transform:translateX(-50%);
-  background:#1f2937;
-  border-radius:6px;
-  min-width:180px;
-  flex-direction:column;
-}
-
-.dropdown-content a {
-  color:white;
-  padding:8px 12px;
-  text-decoration:none;
-  text-align:center;
-  font-size:14px;
-}
-
-.dropdown-content a:hover {
-  background:#374151;
 }
 
 .search-container {
@@ -90,43 +62,6 @@ header {
   color:#374151;
 }
 
-/* FILTER */
-.filter-button {
-  background:#374151;
-  color:white;
-  padding:10px 20px;
-  font-size:16px;
-  border:none;
-  width:100%;
-  text-align:left;
-  cursor:pointer;
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.filter-dropdown {
-  display:none;
-  background:#fff;
-  border-bottom:1px solid #ddd;
-}
-
-.filter-item {
-  padding:12px 16px;
-  border-top:1px solid #eee;
-  cursor:pointer;
-}
-
-.filter-item:hover {
-  background:#f3f4f6;
-}
-
-.filter-item.active {
-  background:#1f2937;
-  color:white;
-}
-
-/* BLOCK */
 .block.hidden { display:none; }
 
 .top-image {
@@ -182,7 +117,7 @@ header {
 }
 
 .detail-info.open {
-  max-height:200px;
+  max-height:300px;
   opacity:1;
 }
 
@@ -196,6 +131,7 @@ header {
 .count-zero { color:#dc143c; }
 .count-positive { color:#16a34a; }
 
+
 </style>
 </head>
 <body>
@@ -204,44 +140,32 @@ header {
   <div class="logo">
     <img src="https://i.postimg.cc/wjGzSY92/1.png">
   </div>
-
-  <div class="site-name" onclick="toggleDropdown()">MANUALS
-    <div class="dropdown-content" id="manualDropdown">
-      <a href="https://smart-bowling.github.io/PARTS-SKYMALL/" target="_blank">SKYMALL</a>
-      <a href="https://smart-bowling.github.io/PARTS-KH/" target="_blank">LUCKY STRIKE KH</a>
-      <a href="https://smart-bowling.github.io/PARTS-BB/" target="_blank">BLOCKBUSTER</a>
-    </div>
-  </div>
-
+  <div class="site-name">MANUALS</div>
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="Поиск детали">
     <i class="fa-solid fa-magnifying-glass"></i>
   </div>
 </header>
 
-<button class="filter-button" onclick="toggleFilter()">
-  <i class="fa-solid fa-filter"></i> Фильтр по оборудованию
-</button>
-
-<div class="filter-dropdown" id="filterMenu"></div>
-
 <div id="manualContainer"></div>
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzHkkjF3Si6WzhVQVNMc9kvexvnsJNC_s8VVZsgjr3YeheetPKvY2vRzw8uHgL8S99VSg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData = [];
+let stockData = {};
 
-/* LOAD DATA */
 async function loadManuals(){
   const response = await fetch(API_URL);
-  manualsData = await response.json();
+  const data = await response.json();
+
+  manualsData = data.manuals;
+  stockData = data.stock;
+
   renderManuals(manualsData);
-  buildFilter(manualsData);
 }
 
-/* RENDER */
 function renderManuals(manuals){
   const container = document.getElementById("manualContainer");
   container.innerHTML="";
@@ -250,7 +174,6 @@ function renderManuals(manuals){
 
     const block=document.createElement("div");
     block.className="block";
-    block.dataset.category=manual.name.toLowerCase();
 
     block.innerHTML=`
       <img class="top-image" src="${manual.image}">
@@ -263,7 +186,6 @@ function renderManuals(manuals){
     manual.parts.forEach((part,i)=>{
       const btn=document.createElement("div");
       btn.className="btn";
-      btn.dataset.number=part.toLowerCase();
 
       btn.innerHTML=`
         <span>${i+1}</span>
@@ -292,119 +214,34 @@ function renderManuals(manuals){
   });
 }
 
-/* FILTER BUILD AUTO */
-function buildFilter(manuals){
-  const menu=document.getElementById("filterMenu");
-  menu.innerHTML=`<div class="filter-item active" onclick="setFilter('all')">Все мануалы</div>`;
-
-  manuals.forEach(manual=>{
-    menu.innerHTML+=`
-      <div class="filter-item" onclick="setFilter('${manual.name.toLowerCase()}')">
-        ${manual.name}
-      </div>
-    `;
-  });
-}
-
-/* FILTER */
-function toggleFilter(){
-  const menu=document.getElementById("filterMenu");
-  menu.style.display=menu.style.display==="block"?"none":"block";
-}
-
-function setFilter(value){
-  document.querySelectorAll(".filter-item")
-    .forEach(i=>i.classList.remove("active"));
-
-  event.target.classList.add("active");
-
-  document.querySelectorAll(".block").forEach(block=>{
-    if(value==="all"){
-      block.classList.remove("hidden");
-    }else{
-      block.classList.toggle(
-        "hidden",
-        block.dataset.category!==value
-      );
-    }
-  });
-
-  document.getElementById("filterMenu").style.display="none";
-}
-
-/* SEARCH */
-function searchDetail(){
-  const value=document.getElementById("searchInput")
-    .value.trim().toLowerCase();
-
-  document.querySelectorAll(".btn").forEach(btn=>{
-    btn.classList.remove("highlight");
-    if(btn.dataset.number.includes(value) && value.length>1){
-      btn.classList.add("highlight");
-      btn.closest(".buttons-container").style.display="flex";
-    }
-  });
-}
-
-document.getElementById("searchInput")
-  .addEventListener("input",searchDetail);
-
-/* DROPDOWN */
-function toggleDropdown(){
-  const d=document.getElementById("manualDropdown");
-  d.style.display=d.style.display==="flex"?"none":"flex";
-  d.style.flexDirection="column";
-}
-
-window.addEventListener("click",(e)=>{
-  if(!document.querySelector(".site-name").contains(e.target)){
-    document.getElementById("manualDropdown").style.display="none";
-  }
-});
-
-/* COPY */
-async function copyToClipboard(text,el){
-  try{
-    await navigator.clipboard.writeText(text);
-    showCopySuccess(el);
-  }catch{
-    alert("Ошибка копирования");
-  }
-}
-
-function showCopySuccess(el){
-  const orig=el.textContent;
-  el.textContent="✓ Скопировано!";
-  el.classList.add("copy-success");
-  setTimeout(()=>{
-    el.textContent=orig;
-    el.classList.remove("copy-success");
-  },1000);
-}
-
-/* DETAIL INFO */
 function toggleDetail(button){
+
   if(button.nextElementSibling &&
      button.nextElementSibling.classList.contains("detail-info")){
     button.nextElementSibling.remove();
     return;
   }
 
+  const partNumber = button.querySelector(".detail-number").textContent;
   const info=document.createElement("div");
   info.className="detail-info";
 
-  const data=[
-    {name:"BLOCKBUSTER",count:7},
-    {name:"LUCKY STRIKE KH",count:0},
-    {name:"SKYMALL",count:4}
+  const clubs = [
+    { key:"BB", name:"BLOCKBUSTER" },
+    { key:"KH", name:"LUCKY STRIKE KH" },
+    { key:"SKYMALL", name:"SKYMALL" },
+    { key:"STORE", name:"STORE" }
   ];
 
-  data.forEach(club=>{
+  clubs.forEach(club=>{
+
+    const count = stockData[partNumber]?.[club.key] ?? 0;
+
     info.innerHTML+=`
       <div class="club-row">
         <span>${club.name}</span>
-        <span class="${club.count===0?'count-zero':'count-positive'}">
-          ${club.count} шт.
+        <span class="${count===0?'count-zero':'count-positive'}">
+          ${count} шт.
         </span>
       </div>
     `;
@@ -412,6 +249,12 @@ function toggleDetail(button){
 
   button.after(info);
   setTimeout(()=>info.classList.add("open"),10);
+}
+
+async function copyToClipboard(text,el){
+  await navigator.clipboard.writeText(text);
+  el.textContent="✓ Скопировано!";
+  setTimeout(()=>el.textContent=text,1000);
 }
 
 loadManuals();
