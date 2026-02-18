@@ -27,7 +27,6 @@ header {
   top:0; left:0; right:0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index:1000;
-  cursor: default;
 }
 
 .logo img {
@@ -64,7 +63,7 @@ header {
   color:#374151;
 }
 
-.block.hidden { display:none; }
+.block { margin-bottom:10px; }
 
 .top-image {
   width:100%;
@@ -81,7 +80,8 @@ header {
   color:#fff;
   border:none;
   cursor:pointer;
-  margin-bottom:10px;
+  margin:8px 0;
+  text-align:left;
 }
 
 .buttons-container {
@@ -92,10 +92,11 @@ header {
 .btn {
   display:flex;
   justify-content:space-between;
-  padding:13px 16px;
+  padding:12px 16px;
   border:1px solid #ddd;
   background:#fff;
   cursor:pointer;
+  margin-bottom:4px;
 }
 
 .btn:hover { background:#f9fafb; }
@@ -117,10 +118,11 @@ header {
   transition:0.4s;
   background:#fff;
   border-left:3px solid #dc143c;
+  margin-bottom:8px;
 }
 
 .detail-info.open {
-  max-height:300px;
+  max-height:500px;
   opacity:1;
 }
 
@@ -133,7 +135,6 @@ header {
 
 .count-zero { color:#dc143c; }
 .count-positive { color:#16a34a; }
-
 </style>
 </head>
 <body>
@@ -157,7 +158,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnm
 let manualsData = [];
 let stockData = {};
 
-// Загрузка данных с API
 async function loadManuals(){
   const response = await fetch(API_URL);
   const data = await response.json();
@@ -168,29 +168,30 @@ async function loadManuals(){
   renderManualGroups();
 }
 
-// ПЕРВЫЙ ЭКРАН — КНОПКИ МАНУАЛОВ
-function renderManualGroups(){
+function renderManualGroups(filter=""){
   const container = document.getElementById("manualContainer");
   container.innerHTML = "";
 
-  // уникальные имена мануалов
   const uniqueNames = [...new Set(manualsData.map(m => m.name))];
 
   uniqueNames.forEach(name => {
+    const relatedManuals = manualsData.filter(m => m.name === name);
+
+    if(filter){
+      const hasMatch = relatedManuals.some(m => m.parts.some(p => p.includes(filter)));
+      if(!hasMatch) return;
+    }
+
     const btn = document.createElement("button");
     btn.className = "toggle-btn";
     btn.textContent = name;
 
-    btn.addEventListener("click", () => {
-      renderManualsByName(name);
-    });
-
+    btn.addEventListener("click", () => renderManualsByName(name, filter));
     container.appendChild(btn);
   });
 }
 
-// ПОКАЗ ВСЕХ МАНУАЛОВ ОДНОЙ ГРУППЫ
-function renderManualsByName(name){
+function renderManualsByName(name, filter=""){
   const container = document.getElementById("manualContainer");
   container.innerHTML = "";
 
@@ -209,6 +210,8 @@ function renderManualsByName(name){
     const btnContainer = block.querySelector(".buttons-container");
 
     manual.parts.forEach((part,i)=>{
+      if(filter && !part.includes(filter)) return;
+
       const btn=document.createElement("div");
       btn.className="btn";
 
@@ -217,13 +220,10 @@ function renderManualsByName(name){
         <span class="detail-number">${part}</span>
       `;
 
+      // теперь клик по кнопке копирует номер детали
       btn.addEventListener("click",(e)=>{
-        if(e.target.classList.contains("detail-number")){
-          copyToClipboard(part,e.target);
-          e.stopPropagation();
-        }else{
-          toggleDetail(btn);
-        }
+        copyToClipboard(part, btn);
+        toggleDetail(btn);
       });
 
       btnContainer.appendChild(btn);
@@ -231,19 +231,16 @@ function renderManualsByName(name){
 
     block.querySelector(".toggle-btn")
       .addEventListener("click",()=>{
-        btnContainer.style.display=
-          btnContainer.style.display==="flex"?"none":"flex";
+        btnContainer.style.display = btnContainer.style.display==="flex"?"none":"flex";
       });
 
     container.appendChild(block);
   });
 
-  // возврат к выбору мануалов через логотип
   const logo = document.querySelector(".logo");
-  logo.addEventListener("click", renderManualGroups);
+  logo.addEventListener("click", ()=>renderManualGroups(filter));
 }
 
-// ДЕТАЛИ И КЛУБЫ
 function toggleDetail(button){
   if(button.nextElementSibling &&
      button.nextElementSibling.classList.contains("detail-info")){
@@ -280,13 +277,22 @@ function toggleDetail(button){
 
 async function copyToClipboard(text,el){
   await navigator.clipboard.writeText(text);
-  el.textContent="✓ Скопировано!";
-  setTimeout(()=>el.textContent=text,1000);
+  const original = el.innerHTML;
+  el.innerHTML="✓ Скопировано!";
+  setTimeout(()=>el.innerHTML=original,1000);
 }
+
+// поиск по инпуту
+document.getElementById("searchInput").addEventListener("input",(e)=>{
+  const val = e.target.value.trim();
+  if(val===""){
+    renderManualGroups();
+  }else{
+    renderManualGroups(val);
+  }
+});
 
 loadManuals();
 </script>
-
 </body>
 </html>
-
