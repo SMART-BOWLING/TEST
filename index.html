@@ -1,200 +1,622 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Детали - MANUALS (JSONP версия)</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-        .block { background: white; margin-bottom: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .top-image { width: 100%; max-height: 200px; object-fit: cover; }
-        .toggle-btn { width: 100%; padding: 15px; background: #1f2937; color: white; border: none; font-size: 16px; cursor: pointer; }
-        .buttons-container { display: none; flex-direction: column; }
-        .btn { padding: 12px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; cursor: pointer; }
-        .btn:hover { background: #f0f0f0; }
-        .detail-number { color: #0066cc; font-weight: bold; }
-        .loading { text-align: center; padding: 40px; font-size: 18px; }
-        .error { color: red; text-align: center; padding: 40px; }
-        .filter-button { width: 100%; padding: 12px; background: #374151; color: white; border: none; margin-bottom: 10px; cursor: pointer; }
-        .filter-dropdown { display: none; background: white; border: 1px solid #ddd; margin-bottom: 20px; }
-        .filter-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .filter-item.active { background: #1f2937; color: white; }
-        .filter-item:hover { background: #f0f0f0; }
-        .hidden { display: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Детали</title>
+
+<!-- Font Awesome для иконок -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+  color: #1f2937;
+  padding-top: 70px;
+}
+
+/* Шапка */
+header {
+  background-color: #1f2937;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  position: fixed;
+  top:0; left:0; right:0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  user-select: none;
+  z-index:1000;
+}
+.logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  margin-left: -10px;
+}
+
+/* Выпадающий список */
+.site-name {
+  position: relative;
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 220%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  min-width: 180px;
+  z-index: 1001;
+  flex-direction: column;
+}
+.dropdown-content a {
+  color: white;
+  padding: 8px 12px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  font-size: 14px;
+}
+.dropdown-content a:hover {
+  background-color: #374151;
+}
+
+/* Поиск */
+.search-container {
+  position: relative;
+}
+.search-container input {
+  padding: 6px 30px 6px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 16px;
+  width: 180px;
+}
+.search-container i {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #374151;
+}
+
+/* ===== КНОПКА ФИЛЬТРА ПОД ШАПКОЙ ===== */
+.filter-button {
+  background-color: #374151;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  border-bottom: 2px solid #4b5563;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+  position: relative;
+}
+
+/* ===== FILTER DROPDOWN ===== */
+.filter-dropdown {
+  display: none;
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+  box-shadow: 0 4px 6px -2px rgba(0,0,0,0.1);
+}
+
+.filter-item {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.filter-item:hover {
+  background: #f3f4f6;
+}
+
+.filter-item.active {
+  background: #1f2937;
+  color: white;
+  font-weight: 500;
+}
+
+/* ===== BLOCKS ===== */
+.block {
+  margin-bottom: 0;
+  display: block;
+}
+
+.block.hidden {
+  display: none;
+}
+
+.top-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
+}
+
+.toggle-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  margin: 0;
+  border-top: 1px solid #4b5563;
+}
+
+.buttons-container {
+  display: none;
+  flex-direction: column;
+  margin: 0;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 16px;
+  border: 1px solid #ddd;
+  background: #ffffff;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: text;
+  margin: 0;
+}
+
+.btn + .btn {
+  border-top: none;
+}
+
+.btn:hover {
+  background: #f9fafb;
+}
+
+.highlight {
+  background: #ffe4e6 !important;
+  border-color: #dc143c !important;
+}
+
+/* Стиль для номера детали при наведении */
+.btn span:last-child {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.btn span:last-child:hover {
+  background-color: #e0e0e0;
+}
+
+.btn span:last-child:active {
+  background-color: #d0d0d0;
+}
+
+/* Сообщение об успешном копировании */
+.copy-success {
+  background-color: #1f2937 !important;
+  color: white !important;
+  transition: background-color 0.3s;
+}
+
+/* ===== DETAIL INFO ===== */
+.detail-info {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  background: #ffffff;
+  border-left: 3px solid #dc143c;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  margin: 0;
+}
+
+.detail-info.open {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.club-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+}
+
+.count-zero { color: #dc143c; }
+.count-positive { color: #16a34a; }
+
+</style>
 </head>
 <body>
 
-    <button class="filter-button" onclick="toggleFilter()">📋 Фильтр по оборудованию</button>
-    <div class="filter-dropdown" id="filterMenu">
-        <div class="filter-item active" onclick="setFilter('all')">Все мануалы</div>
+<!-- ===== ШАПКА ===== -->
+<header>
+  <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+  
+  <div class="site-name" onclick="toggleDropdown()">MANUALS
+    <div class="dropdown-content" id="manualDropdown">
+      <a href="https://smart-bowling.github.io/PARTS-SKYMALL/#" target="_blank">SKYMALL</a>
+      <a href="https://smart-bowling.github.io/PARTS-KH/" target="_blank">LUCKY STRIKE KH</a>
+      <a href="https://smart-bowling.github.io/PARTS-BB/" target="_blank">BLOCKBUSTER</a>
     </div>
+  </div>
+  
+  <div class="search-container">
+    <input type="text" id="searchInput" class="search-input" placeholder="Поиск детали" style="font-size:16px;">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </div>
+</header>
 
-    <div id="instructionsContainer"></div>
-    <div id="loadingIndicator" class="loading">⏳ Загрузка инструкций...</div>
+<!-- ===== КНОПКА ФИЛЬТРА ПОД ШАПКОЙ ===== -->
+<button class="filter-button" onclick="toggleFilter()">
+  <i class="fa-solid fa-filter"></i> Фильтр по оборудованию
+</button>
 
-    <script>
-    // === ВАШ URL (работает) ===
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXtILCyKNehFficVztcKYyvD9JBB4PK-tRx-DWXN6rHQVRROgYhqGiYy-IAe9Lw2K7kQ/exec';
+<!-- ===== FILTER MENU ===== -->
+<div class="filter-dropdown" id="filterMenu">
+  <div class="filter-item active" onclick="setFilter('all')">Все мануалы</div>
+  <div class="filter-item" onclick="setFilter('pins potter 90xli edge')">PINSPOTTER 90XLi EDGE</div>
+  <div class="filter-item" onclick="setFilter('qubicaamf distributor')">QUBICAAMF DISTRIBUTOR</div>
+  <div class="filter-item" onclick="setFilter('ball return harmoni')">BALL RETURN HARMONI</div>
+  <div class="filter-item" onclick="setFilter('ball lift')">Ball lift</div>
+</div>
 
-    let allInstructions = [];
+<!-- ===== BLOCK 1 ===== -->
+<div class="block" data-category="pins potter 90xli edge">
+  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1">
+  <button class="toggle-btn" onclick="toggleList('list1')">
+    PINSPOTTER 90XLi EDGE
+  </button>
+  <div class="buttons-container" id="list1"></div>
+</div>
 
-    // === ЗАГРУЗКА ЧЕРЕЗ JSONP (РАБОТАЕТ В ПЕСОЧНИЦЕ) ===
-    function loadInstructions() {
-        const callbackName = 'jsonp_cb_' + Date.now();
-        
-        window[callbackName] = function(data) {
-            console.log('✅ Данные получены:', data);
-            
-            if (data && !data.error) {
-                allInstructions = data;
-                renderInstructions(data);
-                updateFilterMenu(data);
-            } else {
-                showError('Ошибка загрузки данных');
-            }
-            
-            // Очистка
-            delete window[callbackName];
-            document.body.removeChild(script);
-            document.getElementById('loadingIndicator').style.display = 'none';
-        };
+<!-- ===== BLOCK 2 ===== -->
+<div class="block" data-category="qubicaamf distributor">
+  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2">
+  <button class="toggle-btn" onclick="toggleList('list2')">
+    QUBICAAMF DISTRIBUTOR
+  </button>
+  <div class="buttons-container" id="list2"></div>
+</div>
 
-        const script = document.createElement('script');
-        script.src = SCRIPT_URL + '?callback=' + callbackName;
-        script.onerror = function() {
-            showError('Не удалось загрузить данные. Проверьте URL.');
-            delete window[callbackName];
-            document.getElementById('loadingIndicator').style.display = 'none';
-        };
-        
-        document.body.appendChild(script);
+<!-- ===== BLOCK 3 ===== -->
+<div class="block" data-category="ball return harmoni">
+  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 3">
+  <button class="toggle-btn" onclick="toggleList('list3')">
+    BALL RETURN HARMONI
+  </button>
+  <div class="buttons-container" id="list3"></div>
+</div>
+
+<!-- ===== BLOCK 4 ===== -->
+<div class="block" data-category="ball lift">
+  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 4">
+  <button class="toggle-btn" onclick="toggleList('list4')">
+    Ball lift
+  </button>
+  <div class="buttons-container" id="list4"></div>
+</div>
+
+<script>
+// Функции для шапки
+function toggleDropdown() {
+  const dropdown = document.getElementById('manualDropdown');
+  dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+  dropdown.style.flexDirection = 'column';
+}
+
+// Закрытие дропдауна при клике вне
+window.addEventListener('click', function(e){
+  const siteName = document.querySelector('.site-name');
+  const dropdown = document.getElementById('manualDropdown');
+  if(siteName && !siteName.contains(e.target)){
+    dropdown.style.display='none';
+  }
+});
+
+// Универсальная функция для копирования текста в буфер обмена
+async function copyToClipboard(text, element) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showCopySuccess(element);
+      return true;
+    } catch (err) {
+      console.log('Clipboard API failed:', err);
     }
-
-    // === ОТРИСОВКА ===
-    function renderInstructions(instructions) {
-        const container = document.getElementById('instructionsContainer');
-        container.innerHTML = '';
-        
-        instructions.forEach((inst, index) => {
-            const block = document.createElement('div');
-            block.className = 'block';
-            block.dataset.category = inst.name;
-            
-            // Картинка
-            const img = document.createElement('img');
-            img.className = 'top-image';
-            img.src = inst.image || 'https://via.placeholder.com/800x200?text=' + encodeURIComponent(inst.name);
-            img.alt = inst.name;
-            
-            // Кнопка-заголовок
-            const btn = document.createElement('button');
-            btn.className = 'toggle-btn';
-            btn.textContent = inst.name;
-            btn.onclick = () => toggleList('list-' + index);
-            
-            // Контейнер деталей
-            const list = document.createElement('div');
-            list.className = 'buttons-container';
-            list.id = 'list-' + index;
-            
-            inst.parts.forEach((part, i) => {
-                const partBtn = document.createElement('div');
-                partBtn.className = 'btn';
-                partBtn.innerHTML = `<span>${i+1}</span><span class="detail-number">${part}</span>`;
-                partBtn.onclick = (e) => {
-                    if (e.target.classList.contains('detail-number')) {
-                        copyToClipboard(part, e.target);
-                    }
-                };
-                list.appendChild(partBtn);
-            });
-            
-            block.appendChild(img);
-            block.appendChild(btn);
-            block.appendChild(list);
-            container.appendChild(block);
-        });
-        
-        setFilter('all');
+  }
+  
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+    textarea.style.opacity = '0';
+    textarea.setAttribute('readonly', '');
+    
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    const success = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    if (success) {
+      showCopySuccess(element);
+      return true;
     }
+  } catch (err) {
+    console.log('Fallback copy failed:', err);
+  }
+  
+  alert('Не удалось скопировать. Ваш браузер не поддерживает копирование в буфер обмена.');
+  return false;
+}
 
-    // === ФИЛЬТР ===
-    function updateFilterMenu(instructions) {
-        const menu = document.getElementById('filterMenu');
-        const allItem = menu.children[0];
-        menu.innerHTML = '';
-        menu.appendChild(allItem);
-        
-        [...new Set(instructions.map(i => i.name))].sort().forEach(name => {
-            const item = document.createElement('div');
-            item.className = 'filter-item';
-            item.textContent = name;
-            item.onclick = () => setFilter(name);
-            menu.appendChild(item);
-        });
+// Функция для показа успешного копирования
+function showCopySuccess(element) {
+  const originalText = element.textContent;
+  
+  element.textContent = '✓ Скопировано!';
+  element.classList.add('copy-success');
+  
+  setTimeout(() => {
+    element.textContent = originalText;
+    element.classList.remove('copy-success');
+  }, 1000);
+}
+
+// Функция для открытия/закрытия фильтра
+function toggleFilter() {
+  const menu = document.getElementById('filterMenu');
+  
+  if (menu.style.display === 'block') {
+    menu.style.display = 'none';
+  } else {
+    menu.style.display = 'block';
+  }
+}
+
+// Функция установки фильтра
+function setFilter(filterValue) {
+  // Сначала убираем активный класс у всех пунктов
+  document.querySelectorAll('.filter-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Находим выбранный пункт и добавляем ему активный класс
+  const selectedItem = Array.from(document.querySelectorAll('.filter-item')).find(item => {
+    const itemText = item.textContent.toLowerCase();
+    if (filterValue === 'all') {
+      return itemText === 'все мануалы';
+    } else {
+      return itemText.includes(filterValue);
     }
+  });
+  
+  if (selectedItem) {
+    selectedItem.classList.add('active');
+  }
+  
+  // Фильтруем блоки
+  const blocks = document.querySelectorAll('.block');
+  
+  if (filterValue === 'all') {
+    // Показываем все блоки
+    blocks.forEach(block => {
+      block.classList.remove('hidden');
+    });
+  } else {
+    // Скрываем все блоки, потом показываем подходящие
+    blocks.forEach(block => {
+      block.classList.add('hidden');
+    });
+    
+    // Показываем блоки с соответствующей категорией
+    const matchingBlocks = document.querySelectorAll(`.block[data-category="${filterValue}"]`);
+    matchingBlocks.forEach(block => {
+      block.classList.remove('hidden');
+    });
+  }
+  
+  // Закрываем меню после выбора
+  setTimeout(() => {
+    document.getElementById('filterMenu').style.display = 'none';
+  }, 200);
+}
 
-    function toggleFilter() {
-        const menu = document.getElementById('filterMenu');
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+function toggleList(id) {
+  const list = document.getElementById(id);
+  list.style.display = list.style.display === "flex" ? "none" : "flex";
+}
+
+function createButtons(containerId, count, prefix) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  for(let i=1; i<=count; i++){
+    const number = prefix + "-" + String(i).padStart(3,'0');
+
+    const btn = document.createElement("div");
+    btn.className = "btn";
+    btn.setAttribute("data-number", number);
+    btn.setAttribute("data-search-number", number.toLowerCase());
+
+    btn.innerHTML = `
+      <span>${i}</span>
+      <span class="detail-number">${number}</span>
+    `;
+
+    btn.addEventListener("click", function(event) {
+      if (event.target.classList.contains('detail-number')) {
+        const detailNumber = event.target.textContent;
+        copyToClipboard(detailNumber, event.target);
+        event.stopPropagation();
+      } else {
+        toggleDetail(this);
+      }
+    });
+
+    container.appendChild(btn);
+  }
+}
+
+// Создаем кнопки для всех списков
+createButtons("list1", 20, "000-001");
+createButtons("list2", 40, "000-002");
+createButtons("list3", 15, "000-003");
+createButtons("list4", 25, "000-004");
+
+function toggleDetail(button) {
+  if(button.nextElementSibling && button.nextElementSibling.classList.contains("detail-info")){
+    const info = button.nextElementSibling;
+    info.classList.remove("open");
+    setTimeout(()=> info.remove(), 400);
+    return;
+  }
+
+  document.querySelectorAll(".detail-info").forEach(el => {
+    el.classList.remove("open");
+    setTimeout(()=> el.remove(), 400);
+  });
+
+  const info = document.createElement("div");
+  info.className = "detail-info";
+
+  const data = [
+    {name:"BLOCKBUSTER", count:7},
+    {name:"LUCKY STRIKE KH", count:0},
+    {name:"SKYMALL", count:4}
+  ];
+
+  data.forEach(club => {
+    const row = document.createElement("div");
+    row.className = "club-row";
+
+    row.innerHTML = `
+      <span>${club.name}</span>
+      <span class="${club.count === 0 ? 'count-zero' : 'count-positive'}">
+        ${club.count} шт.
+      </span>
+    `;
+
+    info.appendChild(row);
+  });
+
+  button.after(info);
+  setTimeout(()=> info.classList.add("open"), 10);
+}
+
+/* ===== ПОИСК ===== */
+function searchDetail() {
+  const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+  if(!searchValue) {
+    alert("Введите номер детали или часть номера");
+    return;
+  }
+
+  const buttons = document.querySelectorAll(".btn");
+  let found = false;
+  let firstFoundButton = null;
+
+  buttons.forEach(btn => {
+    btn.classList.remove("highlight");
+  });
+
+  buttons.forEach(btn => {
+    const fullNumber = btn.dataset.number.toLowerCase();
+    const numberWithoutDashes = fullNumber.replace(/-/g, '');
+    const searchWithoutDashes = searchValue.replace(/-/g, '');
+    
+    if (fullNumber === searchValue || 
+        fullNumber.includes(searchValue) || 
+        fullNumber.endsWith(searchValue) ||
+        numberWithoutDashes.includes(searchWithoutDashes)) {
+      
+      const parent = btn.closest(".buttons-container");
+      parent.style.display = "flex";
+      btn.classList.add("highlight");
+      
+      if (!firstFoundButton) {
+        firstFoundButton = btn;
+      }
+      
+      found = true;
     }
+  });
 
-    function setFilter(value) {
-        document.querySelectorAll('.filter-item').forEach(item => {
-            item.classList.remove('active');
-            if (value === 'all' && item.textContent === 'Все мануалы') item.classList.add('active');
-            else if (item.textContent === value) item.classList.add('active');
-        });
-        
-        document.querySelectorAll('.block').forEach(block => {
-            if (value === 'all') block.classList.remove('hidden');
-            else block.classList.toggle('hidden', block.dataset.category !== value);
-        });
-        
-        document.getElementById('filterMenu').style.display = 'none';
+  if (found && firstFoundButton) {
+    setTimeout(() => {
+      firstFoundButton.scrollIntoView({behavior:"smooth", block:"center"});
+    }, 100);
+    
+    // Убрано всплывающее окно с количеством найденных деталей
+  } else {
+    alert("Деталь не найдена");
+  }
+}
+
+// Поиск по мере ввода
+let searchTimeout;
+document.getElementById("searchInput").addEventListener("input", function(e) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (this.value.trim().length >= 2) {
+      searchDetail();
     }
+  }, 500);
+});
 
-    function toggleList(id) {
-        const list = document.getElementById(id);
-        if (list) list.style.display = list.style.display === 'flex' ? 'none' : 'flex';
+document.getElementById("searchInput")
+  .addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+      searchDetail();
     }
+  });
 
-    // === КОПИРОВАНИЕ ===
-    async function copyToClipboard(text, element) {
-        try {
-            await navigator.clipboard.writeText(text);
-            showCopySuccess(element);
-        } catch {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            showCopySuccess(element);
-        }
-    }
+// Закрытие фильтра при клике вне
+window.addEventListener('click', function(e) {
+  const filterButton = document.querySelector('.filter-button');
+  const filterMenu = document.getElementById('filterMenu');
+  
+  if (!filterButton.contains(e.target) && !filterMenu.contains(e.target)) {
+    filterMenu.style.display = 'none';
+  }
+});
 
-    function showCopySuccess(element) {
-        const original = element.textContent;
-        element.textContent = '✓ Скопировано!';
-        element.style.backgroundColor = '#1f2937';
-        element.style.color = 'white';
-        setTimeout(() => {
-            element.textContent = original;
-            element.style.backgroundColor = '';
-            element.style.color = '';
-        }, 1000);
-    }
-
-    function showError(msg) {
-        document.getElementById('instructionsContainer').innerHTML = 
-            `<div class="error">❌ ${msg}</div>`;
-    }
-
-    // === СТАРТ ===
-    window.addEventListener('load', loadInstructions);
-    </script>
+</script>
 
 </body>
 </html>
