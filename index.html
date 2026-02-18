@@ -12,7 +12,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background-color: #e5e7eb;
+  background-color: #ffffff;
   color: #1f2937;
   padding-top: 70px;
 }
@@ -35,7 +35,6 @@ header {
   width: 40px;
   height: 40px;
   object-fit: cover;
-  /* Сдвигаем логотип чуть левее */
   margin-left: -10px;
 }
 
@@ -44,7 +43,6 @@ header {
   position: relative;
   flex: 1;
   text-align: center;
-  /* Уменьшаем текст MANUALS */
   font-size: 18px;
   font-weight: bold;
   color: white;
@@ -59,14 +57,12 @@ header {
   background-color: #1f2937;
   border-radius: 6px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  /* Уменьшаем минимальную ширину дропдауна */
   min-width: 180px;
   z-index: 1001;
   flex-direction: column;
 }
 .dropdown-content a {
   color: white;
-  /* Уменьшаем отступы и размер текста в дропдауне */
   padding: 8px 12px;
   text-decoration: none;
   display: block;
@@ -86,7 +82,6 @@ header {
   border-radius: 6px;
   border: none;
   font-size: 16px;
-  /* Уменьшаем ширину строки поиска */
   width: 180px;
 }
 .search-container i {
@@ -97,11 +92,31 @@ header {
   color: #374151;
 }
 
+/* ===== КНОПКА ФИЛЬТРА ПОД ШАПКОЙ ===== */
+.filter-button {
+  background-color: #374151;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  border-bottom: 2px solid #4b5563;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+  position: relative;
+}
+
 /* ===== FILTER DROPDOWN ===== */
 .filter-dropdown {
   display: none;
   background: #ffffff;
   border-bottom: 1px solid #ddd;
+  box-shadow: 0 4px 6px -2px rgba(0,0,0,0.1);
 }
 
 .filter-item {
@@ -109,15 +124,27 @@ header {
   border-top: 1px solid #eee;
   font-size: 14px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .filter-item:hover {
-  background: #f9fafb;
+  background: #f3f4f6;
+}
+
+.filter-item.active {
+  background: #1f2937;
+  color: white;
+  font-weight: 500;
 }
 
 /* ===== BLOCKS ===== */
 .block {
-  margin-bottom: 25px;
+  margin-bottom: 0;
+  display: block; /* По умолчанию показываем все блоки */
+}
+
+.block.hidden {
+  display: none; /* Скрываем блоки по фильтру */
 }
 
 .top-image {
@@ -125,6 +152,9 @@ header {
   max-height: 300px;
   object-fit: cover;
   display: block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
 }
 
 .toggle-btn {
@@ -136,11 +166,14 @@ header {
   color: #fff;
   border: none;
   cursor: pointer;
+  margin: 0;
+  border-top: 1px solid #4b5563;
 }
 
 .buttons-container {
   display: none;
   flex-direction: column;
+  margin: 0;
 }
 
 /* ===== BUTTONS ===== */
@@ -155,6 +188,7 @@ header {
   cursor: pointer;
   transition: background 0.2s ease;
   user-select: text;
+  margin: 0;
 }
 
 .btn + .btn {
@@ -186,7 +220,7 @@ header {
   background-color: #d0d0d0;
 }
 
-/* Сообщение об успешном копировании - цвет как у кнопки "Список номеров деталей" */
+/* Сообщение об успешном копировании */
 .copy-success {
   background-color: #1f2937 !important;
   color: white !important;
@@ -203,6 +237,7 @@ header {
   border-left: 3px solid #dc143c;
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
+  margin: 0;
 }
 
 .detail-info.open {
@@ -243,31 +278,54 @@ header {
   </div>
 </header>
 
+<!-- ===== КНОПКА ФИЛЬТРА ПОД ШАПКОЙ ===== -->
+<button class="filter-button" onclick="toggleFilter()">
+  <i class="fa-solid fa-filter"></i> Фильтр по оборудованию
+</button>
+
 <!-- ===== FILTER MENU ===== -->
 <div class="filter-dropdown" id="filterMenu">
-  <div class="filter-item">Все мануалы</div>
-  <div class="filter-item">QUBICAAMF 90XLi EDGE</div>
-  <div class="filter-item">QUBICAAMF DISTRIBUTOR</div>
-  <div class="filter-item">Harmony Ball return</div>
-  <div class="filter-item">Ball lift</div>
+  <div class="filter-item active" onclick="setFilter('all')">Все мануалы</div>
+  <div class="filter-item" onclick="setFilter('pins potter 90xli edge')">PINSPOTTER 90XLi EDGE</div>
+  <div class="filter-item" onclick="setFilter('qubicaamf distributor')">QUBICAAMF DISTRIBUTOR</div>
+  <div class="filter-item" onclick="setFilter('ball return harmoni')">BALL RETURN HARMONI</div>
+  <div class="filter-item" onclick="setFilter('ball lift')">Ball lift</div>
 </div>
 
 <!-- ===== BLOCK 1 ===== -->
-<div class="block">
+<div class="block" data-category="pins potter 90xli edge">
   <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 1">
   <button class="toggle-btn" onclick="toggleList('list1')">
-    Список номеров деталей (20)
+    PINSPOTTER 90XLi EDGE
   </button>
   <div class="buttons-container" id="list1"></div>
 </div>
 
 <!-- ===== BLOCK 2 ===== -->
-<div class="block">
+<div class="block" data-category="qubicaamf distributor">
   <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 2">
   <button class="toggle-btn" onclick="toggleList('list2')">
-    Список номеров деталей (40)
+    QUBICAAMF DISTRIBUTOR
   </button>
   <div class="buttons-container" id="list2"></div>
+</div>
+
+<!-- ===== BLOCK 3 ===== (добавим для демонстрации) -->
+<div class="block" data-category="ball return harmoni">
+  <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 3">
+  <button class="toggle-btn" onclick="toggleList('list3')">
+    BALL RETURN HARMONI
+  </button>
+  <div class="buttons-container" id="list3"></div>
+</div>
+
+<!-- ===== BLOCK 4 ===== (добавим для демонстрации) -->
+<div class="block" data-category="ball lift">
+  <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 4">
+  <button class="toggle-btn" onclick="toggleList('list4')">
+    Ball lift
+  </button>
+  <div class="buttons-container" id="list4"></div>
 </div>
 
 <script>
@@ -289,7 +347,6 @@ window.addEventListener('click', function(e){
 
 // Универсальная функция для копирования текста в буфер обмена
 async function copyToClipboard(text, element) {
-  // Пробуем современный Clipboard API 
   if (navigator.clipboard && window.isSecureContext) {
     try {
       await navigator.clipboard.writeText(text);
@@ -297,16 +354,12 @@ async function copyToClipboard(text, element) {
       return true;
     } catch (err) {
       console.log('Clipboard API failed:', err);
-      // Продолжаем с fallback
     }
   }
   
-  // Fallback на старый метод с textarea 
   try {
     const textarea = document.createElement('textarea');
     textarea.value = text;
-    
-    // Делаем элемент невидимым, но существующим 
     textarea.style.position = 'fixed';
     textarea.style.left = '-9999px';
     textarea.style.top = '0';
@@ -328,12 +381,11 @@ async function copyToClipboard(text, element) {
     console.log('Fallback copy failed:', err);
   }
   
-  // Если ничего не сработало
   alert('Не удалось скопировать. Ваш браузер не поддерживает копирование в буфер обмена.');
   return false;
 }
 
-// Функция для показа успешного копирования - цвет как у кнопки "Список номеров деталей"
+// Функция для показа успешного копирования
 function showCopySuccess(element) {
   const originalText = element.textContent;
   
@@ -346,18 +398,66 @@ function showCopySuccess(element) {
   }, 1000);
 }
 
-function toggleFilter(){
-  const menu = document.getElementById("filterMenu");
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
+// Функция для открытия/закрытия фильтра
+function toggleFilter() {
+  const menu = document.getElementById('filterMenu');
+  
+  if (menu.style.display === 'block') {
+    menu.style.display = 'none';
+  } else {
+    menu.style.display = 'block';
+  }
 }
 
-function toggleList(id){
+// Функция установки фильтра
+function setFilter(filterValue) {
+  // Обновляем активный класс в пунктах меню
+  document.querySelectorAll('.filter-item').forEach(item => {
+    const itemText = item.textContent.toLowerCase();
+    if (filterValue === 'all' && itemText === 'все мануалы') {
+      item.classList.add('active');
+    } else if (itemText.includes(filterValue)) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+  
+  // Фильтруем блоки
+  const blocks = document.querySelectorAll('.block');
+  
+  if (filterValue === 'all') {
+    // Показываем все блоки
+    blocks.forEach(block => {
+      block.classList.remove('hidden');
+    });
+  } else {
+    // Скрываем все блоки, потом показываем подходящие
+    blocks.forEach(block => {
+      block.classList.add('hidden');
+    });
+    
+    // Показываем блоки с соответствующей категорией
+    const matchingBlocks = document.querySelectorAll(`.block[data-category="${filterValue}"]`);
+    matchingBlocks.forEach(block => {
+      block.classList.remove('hidden');
+    });
+  }
+  
+  // Закрываем меню после выбора
+  setTimeout(() => {
+    document.getElementById('filterMenu').style.display = 'none';
+  }, 200);
+}
+
+function toggleList(id) {
   const list = document.getElementById(id);
   list.style.display = list.style.display === "flex" ? "none" : "flex";
 }
 
-function createButtons(containerId, count, prefix){
+function createButtons(containerId, count, prefix) {
   const container = document.getElementById(containerId);
+  if (!container) return;
 
   for(let i=1; i<=count; i++){
     const number = prefix + "-" + String(i).padStart(3,'0');
@@ -386,11 +486,13 @@ function createButtons(containerId, count, prefix){
   }
 }
 
+// Создаем кнопки для всех списков
 createButtons("list1", 20, "000-001");
 createButtons("list2", 40, "000-002");
+createButtons("list3", 15, "000-003");
+createButtons("list4", 25, "000-004");
 
-function toggleDetail(button){
-
+function toggleDetail(button) {
   if(button.nextElementSibling && button.nextElementSibling.classList.contains("detail-info")){
     const info = button.nextElementSibling;
     info.classList.remove("open");
@@ -430,8 +532,8 @@ function toggleDetail(button){
   setTimeout(()=> info.classList.add("open"), 10);
 }
 
-/* ===== УЛУЧШЕННЫЙ ПОИСК ===== */
-function searchDetail(){
+/* ===== ПОИСК ===== */
+function searchDetail() {
   const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
   if(!searchValue) {
     alert("Введите номер детали или часть номера");
@@ -500,8 +602,16 @@ document.getElementById("searchInput")
     }
   });
 
-// Кнопка фильтра (можно добавить в шапку при необходимости)
-// Но пока оставляем как было
+// Закрытие фильтра при клике вне
+window.addEventListener('click', function(e) {
+  const filterButton = document.querySelector('.filter-button');
+  const filterMenu = document.getElementById('filterMenu');
+  
+  if (!filterButton.contains(e.target) && !filterMenu.contains(e.target)) {
+    filterMenu.style.display = 'none';
+  }
+});
+
 </script>
 
 </body>
