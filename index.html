@@ -45,6 +45,8 @@ header {
 
 .search-container {
   position:relative;
+  display:flex;
+  align-items:center;
 }
 
 .search-container input {
@@ -52,7 +54,7 @@ header {
   border-radius:6px;
   border:none;
   font-size:16px;
-  width:180px;
+  width:160px;
 }
 
 .search-container i {
@@ -61,6 +63,7 @@ header {
   top:50%;
   transform:translateY(-50%);
   color:#374151;
+  pointer-events:none;
 }
 
 .block { margin-bottom:10px; }
@@ -101,16 +104,6 @@ header {
 
 .btn:hover { background:#f9fafb; }
 
-.highlight {
-  background:#ffe4e6 !important;
-  border-color:#dc143c !important;
-}
-
-.copy-success {
-  background:#1f2937 !important;
-  color:white !important;
-}
-
 .detail-info {
   overflow:hidden;
   max-height:0;
@@ -135,6 +128,37 @@ header {
 
 .count-zero { color:#dc143c; }
 .count-positive { color:#16a34a; }
+
+.search-highlight {
+  background:#ffe4e6 !important;
+  border-color:#dc143c !important;
+}
+
+.active-highlight {
+  background:#ffb6b9 !important;
+  border-color:#dc143c !important;
+}
+
+/* Кнопки навигации внизу */
+.search-nav-bottom {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  gap:6px;
+  z-index:1000;
+  display:none; /* скрываем по умолчанию */
+}
+
+.search-nav-bottom button {
+  background:#1f2937;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:16px;
+  border-radius:4px;
+}
 </style>
 </head>
 <body>
@@ -152,11 +176,22 @@ header {
 
 <div id="manualContainer"></div>
 
+<!-- Навигация между совпадениями -->
+<div class="search-nav-bottom" id="searchNav">
+  <button onclick="prevResult()">←</button>
+  <button onclick="nextResult()">→</button>
+</div>
+
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData = [];
 let stockData = {};
+let currentHighlight = "";
+let searchResults = [];
+let currentIndex = 0;
+
+const searchNav = document.getElementById("searchNav");
 
 async function loadManuals(){
   const response = await fetch(API_URL);
@@ -223,7 +258,7 @@ function renderManualsByName(name, filter=""){
       btn.addEventListener("click",(e)=>{
         if(e.target.classList.contains("detail-number")){
           copyToClipboard(part, e.target);
-          e.stopPropagation(); // НЕ открываем список при клике на текст номера
+          e.stopPropagation(); 
           return;
         }
         toggleDetail(btn);
@@ -241,7 +276,7 @@ function renderManualsByName(name, filter=""){
   });
 
   const logo = document.querySelector(".logo");
-  logo.addEventListener("click", ()=>renderManualGroups(filter));
+  logo.addEventListener("click", ()=>renderManualGroups(currentHighlight));
 }
 
 function toggleDetail(button){
@@ -288,12 +323,73 @@ async function copyToClipboard(text,el){
 // поиск по инпуту
 document.getElementById("searchInput").addEventListener("input",(e)=>{
   const val = e.target.value.trim();
+  currentHighlight = val;
+
+  // скрываем кнопки, если поиск пустой
+  if(val===""){
+    searchNav.style.display="none";
+  } else {
+    searchNav.style.display="flex";
+  }
+
+  searchResults = [];
+  currentIndex = 0;
+
+  // удаляем старую подсветку
+  document.querySelectorAll(".search-highlight, .active-highlight").forEach(el=>{
+    el.classList.remove("search-highlight","active-highlight");
+  });
+
   if(val===""){
     renderManualGroups();
-  }else{
-    renderManualGroups(val);
+    return;
+  }
+
+  // ищем все совпадения
+  let found = false;
+  for(const manual of manualsData){
+    const matches = manual.parts.filter(p => p.includes(val));
+    if(matches.length > 0){
+      renderManualsByName(manual.name);
+      setTimeout(()=>{
+        document.querySelectorAll(".detail-number").forEach(el=>{
+          if(el.textContent.includes(val)){
+            const btnContainer = el.closest(".buttons-container");
+            btnContainer.style.display="flex";
+            el.classList.add("search-highlight");
+            searchResults.push(el);
+            if(!found){
+              el.scrollIntoView({behavior:"smooth", block:"center"});
+              el.classList.add("active-highlight");
+              found = true;
+            }
+          }
+        });
+      },100);
+    }
   }
 });
+
+function showCurrentResult(){
+  searchResults.forEach(el => el.classList.remove("active-highlight"));
+  if(searchResults[currentIndex]){
+    const el = searchResults[currentIndex];
+    el.classList.add("active-highlight");
+    el.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+}
+
+function nextResult(){
+  if(searchResults.length===0) return;
+  currentIndex = (currentIndex+1) % searchResults.length;
+  showCurrentResult();
+}
+
+function prevResult(){
+  if(searchResults.length===0) return;
+  currentIndex = (currentIndex-1+searchResults.length) % searchResults.length;
+  showCurrentResult();
+}
 
 loadManuals();
 </script>
