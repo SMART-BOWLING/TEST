@@ -140,11 +140,11 @@ header {
 /* ===== BLOCKS ===== */
 .block {
   margin-bottom: 0;
-  display: block; /* По умолчанию показываем все блоки */
+  display: block;
 }
 
 .block.hidden {
-  display: none; /* Скрываем блоки по фильтру */
+  display: none;
 }
 
 .top-image {
@@ -310,7 +310,7 @@ header {
   <div class="buttons-container" id="list2"></div>
 </div>
 
-<!-- ===== BLOCK 3 ===== (добавим для демонстрации) -->
+<!-- ===== BLOCK 3 ===== -->
 <div class="block" data-category="ball return harmoni">
   <img class="top-image" src="https://i.postimg.cc/j5pPRtq1/IMG-1936.jpg" alt="Детали 3">
   <button class="toggle-btn" onclick="toggleList('list3')">
@@ -319,7 +319,7 @@ header {
   <div class="buttons-container" id="list3"></div>
 </div>
 
-<!-- ===== BLOCK 4 ===== (добавим для демонстрации) -->
+<!-- ===== BLOCK 4 ===== -->
 <div class="block" data-category="ball lift">
   <img class="top-image" src="https://i.postimg.cc/nLMD7CCg/IMG-1935.jpg" alt="Детали 4">
   <button class="toggle-btn" onclick="toggleList('list4')">
@@ -411,17 +411,24 @@ function toggleFilter() {
 
 // Функция установки фильтра
 function setFilter(filterValue) {
-  // Обновляем активный класс в пунктах меню
+  // Сначала убираем активный класс у всех пунктов
   document.querySelectorAll('.filter-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Находим выбранный пункт и добавляем ему активный класс
+  const selectedItem = Array.from(document.querySelectorAll('.filter-item')).find(item => {
     const itemText = item.textContent.toLowerCase();
-    if (filterValue === 'all' && itemText === 'все мануалы') {
-      item.classList.add('active');
-    } else if (itemText.includes(filterValue)) {
-      item.classList.add('active');
+    if (filterValue === 'all') {
+      return itemText === 'все мануалы';
     } else {
-      item.classList.remove('active');
+      return itemText.includes(filterValue);
     }
   });
+  
+  if (selectedItem) {
+    selectedItem.classList.add('active');
+  }
   
   // Фильтруем блоки
   const blocks = document.querySelectorAll('.block');
@@ -575,10 +582,7 @@ function searchDetail() {
       firstFoundButton.scrollIntoView({behavior:"smooth", block:"center"});
     }, 100);
     
-    const highlightedCount = document.querySelectorAll(".btn.highlight").length;
-    if (highlightedCount > 1) {
-      alert(`Найдено ${highlightedCount} деталей`);
-    }
+    // Убрано всплывающее окно с количеством найденных деталей
   } else {
     alert("Деталь не найдена");
   }
