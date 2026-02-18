@@ -27,12 +27,14 @@ header {
   top:0; left:0; right:0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   z-index:1000;
+  cursor: default;
 }
 
 .logo img {
   width:40px;
   height:40px;
   object-fit:cover;
+  cursor: pointer;
 }
 
 .site-name {
@@ -79,6 +81,7 @@ header {
   color:#fff;
   border:none;
   cursor:pointer;
+  margin-bottom:10px;
 }
 
 .buttons-container {
@@ -131,7 +134,6 @@ header {
 .count-zero { color:#dc143c; }
 .count-positive { color:#16a34a; }
 
-
 </style>
 </head>
 <body>
@@ -150,12 +152,12 @@ header {
 <div id="manualContainer"></div>
 
 <script>
-
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData = [];
 let stockData = {};
 
+// Загрузка данных с API
 async function loadManuals(){
   const response = await fetch(API_URL);
   const data = await response.json();
@@ -163,25 +165,48 @@ async function loadManuals(){
   manualsData = data.manuals;
   stockData = data.stock;
 
-  renderManuals(manualsData);
+  renderManualGroups();
 }
 
-function renderManuals(manuals){
+// ПЕРВЫЙ ЭКРАН — КНОПКИ МАНУАЛОВ
+function renderManualGroups(){
   const container = document.getElementById("manualContainer");
-  container.innerHTML="";
+  container.innerHTML = "";
 
-  manuals.forEach(manual=>{
+  // уникальные имена мануалов
+  const uniqueNames = [...new Set(manualsData.map(m => m.name))];
 
-    const block=document.createElement("div");
-    block.className="block";
+  uniqueNames.forEach(name => {
+    const btn = document.createElement("button");
+    btn.className = "toggle-btn";
+    btn.textContent = name;
 
-    block.innerHTML=`
+    btn.addEventListener("click", () => {
+      renderManualsByName(name);
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+// ПОКАЗ ВСЕХ МАНУАЛОВ ОДНОЙ ГРУППЫ
+function renderManualsByName(name){
+  const container = document.getElementById("manualContainer");
+  container.innerHTML = "";
+
+  const filtered = manualsData.filter(m => m.name === name);
+
+  filtered.forEach(manual => {
+    const block = document.createElement("div");
+    block.className = "block";
+
+    block.innerHTML = `
       <img class="top-image" src="${manual.image}">
       <button class="toggle-btn">${manual.name}</button>
       <div class="buttons-container"></div>
     `;
 
-    const btnContainer=block.querySelector(".buttons-container");
+    const btnContainer = block.querySelector(".buttons-container");
 
     manual.parts.forEach((part,i)=>{
       const btn=document.createElement("div");
@@ -212,10 +237,14 @@ function renderManuals(manuals){
 
     container.appendChild(block);
   });
+
+  // возврат к выбору мануалов через логотип
+  const logo = document.querySelector(".logo");
+  logo.addEventListener("click", renderManualGroups);
 }
 
+// ДЕТАЛИ И КЛУБЫ
 function toggleDetail(button){
-
   if(button.nextElementSibling &&
      button.nextElementSibling.classList.contains("detail-info")){
     button.nextElementSibling.remove();
@@ -234,9 +263,7 @@ function toggleDetail(button){
   ];
 
   clubs.forEach(club=>{
-
     const count = stockData[partNumber]?.[club.key] ?? 0;
-
     info.innerHTML+=`
       <div class="club-row">
         <span>${club.name}</span>
@@ -258,7 +285,8 @@ async function copyToClipboard(text,el){
 }
 
 loadManuals();
-
 </script>
+
 </body>
 </html>
+
