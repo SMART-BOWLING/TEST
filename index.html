@@ -9,31 +9,30 @@
 
 <style>
 body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #ffffff;
-  color: #1f2937;
-  padding-top: 70px;
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#ffffff;
+  color:#1f2937;
+  padding-top:70px;
 }
 
 header {
-  background-color: #1f2937;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  position: fixed;
+  background:#1f2937;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 20px;
+  position:fixed;
   top:0; left:0; right:0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
   z-index:1000;
 }
 
 .logo img {
   width:40px;
   height:40px;
-  object-fit:cover;
-  cursor: pointer;
+  cursor:pointer;
 }
 
 .site-name {
@@ -45,8 +44,6 @@ header {
 
 .search-container {
   position:relative;
-  display:flex;
-  align-items:center;
 }
 
 .search-container input {
@@ -54,7 +51,7 @@ header {
   border-radius:6px;
   border:none;
   font-size:16px;
-  width:160px;
+  width:140px;
 }
 
 .search-container i {
@@ -62,44 +59,77 @@ header {
   right:8px;
   top:50%;
   transform:translateY(-50%);
-  color:#374151;
+  color:#f0f2f5;
   pointer-events:none;
 }
 
-.block { margin-bottom:10px; }
+/* ===== MANUAL CARD ===== */
+
+.block {
+  margin:10px 10px; /* минимальное расстояние между карточками */
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  transition:0.3s;
+}
+
+.block.active-manual {
+  border:2px solid #dc143c;
+  box-shadow:0 4px 12px rgba(220,20,60,0.15);
+}
+
+.manual-label {
+  background:#1f2937;
+  color:white;
+  padding:8px 16px;
+  font-size:16px;
+  font-weight:600;
+}
 
 .top-image {
   width:100%;
   max-height:300px;
   object-fit:cover;
+  border-bottom:1px solid #eee;
+  transition:0.3s;
+  margin:0; /* убрали зазор под картинкой */
+  display:block;
 }
 
-.toggle-btn {
-  width:100%;
-  padding:14px;
-  font-size:16px;
-  font-weight:600;
-  background:#1f2937;
-  color:#fff;
-  border:none;
+.clickable-image {
   cursor:pointer;
-  margin:8px 0;
-  text-align:left;
+}
+
+.clickable-image:hover {
+  opacity:0.9;
+}
+
+.top-image.highlight-image {
+  box-shadow:0 0 0 3px #dc143c inset;
 }
 
 .buttons-container {
   display:none;
   flex-direction:column;
+  margin:0;  /* убрали все отступы */
+  padding:0;
 }
 
+/* Подложки номеров деталей — белые и компактные */
 .btn {
   display:flex;
   justify-content:space-between;
-  padding:12px 16px;
-  border:1px solid #ddd;
-  background:#fff;
+  padding:8px 16px;
+  border-top:1px solid #eee;
   cursor:pointer;
-  margin-bottom:4px;
+  background:white;
+  color:#1f2937;
+  border-radius:6px;
+  margin:0; /* убрали весь margin */
+  font-size:16px;
+  font-weight:500;
 }
 
 .btn:hover { background:#f9fafb; }
@@ -111,7 +141,6 @@ header {
   transition:0.4s;
   background:#fff;
   border-left:3px solid #dc143c;
-  margin-bottom:8px;
 }
 
 .detail-info.open {
@@ -130,24 +159,41 @@ header {
 .count-positive { color:#16a34a; }
 
 .search-highlight {
-  background:#ffe4e6 !important;
-  border-color:#dc143c !important;
+  background:#ffe4e6;
 }
 
 .active-highlight {
-  background:#ffb6b9 !important;
-  border-color:#dc143c !important;
+  background:#ffb6b9;
 }
 
-/* Кнопки навигации внизу */
+/* ===== START BUTTONS ===== */
+.start-btn {
+  display:block;
+  width:90%;
+  max-width:300px;
+  margin:10px auto;
+  padding:18px 20px;
+  background:#1f2937;
+  color:white;
+  font-size:18px;
+  font-weight:600;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  transition:0.2s;
+  text-align:center;
+}
+
+.start-btn:hover { background:#374151; }
+
+/* ===== SEARCH NAV ===== */
 .search-nav-bottom {
   position:fixed;
   bottom:20px;
   right:20px;
-  display:flex;
+  display:none;
   gap:6px;
   z-index:1000;
-  display:none; /* скрываем по умолчанию */
 }
 
 .search-nav-bottom button {
@@ -161,11 +207,12 @@ header {
 }
 </style>
 </head>
+
 <body>
 
 <header>
   <div class="logo">
-    <img src="https://i.postimg.cc/wjGzSY92/1.png">
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
   </div>
   <div class="site-name">MANUALS</div>
   <div class="search-container">
@@ -176,7 +223,6 @@ header {
 
 <div id="manualContainer"></div>
 
-<!-- Навигация между совпадениями -->
 <div class="search-nav-bottom" id="searchNav">
   <button onclick="prevResult()">←</button>
   <button onclick="nextResult()">→</button>
@@ -185,211 +231,155 @@ header {
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
-let manualsData = [];
-let stockData = {};
-let currentHighlight = "";
-let searchResults = [];
-let currentIndex = 0;
+let manualsData=[];
+let stockData={};
+let searchResults=[];
+let currentIndex=0;
 
-const searchNav = document.getElementById("searchNav");
+const searchNav=document.getElementById("searchNav");
+const manualContainer=document.getElementById("manualContainer");
+const searchInput=document.getElementById("searchInput");
 
+// загрузка данных
 async function loadManuals(){
-  const response = await fetch(API_URL);
-  const data = await response.json();
-
-  manualsData = data.manuals;
-  stockData = data.stock;
-
+  const res=await fetch(API_URL);
+  const data=await res.json();
+  manualsData=data.manuals;
+  stockData=data.stock;
   renderManualGroups();
 }
 
-function renderManualGroups(filter=""){
-  const container = document.getElementById("manualContainer");
-  container.innerHTML = "";
-
-  const uniqueNames = [...new Set(manualsData.map(m => m.name))];
-
-  uniqueNames.forEach(name => {
-    const relatedManuals = manualsData.filter(m => m.name === name);
-
-    if(filter){
-      const hasMatch = relatedManuals.some(m => m.parts.some(p => p.includes(filter)));
-      if(!hasMatch) return;
-    }
-
-    const btn = document.createElement("button");
-    btn.className = "toggle-btn";
-    btn.textContent = name;
-
-    btn.addEventListener("click", () => renderManualsByName(name, filter));
-    container.appendChild(btn);
+// отображение кнопок на начальном экране
+function renderManualGroups(){
+  manualContainer.innerHTML="";
+  [...new Set(manualsData.map(m=>m.name))].forEach(name=>{
+    const b=document.createElement("button");
+    b.className="start-btn";
+    b.textContent=name;
+    b.onclick=()=>renderManualsByName(name);
+    manualContainer.appendChild(b);
   });
+  searchInput.value="";
+  searchResults=[];
+  currentIndex=0;
+  searchNav.style.display="none";
 }
 
-function renderManualsByName(name, filter=""){
-  const container = document.getElementById("manualContainer");
-  container.innerHTML = "";
-
-  const filtered = manualsData.filter(m => m.name === name);
-
-  filtered.forEach(manual => {
-    const block = document.createElement("div");
-    block.className = "block";
-
-    block.innerHTML = `
-      <img class="top-image" src="${manual.image}">
-      <button class="toggle-btn">${manual.name}</button>
+// отображение карточек выбранного мануала
+function renderManualsByName(name){
+  manualContainer.innerHTML="";
+  manualsData.filter(m=>m.name===name).forEach(manual=>{
+    const block=document.createElement("div");
+    block.className="block";
+    block.innerHTML=`
+      <div class="manual-label">${manual.name}</div>
+      <img class="top-image clickable-image" src="${manual.image}">
       <div class="buttons-container"></div>
     `;
 
-    const btnContainer = block.querySelector(".buttons-container");
+    const cont=block.querySelector(".buttons-container");
+    const image=block.querySelector(".clickable-image");
+
+    image.onclick=()=>cont.style.display=cont.style.display==="flex"?"none":"flex";
 
     manual.parts.forEach((part,i)=>{
-      if(filter && !part.includes(filter)) return;
-
       const btn=document.createElement("div");
       btn.className="btn";
-
-      btn.innerHTML=`
-        <span>${i+1}</span>
-        <span class="detail-number">${part}</span>
-      `;
-
-      btn.addEventListener("click",(e)=>{
+      btn.innerHTML=`<span>${i+1}</span><span class="detail-number">${part}</span>`;
+      btn.onclick=(e)=>{
         if(e.target.classList.contains("detail-number")){
-          copyToClipboard(part, e.target);
-          e.stopPropagation(); 
+          navigator.clipboard.writeText(part);
           return;
         }
         toggleDetail(btn);
-      });
-
-      btnContainer.appendChild(btn);
+        image.classList.add("highlight-image");
+        setTimeout(()=>image.classList.remove("highlight-image"),800);
+      };
+      cont.appendChild(btn);
     });
 
-    block.querySelector(".toggle-btn")
-      .addEventListener("click",()=>{
-        btnContainer.style.display = btnContainer.style.display==="flex"?"none":"flex";
-      });
-
-    container.appendChild(block);
+    manualContainer.appendChild(block);
   });
-
-  const logo = document.querySelector(".logo");
-  logo.addEventListener("click", ()=>renderManualGroups(currentHighlight));
 }
 
-function toggleDetail(button){
-  if(button.nextElementSibling &&
-     button.nextElementSibling.classList.contains("detail-info")){
-    button.nextElementSibling.remove();
-    return;
+// открытие подробностей детали
+function toggleDetail(btn){
+  if(btn.nextElementSibling?.classList.contains("detail-info")){
+    btn.nextElementSibling.remove(); return;
   }
 
-  const partNumber = button.querySelector(".detail-number").textContent;
+  const part=btn.querySelector(".detail-number").textContent;
   const info=document.createElement("div");
   info.className="detail-info";
 
-  const clubs = [
-    { key:"BB", name:"BLOCKBUSTER" },
-    { key:"KH", name:"LUCKY STRIKE KH" },
-    { key:"SKYMALL", name:"SKYMALL" },
-    { key:"STORE", name:"STORE" }
-  ];
-
-  clubs.forEach(club=>{
-    const count = stockData[partNumber]?.[club.key] ?? 0;
+  ["BB","KH","SKYMALL","STORE"].forEach(k=>{
+    const count=stockData[part]?.[k]??0;
     info.innerHTML+=`
       <div class="club-row">
-        <span>${club.name}</span>
-        <span class="${count===0?'count-zero':'count-positive'}">
-          ${count} шт.
-        </span>
-      </div>
-    `;
+        <span>${k}</span>
+        <span class="${count===0?'count-zero':'count-positive'}">${count} шт.</span>
+      </div>`;
   });
 
-  button.after(info);
+  btn.after(info);
   setTimeout(()=>info.classList.add("open"),10);
 }
 
-async function copyToClipboard(text,el){
-  await navigator.clipboard.writeText(text);
-  const original = el.innerHTML;
-  el.innerHTML="✓ Скопировано!";
-  setTimeout(()=>el.innerHTML=original,1000);
-}
+// поиск деталей
+searchInput.oninput=e=>{
+  const v=e.target.value.trim();
+  searchResults=[];
+  currentIndex=0;
 
-// поиск по инпуту
-document.getElementById("searchInput").addEventListener("input",(e)=>{
-  const val = e.target.value.trim();
-  currentHighlight = val;
+  document.querySelectorAll(".active-manual,.search-highlight,.active-highlight")
+    .forEach(el=>el.classList.remove("active-manual","search-highlight","active-highlight"));
 
-  // скрываем кнопки, если поиск пустой
-  if(val===""){
-    searchNav.style.display="none";
-  } else {
-    searchNav.style.display="flex";
-  }
+  if(!v){ renderManualGroups(); return; }
 
-  searchResults = [];
-  currentIndex = 0;
+  searchNav.style.display="flex";
 
-  // удаляем старую подсветку
-  document.querySelectorAll(".search-highlight, .active-highlight").forEach(el=>{
-    el.classList.remove("search-highlight","active-highlight");
-  });
-
-  if(val===""){
-    renderManualGroups();
-    return;
-  }
-
-  // ищем все совпадения
-  let found = false;
-  for(const manual of manualsData){
-    const matches = manual.parts.filter(p => p.includes(val));
-    if(matches.length > 0){
-      renderManualsByName(manual.name);
+  manualsData.forEach(m=>{
+    if(m.parts.some(p=>p.includes(v))){
+      renderManualsByName(m.name);
       setTimeout(()=>{
         document.querySelectorAll(".detail-number").forEach(el=>{
-          if(el.textContent.includes(val)){
-            const btnContainer = el.closest(".buttons-container");
-            btnContainer.style.display="flex";
+          if(el.textContent.includes(v)){
             el.classList.add("search-highlight");
+            el.closest(".block").classList.add("active-manual");
+            // открыть карточку с деталями
+            const btn=el.parentElement;
+            const cont=btn.parentElement;
+            cont.style.display="flex";
             searchResults.push(el);
-            if(!found){
-              el.scrollIntoView({behavior:"smooth", block:"center"});
-              el.classList.add("active-highlight");
-              found = true;
-            }
           }
         });
+        if(searchResults[0]){
+          searchResults[0].classList.add("active-highlight");
+          searchResults[0].scrollIntoView({behavior:"smooth",block:"center"});
+        }
       },100);
     }
-  }
-});
-
-function showCurrentResult(){
-  searchResults.forEach(el => el.classList.remove("active-highlight"));
-  if(searchResults[currentIndex]){
-    const el = searchResults[currentIndex];
-    el.classList.add("active-highlight");
-    el.scrollIntoView({behavior:"smooth", block:"center"});
-  }
-}
+  });
+};
 
 function nextResult(){
-  if(searchResults.length===0) return;
-  currentIndex = (currentIndex+1) % searchResults.length;
-  showCurrentResult();
+  if(!searchResults.length) return;
+  searchResults[currentIndex].classList.remove("active-highlight");
+  currentIndex=(currentIndex+1)%searchResults.length;
+  searchResults[currentIndex].classList.add("active-highlight");
+  searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
 
 function prevResult(){
-  if(searchResults.length===0) return;
-  currentIndex = (currentIndex-1+searchResults.length) % searchResults.length;
-  showCurrentResult();
+  if(!searchResults.length) return;
+  searchResults[currentIndex].classList.remove("active-highlight");
+  currentIndex=(currentIndex-1+searchResults.length)%searchResults.length;
+  searchResults[currentIndex].classList.add("active-highlight");
+  searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
+
+// логотип сбрасывает все на начальный экран
+document.querySelector(".logo").onclick=renderManualGroups;
 
 loadManuals();
 </script>
