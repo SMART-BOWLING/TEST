@@ -68,7 +68,7 @@ header {
 .block {
   margin:10px 10px;
   border:1px solid #e5e7eb;
-  border-radius:0; /* убрали скругление у карточки */
+  border-radius:0;
   overflow:hidden;
   background:#fff;
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
@@ -81,17 +81,17 @@ header {
   padding:8px 16px;
   font-size:16px;
   font-weight:600;
-  border-radius:6px 6px 0 0; /* скругление оставляем только у заголовка */
+  border-radius:6px 6px 0 0;
 }
+
+/* ===== ИЗОБРАЖЕНИЕ БЕЗ ФИКСИРОВАННЫХ РАМОК ===== */
 
 .top-image {
   width:100%;
-  max-height:300px;
-  object-fit:cover;
+  height:auto;         /* высота определяется самой картинкой */
+  display:block;
   border-bottom:1px solid #eee;
   transition:0.3s;
-  margin:0;
-  display:block;
 }
 
 .clickable-image {
@@ -120,7 +120,7 @@ header {
   border-top:1px solid #eee;
   cursor:pointer;
   color:#1f2937;
-  border-radius:0; /* без скругления */
+  border-radius:0;
   margin:0;
   font-size:16px;
   font-weight:500;
@@ -129,7 +129,7 @@ header {
   background:white;
 }
 
-/* полосатый фон (зебра) */
+/* зебра */
 .buttons-container .btn:nth-child(odd) {
   background:#f9f9f9;
 }
@@ -138,7 +138,7 @@ header {
 }
 
 .btn:hover {
-  background:#f0e6e6; /* выделение при наведении */
+  background:#f0e6e6;
 }
 
 .detail-info {
@@ -174,6 +174,7 @@ header {
 }
 
 /* ===== START BUTTONS ===== */
+
 .start-btn {
   display:block;
   width:90%;
@@ -194,6 +195,7 @@ header {
 .start-btn:hover { background:#374151; }
 
 /* ===== SEARCH NAV ===== */
+
 .search-nav-bottom {
   position:fixed;
   bottom:20px;
@@ -247,7 +249,6 @@ const searchNav=document.getElementById("searchNav");
 const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
 
-// загрузка данных
 async function loadManuals(){
   const res=await fetch(API_URL);
   const data=await res.json();
@@ -256,7 +257,6 @@ async function loadManuals(){
   renderManualGroups();
 }
 
-// отображение кнопок на начальном экране
 function renderManualGroups(){
   manualContainer.innerHTML="";
   [...new Set(manualsData.map(m=>m.name))].forEach(name=>{
@@ -272,7 +272,6 @@ function renderManualGroups(){
   searchNav.style.display="none";
 }
 
-// отображение карточек выбранного мануала
 function renderManualsByName(name){
   manualContainer.innerHTML="";
   manualsData.filter(m=>m.name===name).forEach(manual=>{
@@ -302,11 +301,9 @@ function renderManualsByName(name){
             .then(()=>{
               targetDetail.textContent = "Скопировано!";
               setTimeout(()=>targetDetail.textContent = originalText,1200);
-            })
-            .catch(err=>console.log("Ошибка копирования:", err));
+            });
           return;
         }
-        // иначе открываем подробности
         toggleDetail(btn);
         image.classList.add("highlight-image");
         setTimeout(()=>image.classList.remove("highlight-image"),800);
@@ -319,7 +316,6 @@ function renderManualsByName(name){
   });
 }
 
-// открытие подробностей детали
 function toggleDetail(btn){
   if(btn.nextElementSibling?.classList.contains("detail-info")){
     btn.nextElementSibling.remove(); return;
@@ -342,13 +338,11 @@ function toggleDetail(btn){
   setTimeout(()=>info.classList.add("open"),10);
 }
 
-// поиск деталей
 searchInput.oninput=e=>{
   const v=e.target.value.trim();
   searchResults=[];
   currentIndex=0;
 
-  // убираем все активные подсветки, но не красные рамки карточек
   document.querySelectorAll(".search-highlight,.active-highlight")
     .forEach(el=>el.classList.remove("search-highlight","active-highlight"));
 
@@ -394,7 +388,6 @@ function prevResult(){
   searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
 
-// логотип сбрасывает все на начальный экран
 document.querySelector(".logo").onclick=renderManualGroups;
 
 loadManuals();
