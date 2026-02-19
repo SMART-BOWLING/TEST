@@ -68,16 +68,11 @@ header {
 .block {
   margin:10px 10px;
   border:1px solid #e5e7eb;
-  border-radius:10px;
+  border-radius:0; /* убрали скругление у карточки */
   overflow:hidden;
   background:#fff;
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
   transition:0.3s;
-}
-
-.block.active-manual {
-  border:2px solid #dc143c;
-  box-shadow:0 4px 12px rgba(220,20,60,0.15);
 }
 
 .manual-label {
@@ -86,6 +81,7 @@ header {
   padding:8px 16px;
   font-size:16px;
   font-weight:600;
+  border-radius:6px 6px 0 0; /* скругление оставляем только у заголовка */
 }
 
 .top-image {
@@ -123,16 +119,27 @@ header {
   padding:8px 16px;
   border-top:1px solid #eee;
   cursor:pointer;
-  background:white;
   color:#1f2937;
-  border-radius:6px;
+  border-radius:0; /* без скругления */
   margin:0;
   font-size:16px;
   font-weight:500;
   position:relative;
+  transition:0.2s;
+  background:white;
 }
 
-.btn:hover { background:#f9fafb; }
+/* полосатый фон (зебра) */
+.buttons-container .btn:nth-child(odd) {
+  background:#f9f9f9;
+}
+.buttons-container .btn:nth-child(even) {
+  background:#ffffff;
+}
+
+.btn:hover {
+  background:#f0e6e6; /* выделение при наведении */
+}
 
 .detail-info {
   overflow:hidden;
@@ -341,8 +348,9 @@ searchInput.oninput=e=>{
   searchResults=[];
   currentIndex=0;
 
-  document.querySelectorAll(".active-manual,.search-highlight,.active-highlight")
-    .forEach(el=>el.classList.remove("active-manual","search-highlight","active-highlight"));
+  // убираем все активные подсветки, но не красные рамки карточек
+  document.querySelectorAll(".search-highlight,.active-highlight")
+    .forEach(el=>el.classList.remove("search-highlight","active-highlight"));
 
   if(!v){ renderManualGroups(); return; }
 
@@ -355,7 +363,6 @@ searchInput.oninput=e=>{
         document.querySelectorAll(".detail-number").forEach(el=>{
           if(el.textContent.includes(v)){
             el.classList.add("search-highlight");
-            el.closest(".block").classList.add("active-manual");
             const btn=el.parentElement;
             const cont=btn.parentElement;
             cont.style.display="flex";
