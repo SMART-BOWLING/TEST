@@ -210,6 +210,24 @@ header {
   font-size:16px;
   border-radius:4px;
 }
+
+/* ===== COPIED POPUP ===== */
+.copied-popup {
+  position:absolute;
+  padding:4px 8px;
+  background:#16a34a;
+  color:white;
+  font-size:12px;
+  border-radius:4px;
+  pointer-events:none;
+  z-index:2000;
+  opacity:0;
+  transition:opacity 0.3s, transform 0.3s;
+}
+.copied-popup.show {
+  opacity:1;
+  transform:translateY(-10px);
+}
 </style>
 </head>
 
@@ -233,6 +251,8 @@ header {
   <button onclick="nextResult()">→</button>
 </div>
 
+<div id="copiedPopup" class="copied-popup">Скопировано!</div>
+
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
@@ -244,6 +264,7 @@ let currentIndex=0;
 const searchNav=document.getElementById("searchNav");
 const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
+const copiedPopup=document.getElementById("copiedPopup");
 
 // загрузка данных
 async function loadManuals(){
@@ -293,20 +314,21 @@ function renderManualsByName(name){
       btn.innerHTML=`<span>${i+1}</span><span class="detail-number">${part}</span>`;
 
       btn.onclick = (e) => {
-        // если клик именно на текст детали
-        if (e.target.closest(".detail-number")) {
+        const targetDetail = e.target.closest(".detail-number");
+        if(targetDetail){
           navigator.clipboard.writeText(part)
-            .then(() => {
-              e.target.closest(".detail-number").classList.add("copied");
-              setTimeout(() => e.target.closest(".detail-number").classList.remove("copied"), 500);
+            .then(()=>{
+              showCopiedPopup(targetDetail);
+              targetDetail.classList.add("copied");
+              setTimeout(()=>targetDetail.classList.remove("copied"),500);
             })
-            .catch(err => console.log("Ошибка копирования:", err));
+            .catch(err=>console.log("Ошибка копирования:", err));
           return;
         }
-        // иначе — открываем подробности
+        // иначе открываем подробности
         toggleDetail(btn);
         image.classList.add("highlight-image");
-        setTimeout(() => image.classList.remove("highlight-image"), 800);
+        setTimeout(()=>image.classList.remove("highlight-image"),800);
       };
 
       cont.appendChild(btn);
@@ -393,6 +415,15 @@ function prevResult(){
 
 // логотип сбрасывает все на начальный экран
 document.querySelector(".logo").onclick=renderManualGroups;
+
+// показать всплывающее "Скопировано!"
+function showCopiedPopup(target){
+  const rect = target.getBoundingClientRect();
+  copiedPopup.style.top = `${rect.top - 30 + window.scrollY}px`;
+  copiedPopup.style.left = `${rect.left + rect.width/2 - copiedPopup.offsetWidth/2}px`;
+  copiedPopup.classList.add("show");
+  setTimeout(()=>copiedPopup.classList.remove("show"),700);
+}
 
 loadManuals();
 </script>
