@@ -129,7 +129,7 @@ header {
   margin:0;
   font-size:16px;
   font-weight:500;
-  position:relative; /* нужно для позиционирования popup */
+  position:relative;
 }
 
 .btn:hover { background:#f9fafb; }
@@ -164,12 +164,6 @@ header {
 
 .active-highlight {
   background:#ffb6b9;
-}
-
-/* эффект при копировании */
-.detail-number.copied {
-  background:#dcfce7;
-  transition:0.3s;
 }
 
 /* ===== START BUTTONS ===== */
@@ -211,25 +205,6 @@ header {
   font-size:16px;
   border-radius:4px;
 }
-
-/* ===== COPIED POPUP ===== */
-.copied-popup {
-  position:absolute;
-  padding:2px 6px;
-  background:#1f2937; /* цвет шапки сайта */
-  color:white;
-  font-size:12px;
-  border-radius:4px;
-  pointer-events:none;
-  z-index:2000;
-  opacity:0;
-  transform:translateY(0);
-  transition:opacity 0.3s, transform 0.3s;
-}
-.copied-popup.show {
-  opacity:1;
-  transform:translateY(-20px);
-}
 </style>
 </head>
 
@@ -253,8 +228,6 @@ header {
   <button onclick="nextResult()">→</button>
 </div>
 
-<div id="copiedPopup" class="copied-popup">Скопировано!</div>
-
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
@@ -266,7 +239,6 @@ let currentIndex=0;
 const searchNav=document.getElementById("searchNav");
 const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
-const copiedPopup=document.getElementById("copiedPopup");
 
 // загрузка данных
 async function loadManuals(){
@@ -318,11 +290,11 @@ function renderManualsByName(name){
       btn.onclick = (e) => {
         const targetDetail = e.target.closest(".detail-number");
         if(targetDetail){
-          navigator.clipboard.writeText(part)
+          const originalText = targetDetail.textContent;
+          navigator.clipboard.writeText(originalText)
             .then(()=>{
-              showCopiedPopup(targetDetail);
-              targetDetail.classList.add("copied");
-              setTimeout(()=>targetDetail.classList.remove("copied"),500);
+              targetDetail.textContent = "Скопировано!";
+              setTimeout(()=>targetDetail.textContent = originalText,1200);
             })
             .catch(err=>console.log("Ошибка копирования:", err));
           return;
@@ -417,15 +389,6 @@ function prevResult(){
 
 // логотип сбрасывает все на начальный экран
 document.querySelector(".logo").onclick=renderManualGroups;
-
-// показать всплывающее "Скопировано!" поверх номера
-function showCopiedPopup(target){
-  const rect = target.getBoundingClientRect();
-  copiedPopup.style.top = `${rect.top + window.scrollY}px`;
-  copiedPopup.style.left = `${rect.left + rect.width/2 - copiedPopup.offsetWidth/2}px`;
-  copiedPopup.classList.add("show");
-  setTimeout(()=>copiedPopup.classList.remove("show"),700);
-}
 
 loadManuals();
 </script>
