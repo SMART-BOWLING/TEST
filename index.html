@@ -66,7 +66,7 @@ header {
 /* ===== MANUAL CARD ===== */
 
 .block {
-  margin:10px 10px; /* минимальное расстояние между карточками */
+  margin:10px 10px;
   border:1px solid #e5e7eb;
   border-radius:10px;
   overflow:hidden;
@@ -94,7 +94,7 @@ header {
   object-fit:cover;
   border-bottom:1px solid #eee;
   transition:0.3s;
-  margin:0; /* убрали зазор под картинкой */
+  margin:0;
   display:block;
 }
 
@@ -113,11 +113,10 @@ header {
 .buttons-container {
   display:none;
   flex-direction:column;
-  margin:0;  /* убрали все отступы */
+  margin:0;
   padding:0;
 }
 
-/* Подложки номеров деталей — белые и компактные */
 .btn {
   display:flex;
   justify-content:space-between;
@@ -127,7 +126,7 @@ header {
   background:white;
   color:#1f2937;
   border-radius:6px;
-  margin:0; /* убрали весь margin */
+  margin:0;
   font-size:16px;
   font-weight:500;
 }
@@ -164,6 +163,12 @@ header {
 
 .active-highlight {
   background:#ffb6b9;
+}
+
+/* эффект при копировании */
+.detail-number.copied {
+  background:#dcfce7;
+  transition:0.3s;
 }
 
 /* ===== START BUTTONS ===== */
@@ -286,15 +291,24 @@ function renderManualsByName(name){
       const btn=document.createElement("div");
       btn.className="btn";
       btn.innerHTML=`<span>${i+1}</span><span class="detail-number">${part}</span>`;
-      btn.onclick=(e)=>{
-        if(e.target.classList.contains("detail-number")){
-          navigator.clipboard.writeText(part);
+
+      btn.onclick = (e) => {
+        // если клик именно на текст детали
+        if (e.target.closest(".detail-number")) {
+          navigator.clipboard.writeText(part)
+            .then(() => {
+              e.target.closest(".detail-number").classList.add("copied");
+              setTimeout(() => e.target.closest(".detail-number").classList.remove("copied"), 500);
+            })
+            .catch(err => console.log("Ошибка копирования:", err));
           return;
         }
+        // иначе — открываем подробности
         toggleDetail(btn);
         image.classList.add("highlight-image");
-        setTimeout(()=>image.classList.remove("highlight-image"),800);
+        setTimeout(() => image.classList.remove("highlight-image"), 800);
       };
+
       cont.appendChild(btn);
     });
 
@@ -346,7 +360,6 @@ searchInput.oninput=e=>{
           if(el.textContent.includes(v)){
             el.classList.add("search-highlight");
             el.closest(".block").classList.add("active-manual");
-            // открыть карточку с деталями
             const btn=el.parentElement;
             const cont=btn.parentElement;
             cont.style.display="flex";
