@@ -212,6 +212,80 @@ header {
   border-radius:4px;
 }
 
+/* ===== СТИЛИ КНОПКИ МАГАЗИНА СЛЕВА ===== */
+.shop-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.shop-input-box {
+  display: none;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shop-input-box form {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-input-box input {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  width: 160px;
+  font-size: 14px;
+}
+
+.shop-input-box input:focus {
+  border-color: #dc143c;
+}
+
+.shop-input-box button {
+  background: #1f2937;
+  color: white;
+  border: none;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.shop-fab-left {
+  width: 56px;
+  height: 56px;
+  background: #dc143c;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 20, 60, 0.4);
+  font-size: 22px;
+  transition: 0.3s;
+}
+
+.shop-fab-left:active {
+  transform: scale(0.9);
+}
+
 </style>
 </head>
 
@@ -235,6 +309,18 @@ header {
   <button onclick="nextResult()">→</button>
 </div>
 
+<div class="shop-container">
+  <div class="shop-input-box" id="shopSearchBox">
+    <form action="https://shop.bowlingvision.com/catalogue/results.aspx" method="get">
+      <input type="text" name="search" id="shopInput" placeholder="000000000" required autocomplete="off">
+      <button type="submit">OK</button>
+    </form>
+  </div>
+  <div class="shop-fab-left" onclick="toggleLeftSearch()">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </div>
+</div>
+
 <script>
 
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
@@ -247,6 +333,23 @@ let currentIndex=0;
 const searchNav=document.getElementById("searchNav");
 const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
+
+/* === ФУНКЦИИ МАГАЗИНА (ЛЕВАЯ КНОПКА) === */
+function toggleLeftSearch() {
+  const box = document.getElementById('shopSearchBox');
+  const input = document.getElementById('shopInput');
+  if (box.style.display === 'block') {
+    box.style.display = 'none';
+  } else {
+    box.style.display = 'block';
+    input.focus();
+  }
+}
+
+// Авто-удаление дефисов
+document.getElementById('shopInput').addEventListener('input', function(e) {
+  this.value = this.value.replace(/-/g, '');
+});
 
 /* ===== БЛОКИРОВКА DOUBLE TAP ZOOM ===== */
 let lastTouchEnd = 0;
