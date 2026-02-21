@@ -212,13 +212,13 @@ header {
   border-radius:4px;
 }
 
-/* ===== ЦЕНТРАЛЬНОЕ ОКНО ПОИСКА В МАГАЗИНЕ ===== */
+/* ===== МИНИМАЛИСТИЧНЫЙ ПОИСК В МАГАЗИНЕ ===== */
 .shop-fab-left {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   background: #dc143c;
   color: white;
   border-radius: 50%;
@@ -226,76 +226,77 @@ header {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(220, 20, 60, 0.4);
   z-index: 2001;
-  font-size: 22px;
-  transition: transform 0.2s;
+  font-size: 20px;
+  /* Убрана тень */
 }
 
-.shop-fab-left:active { transform: scale(0.9); }
+.shop-fab-left:active { transform: scale(0.95); }
 
 .shop-overlay {
   display: none;
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
+  background: rgba(255,255,255,0.92); /* Светлый минималистичный фон */
   z-index: 3000;
   align-items: center;
   justify-content: center;
 }
 
-.shop-modal-center {
-  background: white;
-  padding: 25px;
-  border-radius: 15px;
-  width: 90%;
-  max-width: 380px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+.shop-modal-minimal {
+  width: 85%;
+  max-width: 320px;
   text-align: center;
-  position: relative;
-  animation: modalScale 0.2s ease-out;
 }
 
-@keyframes modalScale {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.shop-modal-center h2 {
-  margin: 0 0 20px;
-  color: #1f2937;
-  font-size: 19px;
-}
-
-.shop-modal-center form {
+.shop-modal-minimal form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
 }
 
-.shop-modal-center input {
-  padding: 14px;
-  border: 2px solid #1f2937;
-  border-radius: 10px;
-  font-size: 18px;
+.shop-modal-minimal input {
+  padding: 12px 0;
+  border: none;
+  border-bottom: 1px solid #1f2937; /* Минималистичная линия */
+  background: transparent;
+  font-size: 22px;
   outline: none;
   width: 100%;
   box-sizing: border-box;
+  text-align: center;
+  color: #1f2937;
 }
 
-.shop-modal-center input:focus {
-  border-color: #dc143c;
+.shop-modal-minimal input::placeholder {
+  color: #9ca3af;
+  font-size: 18px;
 }
 
-.shop-modal-center button {
-  padding: 14px;
+.shop-modal-minimal button {
+  margin-top: 25px;
+  padding: 10px;
+  background: transparent;
+  color: #dc143c;
+  border: 1px solid #dc143c;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.shop-modal-minimal button:active {
   background: #dc143c;
   color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: bold;
+}
+
+.close-minimal {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #6b7280;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 </style>
@@ -321,18 +322,17 @@ header {
   <button onclick="nextResult()">→</button>
 </div>
 
-<div class="shop-fab-left" onclick="openCentralSearch()">
+<div class="shop-fab-left" onclick="openShop()">
   <i class="fa-solid fa-magnifying-glass"></i>
 </div>
 
-<div class="shop-overlay" id="shopOverlay" onclick="closeCentralSearch(event)">
-  <div class="shop-modal-center" onclick="event.stopPropagation()">
-    <h2>Поиск в магазине</h2>
+<div class="shop-overlay" id="shopOverlay" onclick="closeShop(event)">
+  <div class="shop-modal-minimal" onclick="event.stopPropagation()">
     <form action="https://shop.bowlingvision.com/catalogue/results.aspx" method="get">
-      <input type="text" name="search" id="shopInput" placeholder="Введите номер..." required autocomplete="off">
-      <button type="submit">Найти</button>
+      <input type="text" name="search" id="shopInput" placeholder="Номер детали" required autocomplete="off">
+      <button type="submit">ОК</button>
     </form>
-    <div style="margin-top:12px; font-size:12px; color:#6b7280; cursor:pointer;" onclick="closeCentralSearch(null)">Закрыть</div>
+    <div class="close-minimal" onclick="closeShop(null)">Отмена</div>
   </div>
 </div>
 
@@ -349,31 +349,27 @@ const searchNav=document.getElementById("searchNav");
 const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
 
-/* === ФУНКЦИИ ЦЕНТРАЛЬНОГО ПОИСКА === */
-function openCentralSearch() {
+/* === ЛОГИКА МИНИМАЛИСТИЧНОГО МАГАЗИНА === */
+function openShop() {
   document.getElementById('shopOverlay').style.display = 'flex';
   document.getElementById('shopInput').focus();
 }
 
-function closeCentralSearch(e) {
+function closeShop(e) {
   if (!e || e.target.id === 'shopOverlay') {
     document.getElementById('shopOverlay').style.display = 'none';
   }
 }
 
-// Авто-удаление дефисов при вводе в поле магазина
 document.getElementById('shopInput').addEventListener('input', function(e) {
   this.value = this.value.replace(/-/g, '');
 });
 
-/* ===== БЛОКИРОВКА DOUBLE TAP ZOOM ===== */
+/* ===== ОСТАЛЬНАЯ ЛОГИКА ===== */
 let lastTouchEnd = 0;
-
 document.addEventListener("touchend", function (event) {
   const now = new Date().getTime();
-  if (now - lastTouchEnd <= 300) {
-    event.preventDefault();
-  }
+  if (now - lastTouchEnd <= 300) { event.preventDefault(); }
   lastTouchEnd = now;
 }, false);
 
@@ -410,36 +406,30 @@ function renderManualsByName(name){
       <img class="top-image clickable-image" src="${manual.image}">
       <div class="buttons-container"></div>
     `;
-
     const cont=block.querySelector(".buttons-container");
     const image=block.querySelector(".clickable-image");
-
     image.onclick=()=>cont.style.display=cont.style.display==="flex"?"none":"flex";
 
     manual.parts.forEach((part,i)=>{
       const btn=document.createElement("div");
       btn.className="btn";
       btn.innerHTML=`<span>${i+1}</span><span class="detail-number">${part}</span>`;
-
       btn.onclick = (e) => {
         const targetDetail = e.target.closest(".detail-number");
         if(targetDetail){
           const originalText = targetDetail.textContent;
-          navigator.clipboard.writeText(originalText)
-            .then(()=>{
+          navigator.clipboard.writeText(originalText).then(()=>{
               targetDetail.textContent = "Скопировано!";
               setTimeout(()=>targetDetail.textContent = originalText,1200);
-            });
+          });
           return;
         }
         toggleDetail(btn);
         image.classList.add("highlight-image");
         setTimeout(()=>image.classList.remove("highlight-image"),800);
       };
-
       cont.appendChild(btn);
     });
-
     manualContainer.appendChild(block);
   });
 }
@@ -448,36 +438,23 @@ function toggleDetail(btn){
   if(btn.nextElementSibling?.classList.contains("detail-info")){
     btn.nextElementSibling.remove(); return;
   }
-
   const part=btn.querySelector(".detail-number").textContent;
   const info=document.createElement("div");
   info.className="detail-info";
-
   ["BB","KH","SKYMALL","STORE"].forEach(k=>{
     const count=stockData[part]?.[k]??0;
-    info.innerHTML+=`
-      <div class="club-row">
-        <span>${k}</span>
-        <span class="${count===0?'count-zero':'count-positive'}">${count} шт.</span>
-      </div>`;
+    info.innerHTML+=`<div class="club-row"><span>${k}</span><span class="${count===0?'count-zero':'count-positive'}">${count} шт.</span></div>`;
   });
-
   btn.after(info);
   setTimeout(()=>info.classList.add("open"),10);
 }
 
 searchInput.oninput=e=>{
   const v=e.target.value.trim();
-  searchResults=[];
-  currentIndex=0;
-
-  document.querySelectorAll(".search-highlight,.active-highlight")
-    .forEach(el=>el.classList.remove("search-highlight","active-highlight"));
-
+  searchResults=[]; currentIndex=0;
+  document.querySelectorAll(".search-highlight,.active-highlight").forEach(el=>el.classList.remove("search-highlight","active-highlight"));
   if(!v){ renderManualGroups(); return; }
-
   searchNav.style.display="flex";
-
   manualsData.forEach(m=>{
     if(m.parts.some(p=>p.includes(v))){
       renderManualsByName(m.name);
@@ -485,9 +462,7 @@ searchInput.oninput=e=>{
         document.querySelectorAll(".detail-number").forEach(el=>{
           if(el.textContent.includes(v)){
             el.classList.add("search-highlight");
-            const btn=el.parentElement;
-            const cont=btn.parentElement;
-            cont.style.display="flex";
+            el.parentElement.parentElement.style.display="flex";
             searchResults.push(el);
           }
         });
@@ -517,9 +492,7 @@ function prevResult(){
 }
 
 document.querySelector(".logo").onclick=renderManualGroups;
-
 loadManuals();
-
 </script>
 </body>
 </html>
