@@ -444,20 +444,28 @@ function renderManualsByName(name){
       const btn=document.createElement("div");
       btn.className="btn";
       btn.innerHTML=`<span>${i+1}</span><span class="detail-number">${part}</span>`;
+      
+      // ИСПРАВЛЕННЫЙ ОБРАБОТЧИК КЛИКА
       btn.onclick = (e) => {
+        // Проверяем, кликнули ли именно по номеру детали
         const targetDetail = e.target.closest(".detail-number");
-        if(targetDetail){
+        
+        if (targetDetail) {
+          e.stopPropagation(); // ОСТАНАВЛИВАЕМ ВСПЛЫТИЕ СОБЫТИЯ
           const originalText = targetDetail.textContent;
-          navigator.clipboard.writeText(originalText).then(()=>{
-              targetDetail.textContent = "Скопировано!";
-              setTimeout(()=>targetDetail.textContent = originalText,1200);
+          navigator.clipboard.writeText(originalText).then(() => {
+            targetDetail.textContent = "Скопировано!";
+            setTimeout(() => targetDetail.textContent = originalText, 1200);
           });
           return;
         }
+        
+        // Если кликнули не по номеру детали, а по другой части кнопки
         toggleDetail(btn);
         image.classList.add("highlight-image");
-        setTimeout(()=>image.classList.remove("highlight-image"),800);
+        setTimeout(() => image.classList.remove("highlight-image"), 800);
       };
+      
       cont.appendChild(btn);
     });
     manualContainer.appendChild(block);
