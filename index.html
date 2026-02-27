@@ -1,278 +1,746 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMB | Smart Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1f2937;
-            --accent: #dc143c;
-            --bg: #f8fafc;
-            --white: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --radius: 16px;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMB | Dashboard</title>
 
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
+<link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
+<link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        /* User Profile Bar */
-        .user-bar {
-            background: var(--white);
-            padding: 12px 20px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+<style>
+:root {
+    --primary: #1f2937;
+    --accent: #dc143c;
+    --bg: #f0f2f5;
+    --white: #ffffff;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --card-shadow: 0 20px 40px rgba(0,0,0,0.06);
+    --hover-shadow: 0 25px 50px rgba(220,20,60,0.12);
+}
 
-        .user-info { display: flex; align-items: center; gap: 15px; }
-        .user-info img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--accent); }
-        .user-details p { margin: 0; font-size: 14px; font-weight: 700; }
-        .user-details span { font-size: 12px; color: var(--text-muted); }
+*{
+    box-sizing:border-box;
+    margin: 0;
+    padding: 0;
+}
 
-        /* Main Grid Structure */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: var(--bg);
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    padding: 20px;
+    color: var(--text-dark);
+}
 
-        .action-card {
-            background: var(--white);
-            border-radius: var(--radius);
-            padding: 30px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            position: relative;
-            overflow: hidden;
-        }
+.container {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:30px;
+    width:100%;
+    max-width:1200px;
+    animation: fadeIn 0.8s ease;
+}
 
-        .action-card i {
-            font-size: 32px;
-            color: var(--primary);
-            transition: 0.3s;
-        }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-        .action-card h3 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+/* ===== LOGIN BLOCK & USER INFO ===== */
+#login, #user-info, #access-denied {
+    background: var(--white);
+    padding: 35px;
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid rgba(255,255,255,0.8);
+}
 
-        .action-card:hover:not(.disabled) {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow);
-            border-color: var(--accent);
-        }
+#user-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    text-align: left;
+    padding: 15px 25px;
+}
 
-        .action-card:hover:not(.disabled) i { color: var(--accent); }
+#user-info img {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--accent);
+    object-fit: cover;
+}
 
-        /* Multi-selection Menu (Dropdown) */
-        .selection-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: var(--white);
-            border-radius: 0 0 var(--radius) var(--radius);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-            z-index: 10;
-            display: none;
-            border: 1px solid #eee;
-            border-top: none;
-        }
+.user-details {
+    flex-grow: 1;
+}
 
-        .selection-menu a {
-            display: block;
-            padding: 12px;
-            text-decoration: none;
-            color: var(--text-main);
-            font-size: 14px;
-            font-weight: 500;
-            border-top: 1px solid #f1f5f9;
-        }
+.user-details p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
 
-        .selection-menu a:hover { background: #fff5f6; color: var(--accent); }
+#user-email {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12px;
+}
 
-        .active-selection .selection-menu { display: block; }
-        .active-selection { border-radius: var(--radius) var(--radius) 0 0; }
+#logout-btn {
+    background: #f1f5f9;
+    color: var(--text-dark);
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        /* Utility */
-        .disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
-        .btn-logout { background: #f1f5f9; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
-        .btn-logout:hover { background: var(--accent); color: white; }
+#logout-btn:hover {
+    background: var(--accent);
+    color: white;
+}
 
-        @media (max-width: 600px) {
-            .action-grid { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+/* ===== TOP BUTTONS ===== */
+.top-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.top-button {
+    flex: 1;
+    max-width: 250px;
+    padding: 18px;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 20px rgba(31, 41, 55, 0.15);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.top-button i { font-size: 18px; }
+
+.top-button:hover:not(.disabled) {
+    transform: translateY(-4px);
+    background: var(--accent);
+    box-shadow: 0 15px 25px rgba(220, 20, 60, 0.2);
+}
+
+/* ===== LOCATION CARDS ===== */
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    width: 100%;
+}
+
+.location-card {
+    background: var(--white);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+.card-header {
+    padding: 20px;
+    background: var(--primary);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ===== MODERN BUTTON STYLES ===== */
+.action-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--text-dark);
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.action-button:hover:not(.disabled) {
+    background: white;
+    border-color: var(--accent);
+    box-shadow: 0 8px 16px rgba(220,20,60,0.1);
+    transform: scale(1.02);
+}
+
+.button-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.button-left i {
+    width: 20px;
+    color: var(--accent);
+    font-size: 18px;
+}
+
+.button-text {
+    font-weight: 500;
+    font-size: 15px;
+}
+
+/* ===== DROPDOWN STYLES (for multiple links) ===== */
+.dropdown-container {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.dropdown-button:hover {
+    background: white;
+    border-color: var(--accent);
+    box-shadow: 0 8px 16px rgba(220,20,60,0.1);
+}
+
+.dropdown-button .button-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dropdown-button i:first-child {
+    color: var(--accent);
+    font-size: 18px;
+}
+
+.dropdown-arrow {
+    color: var(--text-muted);
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-button.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    z-index: 1000;
+    display: none;
+    border: 1px solid #eef2f6;
+}
+
+.dropdown-menu.show {
+    display: block;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--text-dark);
+    transition: 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover:not(.disabled) {
+    background: #fff5f6;
+    color: var(--accent);
+    padding-left: 22px;
+}
+
+.dropdown-item i {
+    width: 18px;
+    color: var(--text-muted);
+}
+
+.dropdown-item:hover:not(.disabled) i {
+    color: var(--accent);
+}
+
+/* ===== BADGE STYLES ===== */
+.multi-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+/* ===== DISABLED STYLES ===== */
+.disabled {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    user-select: none;
+    position: relative;
+}
+
+.disabled::after {
+    content: '\f023';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* ===== ACCESS DENIED ===== */
+#access-denied h3 { 
+    color: var(--accent); 
+    margin-bottom: 10px; 
+}
+
+.denied-email { 
+    background: #fff1f2; 
+    color: var(--accent); 
+    padding: 10px; 
+    border-radius: 10px; 
+    margin: 15px 0;
+    font-family: monospace;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 850px){
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .top-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .top-button {
+        max-width: 100%;
+    }
+}
+</style>
 </head>
+
 <body>
 
-<div class="container" id="main-content" style="display:none;">
-    <div class="user-bar">
-        <div class="user-info">
-            <img id="user-pic" src="" alt="User">
-            <div class="user-details">
-                <p id="user-name">Loading...</p>
-                <span id="user-email">email@example.com</span>
+<div class="container">
+
+    <!-- Login Block -->
+    <div id="login">
+        <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+        <h2>SMB Login</h2>
+        <div id="g_id_onload"
+             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="pill"></div>
+    </div>
+
+    <!-- User Info -->
+    <div id="user-info" style="display: none;">
+        <img id="user-pic" src="" alt="Profile">
+        <div class="user-details">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+        <button id="logout-btn" onclick="signOut()" title="Sign Out">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </div>
+
+    <!-- Access Denied -->
+    <div id="access-denied" style="display: none;">
+        <i class="fas fa-ban" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
+        <h3>Access Denied</h3>
+        <p>Your email is not registered in the system:</p>
+        <div class="denied-email" id="denied-email"></div>
+        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content" style="display:none; width: 100%;">
+        
+        <!-- Top Buttons (Manuals & Store) -->
+        <div class="top-buttons">
+            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" id="manuals-btn" target="_blank">
+                <i class="fas fa-book"></i> MANUALS
+            </a>
+            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" id="store-btn" target="_blank">
+                <i class="fas fa-shopping-cart"></i> STORE
+            </a>
+        </div>
+
+        <!-- Location Cards with Unified Action Buttons -->
+        <div class="location-grid" id="location-grid">
+            <!-- Lucky Strike KH -->
+            <div class="location-card" data-location="luckyStrike">
+                <div class="card-header">Lucky Strike KH</div>
+                <div class="card-content">
+                    <!-- Parts Button -->
+                    <div class="action-container" data-type="parts" data-location="luckyStrike"></div>
+                    
+                    <!-- Maintenance Button -->
+                    <div class="action-container" data-type="maintenance" data-location="luckyStrike"></div>
+                    
+                    <!-- FPS Button -->
+                    <div class="action-container" data-type="fps" data-location="luckyStrike"></div>
+                </div>
             </div>
-        </div>
-        <button class="btn-logout" onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
 
-    <div class="action-grid" style="grid-template-columns: 1fr 1fr;">
-        <div class="action-card" onclick="handleAction('manuals')">
-            <i class="fas fa-book"></i>
-            <h3>Manuals</h3>
-        </div>
-        <div class="action-card" onclick="handleAction('store')">
-            <i class="fas fa-shopping-cart"></i>
-            <h3>Store</h3>
-        </div>
-    </div>
+            <!-- Blockbuster -->
+            <div class="location-card" data-location="blockbuster">
+                <div class="card-header">Blockbuster</div>
+                <div class="card-content">
+                    <!-- Parts Button -->
+                    <div class="action-container" data-type="parts" data-location="blockbuster"></div>
+                    
+                    <!-- Maintenance Button -->
+                    <div class="action-container" data-type="maintenance" data-location="blockbuster"></div>
+                    
+                    <!-- Analysis Button -->
+                    <div class="action-container" data-type="analysis" data-location="blockbuster"></div>
+                    
+                    <!-- FPS Button -->
+                    <div class="action-container" data-type="fps" data-location="blockbuster"></div>
+                </div>
+            </div>
 
-    <div class="action-grid" id="category-grid">
-        <div class="action-card" id="btn-parts">
-            <i class="fas fa-cog"></i>
-            <h3>Parts</h3>
-            <div class="selection-menu" id="menu-parts"></div>
-        </div>
-
-        <div class="action-card" id="btn-maint">
-            <i class="fas fa-tools"></i>
-            <h3>Maintenance</h3>
-            <div class="selection-menu" id="menu-maint"></div>
-        </div>
-
-        <div class="action-card" id="btn-fps">
-            <i class="fas fa-chart-line"></i>
-            <h3>FPS Analysis</h3>
-            <div class="selection-menu" id="menu-fps"></div>
+            <!-- Skymall -->
+            <div class="location-card" data-location="skymall">
+                <div class="card-header">Skymall</div>
+                <div class="card-content">
+                    <!-- Parts Button -->
+                    <div class="action-container" data-type="parts" data-location="skymall"></div>
+                    
+                    <!-- Maintenance Button -->
+                    <div class="action-container" data-type="maintenance" data-location="skymall"></div>
+                    
+                    <!-- Analysis Button -->
+                    <div class="action-container" data-type="analysis" data-location="skymall"></div>
+                    
+                    <!-- FPS Button -->
+                    <div class="action-container" data-type="fps" data-location="skymall"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-// Централизованная база ссылок
-const DATABASE = {
-    parts: {
-        'Lucky Strike KH': 'https://smart-bowling.github.io/PARTS-KH/',
-        'Blockbuster': 'https://smart-bowling.github.io/PARTS-BB/',
-        'Skymall': 'https://smart-bowling.github.io/PARTS-SKYMALL/'
-    },
-    maint: {
-        'Lucky Strike KH': 'https://smart-bowling.github.io/SMB-LS-KH/',
-        'Blockbuster': 'https://smart-bowling.github.io/SMB-BB/',
-        'Skymall': 'https://smart-bowling.github.io/SMB-SKYMALL/'
-    },
-    fps: {
-        'Lucky Strike KH': 'https://smart-bowling.github.io/PS-STOP-KH/',
-        'Blockbuster': 'https://smart-bowling.github.io/PS-STOP-BB/',
-        'Skymall': 'https://smart-bowling.github.io/PS-STOP-SKYMALL/'
-    }
-};
-
-// Права доступа (теперь плоские для удобства проверки)
+// User permissions
 const userPermissions = {
     'vadiksss900@gmail.com': {
-        manuals: 'https://smart-bowling.github.io/MANUALS-SMART/',
-        store: 'https://smart-bowling.github.io/PARTS-STORE/',
-        access: {
-            parts: ['Lucky Strike KH', 'Blockbuster', 'Skymall'],
-            maint: ['Lucky Strike KH', 'Blockbuster', 'Skymall'],
-            fps: ['Lucky Strike KH', 'Blockbuster', 'Skymall']
-        }
+        manuals: true, store: true,
+        luckyStrike: { parts: true, maintenance: true, fps: true },
+        blockbuster: { parts: true, maintenance: true, analysis: true, fps: true },
+        skymall: { parts: true, maintenance: true, analysis: true, fps: true }
     },
     'csportsua@gmail.com': {
-        manuals: 'https://smart-bowling.github.io/MANUALS-SMART/',
-        access: {
-            parts: ['Skymall'],
-            maint: [],
-            fps: []
-        }
+        manuals: true, store: false,
+        luckyStrike: { parts: false, maintenance: false, fps: false },
+        blockbuster: { parts: false, maintenance: false, analysis: false, fps: false },
+        skymall: { parts: true, maintenance: false, analysis: false, fps: false }
     }
 };
 
-function handleAction(type) {
-    const email = localStorage.getItem('userEmail');
-    const user = userPermissions[email];
-    if (user && user[type]) window.open(user[type], '_blank');
+// Link mappings for each location and action type
+const actionLinks = {
+    luckyStrike: {
+        parts: 'https://smart-bowling.github.io/PARTS-KH/',
+        maintenance: 'https://smart-bowling.github.io/SMB-LS-KH/',
+        fps: 'https://smart-bowling.github.io/PS-STOP-KH/',
+        analysis: null // Not available for Lucky Strike
+    },
+    blockbuster: {
+        parts: 'https://smart-bowling.github.io/PARTS-BB/',
+        maintenance: 'https://smart-bowling.github.io/SMB-BB/',
+        analysis: 'https://smart-bowling.github.io/ANALYSIS-BB/',
+        fps: 'https://smart-bowling.github.io/PS-STOP-BB/'
+    },
+    skymall: {
+        parts: 'https://smart-bowling.github.io/PARTS-SKYMALL/',
+        maintenance: 'https://smart-bowling.github.io/SMB-SKYMALL/',
+        analysis: 'https://smart-bowling.github.io/ANALYSIS-SKYMALL/',
+        fps: 'https://smart-bowling.github.io/PS-STOP-SKYMALL/'
+    }
+};
+
+// Icons and labels for action types
+const actionConfig = {
+    parts: { icon: 'fa-cog', label: 'Parts' },
+    maintenance: { icon: 'fa-tools', label: 'Maintenance' },
+    analysis: { icon: 'fa-bowling-ball', label: 'Analysis' },
+    fps: { icon: 'fa-chart-line', label: 'FPS Analysis' }
+};
+
+let currentUserEmail = null;
+let currentPermissions = null;
+
+function handleCredentialResponse(response) {
+    const responsePayload = parseJwt(response.credential);
+    const userEmail = responsePayload.email.toLowerCase();
+    
+    if (userPermissions[userEmail]) {
+        // Store user data
+        currentUserEmail = userEmail;
+        currentPermissions = userPermissions[userEmail];
+        
+        // Update UI
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('user-info').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('user-pic').src = responsePayload.picture;
+        document.getElementById('user-name').textContent = responsePayload.name;
+        document.getElementById('user-email').textContent = userEmail;
+        
+        // Build dynamic interface
+        buildInterface();
+        
+        // Save to localStorage
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userEmail', userEmail);
+        localStorage.setItem('userName', responsePayload.name);
+        localStorage.setItem('userPic', responsePayload.picture);
+    } else {
+        showDenied(userEmail);
+    }
 }
 
-function initDashboard(email) {
-    const user = userPermissions[email];
-    const categories = ['parts', 'maint', 'fps'];
-
-    categories.forEach(cat => {
-        const btn = document.getElementById(`btn-${cat}`);
-        const menu = document.getElementById(`menu-${cat}`);
-        const userAccessList = user.access[cat] || [];
-
-        if (userAccessList.length === 0) {
-            btn.classList.add('disabled');
-        } else if (userAccessList.length === 1) {
-            // Если доступен только один объект - клик сразу ведет на ссылку
-            const locationName = userAccessList[0];
-            btn.onclick = () => window.open(DATABASE[cat][locationName], '_blank');
-        } else {
-            // Если доступно несколько - строим выпадающее меню
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                closeAllMenus();
-                btn.classList.toggle('active-selection');
-            };
+function buildInterface() {
+    if (!currentPermissions) return;
+    
+    // Set top buttons
+    const manualsBtn = document.getElementById('manuals-btn');
+    const storeBtn = document.getElementById('store-btn');
+    
+    if (currentPermissions.manuals) {
+        manualsBtn.classList.remove('disabled');
+        manualsBtn.href = 'https://smart-bowling.github.io/MANUALS-SMART/';
+    } else {
+        manualsBtn.classList.add('disabled');
+        disableLink(manualsBtn);
+    }
+    
+    if (currentPermissions.store) {
+        storeBtn.classList.remove('disabled');
+        storeBtn.href = 'https://smart-bowling.github.io/PARTS-STORE/';
+    } else {
+        storeBtn.classList.add('disabled');
+        disableLink(storeBtn);
+    }
+    
+    // Build action buttons for each location
+    const containers = document.querySelectorAll('.action-container');
+    containers.forEach(container => {
+        const location = container.dataset.location;
+        const type = container.dataset.type;
+        
+        // Check if this action type has any available links for this location
+        const hasLinks = Object.keys(actionLinks[location] || {}).includes(type);
+        
+        if (hasLinks) {
+            const link = actionLinks[location][type];
+            const hasAccess = currentPermissions[location]?.[type] || false;
             
-            userAccessList.forEach(loc => {
-                const link = document.createElement('a');
-                link.href = DATABASE[cat][loc];
-                link.target = "_blank";
-                link.innerText = loc;
-                menu.appendChild(link);
+            // Build button based on access
+            container.innerHTML = buildActionButton(location, type, link, hasAccess);
+        }
+    });
+    
+    // Initialize dropdowns
+    initializeDropdowns();
+}
+
+function buildActionButton(location, type, link, hasAccess) {
+    const config = actionConfig[type];
+    const icon = config.icon;
+    const label = config.label;
+    
+    // Check if user has access to this action
+    if (!hasAccess) {
+        // No access - show disabled button
+        return `
+            <div class="action-button disabled">
+                <div class="button-left">
+                    <i class="fas ${icon}"></i>
+                    <span class="button-text">${label}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Check if this link exists and user has access to it
+    if (!link || link === '...') {
+        // Link doesn't exist - show disabled button
+        return `
+            <div class="action-button disabled">
+                <div class="button-left">
+                    <i class="fas ${icon}"></i>
+                    <span class="button-text">${label}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Single link - show clickable button
+    return `
+        <a href="${link}" class="action-button" target="_blank">
+            <div class="button-left">
+                <i class="fas ${icon}"></i>
+                <span class="button-text">${label}</span>
+            </div>
+        </a>
+    `;
+}
+
+function initializeDropdowns() {
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown-container')) {
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown-button.active').forEach(btn => {
+                btn.classList.remove('active');
             });
         }
     });
 }
 
-function closeAllMenus() {
-    document.querySelectorAll('.action-card').forEach(el => el.classList.remove('active-selection'));
+function disableLink(element) {
+    if (element.tagName === 'A') {
+        element.setAttribute('data-href', element.href);
+        element.href = 'javascript:void(0);';
+    }
+    element.addEventListener('click', (e) => e.preventDefault());
 }
 
-document.addEventListener('click', closeAllMenus);
+function parseJwt(token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
+}
 
-// Заглушка для демонстрации (в реальном коде используйте вашу логику Google Auth)
+function signOut() {
+    localStorage.clear();
+    location.reload();
+}
+
+function showDenied(email) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('access-denied').style.display = 'block';
+    document.getElementById('denied-email').textContent = email;
+}
+
+function backToLogin() {
+    location.reload();
+}
+
 window.onload = function() {
-    const mockEmail = 'vadiksss900@gmail.com'; // Или csportsua@gmail.com
-    localStorage.setItem('userEmail', mockEmail);
-    document.getElementById('main-content').style.display = 'flex';
-    document.getElementById('user-email').innerText = mockEmail;
-    initDashboard(mockEmail);
+    if (localStorage.getItem('userLoggedIn') === 'true') {
+        const email = localStorage.getItem('userEmail');
+        if (userPermissions[email]) {
+            currentUserEmail = email;
+            currentPermissions = userPermissions[email];
+            
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('user-info').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('user-pic').src = localStorage.getItem('userPic');
+            document.getElementById('user-name').textContent = localStorage.getItem('userName');
+            document.getElementById('user-email').textContent = email;
+            
+            buildInterface();
+        }
+    }
 };
-
-function signOut() { location.reload(); }
 </script>
 </body>
 </html>
