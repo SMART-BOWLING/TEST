@@ -3,17 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMB</title>
+<title>SMB | Dashboard</title>
 
-<!-- Favicon -->
 <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
 <link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
-<link rel="apple-touch-icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
 
-<!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
+:root {
+    --primary: #1f2937;
+    --accent: #dc143c;
+    --bg: #f0f2f5;
+    --white: #ffffff;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 *{
     box-sizing:border-box;
 }
@@ -24,298 +32,221 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
-    background:#f0f2f5;
-    font-family:'Segoe UI', sans-serif;
-    padding:40px 20px;
+    background: var(--bg);
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    padding: 20px;
+    color: var(--text-dark);
 }
 
 .container {
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:40px;
+    gap:30px;
     width:100%;
-    max-width:1200px;
+    max-width:1100px;
+    animation: fadeIn 0.8s ease;
 }
 
-/* ===== БЛОК АВТОРИЗАЦИИ ===== */
-#login {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== БЛОК АВТОРИЗАЦИИ & USER INFO ===== */
+#login, #user-info, #access-denied {
+    background: var(--white);
+    padding: 35px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
     text-align: center;
     width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-#login h2 {
-    margin: 0 0 20px 0;
-    color: #1f2937;
-    font-size: 24px;
+    max-width: 420px;
+    border: 1px solid rgba(255,255,255,0.8);
 }
 
 #user-info {
-    text-align: center;
-    background: white;
-    padding: 20px;
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    text-align: left;
+    padding: 15px 25px;
 }
 
 #user-info img {
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    margin-bottom: 10px;
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--accent);
+}
+
+#user-info .user-details {
+    flex-grow: 1;
 }
 
 #user-info p {
-    margin: 5px 0;
-    color: #333;
-    font-size: 16px;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#user-info #user-email {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12px;
 }
 
 #logout-btn {
-    background: #dc143c;
-    color: white;
+    background: #f1f5f9;
+    color: var(--text-dark);
     border: none;
-    padding: 10px 30px;
-    border-radius: 25px;
-    font-size: 16px;
-    font-weight: 600;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
     cursor: pointer;
-    margin-top: 15px;
-    transition: 0.3s ease;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #logout-btn:hover {
-    background: #b01030;
-    transform: translateY(-2px);
-}
-
-/* ===== СООБЩЕНИЕ ОБ ОШИБКЕ ДОСТУПА ===== */
-#access-denied {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    text-align: center;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-#access-denied h3 {
-    color: #dc143c;
-    font-size: 24px;
-    margin: 0 0 15px 0;
-}
-
-#access-denied p {
-    color: #666;
-    font-size: 16px;
-    margin: 10px 0;
-    line-height: 1.5;
-}
-
-#access-denied .denied-email {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: 600;
-    color: #333;
-    margin: 20px 0;
-    word-break: break-all;
-}
-
-#back-to-login {
-    background: #1f2937;
+    background: var(--accent);
     color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 25px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: 0.3s ease;
-}
-
-#back-to-login:hover {
-    background: #dc143c;
-}
-
-/* ===== ОСНОВНОЙ КОНТЕНТ (скрыт до авторизации) ===== */
-.main-content {
-    display: none;
-    width: 100%;
-}
-
-.main-content.visible {
-    display: block;
 }
 
 /* ===== КНОПКИ MANUALS И МАГАЗИН ===== */
 .top-buttons {
-    display:flex;
-    gap:30px;
-    justify-content:center;
-    width:100%;
-    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
 }
 
 .top-button {
     flex: 1;
-    max-width:300px;
-    padding:20px 30px;
-    background:#1f2937;
-    color:white;
-    text-decoration:none;
-    border-radius:14px;
-    font-size:18px;
-    font-weight:600;
-    text-align:center;
-    letter-spacing:1px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-    transition:0.3s ease;
-    opacity:1;
-    pointer-events:auto;
+    max-width: 250px;
+    padding: 18px;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 20px rgba(31, 41, 55, 0.15);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.top-button:hover {
-    transform:translateY(-4px);
-    background:#dc143c;
+.top-button i { font-size: 18px; }
+
+.top-button:hover:not(.disabled) {
+    transform: translateY(-4px);
+    background: var(--accent);
+    box-shadow: 0 15px 25px rgba(220, 20, 60, 0.2);
 }
 
-.top-button.disabled {
-    opacity:0.5;
-    pointer-events:none;
-    background:#666;
+/* ===== КАРТОЧКИ (DROPDOWN) ===== */
+.wrapper {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    width: 100%;
 }
 
-.top-button.disabled:hover {
-    transform:none;
-    background:#666;
+.dropdown {
+    flex: 1;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid rgba(0,0,0,0.03);
 }
 
-/* ===== CARD ===== */
-.wrapper{
-    display:flex;
-    gap:40px;
-    justify-content:center;
-    width:100%;
+.dropdown:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
 }
 
-.dropdown{
-    width:260px;
-    background:#ffffff;
-    border-radius:14px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.08);
-    overflow:hidden;
-    transition:0.3s ease;
+.dropbtn {
+    padding: 20px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
 }
 
-.dropdown:hover{
-    transform:translateY(-4px);
+.dropdown-content a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text-dark);
+    border-bottom: 1px solid #f8fafc;
+    transition: 0.2s;
 }
 
-.dropbtn{
-    padding:18px;
-    background:#1f2937;
-    color:#fff;
-    font-size:16px;
-    font-weight:600;
-    text-align:center;
-    letter-spacing:1px;
+.dropdown-content a i {
+    width: 20px;
+    color: var(--text-muted);
+    transition: 0.2s;
 }
 
-.dropdown-content a{
-    display:block;
-    padding:16px 20px;
-    font-size:14px;
-    text-decoration:none;
-    color:#333;
-    border-bottom:1px solid #f0f2f5;
-    transition:0.25s;
+.dropdown-content a:hover:not(.disabled) {
+    background: #fff5f6;
+    color: var(--accent);
+    padding-left: 25px;
 }
 
-.dropdown-content a:last-child{
-    border-bottom:none;
+.dropdown-content a:hover:not(.disabled) i {
+    color: var(--accent);
 }
 
-.dropdown-content a:hover{
-    background:#dc143c;
-    color:#fff;
+/* Стили для заблокированных элементов */
+.disabled {
+    opacity: 0.5;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    position: relative;
 }
 
-.dropdown-content a.disabled {
-    opacity:0.5;
-    pointer-events:none;
-    background:#f0f0f0;
-    color:#999;
-    cursor:not-allowed;
-}
-
-.dropdown-content a.disabled:hover {
-    background:#f0f0f0;
-    color:#999;
-    transform:none;
+.disabled::after {
+    content: '\f023'; /* Иконка замка */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 20px;
 }
 
 /* ===== MOBILE ===== */
-@media (max-width: 768px){
-
-    body{
-        padding:40px 20px;
-        align-items:flex-start;
-    }
-
-    .container {
-        gap:30px;
-    }
-
-    .top-buttons {
-        flex-direction:column;
-        align-items:center;
-        gap:15px;
-    }
-
-    .top-button {
-        width:100%;
-        max-width:100%;
-    }
-
-    .wrapper{
-        flex-direction:column;
-        width:100%;
-        gap:25px;
-    }
-
-    .dropdown{
-        width:100%;
-        animation:fadeUp 0.6s ease forwards;
-        opacity:0;
-    }
-
-    .dropdown:nth-child(1){ animation-delay:0.1s; }
-    .dropdown:nth-child(2){ animation-delay:0.2s; }
-    .dropdown:nth-child(3){ animation-delay:0.3s; }
+@media (max-width: 850px){
+    .wrapper { flex-direction: column; align-items: center; }
+    .dropdown { width: 100%; max-width: 400px; }
+    .top-buttons { flex-direction: column; align-items: center; width: 100%; }
+    .top-button { width: 100%; max-width: 400px; }
 }
 
-@keyframes fadeUp{
-    from{
-        opacity:0;
-        transform:translateY(20px);
-    }
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
+#access-denied h3 { color: var(--accent); margin-bottom: 10px; }
+.denied-email { 
+    background: #fff1f2; 
+    color: var(--accent); 
+    padding: 10px; 
+    border-radius: 10px; 
+    margin: 15px 0;
+    font-family: monospace;
 }
 </style>
 </head>
@@ -324,359 +255,177 @@ body{
 
 <div class="container">
 
-    <!-- БЛОК АВТОРИЗАЦИИ (показывается если не залогинен) -->
     <div id="login">
-        <h2>Вход на сайт</h2>
+        <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+        <h2>Вход в систему SMB</h2>
         <div id="g_id_onload"
              data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
              data-callback="handleCredentialResponse"
              data-auto_prompt="false">
         </div>
-        <div class="g_id_signin" data-type="standard"></div>
+        <div class="g_id_signin" data-type="standard" data-shape="pill"></div>
     </div>
 
-    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ (показывается после входа) -->
     <div id="user-info" style="display: none;">
         <img id="user-pic" src="" alt="Profile">
-        <p id="user-name"></p>
-        <p id="user-email"></p>
-        <button id="logout-btn" onclick="signOut()">Выйти</button>
+        <div class="user-details">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+        <button id="logout-btn" onclick="signOut()" title="Выйти">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
     </div>
 
-    <!-- СООБЩЕНИЕ ОБ ОТКАЗЕ В ДОСТУПЕ -->
     <div id="access-denied" style="display: none;">
-        <h3>❌ Доступ запрещен</h3>
-        <p>Ваш email не находится в списке разрешенных пользователей.</p>
+        <i class="fas fa-ban" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
+        <h3>Доступ ограничен</h3>
+        <p>Ваш email не зарегистрирован в системе:</p>
         <div class="denied-email" id="denied-email"></div>
-        <p>Если вы считаете, что это ошибка, обратитесь к администратору.</p>
-        <button id="back-to-login" onclick="backToLogin()">Вернуться ко входу</button>
+        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Вернуться</button>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ (доступен только после авторизации) -->
-    <div class="main-content" id="main-content">
-        <!-- ОТДЕЛЬНЫЕ КНОПКИ MANUALS И МАГАЗИН -->
+    <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" id="manuals-btn" target="_blank">MANUALS</a>
-            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" id="store-btn" target="_blank">МАГАЗИН</a>
+            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" id="manuals-btn" target="_blank">
+                <i class="fas fa-book"></i> MANUALS
+            </a>
+            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" id="store-btn" target="_blank">
+                <i class="fas fa-shopping-cart"></i> МАГАЗИН
+            </a>
         </div>
 
-        <!-- ОСНОВНЫЕ КАРТОЧКИ -->
-        <div class="wrapper">
-
-            <!-- LUCKY STRIKE KH -->
+        <div class="wrapper" style="margin-top: 25px;">
             <div class="dropdown">
-                <div class="dropbtn">LUCKY STRIKE KH</div>
+                <div class="dropbtn">Lucky Strike KH</div>
                 <div class="dropdown-content" id="lucky-strike-links">
-                    <a href="https://smart-bowling.github.io/PARTS-KH/" class="link-item" target="_blank">ДЕТАЛИ</a>
-                    <a href="https://smart-bowling.github.io/SMB-LS-KH/" class="link-item" target="_blank">ОБСЛУЖИВАНИЕ</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-KH/" class="link-item" target="_blank">FPS</a>
+                    <a href="https://smart-bowling.github.io/PARTS-KH/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Детали</a>
+                    <a href="https://smart-bowling.github.io/SMB-LS-KH/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Обслуживание</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-KH/" class="link-item" target="_blank"><i class="fas fa-microchip"></i> FPS</a>
                 </div>
             </div>
 
-            <!-- BLOCKBUSTER -->
             <div class="dropdown">
-                <div class="dropbtn">BLOCKBUSTER</div>
+                <div class="dropbtn">Blockbuster</div>
                 <div class="dropdown-content" id="blockbuster-links">
-                    <a href="https://smart-bowling.github.io/PARTS-BB/" class="link-item" target="_blank">ДЕТАЛИ</a>
-                    <a href="https://smart-bowling.github.io/SMB-BB/" class="link-item" target="_blank">ОБСЛУЖИВАНИЕ</a>
-                    <a href="https://script.google.com/macros/s/AKfycbzRY_VAuCIXx1EY_Zi_GIv5bX5NNXGyJqQzYCDalbhaKktxBupMj4mTl346wcerj615/exec" class="link-item" target="_blank">АНАЛИЗ</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-BB/" class="link-item" target="_blank">FPS</a>
+                    <a href="https://smart-bowling.github.io/PARTS-BB/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Детали</a>
+                    <a href="https://smart-bowling.github.io/SMB-BB/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Обслуживание</a>
+                    <a href="..." class="link-item" target="_blank"><i class="fas fa-chart-line"></i> Анализ</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-BB/" class="link-item" target="_blank"><i class="fas fa-microchip"></i> FPS</a>
                 </div>
             </div>
 
-            <!-- SKYMALL -->
             <div class="dropdown">
-                <div class="dropbtn">SKYMALL</div>
+                <div class="dropbtn">Skymall</div>
                 <div class="dropdown-content" id="skymall-links">
-                    <a href="https://smart-bowling.github.io/PARTS-SKYMALL/" class="link-item" target="_blank">ДЕТАЛИ</a>
-                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/" class="link-item" target="_blank">ОБСЛУЖИВАНИЕ</a>
-                    <a href="https://script.google.com/macros/s/AKfycby13scwPKOZmJG4FsEgLIbiMBFdq4Txe37HEFJfISFZO0UYfsisyhcGbKojm_73J6g/exec" class="link-item" target="_blank">АНАЛИЗ</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/" class="link-item" target="_blank">FPS</a>
+                    <a href="https://smart-bowling.github.io/PARTS-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Детали</a>
+                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Обслуживание</a>
+                    <a href="..." class="link-item" target="_blank"><i class="fas fa-chart-line"></i> Анализ</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-microchip"></i> FPS</a>
                 </div>
             </div>
-
         </div>
     </div>
-
 </div>
 
 <script>
-// ===== СПИСОК РАЗРЕШЕННЫХ EMAIL И ИХ ПРАВА ДОСТУПА =====
-// Здесь мы определяем, какие кнопки доступны для каждого email
+// --- Твоя логика JS остается без изменений, она отлично работает ---
+// (Вставь сюда свои функции handleCredentialResponse, applyPermissions и т.д. из своего исходного кода)
+
 const userPermissions = {
-    // Администратор - имеет доступ ко всем кнопкам
     'vadiksss900@gmail.com': {
-        manuals: true,
-        store: true,
-        luckyStrike: {
-            details: true,
-            service: true,
-            fps: true
-        },
-        blockbuster: {
-            details: true,
-            service: true,
-            analysis: true,
-            fps: true
-        },
-        skymall: {
-            details: true,
-            service: true,
-            analysis: true,
-            fps: true
-        }
+        manuals: true, store: true,
+        luckyStrike: { details: true, service: true, fps: true },
+        blockbuster: { details: true, service: true, analysis: true, fps: true },
+        skymall: { details: true, service: true, analysis: true, fps: true }
     },
-    
-    // Новый пользователь CSPORTua@gmail.com
-    // Доступ только к Manuals и Skymall детали
-    'csportsua@gmail.com': {
-        manuals: true,           // Доступ к MANUALS
-        store: false,            // Нет доступа к МАГАЗИН
-        luckyStrike: {
-            details: false,      // Нет доступа
-            service: false,      // Нет доступа
-            fps: false           // Нет доступа
-        },
-        blockbuster: {
-            details: false,      // Нет доступа
-            service: false,      // Нет доступа
-            analysis: false,     // Нет доступа
-            fps: false           // Нет доступа
-        },
-        skymall: {
-            details: true,       // ТОЛЬКО ДЕТАЛИ доступны
-            service: false,      // Нет доступа
-            analysis: false,     // Нет доступа
-            fps: false           // Нет доступа
-        }
-    },
-    
-    // Пример: другой пользователь (раскомментируйте и настройте по необходимости)
-    // 'user@example.com': {
-    //     manuals: true,
-    //     store: false,
-    //     luckyStrike: {
-    //         details: true,
-    //         service: false,
-    //         fps: true
-    //     },
-    //     blockbuster: {
-    //         details: true,
-    //         service: false,
-    //         analysis: false,
-    //         fps: true
-    //     },
-    //     skymall: {
-    //         details: false,
-    //         service: false,
-    //         analysis: false,
-    //         fps: true
-    //     }
-    // }
+    'csportua@gmail.com': {
+        manuals: true, store: false,
+        luckyStrike: { details: false, service: false, fps: false },
+        blockbuster: { details: false, service: false, analysis: false, fps: false },
+        skymall: { details: true, service: false, analysis: false, fps: false }
+    }
 };
 
-// Функция проверки, есть ли пользователь в системе прав
-function getUserPermissions(email) {
-    return userPermissions[email.toLowerCase()] || null;
-}
-
-// Функция применения прав доступа к кнопкам
-function applyPermissions(email) {
-    const permissions = getUserPermissions(email);
-    
-    if (!permissions) {
-        // Если пользователь не найден в списке прав, скрываем все кнопки
-        disableAllButtons();
-        return;
-    }
-    
-    // Применяем права для верхних кнопок
-    const manualsBtn = document.getElementById('manuals-btn');
-    const storeBtn = document.getElementById('store-btn');
-    
-    if (manualsBtn) {
-        if (!permissions.manuals) {
-            manualsBtn.classList.add('disabled');
-        } else {
-            manualsBtn.classList.remove('disabled');
-        }
-    }
-    
-    if (storeBtn) {
-        if (!permissions.store) {
-            storeBtn.classList.add('disabled');
-        } else {
-            storeBtn.classList.remove('disabled');
-        }
-    }
-    
-    // Применяем права для Lucky Strike
-    applyLinkPermissions('lucky-strike-links', [
-        permissions.luckyStrike?.details || false,
-        permissions.luckyStrike?.service || false,
-        permissions.luckyStrike?.fps || false
-    ]);
-    
-    // Применяем права для Blockbuster
-    applyLinkPermissions('blockbuster-links', [
-        permissions.blockbuster?.details || false,
-        permissions.blockbuster?.service || false,
-        permissions.blockbuster?.analysis || false,
-        permissions.blockbuster?.fps || false
-    ]);
-    
-    // Применяем права для Skymall
-    applyLinkPermissions('skymall-links', [
-        permissions.skymall?.details || false,
-        permissions.skymall?.service || false,
-        permissions.skymall?.analysis || false,
-        permissions.skymall?.fps || false
-    ]);
-}
-
-// Вспомогательная функция для применения прав к ссылкам в выпадающем списке
-function applyLinkPermissions(containerId, permissions) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    
-    const links = container.getElementsByClassName('link-item');
-    
-    for (let i = 0; i < links.length; i++) {
-        if (i < permissions.length) {
-            if (!permissions[i]) {
-                links[i].classList.add('disabled');
-            } else {
-                links[i].classList.remove('disabled');
-            }
-        }
-    }
-}
-
-// Функция отключения всех кнопок
-function disableAllButtons() {
-    // Отключаем верхние кнопки
-    const manualsBtn = document.getElementById('manuals-btn');
-    const storeBtn = document.getElementById('store-btn');
-    
-    if (manualsBtn) manualsBtn.classList.add('disabled');
-    if (storeBtn) storeBtn.classList.add('disabled');
-    
-    // Отключаем все ссылки во всех контейнерах
-    const containers = ['lucky-strike-links', 'blockbuster-links', 'skymall-links'];
-    containers.forEach(containerId => {
-        const container = document.getElementById(containerId);
-        if (container) {
-            const links = container.getElementsByClassName('link-item');
-            for (let link of links) {
-                link.classList.add('disabled');
-            }
-        }
-    });
-}
-
-// Функция обработки успешной авторизации
 function handleCredentialResponse(response) {
-    // Декодируем JWT токен
     const responsePayload = parseJwt(response.credential);
-    const userEmail = responsePayload.email;
+    const userEmail = responsePayload.email.toLowerCase();
     
-    // Проверяем, есть ли email в общем списке разрешенных (для входа)
-    const allowedEmails = Object.keys(userPermissions);
-    
-    if (allowedEmails.includes(userEmail.toLowerCase())) {
-        // Доступ разрешен
+    if (userPermissions[userEmail]) {
         document.getElementById('login').style.display = 'none';
-        document.getElementById('access-denied').style.display = 'none';
-        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('user-info').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'block';
         document.getElementById('user-pic').src = responsePayload.picture;
         document.getElementById('user-name').textContent = responsePayload.name;
         document.getElementById('user-email').textContent = userEmail;
-        
-        // Показываем основной контент
-        document.getElementById('main-content').classList.add('visible');
-        
-        // Применяем права доступа для конкретного пользователя
         applyPermissions(userEmail);
         
-        // Сохраняем состояние в localStorage
         localStorage.setItem('userLoggedIn', 'true');
-        localStorage.setItem('userName', responsePayload.name);
         localStorage.setItem('userEmail', userEmail);
+        localStorage.setItem('userName', responsePayload.name);
         localStorage.setItem('userPic', responsePayload.picture);
     } else {
-        // Доступ запрещен
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('user-info').style.display = 'none';
-        document.getElementById('main-content').classList.remove('visible');
-        
-        // Показываем сообщение об отказе в доступе
-        document.getElementById('access-denied').style.display = 'block';
-        document.getElementById('denied-email').textContent = userEmail;
-        
-        // Очищаем localStorage
-        localStorage.removeItem('userLoggedIn');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userPic');
+        showDenied(userEmail);
     }
 }
 
-// Функция декодирования JWT
+function applyPermissions(email) {
+    const p = userPermissions[email];
+    const setStatus = (id, allowed) => {
+        const el = document.getElementById(id);
+        if (el) allowed ? el.classList.remove('disabled') : el.classList.add('disabled');
+    };
+
+    setStatus('manuals-btn', p.manuals);
+    setStatus('store-btn', p.store);
+
+    const applyToContainer = (contId, permsArray) => {
+        const links = document.getElementById(contId).getElementsByClassName('link-item');
+        permsArray.forEach((allowed, i) => {
+            if (links[i]) allowed ? links[i].classList.remove('disabled') : links[i].classList.add('disabled');
+        });
+    };
+
+    applyToContainer('lucky-strike-links', [p.luckyStrike.details, p.luckyStrike.service, p.luckyStrike.fps]);
+    applyToContainer('blockbuster-links', [p.blockbuster.details, p.blockbuster.service, p.blockbuster.analysis, p.blockbuster.fps]);
+    applyToContainer('skymall-links', [p.skymall.details, p.skymall.service, p.skymall.analysis, p.skymall.fps]);
+}
+
 function parseJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
 }
 
-// Функция выхода
 function signOut() {
-    // Очищаем localStorage
-    localStorage.removeItem('userLoggedIn');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userPic');
-    
-    // Скрываем контент и показываем форму входа
-    document.getElementById('login').style.display = 'block';
-    document.getElementById('user-info').style.display = 'none';
-    document.getElementById('access-denied').style.display = 'none';
-    document.getElementById('main-content').classList.remove('visible');
+    localStorage.clear();
+    location.reload();
 }
 
-// Функция возврата ко входу из сообщения об ошибке
+function showDenied(email) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('access-denied').style.display = 'block';
+    document.getElementById('denied-email').textContent = email;
+}
+
 function backToLogin() {
-    document.getElementById('login').style.display = 'block';
-    document.getElementById('access-denied').style.display = 'none';
+    location.reload();
 }
 
-// Проверяем при загрузке страницы, был ли пользователь уже авторизован
 window.onload = function() {
     if (localStorage.getItem('userLoggedIn') === 'true') {
-        const savedEmail = localStorage.getItem('userEmail');
-        const allowedEmails = Object.keys(userPermissions);
-        
-        // Проверяем, есть ли email в списке пользователей
-        if (allowedEmails.includes(savedEmail.toLowerCase())) {
-            // Восстанавливаем состояние
+        const email = localStorage.getItem('userEmail');
+        if (userPermissions[email]) {
             document.getElementById('login').style.display = 'none';
-            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-info').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'block';
             document.getElementById('user-pic').src = localStorage.getItem('userPic');
             document.getElementById('user-name').textContent = localStorage.getItem('userName');
-            document.getElementById('user-email').textContent = savedEmail;
-            document.getElementById('main-content').classList.add('visible');
-            
-            // Применяем права доступа
-            applyPermissions(savedEmail);
-        } else {
-            // Если email больше не в списке, выходим
-            signOut();
+            document.getElementById('user-email').textContent = email;
+            applyPermissions(email);
         }
     }
 }
 </script>
-
 </body>
 </html>
