@@ -1,461 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMB | Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMB | Smart Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1f2937;
+            --accent: #dc143c;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --radius: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
 
-<link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
-<link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
 
-<style>
-:root {
-    --primary: #1f2937;
-    --accent: #dc143c;
-    --bg: #f0f2f5;
-    --white: #ffffff;
-    --text-dark: #1f2937;
-    --text-muted: #6b7280;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+        /* User Profile Bar */
+        .user-bar {
+            background: var(--white);
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-*{
-    box-sizing:border-box;
-}
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .user-info img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--accent); }
+        .user-details p { margin: 0; font-size: 14px; font-weight: 700; }
+        .user-details span { font-size: 12px; color: var(--text-muted); }
 
-body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background: var(--bg);
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    padding: 20px;
-    color: var(--text-dark);
-}
+        /* Main Grid Structure */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
 
-.container {
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:30px;
-    width:100%;
-    max-width:1100px;
-    animation: fadeIn 0.8s ease;
-}
+        .action-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+        .action-card i {
+            font-size: 32px;
+            color: var(--primary);
+            transition: 0.3s;
+        }
 
-/* ===== LOGIN BLOCK & USER INFO ===== */
-#login, #user-info, #access-denied {
-    background: var(--white);
-    padding: 35px;
-    border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-    text-align: center;
-    width: 100%;
-    max-width: 420px;
-    border: 1px solid rgba(255,255,255,0.8);
-}
+        .action-card h3 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
 
-#user-info {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    text-align: left;
-    padding: 15px 25px;
-}
+        .action-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: var(--accent);
+        }
 
-#user-info img {
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    border: 2px solid var(--accent);
-}
+        .action-card:hover:not(.disabled) i { color: var(--accent); }
 
-#user-info .user-details {
-    flex-grow: 1;
-}
+        /* Multi-selection Menu (Dropdown) */
+        .selection-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: var(--white);
+            border-radius: 0 0 var(--radius) var(--radius);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            z-index: 10;
+            display: none;
+            border: 1px solid #eee;
+            border-top: none;
+        }
 
-#user-info p {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-}
+        .selection-menu a {
+            display: block;
+            padding: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            border-top: 1px solid #f1f5f9;
+        }
 
-#user-info #user-email {
-    font-weight: 400;
-    color: var(--text-muted);
-    font-size: 12px;
-}
+        .selection-menu a:hover { background: #fff5f6; color: var(--accent); }
 
-#logout-btn {
-    background: #f1f5f9;
-    color: var(--text-dark);
-    border: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .active-selection .selection-menu { display: block; }
+        .active-selection { border-radius: var(--radius) var(--radius) 0 0; }
 
-#logout-btn:hover {
-    background: var(--accent);
-    color: white;
-}
+        /* Utility */
+        .disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+        .btn-logout { background: #f1f5f9; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .btn-logout:hover { background: var(--accent); color: white; }
 
-/* ===== MANUALS AND STORE BUTTONS ===== */
-.top-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    width: 100%;
-}
-
-.top-button {
-    flex: 1;
-    max-width: 250px;
-    padding: 18px;
-    background: var(--primary);
-    color: white;
-    text-decoration: none;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    text-align: center;
-    letter-spacing: 1px;
-    box-shadow: 0 10px 20px rgba(31, 41, 55, 0.15);
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.top-button i { font-size: 18px; }
-
-.top-button:hover:not(.disabled) {
-    transform: translateY(-4px);
-    background: var(--accent);
-    box-shadow: 0 15px 25px rgba(220, 20, 60, 0.2);
-}
-
-/* ===== DROPDOWN CARDS ===== */
-.wrapper {
-    display: flex;
-    gap: 25px;
-    justify-content: center;
-    width: 100%;
-}
-
-.dropdown {
-    flex: 1;
-    background: var(--white);
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.04);
-    overflow: hidden;
-    transition: var(--transition);
-    border: 1px solid rgba(0,0,0,0.03);
-}
-
-.dropdown:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-}
-
-.dropbtn {
-    padding: 20px;
-    background: var(--primary);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-}
-
-.dropdown-content a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    font-size: 15px;
-    font-weight: 500;
-    text-decoration: none;
-    color: var(--text-dark);
-    border-bottom: 1px solid #f8fafc;
-    transition: 0.2s;
-}
-
-.dropdown-content a i {
-    width: 20px;
-    color: var(--text-muted);
-    transition: 0.2s;
-}
-
-.dropdown-content a:hover:not(.disabled) {
-    background: #fff5f6;
-    color: var(--accent);
-    padding-left: 25px;
-}
-
-.dropdown-content a:hover:not(.disabled) i {
-    color: var(--accent);
-}
-
-/* Styles for disabled items */
-.disabled {
-    opacity: 0.5;
-    filter: grayscale(1);
-    cursor: not-allowed !important;
-    position: relative;
-    pointer-events: none !important;
-    user-select: none;
-}
-
-.disabled::after {
-    content: '\f023';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    position: absolute;
-    right: 20px;
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 850px){
-    .wrapper { flex-direction: column; align-items: center; }
-    .dropdown { width: 100%; max-width: 400px; }
-    .top-buttons { flex-direction: column; align-items: center; width: 100%; }
-    .top-button { width: 100%; max-width: 400px; }
-}
-
-#access-denied h3 { color: var(--accent); margin-bottom: 10px; }
-.denied-email { 
-    background: #fff1f2; 
-    color: var(--accent); 
-    padding: 10px; 
-    border-radius: 10px; 
-    margin: 15px 0;
-    font-family: monospace;
-}
-</style>
+        @media (max-width: 600px) {
+            .action-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
-
-    <div id="login">
-        <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
-        <h2>SMB Login</h2>
-        <div id="g_id_onload"
-             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
-             data-callback="handleCredentialResponse"
-             data-auto_prompt="false">
+<div class="container" id="main-content" style="display:none;">
+    <div class="user-bar">
+        <div class="user-info">
+            <img id="user-pic" src="" alt="User">
+            <div class="user-details">
+                <p id="user-name">Loading...</p>
+                <span id="user-email">email@example.com</span>
+            </div>
         </div>
-        <div class="g_id_signin" data-type="standard" data-shape="pill"></div>
+        <button class="btn-logout" onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 
-    <div id="user-info" style="display: none;">
-        <img id="user-pic" src="" alt="Profile">
-        <div class="user-details">
-            <p id="user-name"></p>
-            <p id="user-email"></p>
+    <div class="action-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="action-card" onclick="handleAction('manuals')">
+            <i class="fas fa-book"></i>
+            <h3>Manuals</h3>
         </div>
-        <button id="logout-btn" onclick="signOut()" title="Sign Out">
-            <i class="fas fa-sign-out-alt"></i>
-        </button>
+        <div class="action-card" onclick="handleAction('store')">
+            <i class="fas fa-shopping-cart"></i>
+            <h3>Store</h3>
+        </div>
     </div>
 
-    <div id="access-denied" style="display: none;">
-        <i class="fas fa-ban" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
-        <h3>Access Denied</h3>
-        <p>Your email is not registered in the system:</p>
-        <div class="denied-email" id="denied-email"></div>
-        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
-    </div>
-
-    <div class="main-content" id="main-content" style="display:none; width: 100%;">
-        <div class="top-buttons">
-            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" id="manuals-btn" target="_blank">
-                <i class="fas fa-book"></i> MANUALS
-            </a>
-            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" id="store-btn" target="_blank">
-                <i class="fas fa-shopping-cart"></i> STORE
-            </a>
+    <div class="action-grid" id="category-grid">
+        <div class="action-card" id="btn-parts">
+            <i class="fas fa-cog"></i>
+            <h3>Parts</h3>
+            <div class="selection-menu" id="menu-parts"></div>
         </div>
 
-        <div class="wrapper" style="margin-top: 25px;">
-            <div class="dropdown">
-                <div class="dropbtn">Lucky Strike KH</div>
-                <div class="dropdown-content" id="lucky-strike-links">
-                    <a href="https://smart-bowling.github.io/PARTS-KH/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Parts</a>
-                    <a href="https://smart-bowling.github.io/SMB-LS-KH/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Maintenance</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-KH/" class="link-item" target="_blank"><i class="fas fa-chart-line"></i> FPS</a>
-                </div>
-            </div>
+        <div class="action-card" id="btn-maint">
+            <i class="fas fa-tools"></i>
+            <h3>Maintenance</h3>
+            <div class="selection-menu" id="menu-maint"></div>
+        </div>
 
-            <div class="dropdown">
-                <div class="dropbtn">Blockbuster</div>
-                <div class="dropdown-content" id="blockbuster-links">
-                    <a href="https://smart-bowling.github.io/PARTS-BB/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Parts</a>
-                    <a href="https://smart-bowling.github.io/SMB-BB/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Maintenance</a>
-                    <a href="..." class="link-item" target="_blank"><i class="fas fa-bowling-ball"></i> Analysis</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-BB/" class="link-item" target="_blank"><i class="fas fa-chart-line"></i> FPS</a>
-                </div>
-            </div>
-
-            <div class="dropdown">
-                <div class="dropbtn">Skymall</div>
-                <div class="dropdown-content" id="skymall-links">
-                    <a href="https://smart-bowling.github.io/PARTS-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-cog"></i> Parts</a>
-                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-tools"></i> Maintenance</a>
-                    <a href="..." class="link-item" target="_blank"><i class="fas fa-bowling-ball"></i> Analysis</a>
-                    <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/" class="link-item" target="_blank"><i class="fas fa-chart-line"></i> FPS</a>
-                </div>
-            </div>
+        <div class="action-card" id="btn-fps">
+            <i class="fas fa-chart-line"></i>
+            <h3>FPS Analysis</h3>
+            <div class="selection-menu" id="menu-fps"></div>
         </div>
     </div>
 </div>
 
 <script>
-const userPermissions = {
-    'vadiksss900@gmail.com': {
-        manuals: true, store: true,
-        luckyStrike: { details: true, service: true, fps: true },
-        blockbuster: { details: true, service: true, analysis: true, fps: true },
-        skymall: { details: true, service: true, analysis: true, fps: true }
+// Централизованная база ссылок
+const DATABASE = {
+    parts: {
+        'Lucky Strike KH': 'https://smart-bowling.github.io/PARTS-KH/',
+        'Blockbuster': 'https://smart-bowling.github.io/PARTS-BB/',
+        'Skymall': 'https://smart-bowling.github.io/PARTS-SKYMALL/'
     },
-    'csportsua@gmail.com': {
-        manuals: true, store: false,
-        luckyStrike: { details: false, service: false, fps: false },
-        blockbuster: { details: false, service: false, analysis: false, fps: false },
-        skymall: { details: true, service: false, analysis: false, fps: false }
+    maint: {
+        'Lucky Strike KH': 'https://smart-bowling.github.io/SMB-LS-KH/',
+        'Blockbuster': 'https://smart-bowling.github.io/SMB-BB/',
+        'Skymall': 'https://smart-bowling.github.io/SMB-SKYMALL/'
+    },
+    fps: {
+        'Lucky Strike KH': 'https://smart-bowling.github.io/PS-STOP-KH/',
+        'Blockbuster': 'https://smart-bowling.github.io/PS-STOP-BB/',
+        'Skymall': 'https://smart-bowling.github.io/PS-STOP-SKYMALL/'
     }
 };
 
-function handleCredentialResponse(response) {
-    const responsePayload = parseJwt(response.credential);
-    const userEmail = responsePayload.email.toLowerCase();
-    
-    if (userPermissions[userEmail]) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('user-info').style.display = 'flex';
-        document.getElementById('main-content').style.display = 'block';
-        document.getElementById('user-pic').src = responsePayload.picture;
-        document.getElementById('user-name').textContent = responsePayload.name;
-        document.getElementById('user-email').textContent = userEmail;
-        applyPermissions(userEmail);
-        
-        localStorage.setItem('userLoggedIn', 'true');
-        localStorage.setItem('userEmail', userEmail);
-        localStorage.setItem('userName', responsePayload.name);
-        localStorage.setItem('userPic', responsePayload.picture);
-    } else {
-        showDenied(userEmail);
+// Права доступа (теперь плоские для удобства проверки)
+const userPermissions = {
+    'vadiksss900@gmail.com': {
+        manuals: 'https://smart-bowling.github.io/MANUALS-SMART/',
+        store: 'https://smart-bowling.github.io/PARTS-STORE/',
+        access: {
+            parts: ['Lucky Strike KH', 'Blockbuster', 'Skymall'],
+            maint: ['Lucky Strike KH', 'Blockbuster', 'Skymall'],
+            fps: ['Lucky Strike KH', 'Blockbuster', 'Skymall']
+        }
+    },
+    'csportsua@gmail.com': {
+        manuals: 'https://smart-bowling.github.io/MANUALS-SMART/',
+        access: {
+            parts: ['Skymall'],
+            maint: [],
+            fps: []
+        }
     }
+};
+
+function handleAction(type) {
+    const email = localStorage.getItem('userEmail');
+    const user = userPermissions[email];
+    if (user && user[type]) window.open(user[type], '_blank');
 }
 
-function applyPermissions(email) {
-    const p = userPermissions[email];
-    const setStatus = (id, allowed) => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (allowed) {
-                el.classList.remove('disabled');
-                el.removeEventListener('click', preventClick);
-            } else {
-                el.classList.add('disabled');
-                el.addEventListener('click', preventClick);
-            }
-        }
-    };
+function initDashboard(email) {
+    const user = userPermissions[email];
+    const categories = ['parts', 'maint', 'fps'];
 
-    function preventClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-    }
+    categories.forEach(cat => {
+        const btn = document.getElementById(`btn-${cat}`);
+        const menu = document.getElementById(`menu-${cat}`);
+        const userAccessList = user.access[cat] || [];
 
-    setStatus('manuals-btn', p.manuals);
-    setStatus('store-btn', p.store);
-
-    const applyToContainer = (contId, permsArray) => {
-        const links = document.getElementById(contId).getElementsByClassName('link-item');
-        for (let i = 0; i < links.length; i++) {
-            const link = links[i];
-            const allowed = permsArray[i];
+        if (userAccessList.length === 0) {
+            btn.classList.add('disabled');
+        } else if (userAccessList.length === 1) {
+            // Если доступен только один объект - клик сразу ведет на ссылку
+            const locationName = userAccessList[0];
+            btn.onclick = () => window.open(DATABASE[cat][locationName], '_blank');
+        } else {
+            // Если доступно несколько - строим выпадающее меню
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                closeAllMenus();
+                btn.classList.toggle('active-selection');
+            };
             
-            if (allowed) {
-                link.classList.remove('disabled');
-                link.removeEventListener('click', preventClick);
-                if (link.hasAttribute('data-href')) {
-                    link.href = link.getAttribute('data-href');
-                    link.removeAttribute('data-href');
-                }
-            } else {
-                link.classList.add('disabled');
-                link.addEventListener('click', preventClick);
-                if (!link.hasAttribute('data-href') && link.href && link.href !== '...') {
-                    link.setAttribute('data-href', link.href);
-                    link.href = 'javascript:void(0);';
-                }
-            }
+            userAccessList.forEach(loc => {
+                const link = document.createElement('a');
+                link.href = DATABASE[cat][loc];
+                link.target = "_blank";
+                link.innerText = loc;
+                menu.appendChild(link);
+            });
         }
-    };
-
-    applyToContainer('lucky-strike-links', [p.luckyStrike.details, p.luckyStrike.service, p.luckyStrike.fps]);
-    applyToContainer('blockbuster-links', [p.blockbuster.details, p.blockbuster.service, p.blockbuster.analysis, p.blockbuster.fps]);
-    applyToContainer('skymall-links', [p.skymall.details, p.skymall.service, p.skymall.analysis, p.skymall.fps]);
+    });
 }
 
-function parseJwt(token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(window.atob(base64));
+function closeAllMenus() {
+    document.querySelectorAll('.action-card').forEach(el => el.classList.remove('active-selection'));
 }
 
-function signOut() {
-    localStorage.clear();
-    location.reload();
-}
+document.addEventListener('click', closeAllMenus);
 
-function showDenied(email) {
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('access-denied').style.display = 'block';
-    document.getElementById('denied-email').textContent = email;
-}
-
-function backToLogin() {
-    location.reload();
-}
-
+// Заглушка для демонстрации (в реальном коде используйте вашу логику Google Auth)
 window.onload = function() {
-    if (localStorage.getItem('userLoggedIn') === 'true') {
-        const email = localStorage.getItem('userEmail');
-        if (userPermissions[email]) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('user-info').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('user-pic').src = localStorage.getItem('userPic');
-            document.getElementById('user-name').textContent = localStorage.getItem('userName');
-            document.getElementById('user-email').textContent = email;
-            applyPermissions(email);
-        }
-    }
-}
+    const mockEmail = 'vadiksss900@gmail.com'; // Или csportsua@gmail.com
+    localStorage.setItem('userEmail', mockEmail);
+    document.getElementById('main-content').style.display = 'flex';
+    document.getElementById('user-email').innerText = mockEmail;
+    initDashboard(mockEmail);
+};
+
+function signOut() { location.reload(); }
 </script>
 </body>
 </html>
