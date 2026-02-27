@@ -219,8 +219,10 @@ body{
 .disabled {
     opacity: 0.5;
     filter: grayscale(1);
-    cursor: not-allowed;
+    cursor: not-allowed !important;
     position: relative;
+    pointer-events: none !important; /* Запрещает все события мыши */
+    user-select: none; /* Запрещает выделение текста */
 }
 
 .disabled::after {
@@ -375,17 +377,53 @@ function applyPermissions(email) {
     const p = userPermissions[email];
     const setStatus = (id, allowed) => {
         const el = document.getElementById(id);
-        if (el) allowed ? el.classList.remove('disabled') : el.classList.add('disabled');
+        if (el) {
+            if (allowed) {
+                el.classList.remove('disabled');
+                // Убираем обработчик, если он был добавлен
+                el.removeEventListener('click', preventClick);
+            } else {
+                el.classList.add('disabled');
+                // Добавляем дополнительную защиту от клика
+                el.addEventListener('click', preventClick);
+            }
+        }
     };
+
+    // Дополнительная защита от перехода по ссылке
+    function preventClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
 
     setStatus('manuals-btn', p.manuals);
     setStatus('store-btn', p.store);
 
     const applyToContainer = (contId, permsArray) => {
         const links = document.getElementById(contId).getElementsByClassName('link-item');
-        permsArray.forEach((allowed, i) => {
-            if (links[i]) allowed ? links[i].classList.remove('disabled') : links[i].classList.add('disabled');
-        });
+        for (let i = 0; i < links.length; i++) {
+            const link = links[i];
+            const allowed = permsArray[i];
+            
+            if (allowed) {
+                link.classList.remove('disabled');
+                link.removeEventListener('click', preventClick);
+                // Восстанавливаем href
+                if (link.hasAttribute('data-href')) {
+                    link.href = link.getAttribute('data-href');
+                    link.removeAttribute('data-href');
+                }
+            } else {
+                link.classList.add('disabled');
+                link.addEventListener('click', preventClick);
+                // Сохраняем оригинальный href и убираем его
+                if (!link.hasAttribute('data-href') && link.href && link.href !== '...') {
+                    link.setAttribute('data-href', link.href);
+                    link.href = 'javascript:void(0);';
+                }
+            }
+        }
     };
 
     applyToContainer('lucky-strike-links', [p.luckyStrike.details, p.luckyStrike.service, p.luckyStrike.fps]);
