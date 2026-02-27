@@ -3,60 +3,375 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading</title>
+<title>SMB</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
+<link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
+<link rel="apple-touch-icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
-body {
-  margin: 0;
+*{
+    box-sizing:border-box;
 }
 
-.loading-screen {
-  position: fixed;
-  inset: 0;
-  background: #1f2937;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#f0f2f5;
+    font-family:'Segoe UI', sans-serif;
+    padding:40px 20px;
 }
 
-.logo-wrapper {
-  position: relative;
-  width: 160px;
-  height: 160px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.container {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:40px;
+    width:100%;
+    max-width:1200px;
 }
 
-.glow-ring {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 100%;
-  background: conic-gradient(#dc143c, transparent 100%);
-  animation: spin 5s linear infinite;
-  filter: blur(20px);
+/* ===== БЛОК АВТОРИЗАЦИИ ===== */
+#login {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
-.loading-screen img {
-  width: 120px;
-  z-index: 2;
+#login h2 {
+    margin: 0 0 20px 0;
+    color: #1f2937;
+    font-size: 24px;
 }
 
-@keyframes spin {
-  to { transform: rotate(365deg); }
+#user-info {
+    text-align: center;
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+#user-info img {
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 10px;
+}
+
+#user-info p {
+    margin: 5px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+#logout-btn {
+    background: #dc143c;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.3s ease;
+}
+
+#logout-btn:hover {
+    background: #b01030;
+    transform: translateY(-2px);
+}
+
+/* ===== ОСНОВНОЙ КОНТЕНТ (скрыт до авторизации) ===== */
+.main-content {
+    display: none;
+    width: 100%;
+}
+
+.main-content.visible {
+    display: block;
+}
+
+/* ===== КНОПКИ MANUALS И МАГАЗИН ===== */
+.top-buttons {
+    display:flex;
+    gap:30px;
+    justify-content:center;
+    width:100%;
+    margin-bottom: 20px;
+}
+
+.top-button {
+    flex: 1;
+    max-width:300px;
+    padding:20px 30px;
+    background:#1f2937;
+    color:white;
+    text-decoration:none;
+    border-radius:14px;
+    font-size:18px;
+    font-weight:600;
+    text-align:center;
+    letter-spacing:1px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    transition:0.3s ease;
+}
+
+.top-button:hover {
+    transform:translateY(-4px);
+    background:#dc143c;
+}
+
+/* ===== CARD ===== */
+.wrapper{
+    display:flex;
+    gap:40px;
+    justify-content:center;
+    width:100%;
+}
+
+.dropdown{
+    width:260px;
+    background:#ffffff;
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    overflow:hidden;
+    transition:0.3s ease;
+}
+
+.dropdown:hover{
+    transform:translateY(-4px);
+}
+
+.dropbtn{
+    padding:18px;
+    background:#1f2937;
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+    text-align:center;
+    letter-spacing:1px;
+}
+
+.dropdown-content a{
+    display:block;
+    padding:16px 20px;
+    font-size:14px;
+    text-decoration:none;
+    color:#333;
+    border-bottom:1px solid #f0f2f5;
+    transition:0.25s;
+}
+
+.dropdown-content a:last-child{
+    border-bottom:none;
+}
+
+.dropdown-content a:hover{
+    background:#dc143c;
+    color:#fff;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px){
+
+    body{
+        padding:40px 20px;
+        align-items:flex-start;
+    }
+
+    .container {
+        gap:30px;
+    }
+
+    .top-buttons {
+        flex-direction:column;
+        align-items:center;
+        gap:15px;
+    }
+
+    .top-button {
+        width:100%;
+        max-width:100%;
+    }
+
+    .wrapper{
+        flex-direction:column;
+        width:100%;
+        gap:25px;
+    }
+
+    .dropdown{
+        width:100%;
+        animation:fadeUp 0.6s ease forwards;
+        opacity:0;
+    }
+
+    .dropdown:nth-child(1){ animation-delay:0.1s; }
+    .dropdown:nth-child(2){ animation-delay:0.2s; }
+    .dropdown:nth-child(3){ animation-delay:0.3s; }
+}
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
 }
 </style>
 </head>
 
 <body>
 
-<div class="loading-screen">
-  <div class="logo-wrapper">
-    <div class="glow-ring"></div>
-    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="">
-  </div>
+<div class="container">
+
+    <!-- БЛОК АВТОРИЗАЦИИ (показывается если не залогинен) -->
+    <div id="login">
+        <h2>Вход на сайт</h2>
+        <div id="g_id_onload"
+             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </div>
+
+    <!-- ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ (показывается после входа) -->
+    <div id="user-info" style="display: none;">
+        <img id="user-pic" src="" alt="Profile">
+        <p id="user-name"></p>
+        <p id="user-email"></p>
+        <button id="logout-btn" onclick="signOut()">Выйти</button>
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ (доступен только после авторизации) -->
+    <div class="main-content" id="main-content">
+        <!-- ОТДЕЛЬНЫЕ КНОПКИ MANUALS И МАГАЗИН -->
+        <div class="top-buttons">
+            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" target="_blank">MANUALS</a>
+            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" target="_blank">МАГАЗИН</a>
+        </div>
+
+        <!-- ОСНОВНЫЕ КАРТОЧКИ -->
+        <div class="wrapper">
+
+            <!-- LUCKY STRIKE KH -->
+            <div class="dropdown">
+                <div class="dropbtn">LUCKY STRIKE KH</div>
+                <div class="dropdown-content">
+                    <a href="https://smart-bowling.github.io/PARTS-KH/" target="_blank">ДЕТАЛИ</a>
+                    <a href="https://smart-bowling.github.io/SMB-LS-KH/" target="_blank">ОБСЛУЖИВАНИЕ</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-KH/" target="_blank">FPS</a>
+                </div>
+            </div>
+
+            <!-- BLOCKBUSTER -->
+            <div class="dropdown">
+                <div class="dropbtn">BLOCKBUSTER</div>
+                <div class="dropdown-content">
+                    <a href="https://smart-bowling.github.io/PARTS-BB/" target="_blank">ДЕТАЛИ</a>
+                    <a href="https://smart-bowling.github.io/SMB-BB/" target="_blank">ОБСЛУЖИВАНИЕ</a>
+                    <a href="https://script.google.com/macros/s/AKfycbzRY_VAuCIXx1EY_Zi_GIv5bX5NNXGyJqQzYCDalbhaKktxBupMj4mTl346wcerj615/exec" target="_blank">АНАЛИЗ</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-BB/" target="_blank">FPS</a>
+                </div>
+            </div>
+
+            <!-- SKYMALL -->
+            <div class="dropdown">
+                <div class="dropbtn">SKYMALL</div>
+                <div class="dropdown-content">
+                    <a href="https://smart-bowling.github.io/PARTS-SKYMALL/" target="_blank">ДЕТАЛИ</a>
+                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/" target="_blank">ОБСЛУЖИВАНИЕ</a>
+                    <a href="https://script.google.com/macros/s/AKfycby13scwPKOZmJG4FsEgLIbiMBFdq4Txe37HEFJfISFZO0UYfsisyhcGbKojm_73J6g/exec" target="_blank">АНАЛИЗ</a>
+                    <a href="https://smart-bowling.github.io/PS-STOP-SKYMALL/" target="_blank">FPS</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
+
+<script>
+// Функция обработки успешной авторизации
+function handleCredentialResponse(response) {
+    // Декодируем JWT токен
+    const responsePayload = parseJwt(response.credential);
+    
+    // Показываем информацию о пользователе
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('user-info').style.display = 'block';
+    document.getElementById('user-pic').src = responsePayload.picture;
+    document.getElementById('user-name').textContent = responsePayload.name;
+    document.getElementById('user-email').textContent = responsePayload.email;
+    
+    // Показываем основной контент
+    document.getElementById('main-content').classList.add('visible');
+    
+    // Сохраняем состояние в localStorage
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userName', responsePayload.name);
+    localStorage.setItem('userEmail', responsePayload.email);
+    localStorage.setItem('userPic', responsePayload.picture);
+}
+
+// Функция декодирования JWT
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// Функция выхода
+function signOut() {
+    // Очищаем localStorage
+    localStorage.removeItem('userLoggedIn');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userPic');
+    
+    // Скрываем контент и показываем форму входа
+    document.getElementById('login').style.display = 'block';
+    document.getElementById('user-info').style.display = 'none';
+    document.getElementById('main-content').classList.remove('visible');
+}
+
+// Проверяем при загрузке страницы, был ли пользователь уже авторизован
+window.onload = function() {
+    if (localStorage.getItem('userLoggedIn') === 'true') {
+        // Восстанавливаем состояние
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('user-pic').src = localStorage.getItem('userPic');
+        document.getElementById('user-name').textContent = localStorage.getItem('userName');
+        document.getElementById('user-email').textContent = localStorage.getItem('userEmail');
+        document.getElementById('main-content').classList.add('visible');
+    }
+}
+</script>
 
 </body>
 </html>
