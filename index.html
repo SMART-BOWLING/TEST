@@ -98,6 +98,58 @@ body{
     transform: translateY(-2px);
 }
 
+/* ===== СООБЩЕНИЕ ОБ ОШИБКЕ ДОСТУПА ===== */
+#access-denied {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+#access-denied h3 {
+    color: #dc143c;
+    font-size: 24px;
+    margin: 0 0 15px 0;
+}
+
+#access-denied p {
+    color: #666;
+    font-size: 16px;
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+#access-denied .denied-email {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #333;
+    margin: 20px 0;
+    word-break: break-all;
+}
+
+#back-to-login {
+    background: #1f2937;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.3s ease;
+}
+
+#back-to-login:hover {
+    background: #dc143c;
+}
+
 /* ===== ОСНОВНОЙ КОНТЕНТ (скрыт до авторизации) ===== */
 .main-content {
     display: none;
@@ -264,6 +316,15 @@ body{
         <button id="logout-btn" onclick="signOut()">Выйти</button>
     </div>
 
+    <!-- СООБЩЕНИЕ ОБ ОТКАЗЕ В ДОСТУПЕ -->
+    <div id="access-denied" style="display: none;">
+        <h3>❌ Доступ запрещен</h3>
+        <p>Ваш email не находится в списке разрешенных пользователей.</p>
+        <div class="denied-email" id="denied-email"></div>
+        <p>Если вы считаете, что это ошибка, обратитесь к администратору.</p>
+        <button id="back-to-login" onclick="backToLogin()">Вернуться ко входу</button>
+    </div>
+
     <!-- ОСНОВНОЙ КОНТЕНТ (доступен только после авторизации) -->
     <div class="main-content" id="main-content">
         <!-- ОТДЕЛЬНЫЕ КНОПКИ MANUALS И МАГАЗИН -->
@@ -313,26 +374,60 @@ body{
 </div>
 
 <script>
+// ===== СПИСОК РАЗРЕШЕННЫХ EMAIL =====
+// Добавьте сюда все email, которым разрешен доступ
+const allowedEmails = [
+    'vadiksss900@gmail.com'  // Основной разрешенный email
+    // Добавьте другие email через запятую, например:
+    // 'user2@example.com',
+    // 'user3@example.com',
+];
+
+// Функция проверки email в белом списке
+function isEmailAllowed(email) {
+    return allowedEmails.includes(email.toLowerCase());
+}
+
 // Функция обработки успешной авторизации
 function handleCredentialResponse(response) {
     // Декодируем JWT токен
     const responsePayload = parseJwt(response.credential);
+    const userEmail = responsePayload.email;
     
-    // Показываем информацию о пользователе
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('user-info').style.display = 'block';
-    document.getElementById('user-pic').src = responsePayload.picture;
-    document.getElementById('user-name').textContent = responsePayload.name;
-    document.getElementById('user-email').textContent = responsePayload.email;
-    
-    // Показываем основной контент
-    document.getElementById('main-content').classList.add('visible');
-    
-    // Сохраняем состояние в localStorage
-    localStorage.setItem('userLoggedIn', 'true');
-    localStorage.setItem('userName', responsePayload.name);
-    localStorage.setItem('userEmail', responsePayload.email);
-    localStorage.setItem('userPic', responsePayload.picture);
+    // Проверяем, есть ли email в белом списке
+    if (isEmailAllowed(userEmail)) {
+        // Доступ разрешен
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('access-denied').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('user-pic').src = responsePayload.picture;
+        document.getElementById('user-name').textContent = responsePayload.name;
+        document.getElementById('user-email').textContent = userEmail;
+        
+        // Показываем основной контент
+        document.getElementById('main-content').classList.add('visible');
+        
+        // Сохраняем состояние в localStorage
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userName', responsePayload.name);
+        localStorage.setItem('userEmail', userEmail);
+        localStorage.setItem('userPic', responsePayload.picture);
+    } else {
+        // Доступ запрещен
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('main-content').classList.remove('visible');
+        
+        // Показываем сообщение об отказе в доступе
+        document.getElementById('access-denied').style.display = 'block';
+        document.getElementById('denied-email').textContent = userEmail;
+        
+        // Очищаем localStorage
+        localStorage.removeItem('userLoggedIn');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userPic');
+    }
 }
 
 // Функция декодирования JWT
@@ -356,19 +451,34 @@ function signOut() {
     // Скрываем контент и показываем форму входа
     document.getElementById('login').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
+    document.getElementById('access-denied').style.display = 'none';
     document.getElementById('main-content').classList.remove('visible');
+}
+
+// Функция возврата ко входу из сообщения об ошибке
+function backToLogin() {
+    document.getElementById('login').style.display = 'block';
+    document.getElementById('access-denied').style.display = 'none';
 }
 
 // Проверяем при загрузке страницы, был ли пользователь уже авторизован
 window.onload = function() {
     if (localStorage.getItem('userLoggedIn') === 'true') {
-        // Восстанавливаем состояние
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('user-info').style.display = 'block';
-        document.getElementById('user-pic').src = localStorage.getItem('userPic');
-        document.getElementById('user-name').textContent = localStorage.getItem('userName');
-        document.getElementById('user-email').textContent = localStorage.getItem('userEmail');
-        document.getElementById('main-content').classList.add('visible');
+        const savedEmail = localStorage.getItem('userEmail');
+        
+        // Проверяем, все еще ли email в белом списке
+        if (isEmailAllowed(savedEmail)) {
+            // Восстанавливаем состояние
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-pic').src = localStorage.getItem('userPic');
+            document.getElementById('user-name').textContent = localStorage.getItem('userName');
+            document.getElementById('user-email').textContent = savedEmail;
+            document.getElementById('main-content').classList.add('visible');
+        } else {
+            // Если email больше не в белом списке, выходим
+            signOut();
+        }
     }
 }
 </script>
