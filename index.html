@@ -55,6 +55,7 @@
         .back-button {
             align-self: flex-start;
             margin-bottom: 10px;
+            width: 100%;
         }
 
         .back-btn {
@@ -77,10 +78,22 @@
             color: var(--accent);
         }
 
-        /* Контейнер для загружаемого контента */
+        /* Контейнер для iframe */
         #page-container {
             width: 100%;
+            min-height: 500px;
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
             animation: slideIn 0.3s ease;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 80vh;
+            border: none;
+            background: white;
         }
 
         @keyframes slideIn {
@@ -93,10 +106,26 @@
             background: #fee;
             border: 1px solid var(--accent);
             color: var(--accent);
-            padding: 20px;
-            border-radius: 8px;
+            padding: 30px;
+            border-radius: 24px;
             text-align: center;
             margin: 20px;
+        }
+
+        .error-message button {
+            background: var(--white);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .error-message button:hover {
+            background: var(--accent);
+            color: white;
         }
 
         /* ===== AUTH BLOCKS ===== */
@@ -163,6 +192,7 @@
             display: flex;
             flex-direction: column;
             aspect-ratio: 1 / 1;
+            cursor: pointer;
         }
 
         .top-card:hover:not(.disabled) {
@@ -322,6 +352,7 @@
             .action-btn, .top-card .action-btn { padding: 8px; }
             .action-btn i, .top-card .action-btn i { font-size: 28px; }
             .action-btn span, .top-card .action-btn span { font-size: 12px; }
+            .iframe-container { height: 70vh; }
         }
 
         @media (max-width: 360px) {
@@ -367,7 +398,7 @@
         <h3>Access Denied</h3>
         <p>Your email is not registered:</p>
         <div class="denied-email" id="denied-email"></div>
-        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
+        <button onclick="backToLogin()" style="width:auto; padding: 10px 20px; margin: 0 auto; background: var(--accent); color: white; border: none; border-radius: 10px; cursor: pointer;">Go Back</button>
     </div>
 
     <!-- Основной контент дашборда -->
@@ -424,8 +455,8 @@
         </div>
     </div>
 
-    <!-- Контейнер для загружаемых страниц -->
-    <div id="page-container" style="width: 100%;"></div>
+    <!-- Контейнер для iframe -->
+    <div id="page-container" style="width: 100%; display: none;"></div>
 </div>
 
 <script>
@@ -468,13 +499,13 @@ const pagesMap = {
     ]
 };
 
-// --- ФУНКЦИИ SPA ---
+// --- ФУНКЦИИ ЗАГРУЗКИ СТРАНИЦ (IFRAME) ---
 
 /**
- * Загружает HTML-фрагмент из папки pages и вставляет его в page-container
- * @param {string} pageName - имя файла в папке pages (например, 'manuals.html')
+ * Загружает HTML-страницу в iframe
+ * @param {string} pageName - имя файла в папке pages
  */
-async function loadPage(pageName) {
+function loadPage(pageName) {
     try {
         // Показываем кнопку "Назад"
         document.getElementById('back-button').style.display = 'block';
@@ -482,61 +513,44 @@ async function loadPage(pageName) {
         // Скрываем основной контент дашборда
         document.getElementById('main-content').style.display = 'none';
         
-        // Очищаем и показываем контейнер для страницы
+        // Показываем контейнер для страницы
         const pageContainer = document.getElementById('page-container');
         pageContainer.style.display = 'block';
         
-        // Показываем индикатор загрузки
-        pageContainer.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fas fa-spinner fa-spin" style="font-size: 40px; color: var(--accent);"></i></div>';
-        
-        // Загружаем HTML-фрагмент
-        const response = await fetch(`pages/${pageName}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const html = await response.text();
-        
-        // Вставляем загруженный контент
-        pageContainer.innerHTML = html;
-        
-        // Выполняем скрипты в загруженном контенте
-        executeScripts(pageContainer);
+        // Создаем iframe для полной изоляции контента
+        pageContainer.innerHTML = `
+            <iframe 
+                src="pages/${pageName}" 
+                class="iframe-container"
+                title="${pageName.replace('.html', '')}"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            ></iframe>
+        `;
         
         // Обновляем заголовок страницы
         document.title = `SMB | ${pageName.replace('.html', '').toUpperCase()}`;
         
     } catch (error) {
         console.error('Error loading page:', error);
-        document.getElementById('page-container').innerHTML = `
-            <div class="error-message">
-                <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
-                <h3>Ошибка загрузки</h3>
-                <p>${error.message}</p>
-                <button class="back-btn" onclick="goBack()" style="margin: 20px auto;">
-                    <i class="fas fa-arrow-left"></i> Вернуться
-                </button>
-            </div>
-        `;
+        showLoadError(error.message);
     }
 }
 
 /**
- * Выполняет все скрипты в загруженном контейнере
- * @param {HTMLElement} container 
+ * Показывает ошибку загрузки
  */
-function executeScripts(container) {
-    const scripts = container.querySelectorAll('script');
-    scripts.forEach(oldScript => {
-        const newScript = document.createElement('script');
-        // Копируем все атрибуты
-        Array.from(oldScript.attributes).forEach(attr => {
-            newScript.setAttribute(attr.name, attr.value);
-        });
-        // Копируем содержимое
-        newScript.textContent = oldScript.textContent;
-        // Заменяем старый скрипт новым (это вызывает выполнение)
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-    });
+function showLoadError(errorMessage) {
+    const pageContainer = document.getElementById('page-container');
+    pageContainer.innerHTML = `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 15px;"></i>
+            <h3>Ошибка загрузки</h3>
+            <p>${errorMessage}</p>
+            <button onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Вернуться
+            </button>
+        </div>
+    `;
 }
 
 /**
@@ -546,9 +560,10 @@ function goBack() {
     // Скрываем кнопку "Назад"
     document.getElementById('back-button').style.display = 'none';
     
-    // Скрываем контейнер с загруженной страницей
-    document.getElementById('page-container').style.display = 'none';
-    document.getElementById('page-container').innerHTML = '';
+    // Скрываем контейнер с iframe
+    const pageContainer = document.getElementById('page-container');
+    pageContainer.style.display = 'none';
+    pageContainer.innerHTML = '';
     
     // Показываем основной контент
     document.getElementById('main-content').style.display = 'block';
@@ -559,13 +574,18 @@ function goBack() {
 
 // --- AUTH LOGIC ---
 function handleCredentialResponse(response) {
-    const payload = parseJwt(response.credential);
-    const email = payload.email.toLowerCase();
-    
-    if (userPermissions[email]) {
-        loginUser(payload);
-    } else {
-        showDenied(email);
+    try {
+        const payload = parseJwt(response.credential);
+        const email = payload.email.toLowerCase();
+        
+        if (userPermissions[email]) {
+            loginUser(payload);
+        } else {
+            showDenied(email);
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
+        alert('Ошибка авторизации');
     }
 }
 
@@ -589,6 +609,8 @@ function loginUser(payload) {
 // --- ОСНОВНАЯ ЛОГИКА ---
 function handleAction(type) {
     const email = localStorage.getItem('userEmail');
+    if (!email || !userPermissions[email]) return;
+    
     const p = userPermissions[email];
     
     // Фильтруем страницы, к которым есть доступ
@@ -597,7 +619,7 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        // Загружаем страницу через SPA
+        // Загружаем страницу через iframe
         loadPage(available[0].page);
     } else {
         const drop = document.getElementById(`drop-${type}`);
@@ -617,20 +639,40 @@ function handleAction(type) {
 
 function applyPermissions(email) {
     const p = userPermissions[email];
+    if (!p) return;
     
     // Top cards
-    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
+    const manualsBtn = document.getElementById('manuals-btn');
+    if (manualsBtn) {
+        if (!p.manuals) {
+            manualsBtn.classList.add('disabled');
+        } else {
+            manualsBtn.classList.remove('disabled');
+        }
+    }
     
     // Cards
     Object.keys(pagesMap).forEach(type => {
         const hasAccess = pagesMap[type].some(item => p[item.key] && p[item.key][type]);
-        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
+        const card = document.getElementById(`card-${type}`);
+        if (card) {
+            if (!hasAccess) {
+                card.classList.add('disabled');
+            } else {
+                card.classList.remove('disabled');
+            }
+        }
     });
 }
 
 // --- УТИЛИТЫ ---
 function parseJwt(token) {
-    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
 }
 
 function signOut() {
@@ -644,8 +686,11 @@ function showDenied(email) {
     document.getElementById('denied-email').textContent = email;
 }
 
-function backToLogin() { location.reload(); }
+function backToLogin() { 
+    location.reload(); 
+}
 
+// Инициализация при загрузке страницы
 window.onload = () => {
     if (localStorage.getItem('userLoggedIn') === 'true') {
         const email = localStorage.getItem('userEmail');
@@ -655,6 +700,9 @@ window.onload = () => {
                 name: localStorage.getItem('userName'),
                 picture: localStorage.getItem('userPic')
             });
+        } else {
+            // Если email больше нет в permissions, выходим
+            localStorage.clear();
         }
     }
 }
