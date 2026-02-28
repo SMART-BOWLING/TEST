@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        /* Все ваши существующие стили остаются без изменений */
         :root {
             --primary: #1f2937;
             --accent: #dc143c;
@@ -86,38 +87,6 @@
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* Стили для страницы manuals (добавьте сюда стили из manuals.html) */
-        .manuals-container {
-            background: var(--white);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-        }
-
-        .manuals-title {
-            color: var(--primary);
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        .manuals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .manual-card {
-            background: #f8fafc;
-            border-radius: 16px;
-            padding: 20px;
-            transition: var(--transition);
-        }
-
-        .manual-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
         /* ===== AUTH BLOCKS ===== */
@@ -489,7 +458,7 @@ const pagesMap = {
     ]
 };
 
-// --- ФУНКЦИИ SPA ---
+// --- ИСПРАВЛЕННЫЕ ФУНКЦИИ SPA ---
 
 /**
  * Загружает HTML-фрагмент из папки pages и вставляет его в page-container
@@ -520,6 +489,9 @@ async function loadPage(pageName) {
         // Вставляем загруженный контент
         pageContainer.innerHTML = html;
         
+        // ВАЖНО: выполняем скрипты в загруженном контенте
+        executeScripts(pageContainer);
+        
         // Опционально: обновляем заголовок страницы
         document.title = `SMB | ${pageName.replace('.html', '').toUpperCase()}`;
         
@@ -536,6 +508,30 @@ async function loadPage(pageName) {
             </div>
         `;
     }
+}
+
+/**
+ * Выполняет все скрипты в загруженном контенте
+ * @param {HTMLElement} container - контейнер с загруженным HTML
+ */
+function executeScripts(container) {
+    const scripts = container.getElementsByTagName('script');
+    
+    // Преобразуем HTMLCollection в массив для безопасной итерации
+    Array.from(scripts).forEach(oldScript => {
+        const newScript = document.createElement('script');
+        
+        // Копируем все атрибуты
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+        
+        // Копируем содержимое
+        newScript.textContent = oldScript.textContent;
+        
+        // Заменяем старый скрипт новым (это вызывает выполнение)
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
 }
 
 /**
