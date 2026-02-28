@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SMB | Dashboard</title>
 
+<!-- Favicon -->
 <link rel="icon" type="image/png" href="https://i.postimg.cc/QNkbRTbS/1.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -18,16 +19,16 @@
 --text-muted:#6b7280;
 --transition:all .3s cubic-bezier(.4,0,.2,1);
 }
-*{box-sizing:border-box}
+
+*{box-sizing:border-box;margin:0;padding:0}
 body{
-margin:0;
 min-height:100vh;
 display:flex;
 justify-content:center;
-align-items:center;
+align-items:flex-start;
 background:var(--bg);
 font-family:'Segoe UI',sans-serif;
-padding:20px;
+padding:30px;
 }
 .container{
 display:flex;
@@ -43,6 +44,7 @@ from{opacity:0;transform:translateY(10px)}
 to{opacity:1;transform:translateY(0)}
 }
 
+/* ===== Dashboard Top Cards ===== */
 .top-buttons{
 display:flex;
 gap:20px;
@@ -85,6 +87,7 @@ width:100%;
 animation:fadeIn .4s ease;
 }
 
+/* ===== Back Button ===== */
 .back-btn{
 margin-top:20px;
 padding:12px 20px;
@@ -93,17 +96,19 @@ background:var(--primary);
 color:#fff;
 border-radius:12px;
 cursor:pointer;
+transition:.3s;
 }
+.back-btn:hover{background:var(--accent)}
 </style>
 </head>
 <body>
 
 <div class="container">
 
+<!-- Main Dashboard Content -->
 <div class="main-content" id="main-content" style="width:100%;">
 
 <div class="top-buttons">
-
 <div class="top-card" onclick="loadPage('manuals.html')">
 <div>
 <i class="fas fa-book"></i>
@@ -118,20 +123,25 @@ cursor:pointer;
 </div>
 </div>
 
+<div class="top-card">
+<div>
+<i class="fas fa-cogs"></i>
+<span>SETTINGS</span>
+</div>
+</div>
 </div>
 
 </div>
 
+<!-- Container для подгружаемых страниц -->
 <div id="page-container"></div>
 
 </div>
 
 <script>
-
 /* =========================
    SPA FUNCTIONS
 ========================= */
-
 async function loadPage(pageName){
 try{
 const main=document.getElementById("main-content");
@@ -142,8 +152,9 @@ container.style.display="block";
 container.innerHTML="<div style='padding:40px;text-align:center;'>Loading...</div>";
 
 const response=await fetch("pages/"+pageName);
-const html=await response.text();
+if(!response.ok) throw new Error('Page not found');
 
+const html=await response.text();
 container.innerHTML=html;
 window.scrollTo(0,0);
 
@@ -160,7 +171,6 @@ document.getElementById("page-container").style.display="none";
 document.getElementById("main-content").style.display="block";
 window.scrollTo(0,0);
 }
-
 </script>
 
 </body>
