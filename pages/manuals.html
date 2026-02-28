@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MANUALS</title>
 
-<!-- favicon из логотипа -->
+<!-- Добавлен favicon из логотипа -->
 <link rel="icon" type="image/png" href="https://i.postimg.cc/wjGzSY92/1.png">
 <link rel="shortcut icon" href="https://i.postimg.cc/wjGzSY92/1.png" type="image/png">
 
@@ -421,8 +421,8 @@ header {
 </div>
 
 <header>
-  <!-- Логотип теперь ведет на указанную страницу -->
-  <div class="logo" onclick="window.location.href='https://smart-bowling.github.io/SMB/'">
+  <!-- Логотип теперь ведет на указанную страницу и работает как SPA-навигация -->
+  <div class="logo" onclick="navigateTo('home')">
     <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
   </div>
   <div class="site-name">MANUALS</div>
@@ -447,30 +447,80 @@ header {
 </div>
 
 <!-- Новая правая кнопка (стрелка влево, функция как у логотипа) -->
-<div class="shop-fab-right" onclick="renderManualGroups()">
+<div class="shop-fab-right" onclick="navigateTo('home')">
   <i class="fa-solid fa-arrow-left"></i>
 </div>
 
 <script>
-// =============================================
-// ИСПРАВЛЕННАЯ ВЕРСИЯ: поиск показывает ВСЕ подходящие мануалы,
-// добавлен debounce, внешний вид полностью сохранён.
-// =============================================
+// ============================================
+// SPA-совместимая структура
+// ============================================
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
-let manualsData = [];
-let stockData = {};
-let searchResults = [];
-let currentIndex = 0;
-let searchTimeout = null;          // для debounce
+let manualsData=[];
+let stockData={};
+let searchResults=[];
+let currentIndex=0;
 
-const searchNav = document.getElementById("searchNav");
-const manualContainer = document.getElementById("manualContainer");
-const searchInput = document.getElementById("searchInput");
-const loadingScreen = document.getElementById("loadingScreen");
-const clearSearchBtn = document.getElementById("clearSearchBtn");
+const searchNav=document.getElementById("searchNav");
+const manualContainer=document.getElementById("manualContainer");
+const searchInput=document.getElementById("searchInput");
+const loadingScreen=document.getElementById("loadingScreen");
+const clearSearchBtn=document.getElementById("clearSearchBtn");
 
-// ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (без изменений) ----------
+// SPA: Текущее состояние
+let currentView = 'home'; // 'home' или 'manual:Имя'
+let currentManualName = '';
+
+// ===== Функции навигации =====
+function navigateTo(view, manualName = '') {
+  if (view === 'home') {
+    currentView = 'home';
+    currentManualName = '';
+    renderManualGroups();
+    // Скрываем поисковую навигацию
+    searchNav.style.display = "none";
+    // Очищаем поле поиска
+    searchInput.value = "";
+    // Сбрасываем подсветки
+    document.querySelectorAll(".search-highlight,.active-highlight").forEach(el => 
+      el.classList.remove("search-highlight", "active-highlight")
+    );
+    searchResults = [];
+  } else if (view === 'manual') {
+    currentView = 'manual';
+    currentManualName = manualName;
+    renderManualsByName(manualName);
+  }
+  
+  // Обновляем URL без перезагрузки (опционально, для поддержки истории)
+  if (view === 'home') {
+    history.pushState({ view: 'home' }, '', '#/');
+  } else if (view === 'manual') {
+    history.pushState({ view: 'manual', name: manualName }, '', `#/manual/${encodeURIComponent(manualName)}`);
+  }
+}
+
+// Обработка кнопок "назад" в браузере
+window.addEventListener('popstate', (event) => {
+  if (event.state) {
+    if (event.state.view === 'home') {
+      navigateTo('home');
+    } else if (event.state.view === 'manual') {
+      navigateTo('manual', event.state.name);
+    }
+  } else {
+    // Если state нет (например,初始 хэш), показываем главную
+    const hash = window.location.hash;
+    if (hash.startsWith('#/manual/')) {
+      const manualName = decodeURIComponent(hash.replace('#/manual/', ''));
+      navigateTo('manual', manualName);
+    } else {
+      navigateTo('home');
+    }
+  }
+});
+
 function openShopSearch() {
   const partNumber = prompt("Введите номер детали:", "");
   if (partNumber !== null && partNumber.trim() !== "") {
@@ -497,32 +547,145 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, false);
 
-// ---------- ПАРСИНГ ДЕТАЛЕЙ (полностью из оригинала) ----------
+async function loadManuals(){
+  try {
+    const res=await fetch(API_URL);
+    const data=await res.json();
+    manualsData=data.manuals;
+    stockData=data.stock;
+    
+    // SPA: После загрузки данных проверяем хэш и показываем нужное состояние
+    const hash = window.location.hash;
+    if (hash.startsWith('#/manual/')) {
+      const manualName = decodeURIComponent(hash.replace('#/manual/', ''));
+      navigateTo('manual', manualName);
+    } else {
+      navigateTo('home'); // Показываем главную по умолчанию
+    }
+    
+    // Скрываем экран загрузки после завершения
+    setTimeout(() => {
+      loadingScreen.classList.add('fade-out');
+    }, 500);
+    
+  } catch (error) {
+    console.error('Ошибка загрузки:', error);
+    loadingScreen.classList.add('fade-out');
+  }
+}
+
+/**
+ * Разбирает составную строку с номерами деталей вида:
+ * "(14) 070-011-411 (14А) 070-011-412 (14А1) 070-011-413"
+ * Возвращает массив объектов {code, number}
+ */
 function parseCompositeParts(partString) {
   const result = [];
+  // Регулярное выражение ищет паттерн: (код) пробел номер
+  // Номер может содержать цифры и дефисы
   const regex = /\(([^)]+)\)\s+([\d-]+)/g;
   let match;
+  
   while ((match = regex.exec(partString)) !== null) {
-    result.push({ code: match[1].trim(), number: match[2].trim() });
+    result.push({
+      code: match[1].trim(),  // Оригинальный код из скобок (14, 14А, 14А1, 6А и т.д.)
+      number: match[2].trim()
+    });
   }
+  
   return result;
 }
 
+/**
+ * Проверяет, содержит ли строка номер в скобках
+ * Возвращает объект с кодом и номером, если есть, иначе null
+ */
 function extractSingleCode(partString) {
   const regex = /^\(([^)]+)\)\s+([\d-]+)$/;
   const match = partString.match(regex);
   if (match) {
-    return { code: match[1].trim(), number: match[2].trim() };
+    return {
+      code: match[1].trim(),
+      number: match[2].trim()
+    };
   }
   return null;
 }
 
+/**
+ * Проверяет, является ли строка составной (содержит несколько номеров в скобках)
+ */
 function isCompositePart(partString) {
   const matches = partString.match(/\([^)]+\)\s+[\d-]+/g);
   return matches && matches.length > 1;
 }
 
-// ---------- ФУНКЦИЯ СОЗДАНИЯ КНОПКИ ДЕТАЛИ (без изменений) ----------
+function renderManualGroups(){
+  manualContainer.innerHTML="";
+  [...new Set(manualsData.map(m=>m.name))].forEach(name=>{
+    const b=document.createElement("button");
+    b.className="start-btn";
+    const icon = document.createElement("i");
+    icon.className = "fa-solid fa-book-open";
+    const span = document.createElement("span");
+    span.textContent = name;
+    b.appendChild(icon);
+    b.appendChild(span);
+    // SPA: Используем navigateTo при клике
+    b.onclick=()=>navigateTo('manual', name);
+    manualContainer.appendChild(b);
+  });
+  searchInput.value="";
+  searchResults=[];
+  currentIndex=0;
+  searchNav.style.display="none";
+}
+
+function renderManualsByName(name){
+  manualContainer.innerHTML="";
+  manualsData.filter(m=>m.name===name).forEach(manual=>{
+    const block=document.createElement("div");
+    block.className="block";
+    block.innerHTML=`
+      <div class="manual-label">${manual.name}</div>
+      <img class="top-image clickable-image" src="${manual.image}">
+      <div class="buttons-container"></div>
+    `;
+    const cont=block.querySelector(".buttons-container");
+    const image=block.querySelector(".clickable-image");
+    image.onclick=()=>cont.style.display=cont.style.display==="flex"?"none":"flex";
+
+    // Обрабатываем каждую деталь
+    manual.parts.forEach((part, index) => {
+      // Проверяем, есть ли одиночный код в скобках
+      const singleCode = extractSingleCode(part);
+      
+      if (singleCode) {
+        // Случай: (6А) 000-021-408 - меняем метку на код из скобок
+        createPartButton(cont, singleCode.number, singleCode.code, image);
+      } else if (isCompositePart(part)) {
+        // Составная деталь с несколькими номерами
+        const parsedParts = parseCompositeParts(part);
+        parsedParts.forEach((parsedPart) => {
+          createPartButton(cont, parsedPart.number, parsedPart.code, image);
+        });
+      } else {
+        // Обычная деталь без скобок - используем порядковый номер
+        createPartButton(cont, part, (index + 1).toString(), image);
+      }
+    });
+    
+    manualContainer.appendChild(block);
+  });
+}
+
+/**
+ * Создает кнопку для одной детали
+ * @param {HTMLElement} container - контейнер для кнопок
+ * @param {string} partNumber - номер детали
+ * @param {string} label - метка (оригинальный код из скобок или номер)
+ * @param {HTMLElement} image - элемент изображения для подсветки
+ */
 function createPartButton(container, partNumber, label, image) {
   const btn = document.createElement("div");
   btn.className = "btn";
@@ -551,12 +714,11 @@ function createPartButton(container, partNumber, label, image) {
   container.appendChild(btn);
 }
 
-// ---------- ПЕРЕКЛЮЧЕНИЕ ДЕТАЛЬНОЙ ИНФОРМАЦИИ (без изменений) ----------
-function toggleDetail(btn) {
+function toggleDetail(btn){
   const nextEl = btn.nextElementSibling;
   
-  if (nextEl && nextEl.classList.contains("detail-info")) {
-    nextEl.remove();
+  if(nextEl && nextEl.classList.contains("detail-info")){
+    nextEl.remove(); 
     btn.classList.remove("active-detail");
     return;
   }
@@ -565,234 +727,134 @@ function toggleDetail(btn) {
   container.querySelectorAll(".detail-info").forEach(el => el.remove());
   container.querySelectorAll(".btn").forEach(b => b.classList.remove("active-detail"));
 
-  const part = btn.querySelector(".detail-number").textContent;
-  const info = document.createElement("div");
-  info.className = "detail-info";
+  const part=btn.querySelector(".detail-number").textContent;
+  const info=document.createElement("div");
+  info.className="detail-info";
   
   let clubDataHtml = "";
-  ["BB", "KH", "SKYMALL", "STORE"].forEach(k => {
-    const count = stockData[part]?.[k] ?? 0;
-    clubDataHtml += `<div class="club-row"><span>${k}</span><span class="${count === 0 ? 'count-zero' : 'count-positive'}">${count} шт.</span></div>`;
+  ["BB","KH","SKYMALL","STORE"].forEach(k=>{
+    const count=stockData[part]?.[k]??0;
+    clubDataHtml += `<div class="club-row"><span>${k}</span><span class="${count===0?'count-zero':'count-positive'}">${count} шт.</span></div>`;
   });
   
   info.innerHTML = clubDataHtml;
   btn.after(info);
   btn.classList.add("active-detail");
   
-  setTimeout(() => info.classList.add("open"), 10);
+  setTimeout(()=>info.classList.add("open"),10);
 }
 
-// ---------- СБРОС СОСТОЯНИЯ ПОИСКА (не очищает поле ввода) ----------
-function resetSearchState() {
-  searchResults = [];
-  currentIndex = 0;
-  searchNav.style.display = "none";
-  document.querySelectorAll(".search-highlight, .active-highlight").forEach(el => 
-    el.classList.remove("search-highlight", "active-highlight")
-  );
-}
-
-// ---------- ЗАГРУЗКА ДАННЫХ ----------
-async function loadManuals() {
-  try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    manualsData = data.manuals;
-    stockData = data.stock;
-    renderManualGroups();
-    
-    setTimeout(() => {
-      loadingScreen.classList.add('fade-out');
-    }, 500);
-  } catch (error) {
-    console.error('Ошибка загрузки:', error);
-    loadingScreen.classList.add('fade-out');
-  }
-}
-
-// ---------- ОТОБРАЖЕНИЕ ГРУПП (СТАРТОВЫЙ ЭКРАН) ----------
-function renderManualGroups() {
-  manualContainer.innerHTML = "";
-  resetSearchState();            // сбрасываем поиск, но поле ввода остаётся
-  [...new Set(manualsData.map(m => m.name))].forEach(name => {
-    const b = document.createElement("button");
-    b.className = "start-btn";
-    const icon = document.createElement("i");
-    icon.className = "fa-solid fa-book-open";
-    const span = document.createElement("span");
-    span.textContent = name;
-    b.appendChild(icon);
-    b.appendChild(span);
-    b.onclick = () => renderManualsByName(name);
-    manualContainer.appendChild(b);
-  });
-}
-
-// ---------- ОТОБРАЖЕНИЕ ОДНОГО МАНУАЛА ПО ИМЕНИ (оригинальная функция) ----------
-function renderManualsByName(name) {
-  manualContainer.innerHTML = "";
-  resetSearchState();   // при клике на группу сбрасываем подсветку поиска
-  
-  manualsData.filter(m => m.name === name).forEach(manual => {
-    const block = document.createElement("div");
-    block.className = "block";
-    block.innerHTML = `
-      <div class="manual-label">${manual.name}</div>
-      <img class="top-image clickable-image" src="${manual.image}">
-      <div class="buttons-container"></div>
-    `;
-    const cont = block.querySelector(".buttons-container");
-    const image = block.querySelector(".clickable-image");
-    image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
-
-    manual.parts.forEach((part, index) => {
-      const singleCode = extractSingleCode(part);
-      if (singleCode) {
-        createPartButton(cont, singleCode.number, singleCode.code, image);
-      } else if (isCompositePart(part)) {
-        const parsedParts = parseCompositeParts(part);
-        parsedParts.forEach((parsedPart) => {
-          createPartButton(cont, parsedPart.number, parsedPart.code, image);
-        });
-      } else {
-        createPartButton(cont, part, (index + 1).toString(), image);
-      }
-    });
-    
-    manualContainer.appendChild(block);
-  });
-}
-
-// ---------- НОВАЯ ФУНКЦИЯ: ОТОБРАЖЕНИЕ НЕСКОЛЬКИХ МАНУАЛОВ (ДЛЯ ПОИСКА) ----------
-function renderSearchResults(manualsList) {
-  manualContainer.innerHTML = "";
-  manualsList.forEach(manual => {
-    const block = document.createElement("div");
-    block.className = "block";
-    block.innerHTML = `
-      <div class="manual-label">${manual.name}</div>
-      <img class="top-image clickable-image" src="${manual.image}">
-      <div class="buttons-container"></div>
-    `;
-    const cont = block.querySelector(".buttons-container");
-    const image = block.querySelector(".clickable-image");
-    image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
-
-    manual.parts.forEach((part, index) => {
-      const singleCode = extractSingleCode(part);
-      if (singleCode) {
-        createPartButton(cont, singleCode.number, singleCode.code, image);
-      } else if (isCompositePart(part)) {
-        const parsedParts = parseCompositeParts(part);
-        parsedParts.forEach((parsedPart) => {
-          createPartButton(cont, parsedPart.number, parsedPart.code, image);
-        });
-      } else {
-        createPartButton(cont, part, (index + 1).toString(), image);
-      }
-    });
-    
-    manualContainer.appendChild(block);
-  });
-}
-
-// ---------- ПРОВЕРКА, СОДЕРЖИТ ЛИ МАНУАЛ ИСКОМЫЙ ТЕКСТ ----------
-function manualMatches(manual, searchText) {
-  const lowerSearch = searchText.toLowerCase();
-  return manual.parts.some(part => {
-    const single = extractSingleCode(part);
-    if (single) return single.number.toLowerCase().includes(lowerSearch);
-    if (isCompositePart(part)) {
-      const parsed = parseCompositeParts(part);
-      return parsed.some(p => p.number.toLowerCase().includes(lowerSearch));
-    }
-    return part.toLowerCase().includes(lowerSearch);
-  });
-}
-
-// ---------- ОСНОВНАЯ ФУНКЦИЯ ПОИСКА (ВЫЗЫВАЕТСЯ С DEBOUNCE) ----------
-function performSearch(searchText) {
-  const trimmed = searchText.trim();
-  if (trimmed === "") {
-    renderManualGroups();
-    searchNav.style.display = "none";
-    return;
-  }
-
-  // Находим все подходящие мануалы
-  const matchedManuals = manualsData.filter(m => manualMatches(m, trimmed));
-  
-  if (matchedManuals.length === 0) {
-    manualContainer.innerHTML = '<div style="padding:2rem; text-align:center; color:#666;">Ничего не найдено</div>';
-    searchNav.style.display = "none";
-    return;
-  }
-
-  // Отображаем их
-  renderSearchResults(matchedManuals);
-  
-  // Подсвечиваем совпадения и собираем результаты для навигации
-  setTimeout(() => {
-    const allDetails = document.querySelectorAll(".detail-number");
-    searchResults = [];
-    allDetails.forEach(el => {
-      if (el.textContent.toLowerCase().includes(trimmed.toLowerCase())) {
-        el.classList.add("search-highlight");
-        searchResults.push(el);
-      }
-    });
-    
-    if (searchResults.length > 0) {
-      currentIndex = 0;
-      searchResults[0].classList.add("active-highlight");
-      searchResults[0].scrollIntoView({ behavior: "smooth", block: "center" });
-      searchNav.style.display = "flex";
-    } else {
-      searchNav.style.display = "none";
-    }
-  }, 50);
-}
-
-// ---------- ОБРАБОТЧИК ВВОДА С DEBOUNCE ----------
-searchInput.oninput = function(e) {
-  clearTimeout(searchTimeout);
-  const val = e.target.value;
-  searchTimeout = setTimeout(() => performSearch(val), 300);
-};
-
-// ---------- НАВИГАЦИЯ ПО РЕЗУЛЬТАТАМ ----------
-function nextResult() {
-  if (!searchResults.length) return;
-  searchResults[currentIndex].classList.remove("active-highlight");
-  currentIndex = (currentIndex + 1) % searchResults.length;
-  searchResults[currentIndex].classList.add("active-highlight");
-  searchResults[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-function prevResult() {
-  if (!searchResults.length) return;
-  searchResults[currentIndex].classList.remove("active-highlight");
-  currentIndex = (currentIndex - 1 + searchResults.length) % searchResults.length;
-  searchResults[currentIndex].classList.add("active-highlight");
-  searchResults[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-// ---------- ОЧИСТКА ПОИСКА (ПО КНОПКЕ) ----------
+// Функция очистки поиска
 function clearSearch() {
   searchInput.value = "";
-  resetSearchState();
-  renderManualGroups();
+  searchResults = [];
+  currentIndex = 0;
+  document.querySelectorAll(".search-highlight,.active-highlight").forEach(el => 
+    el.classList.remove("search-highlight", "active-highlight")
+  );
+  
+  // Возвращаемся к текущему представлению (главная или мануал)
+  if (currentView === 'home') {
+    renderManualGroups();
+  } else if (currentView === 'manual') {
+    renderManualsByName(currentManualName);
+  }
+  
+  searchNav.style.display = "none";
 }
 
-// ---------- СТАРТ ----------
+searchInput.oninput = e => {
+  const v = e.target.value.trim();
+  searchResults = []; 
+  currentIndex = 0;
+  document.querySelectorAll(".search-highlight,.active-highlight").forEach(el => 
+    el.classList.remove("search-highlight", "active-highlight")
+  );
+  
+  if (!v) { 
+    if (currentView === 'home') {
+      renderManualGroups();
+    } else if (currentView === 'manual') {
+      renderManualsByName(currentManualName);
+    }
+    return; 
+  }
+  
+  searchNav.style.display = "flex";
+  
+  // Всегда ищем по всем мануалам, независимо от текущего вида
+  manualsData.forEach(m => {
+    // Проверяем, есть ли совпадение в обычных или составных деталях
+    let hasMatch = false;
+    
+    // Функция для проверки номера детали
+    const checkPart = (part) => {
+      // Проверяем одиночный код в скобках
+      const singleCode = extractSingleCode(part);
+      if (singleCode && singleCode.number.includes(v)) {
+        return true;
+      }
+      
+      // Проверяем составную деталь
+      if (isCompositePart(part)) {
+        const parsed = parseCompositeParts(part);
+        return parsed.some(p => p.number.includes(v));
+      }
+      
+      // Обычная деталь
+      return part.includes(v);
+    };
+    
+    if (m.parts.some(checkPart)) {
+      hasMatch = true;
+      // Показываем мануал, в котором есть совпадение
+      renderManualsByName(m.name);
+      setTimeout(() => {
+        document.querySelectorAll(".detail-number").forEach(el => {
+          if (el.textContent.includes(v)) {
+            el.classList.add("search-highlight");
+            el.parentElement.parentElement.style.display = "flex";
+            searchResults.push(el);
+          }
+        });
+        if (searchResults[0]) {
+          searchResults[0].classList.add("active-highlight");
+          searchResults[0].scrollIntoView({behavior: "smooth", block: "center"});
+        }
+      }, 100);
+    }
+  });
+};
+
+function nextResult(){
+  if(!searchResults.length) return;
+  searchResults[currentIndex].classList.remove("active-highlight");
+  currentIndex=(currentIndex+1)%searchResults.length;
+  searchResults[currentIndex].classList.add("active-highlight");
+  searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+function prevResult(){
+  if(!searchResults.length) return;
+  searchResults[currentIndex].classList.remove("active-highlight");
+  currentIndex=(currentIndex-1+searchResults.length)%searchResults.length;
+  searchResults[currentIndex].classList.add("active-highlight");
+  searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+// Запускаем загрузку данных
 loadManuals();
 
-// Экспортируем функции в глобальную область (для onclick)
-window.renderManualGroups = renderManualGroups;
-window.openShopSearch = openShopSearch;
-window.nextResult = nextResult;
-window.prevResult = prevResult;
-window.clearSearch = clearSearch;
+// Инициализация начального состояния по URL при загрузке
+window.addEventListener('load', () => {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#/manual/')) {
+    // Будет обработано в loadManuals после получения данных
+  } else {
+    // Если нет хэша, устанавливаем начальное состояние
+    history.replaceState({ view: 'home' }, '', '#/');
+  }
+});
 </script>
 </body>
 </html>
