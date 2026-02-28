@@ -7,6 +7,7 @@
 </div>
 
 <header>
+  <!-- Логотип теперь вызывает goBack() для возврата на дашборд -->
   <div class="logo" onclick="goBack()">
     <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
   </div>
@@ -21,9 +22,9 @@
 
 <!-- ОБНОВЛЕННАЯ ПАНЕЛЬ НАВИГАЦИИ ПОИСКА С КНОПКОЙ ОЧИСТКИ -->
 <div class="search-nav-bottom" id="searchNav">
-  <button onclick="window.prevResult()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
-  <button id="clearSearchBtn" onclick="window.clearSearch()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
-  <button onclick="window.nextResult()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
+  <button onclick="prevResult()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
+  <button id="clearSearchBtn" onclick="clearSearch()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
+  <button onclick="nextResult()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
 </div>
 
 <!-- Левая кнопка (магазин) -->
@@ -31,7 +32,13 @@
   <i class="fa-solid fa-magnifying-glass"></i>
 </div>
 
+<!-- Новая правая кнопка (стрелка влево, возврат на дашборд) -->
+<div class="shop-fab-right" onclick="goBack()">
+  <i class="fa-solid fa-arrow-left"></i>
+</div>
+
 <style>
+/* ===== ПОЛНОСТЬЮ ОРИГИНАЛЬНЫЕ СТИЛИ ИЗ manuals.html ===== */
 /* ===== ОТКЛЮЧЕНИЕ DOUBLE TAP ZOOM ===== */
 html, body {
   touch-action: manipulation;
@@ -355,6 +362,34 @@ header {
 
 .shop-fab-left:active { transform: scale(0.95); }
 
+/* ===== НОВАЯ КНОПКА СПРАВА СНИЗУ (ЦВЕТ ШАПКИ, СТРЕЛКА ВЛЕВО) ===== */
+.shop-fab-right {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 54px;
+  height: 54px;
+  background: #1f2937;  /* Цвет как у шапки сайта */
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2001;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.shop-fab-right:active { 
+  transform: scale(0.95); 
+}
+
+.shop-fab-right:hover {
+  background: #374151; /* Эффект при наведении как у шапки */
+}
+
 /* ===== ЭКРАН ЗАГРУЗКИ (НОВАЯ АНИМАЦИЯ) ===== */
 .loading-screen {
   position: fixed;
@@ -402,6 +437,9 @@ header {
 </style>
 
 <script>
+// Сохраняем ссылку на goBack из родительского окна
+const goBack = window.goBack;
+
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData=[];
@@ -713,12 +751,6 @@ function prevResult(){
   searchResults[currentIndex].classList.add("active-highlight");
   searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
-
-// Делаем функции глобальными для доступа из onclick атрибутов
-window.prevResult = prevResult;
-window.nextResult = nextResult;
-window.clearSearch = clearSearch;
-window.openShopSearch = openShopSearch;
 
 loadManuals();
 </script>
