@@ -1,649 +1,714 @@
-<!-- pages/manuals.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MANUALS · SPA</title>
 
-<!-- ЭКРАН ЗАГРУЗКИ -->
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/wjGzSY92/1.png">
+  <link rel="shortcut icon" href="https://i.postimg.cc/wjGzSY92/1.png" type="image/png">
+
+  <!-- Font Awesome (иконки) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    /* ===== СБРОС И БАЗОВЫЕ НАСТРОЙКИ ===== */
+    html, body {
+      touch-action: manipulation; /* отключает двойной тап-зум */
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      background: #ffffff;
+      color: #1f2937;
+      padding-top: 70px; /* под фиксированный хедер */
+      padding-bottom: 0;
+      box-sizing: border-box;
+    }
+    /* Боковые отступы для ПК */
+    @media screen and (min-width: 768px) {
+      body { padding-left: 30px; padding-right: 30px; }
+    }
+    @media screen and (min-width: 1200px) {
+      body { padding-left: 50px; padding-right: 50px; }
+    }
+    /* Доп. отступ снизу только на мобильных */
+    @media screen and (max-width: 768px) {
+      body { padding-bottom: 80px; }
+    }
+
+    /* ===== ШАПКА ===== */
+    header {
+      background: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+    .logo img {
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: block;
+    }
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .search-container {
+      position: relative;
+    }
+    .search-container input {
+      padding: 8px 32px 8px 12px;
+      border-radius: 30px;
+      border: none;
+      font-size: 1rem;
+      width: 150px;
+      transition: width 0.2s;
+      background: white;
+    }
+    .search-container input:focus {
+      outline: 2px solid #dc143c;
+      width: 200px;
+    }
+    .search-container i {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #1f2937;
+      pointer-events: none;
+    }
+
+    /* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+    #manualContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ===== БЛОК МАНУАЛА ===== */
+    .block {
+      margin: 8px 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      transition: box-shadow 0.2s;
+    }
+    .block:hover {
+      box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    }
+    .manual-label {
+      background: #1f2937;
+      color: white;
+      padding: 10px 18px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .top-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-bottom: 1px solid #eee;
+      transition: opacity 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .top-image.highlight-image {
+      box-shadow: inset 0 0 0 4px #dc143c;
+    }
+    .buttons-container {
+      display: none; /* скрыто по умолчанию, открывается кликом на картинку */
+      flex-direction: column;
+    }
+
+    /* ===== КНОПКИ ДЕТАЛЕЙ ===== */
+    .btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-top: 1px solid #f0f0f0;
+      cursor: pointer;
+      color: #1f2937;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s;
+      background: white;
+    }
+    .btn.active-detail {
+      background: #fef2f2 !important;
+      border-left: 3px solid #dc143c;
+      padding-left: 15px; /* компенсация */
+    }
+    .buttons-container .btn:nth-child(odd) { background: #fafafa; }
+    .buttons-container .btn:nth-child(even) { background: #ffffff; }
+    .btn:hover { background: #f3e6e6; }
+
+    /* ===== ВЫПАДАЮЩАЯ ИНФОРМАЦИЯ (ОСТАТКИ) ===== */
+    .detail-info {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+      background: #fff;
+      border-left: 3px solid #dc143c;
+      border-bottom: 1px solid #ffe6e6;
+    }
+    .detail-info.open {
+      max-height: 500px;
+      opacity: 1;
+    }
+    .club-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 18px;
+      border-top: 1px solid #f3f4f6;
+      font-size: 0.95rem;
+    }
+    .count-zero { color: #dc143c; font-weight: bold; }
+    .count-positive { color: #16a34a; font-weight: bold; }
+
+    /* ===== ПОДСВЕТКА ПОИСКА ===== */
+    .search-highlight {
+      background: #ffe4e6;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .active-highlight {
+      background: #ffb6b9;
+      box-shadow: 0 0 0 2px #dc143c;
+    }
+
+    /* ===== СТАРТОВЫЕ КНОПКИ (ГРУППЫ МАНУАЛОВ) ===== */
+    .start-btn {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      margin: 6px 0;
+      padding: 18px 22px;
+      background: #1f2937;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      text-align: left;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    .start-btn i {
+      margin-right: 20px;
+      font-size: 1.8rem;
+      color: white;
+      width: 32px;
+      text-align: center;
+    }
+    .start-btn span { flex: 1; }
+    .start-btn:hover { background: #374151; }
+    .start-btn:active { transform: scale(0.98); }
+
+    /* ===== ПАНЕЛЬ НАВИГАЦИИ ПОИСКА ===== */
+    .search-nav-bottom {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 10px;
+      z-index: 2000;
+      background: #1f2937;
+      padding: 8px 16px;
+      border-radius: 40px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .search-nav-bottom button {
+      background: transparent;
+      color: white;
+      border: none;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .search-nav-bottom button:hover { background: #374151; }
+    .search-nav-bottom button:active { transform: scale(0.92); }
+    #clearSearchBtn {
+      background: #dc143c;
+      color: white;
+    }
+    #clearSearchBtn:hover { background: #b01030; }
+
+    /* ===== FAB-КНОПКИ ===== */
+    .shop-fab-left, .shop-fab-right {
+      position: fixed;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2001;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .shop-fab-left {
+      bottom: 20px; left: 20px;
+      background: #dc143c;
+      color: white;
+    }
+    .shop-fab-right {
+      bottom: 20px; right: 20px;
+      background: #1f2937;
+      color: white;
+    }
+    .shop-fab-left:hover { background: #b01030; }
+    .shop-fab-right:hover { background: #374151; }
+    .shop-fab-left:active, .shop-fab-right:active { transform: scale(0.9); }
+
+    /* ===== ЭКРАН ЗАГРУЗКИ ===== */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+    .loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .logo-wrapper {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .glow-ring {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 100%;
+      background: conic-gradient(#dc143c, transparent 100%);
+      animation: spin 5s linear infinite;
+      filter: blur(20px);
+    }
+    .loading-screen img {
+      width: 120px;
+      z-index: 2;
+    }
+    @keyframes spin { to { transform: rotate(365deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ЗАГРУЗОЧНЫЙ ЭКРАН -->
 <div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper">
-        <div class="glow-ring"></div>
-        <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
-    </div>
+  <div class="logo-wrapper">
+    <div class="glow-ring"></div>
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+  </div>
 </div>
 
-<!-- ШАПКА (без логотипа-кнопки) -->
+<!-- ШАПКА -->
 <header>
-    <div style="width:40px;"></div> <!-- пустой отступ слева для баланса -->
-    <div class="site-name">MANUALS</div>
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Поиск детали">
-        <i class="fa-solid fa-magnifying-glass"></i>
-    </div>
+  <div class="logo" onclick="window.location.href='https://smart-bowling.github.io/SMB/'">
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+  </div>
+  <div class="site-name">MANUALS</div>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="Поиск детали" autocomplete="off">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </div>
 </header>
 
-<!-- КОНТЕЙНЕР ДЛЯ СПИСКА МАНУАЛОВ -->
+<!-- КОНТЕЙНЕР ДЛЯ ДИНАМИЧЕСКОГО КОНТЕНТА -->
 <div id="manualContainer"></div>
 
-<!-- ПАНЕЛЬ НАВИГАЦИИ ПОИСКА -->
+<!-- ПАНЕЛЬ НАВИГАЦИИ ПО РЕЗУЛЬТАТАМ ПОИСКА -->
 <div class="search-nav-bottom" id="searchNav">
-    <button onclick="window.prevResult?.()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
-    <button id="clearSearchBtn" onclick="window.clearSearch?.()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
-    <button onclick="window.nextResult?.()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
+  <button onclick="prevResult()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
+  <button id="clearSearchBtn" onclick="clearSearch()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
+  <button onclick="nextResult()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
 </div>
 
-<!-- ЛЕВАЯ КНОПКА (МАГАЗИН) ОСТАЁТСЯ -->
-<div class="shop-fab-left" onclick="window.openShopSearch?.()">
-    <i class="fa-solid fa-magnifying-glass"></i>
+<!-- ЛЕВАЯ FAB: ПОИСК ПО МАГАЗИНУ -->
+<div class="shop-fab-left" onclick="openShopSearch()">
+  <i class="fa-solid fa-magnifying-glass"></i>
 </div>
 
-<!-- ПРАВАЯ КНОПКА (НАЗАД) УДАЛЕНА -->
-
-<style>
-/* Все стили остаются без изменений */
-html, body {
-    touch-action: manipulation;
-}
-
-body {
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background:#ffffff;
-    color:#1f2937;
-    padding-top:70px;
-}
-
-@media screen and (max-width: 768px) {
-    body {
-        padding-bottom: 80px;
-    }
-}
-
-header {
-    background:#1f2937;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 20px;
-    position:fixed;
-    top:0; left:0; right:0;
-    box-shadow:0 2px 4px rgba(0,0,0,0.2);
-    z-index:1000;
-}
-
-.site-name {
-    flex:1;
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.search-container {
-    position:relative;
-}
-
-.search-container input {
-    padding:6px 30px 6px 10px;
-    border-radius:6px;
-    border:none;
-    font-size:16px;
-    width:140px;
-}
-
-.search-container i {
-    position:absolute;
-    right:8px;
-    top:50%;
-    transform:translateY(-50%);
-    color:#1f2937;
-    pointer-events:none;
-}
-
-#manualContainer {
-    display:flex;
-    flex-direction:column;
-    gap:0;
-    padding:0;
-    max-width:1200px;
-    margin:0 auto;
-    width:100%;
-}
-
-@media screen and (min-width: 768px) {
-    body {
-        padding-left:30px;
-        padding-right:30px;
-    }
-}
-
-@media screen and (min-width: 1200px) {
-    body {
-        padding-left:50px;
-        padding-right:50px;
-    }
-}
-
-.block {
-    margin:10px 0;
-    border:1px solid #e5e7eb;
-    border-radius:0;
-    overflow:hidden;
-    background:#fff;
-    box-shadow:0 2px 6px rgba(0,0,0,0.05);
-    transition:0.3s;
-}
-
-.manual-label {
-    background:#1f2937;
-    color:white;
-    padding:8px 16px;
-    font-size:16px;
-    font-weight:600;
-    border-radius:6px 6px 0 0;
-}
-
-.top-image {
-    width:100%;
-    height:auto;
-    display:block;
-    border-bottom:1px solid #eee;
-    transition:0.3s;
-}
-
-.clickable-image {
-    cursor:pointer;
-}
-
-.clickable-image:hover {
-    opacity:0.9;
-}
-
-.top-image.highlight-image {
-    box-shadow:0 0 0 3px #dc143c inset;
-}
-
-.buttons-container {
-    display:none;
-    flex-direction:column;
-    margin:0;
-    padding:0;
-}
-
-.btn {
-    display:flex;
-    justify-content:space-between;
-    padding:10px 16px;
-    border-top:1px solid #eee;
-    cursor:pointer;
-    color:#1f2937;
-    border-radius:0;
-    margin:0;
-    font-size:16px;
-    font-weight:500;
-    position:relative;
-    transition:0.2s;
-    background:white;
-}
-
-.btn.active-detail {
-    background:#fef2f2 !important;
-    border-left:2px solid #dc143c;
-    padding-left:14px;
-}
-
-.buttons-container .btn:nth-child(odd) {
-    background:#f9f9f9;
-}
-.buttons-container .btn:nth-child(even) {
-    background:#ffffff;
-}
-
-.btn:hover {
-    background:#f0e6e6;
-}
-
-.detail-info {
-    overflow:hidden;
-    max-height:0;
-    opacity:0;
-    transition:0.4s;
-    background:#fff;
-    border-left:2px solid #dc143c;
-}
-
-.detail-info.open {
-    max-height:500px;
-    opacity:1;
-}
-
-.club-row {
-    display:flex;
-    justify-content:space-between;
-    padding:10px 16px;
-    border-top:1px solid #f3f4f6;
-    font-size:15px;
-}
-
-.count-zero {
-    color:#dc143c;
-    font-weight:bold;
-}
-.count-positive {
-    color:#16a34a;
-    font-weight:bold;
-}
-
-.search-highlight {
-    background:#ffe4e6;
-}
-
-.active-highlight {
-    background:#ffb6b9;
-}
-
-.start-btn {
-    display:flex;
-    align-items:center;
-    width:100%;
-    margin:0;
-    padding:18px 20px;
-    background:#1f2937;
-    color:white;
-    font-size:16px;
-    font-weight:600;
-    border:none;
-    border-radius:0;
-    cursor:pointer;
-    transition:0.2s;
-    text-align:left;
-    border-bottom:1px solid #374151;
-}
-
-.start-btn i {
-    margin-right:15px;
-    font-size:22px;
-    color:white;
-    width:24px;
-    text-align:center;
-}
-
-.start-btn span {
-    flex:1;
-}
-
-.start-btn:first-child {
-    border-top:1px solid #374151;
-}
-
-.start-btn:hover {
-    background:#374151;
-}
-
-.search-nav-bottom {
-    position:fixed;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    display:none;
-    gap:10px;
-    z-index:1000;
-    background:#1f2937;
-    padding:8px 16px;
-    border-radius:40px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
-
-.search-nav-bottom button {
-    background:transparent;
-    color:white;
-    border:none;
-    width:44px;
-    height:44px;
-    cursor:pointer;
-    font-size:18px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transition:background 0.2s;
-}
-
-.search-nav-bottom button:hover {
-    background:#374151;
-}
-
-.search-nav-bottom button:active {
-    transform:scale(0.95);
-}
-
-#clearSearchBtn {
-    background:#dc143c;
-    color:white;
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:18px;
-    transition:background 0.2s;
-}
-
-#clearSearchBtn:hover {
-    background:#b01030;
-}
-
-.shop-fab-left {
-    position:fixed;
-    bottom:20px;
-    left:20px;
-    width:54px;
-    height:54px;
-    background:#dc143c;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    z-index:2001;
-    font-size:20px;
-}
-
-.shop-fab-left:active {
-    transform:scale(0.95);
-}
-
-.loading-screen {
-    position:fixed;
-    inset:0;
-    background:#1f2937;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-    transition:opacity 0.5s ease;
-}
-
-.loading-screen.fade-out {
-    opacity:0;
-    pointer-events:none;
-}
-
-.logo-wrapper {
-    position:relative;
-    width:160px;
-    height:160px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.glow-ring {
-    position:absolute;
-    width:80px;
-    height:80px;
-    border-radius:100%;
-    background:conic-gradient(#dc143c, transparent 100%);
-    animation:spin 5s linear infinite;
-    filter:blur(20px);
-}
-
-.loading-screen img {
-    width:120px;
-    z-index:2;
-}
-
-@keyframes spin {
-    to { transform:rotate(365deg); }
-}
-</style>
+<!-- ПРАВАЯ FAB: ВЕРНУТЬСЯ К СПИСКУ ГРУПП -->
+<div class="shop-fab-right" onclick="renderManualGroups()">
+  <i class="fa-solid fa-arrow-left"></i>
+</div>
 
 <script>
-(function() {
+  (function() {
+    // ----- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ -----
     const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
+    let manualsData = [];              // все загруженные мануалы
+    let stockData = {};                // остатки по складам
+    let searchResults = [];             // массив DOM-элементов .detail-number, совпавших с поиском
+    let currentResultIndex = 0;         // индекс активного элемента в searchResults
+    let searchTimeout = null;            // для debounce
 
-    let manualsData = [];
-    let stockData = {};
-    let searchResults = [];
-    let currentIndex = 0;
+    // Элементы DOM
+    const manualContainer = document.getElementById('manualContainer');
+    const searchInput = document.getElementById('searchInput');
+    const searchNav = document.getElementById('searchNav');
+    const loadingScreen = document.getElementById('loadingScreen');
 
-    const searchNav = document.getElementById("searchNav");
-    const manualContainer = document.getElementById("manualContainer");
-    const searchInput = document.getElementById("searchInput");
-    const loadingScreen = document.getElementById("loadingScreen");
-
-    // Глобальные функции для вызова из onclick (кроме goBack)
-    window.openShopSearch = function() {
-        const partNumber = prompt("Введите номер детали:", "");
-        if (partNumber && partNumber.trim() !== "") {
-            const cleanNumber = partNumber.replace(/-/g, '');
-            const form = document.createElement('form');
-            form.method = 'get';
-            form.action = 'https://shop.bowlingvision.com/catalogue/results.aspx';
-            form.style.display = 'none';
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.name = 'search';
-            input.value = cleanNumber;
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-            setTimeout(() => document.body.removeChild(form), 1000);
-        }
-    };
-
-    window.clearSearch = function() {
-        searchInput.value = "";
-        searchResults = [];
-        currentIndex = 0;
-        document.querySelectorAll(".search-highlight,.active-highlight").forEach(el =>
-            el.classList.remove("search-highlight", "active-highlight")
-        );
-        renderManualGroups();
-        searchNav.style.display = "none";
-    };
-
-    window.nextResult = function() {
-        if (!searchResults.length) return;
-        searchResults[currentIndex].classList.remove("active-highlight");
-        currentIndex = (currentIndex + 1) % searchResults.length;
-        searchResults[currentIndex].classList.add("active-highlight");
-        searchResults[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
-    };
-
-    window.prevResult = function() {
-        if (!searchResults.length) return;
-        searchResults[currentIndex].classList.remove("active-highlight");
-        currentIndex = (currentIndex - 1 + searchResults.length) % searchResults.length;
-        searchResults[currentIndex].classList.add("active-highlight");
-        searchResults[currentIndex].scrollIntoView({ behavior: "smooth", block: "center" });
-    };
-
-    // Вспомогательные функции
-    function parseCompositeParts(partString) {
-        const result = [];
-        const regex = /\(([^)]+)\)\s+([\d-]+)/g;
-        let match;
-        while ((match = regex.exec(partString)) !== null) {
-            result.push({ code: match[1].trim(), number: match[2].trim() });
-        }
-        return result;
-    }
-
+    // ----- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАЗБОРА ДЕТАЛЕЙ -----
+    /**
+     * Извлекает одиночный код в формате "(код) номер"
+     * @param {string} partString
+     * @returns {null|{code:string, number:string}}
+     */
     function extractSingleCode(partString) {
-        const regex = /^\(([^)]+)\)\s+([\d-]+)$/;
-        const match = partString.match(regex);
-        return match ? { code: match[1].trim(), number: match[2].trim() } : null;
+      const regex = /^\(([^)]+)\)\s+([\d-]+)$/;
+      const match = partString.match(regex);
+      return match ? { code: match[1].trim(), number: match[2].trim() } : null;
     }
 
+    /**
+     * Проверяет, является ли строка составной (содержит несколько "(код) номер")
+     */
     function isCompositePart(partString) {
-        const matches = partString.match(/\([^)]+\)\s+[\d-]+/g);
-        return matches && matches.length > 1;
+      const matches = partString.match(/\([^)]+\)\s+[\d-]+/g);
+      return matches && matches.length > 1;
     }
 
+    /**
+     * Разбирает составную строку "(14) 070-011-411 (14А) 070-011-412"
+     * @returns {Array<{code:string, number:string}>}
+     */
+    function parseCompositeParts(partString) {
+      const result = [];
+      const regex = /\(([^)]+)\)\s+([\d-]+)/g;
+      let match;
+      while ((match = regex.exec(partString)) !== null) {
+        result.push({ code: match[1].trim(), number: match[2].trim() });
+      }
+      return result;
+    }
+
+    // ----- ЗАГРУЗКА ДАННЫХ -----
+    async function loadManuals() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        manualsData = data.manuals || [];
+        stockData = data.stock || {};
+        renderManualGroups(); // показываем группы после загрузки
+
+        // Плавно скрываем загрузочный экран
+        setTimeout(() => loadingScreen.classList.add('fade-out'), 400);
+      } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        loadingScreen.classList.add('fade-out');
+        manualContainer.innerHTML = '<div style="padding:2rem;text-align:center;">Не удалось загрузить данные. Попробуйте позже.</div>';
+      }
+    }
+
+    // ----- ОТОБРАЖЕНИЕ ГРУПП МАНУАЛОВ (СТАРТОВЫЙ ЭКРАН) -----
     function renderManualGroups() {
-        manualContainer.innerHTML = "";
-        [...new Set(manualsData.map(m => m.name))].forEach(name => {
-            const b = document.createElement("button");
-            b.className = "start-btn";
-            const icon = document.createElement("i");
-            icon.className = "fa-solid fa-book-open";
-            const span = document.createElement("span");
-            span.textContent = name;
-            b.appendChild(icon);
-            b.appendChild(span);
-            b.onclick = () => renderManualsByName(name);
-            manualContainer.appendChild(b);
-        });
-        searchInput.value = "";
-        searchResults = [];
-        currentIndex = 0;
-        searchNav.style.display = "none";
-    }
-
-    function renderManualsByName(name) {
-        manualContainer.innerHTML = "";
-        manualsData.filter(m => m.name === name).forEach(manual => {
-            const block = document.createElement("div");
-            block.className = "block";
-            block.innerHTML = `
-                <div class="manual-label">${manual.name}</div>
-                <img class="top-image clickable-image" src="${manual.image}">
-                <div class="buttons-container"></div>
-            `;
-            const cont = block.querySelector(".buttons-container");
-            const image = block.querySelector(".clickable-image");
-            image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
-
-            manual.parts.forEach((part, index) => {
-                const singleCode = extractSingleCode(part);
-                if (singleCode) {
-                    createPartButton(cont, singleCode.number, singleCode.code, image);
-                } else if (isCompositePart(part)) {
-                    const parsedParts = parseCompositeParts(part);
-                    parsedParts.forEach(p => createPartButton(cont, p.number, p.code, image));
-                } else {
-                    createPartButton(cont, part, (index + 1).toString(), image);
-                }
-            });
-            manualContainer.appendChild(block);
-        });
-    }
-
-    function createPartButton(container, partNumber, label, image) {
-        const btn = document.createElement("div");
-        btn.className = "btn";
-        btn.innerHTML = `<span>${label}</span><span class="detail-number">${partNumber}</span>`;
-        btn.onclick = (e) => {
-            const targetDetail = e.target.closest(".detail-number");
-            if (targetDetail) {
-                e.stopPropagation();
-                const originalText = targetDetail.textContent;
-                navigator.clipboard.writeText(originalText).then(() => {
-                    targetDetail.textContent = "Скопировано!";
-                    setTimeout(() => targetDetail.textContent = originalText, 1200);
-                });
-                return;
-            }
-            toggleDetail(btn);
-            if (image) {
-                image.classList.add("highlight-image");
-                setTimeout(() => image.classList.remove("highlight-image"), 800);
-            }
+      manualContainer.innerHTML = '';
+      // Получаем уникальные названия мануалов
+      const uniqueNames = [...new Set(manualsData.map(m => m.name))];
+      uniqueNames.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'start-btn';
+        btn.innerHTML = `<i class="fa-solid fa-book-open"></i><span>${name}</span>`;
+        btn.onclick = () => {
+          // фильтруем все мануалы с таким именем
+          const groupManuals = manualsData.filter(m => m.name === name);
+          renderManuals(groupManuals);
         };
-        container.appendChild(btn);
+        manualContainer.appendChild(btn);
+      });
+      // Сброс поисковых данных
+      searchInput.value = '';
+      searchResults = [];
+      currentResultIndex = 0;
+      searchNav.style.display = 'none';
     }
 
+    // ----- ОТОБРАЖЕНИЕ МАНУАЛОВ (БЛОКИ С КАРТИНКАМИ) -----
+    /**
+     * @param {Array} manualsList - массив объектов мануала { name, image, parts }
+     */
+    function renderManuals(manualsList) {
+      manualContainer.innerHTML = ''; // очищаем
+
+      manualsList.forEach(manual => {
+        const block = document.createElement('div');
+        block.className = 'block';
+        block.innerHTML = `
+          <div class="manual-label">${manual.name}</div>
+          <img class="top-image clickable-image" src="${manual.image}" loading="lazy">
+          <div class="buttons-container"></div>
+        `;
+        const img = block.querySelector('.clickable-image');
+        const btnContainer = block.querySelector('.buttons-container');
+
+        // клик по картинке — показать/скрыть кнопки
+        img.onclick = () => {
+          btnContainer.style.display = btnContainer.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        // Наполняем кнопками детали
+        manual.parts.forEach((part, idx) => {
+          const single = extractSingleCode(part);
+          if (single) {
+            // (6А) 000-021-408
+            createPartButton(btnContainer, single.number, single.code, img);
+          } else if (isCompositePart(part)) {
+            // составная строка
+            const parsed = parseCompositeParts(part);
+            parsed.forEach(p => createPartButton(btnContainer, p.number, p.code, img));
+          } else {
+            // обычная деталь без скобок
+            createPartButton(btnContainer, part, (idx + 1).toString(), img);
+          }
+        });
+
+        manualContainer.appendChild(block);
+      });
+    }
+
+    /**
+     * Создаёт кнопку детали внутри buttonsContainer
+     * @param {HTMLElement} container - .buttons-container
+     * @param {string} partNumber - номер детали
+     * @param {string} label - метка (то, что слева на кнопке)
+     * @param {HTMLElement} image - элемент изображения (для подсветки)
+     */
+    function createPartButton(container, partNumber, label, image) {
+      const btn = document.createElement('div');
+      btn.className = 'btn';
+      btn.innerHTML = `<span>${label}</span><span class="detail-number">${partNumber}</span>`;
+
+      btn.onclick = (e) => {
+        const targetDetail = e.target.closest('.detail-number');
+        if (targetDetail) {
+          e.stopPropagation(); // не открывать подробности, только копировать
+          const original = targetDetail.textContent;
+          navigator.clipboard.writeText(original).then(() => {
+            targetDetail.textContent = 'Скопировано!';
+            setTimeout(() => targetDetail.textContent = original, 1200);
+          });
+          return;
+        }
+
+        // Открыть/закрыть детальную информацию (остатки)
+        toggleDetail(btn);
+
+        // Подсветить картинку на 0.8 сек
+        if (image) {
+          image.classList.add('highlight-image');
+          setTimeout(() => image.classList.remove('highlight-image'), 800);
+        }
+      };
+
+      container.appendChild(btn);
+    }
+
+    /**
+     * Показать/скрыть блок с остатками для конкретной кнопки
+     */
     function toggleDetail(btn) {
-        const nextEl = btn.nextElementSibling;
-        if (nextEl && nextEl.classList.contains("detail-info")) {
-            nextEl.remove();
-            btn.classList.remove("active-detail");
-            return;
-        }
-        const container = btn.parentElement;
-        container.querySelectorAll(".detail-info").forEach(el => el.remove());
-        container.querySelectorAll(".btn").forEach(b => b.classList.remove("active-detail"));
+      const next = btn.nextElementSibling;
+      if (next && next.classList.contains('detail-info')) {
+        next.remove();
+        btn.classList.remove('active-detail');
+        return;
+      }
 
-        const part = btn.querySelector(".detail-number").textContent;
-        const info = document.createElement("div");
-        info.className = "detail-info";
-        let clubDataHtml = "";
-        ["BB", "KH", "SKYMALL", "STORE"].forEach(k => {
-            const count = stockData[part]?.[k] ?? 0;
-            clubDataHtml += `<div class="club-row"><span>${k}</span><span class="${count === 0 ? 'count-zero' : 'count-positive'}">${count} шт.</span></div>`;
-        });
-        info.innerHTML = clubDataHtml;
-        btn.after(info);
-        btn.classList.add("active-detail");
-        setTimeout(() => info.classList.add("open"), 10);
+      // Закрыть все другие открытые детали в этом блоке
+      const container = btn.parentElement;
+      container.querySelectorAll('.detail-info').forEach(el => el.remove());
+      container.querySelectorAll('.btn').forEach(b => b.classList.remove('active-detail'));
+
+      const partNumber = btn.querySelector('.detail-number').textContent;
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'detail-info';
+
+      let clubHtml = '';
+      ['BB', 'KH', 'SKYMALL', 'STORE'].forEach(club => {
+        const count = stockData[partNumber]?.[club] ?? 0;
+        const cls = count === 0 ? 'count-zero' : 'count-positive';
+        clubHtml += `<div class="club-row"><span>${club}</span><span class="${cls}">${count} шт.</span></div>`;
+      });
+      infoDiv.innerHTML = clubHtml;
+
+      btn.after(infoDiv);
+      btn.classList.add('active-detail');
+      setTimeout(() => infoDiv.classList.add('open'), 10);
     }
 
-    // Поиск
-    searchInput.oninput = function(e) {
-        const v = e.target.value.trim();
-        searchResults = [];
-        currentIndex = 0;
-        document.querySelectorAll(".search-highlight,.active-highlight").forEach(el =>
-            el.classList.remove("search-highlight", "active-highlight")
-        );
+    // ----- ПОИСК -----
+    function performSearch(searchText) {
+      if (!searchText.trim()) {
+        renderManualGroups();
+        searchNav.style.display = 'none';
+        return;
+      }
 
-        if (!v) {
-            renderManualGroups();
-            return;
-        }
+      const lowerSearch = searchText.toLowerCase();
 
-        searchNav.style.display = "flex";
-        manualsData.forEach(m => {
-            const checkPart = (part) => {
-                const sc = extractSingleCode(part);
-                if (sc && sc.number.includes(v)) return true;
-                if (isCompositePart(part)) return parseCompositeParts(part).some(p => p.number.includes(v));
-                return part.includes(v);
-            };
-            if (m.parts.some(checkPart)) {
-                renderManualsByName(m.name);
-                setTimeout(() => {
-                    document.querySelectorAll(".detail-number").forEach(el => {
-                        if (el.textContent.includes(v)) {
-                            el.classList.add("search-highlight");
-                            const btnContainer = el.closest(".buttons-container");
-                            if (btnContainer) btnContainer.style.display = "flex";
-                            searchResults.push(el);
-                        }
-                    });
-                    if (searchResults[0]) {
-                        searchResults[0].classList.add("active-highlight");
-                        searchResults[0].scrollIntoView({ behavior: "smooth", block: "center" });
-                    }
-                }, 100);
-            }
+      // Фильтруем мануалы: хотя бы одна деталь совпадает с учётом составных
+      const filteredManuals = manualsData.filter(manual => {
+        return manual.parts.some(part => {
+          // Проверяем все возможные номера в детали
+          const single = extractSingleCode(part);
+          if (single) return single.number.includes(lowerSearch);
+
+          if (isCompositePart(part)) {
+            const parsed = parseCompositeParts(part);
+            return parsed.some(p => p.number.includes(lowerSearch));
+          }
+
+          return part.includes(lowerSearch);
         });
+      });
+
+      if (filteredManuals.length === 0) {
+        // Ничего не найдено — покажем заглушку
+        manualContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#666;">Ничего не найдено</div>';
+        searchNav.style.display = 'none';
+        return;
+      }
+
+      // Отрендерить все подходящие мануалы
+      renderManuals(filteredManuals);
+
+      // После рендера (чуть позже, чтобы DOM обновился) подсветить совпадения
+      setTimeout(() => {
+        const allDetails = document.querySelectorAll('.detail-number');
+        searchResults = [];
+        allDetails.forEach(el => {
+          if (el.textContent.toLowerCase().includes(lowerSearch)) {
+            el.classList.add('search-highlight');
+            searchResults.push(el);
+          }
+        });
+
+        if (searchResults.length > 0) {
+          currentResultIndex = 0;
+          searchResults[0].classList.add('active-highlight');
+          searchResults[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          searchNav.style.display = 'flex';
+        } else {
+          searchNav.style.display = 'none';
+        }
+      }, 50);
+    }
+
+    // Дебаунс для поиска
+    searchInput.oninput = function(e) {
+      clearTimeout(searchTimeout);
+      const val = e.target.value;
+      searchTimeout = setTimeout(() => performSearch(val), 300);
     };
 
-    // Загрузка данных
-    async function loadManuals() {
-        try {
-            const res = await fetch(API_URL);
-            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-            const data = await res.json();
-            manualsData = data.manuals;
-            stockData = data.stock;
-            renderManualGroups();
-            loadingScreen.classList.add('fade-out');
-        } catch (error) {
-            console.error('Ошибка загрузки manuals:', error);
-            loadingScreen.classList.add('fade-out');
-            manualContainer.innerHTML = `<div class="error-message">Ошибка загрузки данных: ${error.message}</div>`;
-        }
+    // Навигация по результатам
+    function nextResult() {
+      if (searchResults.length === 0) return;
+      searchResults[currentResultIndex].classList.remove('active-highlight');
+      currentResultIndex = (currentResultIndex + 1) % searchResults.length;
+      const active = searchResults[currentResultIndex];
+      active.classList.add('active-highlight');
+      active.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    function prevResult() {
+      if (searchResults.length === 0) return;
+      searchResults[currentResultIndex].classList.remove('active-highlight');
+      currentResultIndex = (currentResultIndex - 1 + searchResults.length) % searchResults.length;
+      const active = searchResults[currentResultIndex];
+      active.classList.add('active-highlight');
+      active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Очистка поиска
+    function clearSearch() {
+      searchInput.value = '';
+      searchResults = [];
+      currentResultIndex = 0;
+      searchNav.style.display = 'none';
+      renderManualGroups();
+    }
+
+    // ----- ПОИСК В МАГАЗИНЕ (левая FAB) -----
+    function openShopSearch() {
+      const partNumber = prompt('Введите номер детали:', '');
+      if (partNumber && partNumber.trim() !== '') {
+        const clean = partNumber.replace(/-/g, '');
+        const form = document.createElement('form');
+        form.method = 'get';
+        form.action = 'https://shop.bowlingvision.com/catalogue/results.aspx';
+        form.style.display = 'none';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'search';
+        input.value = clean;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        setTimeout(() => document.body.removeChild(form), 2000);
+      }
+    }
+
+    // ----- ЗАПУСК ПРИЛОЖЕНИЯ -----
     loadManuals();
 
-    // Защита от двойного тапа на мобильных
-    let lastTouchEnd = 0;
-    document.addEventListener("touchend", function(event) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) event.preventDefault();
-        lastTouchEnd = now;
-    }, false);
-})();
+    // Делаем функции глобально доступными (для onclick в HTML)
+    window.renderManualGroups = renderManualGroups;
+    window.openShopSearch = openShopSearch;
+    window.nextResult = nextResult;
+    window.prevResult = prevResult;
+    window.clearSearch = clearSearch;
+  })();
 </script>
+
+<!-- Блокировка двойного тап-зума (дополнительная) -->
+<script>
+  (function() {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, false);
+  })();
+</script>
+</body>
+</html>
