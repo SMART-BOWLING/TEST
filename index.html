@@ -95,35 +95,68 @@
 
         #logout-btn:hover { background: var(--accent); color: white; }
 
-        /* ===== TOP NAV BUTTONS — теперь тоже квадратные ===== */
+        /* ===== TOP NAV BUTTONS — теперь как карточки ===== */
         .top-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
         }
 
-        .top-button {
+        .top-card {
             flex: 1;
-            /* Квадратная форма: ширина автоматическая, высота равна ширине */
-            aspect-ratio: 1 / 1;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 700;
-            text-align: center;
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
             transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
+            text-decoration: none;
+            color: inherit;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 8px; /* внутренние отступы для текста */
+            flex-direction: column;
+            aspect-ratio: 1 / 1;
         }
 
-        .top-button:hover:not(.disabled) {
-            background: var(--accent);
-            transform: translateY(-2px);
+        .top-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .top-card .action-btn {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+            font-family: inherit;
+        }
+
+        .top-card .action-btn i {
+            font-size: 32px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .top-card .action-btn span {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .top-card:hover:not(.disabled) .action-btn i {
+            color: var(--accent);
         }
 
         /* ===== ACTION GRID (всегда 2 колонки) ===== */
@@ -238,32 +271,24 @@
 
         /* --- АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ --- */
         @media (max-width: 480px) {
-            .action-grid {
+            .action-grid, .top-buttons {
                 gap: 15px;
             }
-            .action-btn {
+            .action-btn, .top-card .action-btn {
                 padding: 8px;
             }
-            .action-btn i {
+            .action-btn i, .top-card .action-btn i {
                 font-size: 28px;
             }
-            .action-btn span {
+            .action-btn span, .top-card .action-btn span {
                 font-size: 12px;
-            }
-            .top-button {
-                font-size: 13px;
-                padding: 6px;
-            }
-            .top-button i {
-                font-size: 16px;
             }
         }
 
-        /* Если экран совсем узкий, можно переключить верхние кнопки в колонку,
-           но по условию они должны быть 2 в ряд — оставляем строку */
+        /* Если экран совсем узкий, можно переключить основные кнопки в 1 колонку */
         @media (max-width: 360px) {
             .action-grid {
-                grid-template-columns: 1fr; /* одна колонка для основных кнопок на совсем маленьких */
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -303,13 +328,19 @@
     </div>
 
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
-        <!-- Две квадратные кнопки в ряд -->
+        <!-- Две квадратные карточки в ряд: Manuals и Store -->
         <div class="top-buttons">
-            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-button" id="manuals-btn" target="_blank">
-                <i class="fas fa-book"></i> MANUALS
+            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-card" id="manuals-btn" target="_blank">
+                <div class="action-btn">
+                    <i class="fas fa-book"></i>
+                    <span>MANUALS</span>
+                </div>
             </a>
-            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-button" id="store-btn" target="_blank">
-                <i class="fas fa-shopping-cart"></i> STORE
+            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
+                <div class="action-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>STORE</span>
+                </div>
             </a>
         </div>
 
@@ -449,7 +480,7 @@ function handleAction(type) {
 function applyPermissions(email) {
     const p = userPermissions[email];
     
-    // Top buttons
+    // Top cards (Manuals & Store)
     document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
     document.getElementById('store-btn').classList.toggle('disabled', !p.store);
 
