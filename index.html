@@ -22,14 +22,18 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             margin: 0;
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             background: var(--bg);
             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
             padding: 20px;
@@ -42,7 +46,7 @@
             align-items: center;
             gap: 25px;
             width: 100%;
-            max-width: 900px;
+            max-width: 1200px;
             animation: fadeIn 0.8s ease;
         }
 
@@ -258,23 +262,49 @@
             cursor: pointer;
         }
 
-        /* ===== DYNAMIC CONTENT AREA (для SPA) ===== */
-        #spa-content {
+        /* ===== DYNAMIC CONTENT AREA (для полных страниц) ===== */
+        #spa-container {
             width: 100%;
-            background: var(--white);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
             display: none;
             margin-top: 20px;
             animation: slideUp 0.4s ease;
+        }
+
+        #page-frame {
+            width: 100%;
+            min-height: 80vh;
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #page-content {
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        /* Стили для загруженных страниц */
+        #page-content h1, #page-content h2, #page-content h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        #page-content a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        #page-content a:hover {
+            text-decoration: underline;
         }
 
         #back-to-dashboard {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 30px;
             font-weight: 600;
             margin-bottom: 20px;
@@ -283,10 +313,13 @@
             align-items: center;
             gap: 8px;
             transition: var(--transition);
+            border: 1px solid transparent;
         }
 
         #back-to-dashboard:hover {
-            background: var(--accent);
+            background: var(--white);
+            color: var(--primary);
+            border-color: var(--primary);
             transform: translateX(-5px);
         }
 
@@ -294,15 +327,12 @@
             font-size: 14px;
         }
 
-        .spa-page-content {
-            line-height: 1.6;
-        }
-
-        .spa-page-content h2 {
-            color: var(--primary);
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 10px;
-            margin-top: 0;
+        /* Стили для iframe (запасной вариант) */
+        #page-iframe {
+            width: 100%;
+            min-height: 80vh;
+            border: none;
+            display: none;
         }
 
         @keyframes slideUp {
@@ -321,10 +351,25 @@
         #access-denied h3 { color: var(--accent); }
         .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
 
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--text-muted);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 480px) {
             .action-grid, .top-buttons { gap: 15px; }
             .action-btn i, .top-card .action-btn i { font-size: 28px; }
             .action-btn span, .top-card .action-btn span { font-size: 12px; }
+            #page-content { padding: 20px; }
         }
 
         @media (max-width: 360px) {
@@ -369,13 +414,13 @@
     <!-- Главная панель (дашборд) -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <div class="top-card" id="manuals-btn" onclick="loadPage('manuals')">
+            <div class="top-card" id="manuals-btn" onclick="loadFullPage('manuals')">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
             </div>
-            <div class="top-card" id="store-btn" onclick="loadPage('store')">
+            <div class="top-card" id="store-btn" onclick="loadFullPage('store')">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
                     <span>STORE</span>
@@ -415,12 +460,15 @@
         </div>
     </div>
 
-    <!-- SPA контейнер для динамической загрузки страниц -->
-    <div id="spa-content">
+    <!-- SPA контейнер для загрузки полных страниц -->
+    <div id="spa-container">
         <button id="back-to-dashboard" onclick="showDashboard()">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </button>
-        <div id="page-content"></div>
+        <div id="page-frame">
+            <div id="page-content"></div>
+            <iframe id="page-iframe" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+        </div>
     </div>
 </div>
 
@@ -463,86 +511,111 @@ const linksMap = {
     ]
 };
 
-// --- МОК-ДАННЫЕ ДЛЯ СТРАНИЦ (чтобы не ломать ссылки) ---
-const pageContents = {
-    manuals: `
-        <h2>📚 MANUALS</h2>
-        <p>Welcome to the Manuals section. Here you'll find documentation and guides.</p>
-        <ul style="margin-top: 20px;">
-            <li><strong>Lucky Strike KH</strong> - <a href="https://smart-bowling.github.io/MANUALS-SMART/" target="_blank">Open original (new tab)</a></li>
-            <li><strong>Blockbuster</strong> - Maintenance guide v2.3</li>
-            <li><strong>Skymall</strong> - Quick start guide</li>
-        </ul>
-        <p style="color: var(--text-muted); margin-top: 20px;"><i class="fas fa-info-circle"></i> This content is loaded dynamically without page reload.</p>
-    `,
-    store: `
-        <h2>🛒 PARTS STORE</h2>
-        <p>Browse available parts and accessories.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-bolt"></i> Motors</div>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-cogs"></i> Gearboxes</div>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-microchip"></i> Controllers</div>
-            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-wrench"></i> Tools</div>
-        </div>
-        <p style="margin-top: 20px;"><a href="https://smart-bowling.github.io/PARTS-STORE/" target="_blank">Open full store in new tab →</a></p>
-    `
-};
-
-// --- СОСТОЯНИЕ SPA ---
+// --- СОСТОЯНИЕ ---
 let currentUserEmail = null;
+const contentDiv = document.getElementById('page-content');
+const iframe = document.getElementById('page-iframe');
+const spaContainer = document.getElementById('spa-container');
+const mainContent = document.getElementById('main-content');
 
-// --- ФУНКЦИИ ЗАГРУЗКИ СТРАНИЦ (SPA) ---
-function loadPage(pageName) {
-    // Закрываем все дропдауны
+// --- ЗАГРУЗКА ПОЛНОЙ СТРАНИЦЫ ---
+async function loadFullPage(pageName) {
+    // Проверяем права доступа
+    const email = localStorage.getItem('userEmail');
+    if (!email || !userPermissions[email] || !userPermissions[email][pageName]) {
+        alert('Access denied to this page');
+        return;
+    }
+
+    // Закрываем дропдауны
     document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
     
-    // Прячем дашборд, показываем SPA-контейнер
-    document.getElementById('main-content').style.display = 'none';
-    document.getElementById('spa-content').style.display = 'block';
+    // Показываем контейнер и скрываем дашборд
+    mainContent.style.display = 'none';
+    spaContainer.style.display = 'block';
     
-    // Загружаем контент (имитация загрузки с сервера)
-    const contentDiv = document.getElementById('page-content');
-    
-    if (pageContents[pageName]) {
-        contentDiv.innerHTML = pageContents[pageName];
-    } else {
-        // Если страница не найдена, пытаемся загрузить с GitHub Pages
-        contentDiv.innerHTML = `<h2>Loading ${pageName}...</h2>`;
-        
-        // Пытаемся загрузить реальный HTML с GitHub
-        const url = `https://smart-bowling.github.io/pages/${pageName}.html`;
-        
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error('Page not found');
-                return response.text();
-            })
-            .then(html => {
-                // Извлекаем только контент из body
-                const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-                const content = match ? match[1] : html;
-                contentDiv.innerHTML = `<h2>${pageName.toUpperCase()}</h2>${content}`;
-            })
-            .catch(err => {
-                console.warn('Could not load from GitHub, using fallback');
-                contentDiv.innerHTML = `
-                    <h2>${pageName.toUpperCase()} (Demo)</h2>
-                    <p>This is a dynamically loaded page. In production, this would load from <code>https://smart-bowling.github.io/pages/${pageName}.html</code></p>
-                    <p><a href="https://smart-bowling.github.io/pages/${pageName}.html" target="_blank">Open original in new tab →</a></p>
-                `;
-            });
+    // Показываем загрузку
+    contentDiv.style.display = 'block';
+    iframe.style.display = 'none';
+    contentDiv.innerHTML = `
+        <div style="text-align: center; padding: 50px;">
+            <div class="loader" style="width: 40px; height: 40px;"></div>
+            <p style="margin-top: 20px; color: var(--text-muted);">Loading ${pageName} page...</p>
+        </div>
+    `;
+
+    // Формируем URL страницы
+    let pageUrl;
+    switch(pageName) {
+        case 'manuals':
+            pageUrl = 'https://smart-bowling.github.io/MANUALS-SMART/';
+            break;
+        case 'store':
+            pageUrl = 'https://smart-bowling.github.io/PARTS-STORE/';
+            break;
+        default:
+            pageUrl = `https://smart-bowling.github.io/pages/${pageName}.html`;
     }
-    
-    // Обновляем историю БЕЗ изменения URL (требование SPA)
-    // history.replaceState({page: pageName}, '', '/TEST/'); // закомментировано, чтобы URL не менялся
+
+    try {
+        // Пытаемся загрузить страницу через fetch
+        const response = await fetch(pageUrl);
+        if (!response.ok) throw new Error('Page not found');
+        
+        const html = await response.text();
+        
+        // Извлекаем контент из body
+        const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+        
+        let content = '';
+        if (bodyMatch) {
+            content = bodyMatch[1];
+        } else {
+            content = html;
+        }
+        
+        // Очищаем скрипты, которые могут конфликтовать
+        content = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        
+        // Вставляем контент
+        contentDiv.style.display = 'block';
+        iframe.style.display = 'none';
+        
+        // Добавляем заголовок страницы
+        const pageTitle = titleMatch ? titleMatch[1] : pageName.toUpperCase();
+        contentDiv.innerHTML = `
+            <div style="border-bottom: 2px solid var(--accent); padding-bottom: 20px; margin-bottom: 20px;">
+                <h2 style="margin:0;">${pageTitle}</h2>
+            </div>
+            ${content}
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: var(--text-muted);">
+                <i class="fas fa-lock"></i> Loaded dynamically without page reload · URL always stays the same
+            </div>
+        `;
+        
+    } catch (error) {
+        console.warn('Fetch failed, using iframe fallback:', error);
+        
+        // Если fetch не работает, используем iframe
+        contentDiv.style.display = 'none';
+        iframe.style.display = 'block';
+        iframe.src = pageUrl;
+        
+        // Добавляем обработчик загрузки iframe
+        iframe.onload = () => {
+            console.log('Iframe loaded:', pageUrl);
+        };
+    }
 }
 
 function showDashboard() {
-    document.getElementById('spa-content').style.display = 'none';
-    document.getElementById('main-content').style.display = 'block';
+    spaContainer.style.display = 'none';
+    mainContent.style.display = 'block';
     
-    // Обновляем историю, возвращаясь к корню без изменения URL
-    // history.replaceState({page: null}, '', '/TEST/'); // закомментировано
+    // Очищаем загруженный контент
+    contentDiv.innerHTML = '';
+    iframe.src = 'about:blank';
 }
 
 // --- ОБРАБОТКА ДЕЙСТВИЙ (Dropdowns) ---
@@ -557,7 +630,6 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        // Если только одна опция - открываем в новой вкладке (оригинальное поведение)
         window.open(available[0].url, '_blank');
     } else {
         const drop = document.getElementById(`drop-${type}`);
@@ -603,7 +675,6 @@ function loginUser(payload) {
     currentUserEmail = payload.email.toLowerCase();
     applyPermissions(currentUserEmail);
     
-    // Всегда показываем дашборд при логине
     showDashboard();
 }
 
@@ -639,13 +710,14 @@ function backToLogin() {
     location.reload(); 
 }
 
-// --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
+// --- ИНИЦИАЛИЗАЦИЯ ---
 window.onload = () => {
-    // Убеждаемся, что URL всегда /TEST/
-    if (window.location.pathname !== '/TEST/') {
+    // Фиксируем URL
+    if (window.location.pathname !== '/TEST/' && !window.location.pathname.includes('/TEST/')) {
         history.replaceState(null, '', '/TEST/');
     }
     
+    // Проверяем авторизацию
     if (localStorage.getItem('userLoggedIn') === 'true') {
         const email = localStorage.getItem('userEmail');
         if (userPermissions[email]) {
@@ -659,10 +731,22 @@ window.onload = () => {
         }
     }
     
-    // Обработка кнопки "назад" в браузере - остаемся на месте
+    // Блокируем изменение URL
     window.addEventListener('popstate', (event) => {
-        // Ничего не делаем, остаемся на текущей странице
-        console.log('URL change prevented');
+        history.pushState(null, '', '/TEST/');
+    });
+    
+    // Перенаправляем все клики по ссылкам внутри загруженного контента
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link && link.hostname === window.location.hostname) {
+            e.preventDefault();
+            // Если это внутренняя ссылка, загружаем через SPA
+            const path = link.pathname.split('/').pop().replace('.html', '');
+            if (path) {
+                loadFullPage(path);
+            }
+        }
     });
 };
 </script>
