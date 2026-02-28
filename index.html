@@ -78,18 +78,25 @@
             color: var(--accent);
         }
 
-        /* Контейнер для iframe */
+        /* Контейнер для загружаемого контента */
         #page-container {
             width: 100%;
             min-height: 500px;
-            background: var(--white);
+            background: white;
             border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 15px 35px rgba(0,0,0,0.05);
             animation: slideIn 0.3s ease;
         }
 
-        .iframe-container {
+        /* Стили для полной страницы manuals */
+        .full-page-content {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .full-page-content iframe {
             width: 100%;
             height: 80vh;
             border: none;
@@ -352,7 +359,7 @@
             .action-btn, .top-card .action-btn { padding: 8px; }
             .action-btn i, .top-card .action-btn i { font-size: 28px; }
             .action-btn span, .top-card .action-btn span { font-size: 12px; }
-            .iframe-container { height: 70vh; }
+            .full-page-content iframe { height: 70vh; }
         }
 
         @media (max-width: 360px) {
@@ -455,7 +462,7 @@
         </div>
     </div>
 
-    <!-- Контейнер для iframe -->
+    <!-- Контейнер для загружаемых страниц -->
     <div id="page-container" style="width: 100%; display: none;"></div>
 </div>
 
@@ -499,13 +506,13 @@ const pagesMap = {
     ]
 };
 
-// --- ФУНКЦИИ ЗАГРУЗКИ СТРАНИЦ (IFRAME) ---
+// --- ФУНКЦИИ ЗАГРУЗКИ СТРАНИЦ ---
 
 /**
- * Загружает HTML-страницу в iframe
+ * Загружает HTML-страницу
  * @param {string} pageName - имя файла в папке pages
  */
-function loadPage(pageName) {
+async function loadPage(pageName) {
     try {
         // Показываем кнопку "Назад"
         document.getElementById('back-button').style.display = 'block';
@@ -517,15 +524,33 @@ function loadPage(pageName) {
         const pageContainer = document.getElementById('page-container');
         pageContainer.style.display = 'block';
         
-        // Создаем iframe для полной изоляции контента
-        pageContainer.innerHTML = `
-            <iframe 
-                src="pages/${pageName}" 
-                class="iframe-container"
-                title="${pageName.replace('.html', '')}"
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            ></iframe>
-        `;
+        // Показываем индикатор загрузки
+        pageContainer.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fas fa-spinner fa-spin" style="font-size: 40px; color: var(--accent);"></i></div>';
+        
+        // Загружаем HTML-файл
+        const response = await fetch(`pages/${pageName}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const html = await response.text();
+        
+        // Для manuals.html используем iframe для полной изоляции
+        if (pageName === 'manuals.html') {
+            pageContainer.innerHTML = `
+                <div class="full-page-content">
+                    <iframe 
+                        src="pages/${pageName}" 
+                        style="width: 100%; height: 80vh; border: none; background: white; border-radius: 12px;"
+                        title="Manuals"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+                    ></iframe>
+                </div>
+            `;
+        } else {
+            // Для остальных страниц используем прямую вставку
+            pageContainer.innerHTML = html;
+            executeScripts(pageContainer);
+        }
         
         // Обновляем заголовок страницы
         document.title = `SMB | ${pageName.replace('.html', '').toUpperCase()}`;
@@ -554,13 +579,32 @@ function showLoadError(errorMessage) {
 }
 
 /**
+ * Выполняет все скрипты в загруженном контейнере
+ * @param {HTMLElement} container 
+ */
+function executeScripts(container) {
+    const scripts = container.querySelectorAll('script');
+    scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        // Копируем все атрибуты
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+        // Копируем содержимое
+        newScript.textContent = oldScript.textContent;
+        // Заменяем старый скрипт новым (это вызывает выполнение)
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
+
+/**
  * Возвращает пользователя на главный дашборд
  */
 function goBack() {
     // Скрываем кнопку "Назад"
     document.getElementById('back-button').style.display = 'none';
     
-    // Скрываем контейнер с iframe
+    // Скрываем контейнер с загруженной страницей
     const pageContainer = document.getElementById('page-container');
     pageContainer.style.display = 'none';
     pageContainer.innerHTML = '';
@@ -619,7 +663,7 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        // Загружаем страницу через iframe
+        // Загружаем страницу
         loadPage(available[0].page);
     } else {
         const drop = document.getElementById(`drop-${type}`);
