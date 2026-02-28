@@ -11,9 +11,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Общие стили для всех страниц -->
     <style>
-        /* ===== GLOBAL STYLES ===== */
         :root {
             --primary: #1f2937;
             --accent: #dc143c;
@@ -24,10 +22,7 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -100,7 +95,7 @@
 
         #logout-btn:hover { background: var(--accent); color: white; }
 
-        /* ===== DASHBOARD STYLES ===== */
+        /* ===== TOP NAV BUTTONS ===== */
         .top-buttons {
             display: flex;
             gap: 20px;
@@ -164,6 +159,7 @@
             color: var(--accent);
         }
 
+        /* ===== ACTION GRID ===== */
         .action-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -220,6 +216,7 @@
 
         .action-card:hover:not(.disabled) .action-btn i { color: var(--accent); }
 
+        /* ===== DROPDOWN CONTENT ===== */
         .action-dropdown {
             max-height: 0;
             overflow: hidden;
@@ -261,58 +258,18 @@
             padding-left: 25px;
         }
 
-        .disabled {
-            opacity: 0.4;
-            filter: grayscale(1);
-            pointer-events: none;
-            cursor: not-allowed;
-        }
-
-        #access-denied h3 { color: var(--accent); }
-        .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
-
-        /* ===== SPA CONTAINER ===== */
+        /* ===== PAGE CONTAINER FOR SPA ===== */
         #page-container {
             width: 100%;
             min-height: 100vh;
             display: none;
             position: relative;
         }
-        
+
         #page-container.active {
             display: block;
         }
-        
-        #page-container.loading::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.8);
-            z-index: 9998;
-        }
-        
-        #page-container.loading::after {
-            content: '';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            z-index: 9999;
-        }
-        
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        
+
         .back-button {
             position: fixed;
             bottom: 20px;
@@ -326,25 +283,31 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 2000;
+            z-index: 2001;
             font-size: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s;
             border: none;
         }
 
         .back-button:hover {
             background: #374151;
-            transform: scale(1.05);
         }
 
         .back-button:active {
             transform: scale(0.95);
         }
 
-        .back-button i {
-            font-size: 20px;
+        /* ===== UTILS ===== */
+        .disabled {
+            opacity: 0.4;
+            filter: grayscale(1);
+            pointer-events: none;
+            cursor: not-allowed;
         }
+
+        #access-denied h3 { color: var(--accent); }
+        .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
 
         @media (max-width: 480px) {
             .action-grid, .top-buttons { gap: 15px; }
@@ -389,13 +352,13 @@
         <h3>Access Denied</h3>
         <p>Your email is not registered:</p>
         <div class="denied-email" id="denied-email"></div>
-        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
+        <button style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
     </div>
 
-    <!-- Главный дашборд -->
+    <!-- Основной контент дашборда -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <div class="top-card" id="manuals-btn" onclick="loadPage('manuals.html')">
+            <div class="top-card" id="manuals-btn" onclick="loadPage('pages/manuals.html')">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
@@ -447,11 +410,10 @@
     <!-- Контейнер для загружаемых страниц -->
     <div id="page-container"></div>
 
-    <!-- Кнопка возврата (изначально скрыта) -->
+    <!-- Кнопка "Назад" для возврата на дашборд -->
     <button class="back-button" id="back-button" onclick="goBack()" style="display: none;">
         <i class="fas fa-arrow-left"></i>
     </button>
-
 </div>
 
 <script>
@@ -494,6 +456,64 @@ const pagesMap = {
     ]
 };
 
+// --- SPA FUNCTIONS ---
+async function loadPage(pagePath) {
+    try {
+        const response = await fetch(pagePath);
+        const html = await response.text();
+        
+        // Скрываем основной контент и показываем контейнер для страниц
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('page-container').style.display = 'block';
+        document.getElementById('page-container').classList.add('active');
+        
+        // Показываем кнопку "Назад"
+        document.getElementById('back-button').style.display = 'flex';
+        
+        // Вставляем загруженный HTML (без <html>, <head>, <body>)
+        document.getElementById('page-container').innerHTML = html;
+        
+        // Выполняем скрипты из загруженной страницы, если они есть
+        const scripts = document.getElementById('page-container').getElementsByTagName('script');
+        for (let script of scripts) {
+            const newScript = document.createElement('script');
+            
+            // Копируем атрибуты
+            Array.from(script.attributes).forEach(attr => {
+                newScript.setAttribute(attr.name, attr.value);
+            });
+            
+            // Копируем содержимое
+            if (script.innerHTML) {
+                newScript.innerHTML = script.innerHTML;
+            }
+            
+            // Заменяем скрипт
+            script.parentNode.replaceChild(newScript, script);
+        }
+        
+        // Добавляем класс для стилизации загруженного контента
+        document.getElementById('page-container').classList.add('page-loaded');
+        
+    } catch (error) {
+        console.error('Ошибка загрузки страницы:', error);
+        document.getElementById('page-container').innerHTML = '<div style="color: red; padding: 20px;">Ошибка загрузки страницы</div>';
+    }
+}
+
+function goBack() {
+    // Показываем основной контент, скрываем контейнер страниц
+    document.getElementById('main-content').style.display = 'block';
+    document.getElementById('page-container').style.display = 'none';
+    document.getElementById('page-container').classList.remove('active');
+    
+    // Скрываем кнопку "Назад"
+    document.getElementById('back-button').style.display = 'none';
+    
+    // Очищаем контейнер
+    document.getElementById('page-container').innerHTML = '';
+}
+
 // --- AUTH LOGIC ---
 function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
@@ -523,104 +543,7 @@ function loginUser(payload) {
     applyPermissions(payload.email.toLowerCase());
 }
 
-// --- УЛУЧШЕННАЯ SPA FUNCTIONS ---
-
-/**
- * Загружает HTML-фрагмент из папки /pages/
- * @param {string} pageName - имя файла (например, 'manuals.html')
- */
-async function loadPage(pageName) {
-    const mainContent = document.getElementById('main-content');
-    const pageContainer = document.getElementById('page-container');
-    const backButton = document.getElementById('back-button');
-    
-    try {
-        // Показываем индикатор загрузки
-        pageContainer.classList.add('loading');
-        
-        // Скрываем главный контент, показываем контейнер для страницы
-        mainContent.style.display = 'none';
-        pageContainer.style.display = 'block';
-        pageContainer.classList.add('active');
-        
-        // Показываем кнопку "Назад"
-        backButton.style.display = 'flex';
-        
-        // Загружаем страницу
-        const response = await fetch(`pages/${pageName}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        let html = await response.text();
-        
-        // Добавляем базовые стили, если их нет
-        if (!html.includes('<!-- GLOBAL STYLES INCLUDED -->')) {
-            // Получаем глобальные стили из текущей страницы
-            const globalStyles = document.querySelector('style').innerHTML;
-            html = `<!-- GLOBAL STYLES INCLUDED -->\n<style>${globalStyles}</style>\n${html}`;
-        }
-        
-        // Вставляем загруженный контент
-        pageContainer.innerHTML = html;
-        
-        // Убираем индикатор загрузки
-        pageContainer.classList.remove('loading');
-        
-        // Выполняем скрипты
-        setTimeout(() => {
-            const scripts = pageContainer.getElementsByTagName('script');
-            for (let script of scripts) {
-                try {
-                    if (script.src) {
-                        const newScript = document.createElement('script');
-                        newScript.src = script.src;
-                        document.body.appendChild(newScript);
-                    } else {
-                        // Создаем функцию для выполнения скрипта в правильном контексте
-                        const executeScript = new Function(script.textContent);
-                        executeScript();
-                    }
-                } catch (e) {
-                    console.error('Script execution error:', e);
-                }
-            }
-        }, 100);
-        
-    } catch (error) {
-        console.error('Ошибка загрузки страницы:', error);
-        pageContainer.classList.remove('loading');
-        pageContainer.innerHTML = `
-            <div style="text-align: center; padding: 50px; color: var(--accent);">
-                <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
-                <h3>Ошибка загрузки страницы</h3>
-                <p>${error.message}</p>
-                <button onclick="goBack()" style="padding: 10px 20px; margin-top: 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer;">Вернуться на главную</button>
-            </div>
-        `;
-    }
-}
-
-/**
- * Возвращает на главный дашборд
- */
-function goBack() {
-    const mainContent = document.getElementById('main-content');
-    const pageContainer = document.getElementById('page-container');
-    const backButton = document.getElementById('back-button');
-    
-    // Очищаем контейнер страницы
-    pageContainer.innerHTML = '';
-    pageContainer.style.display = 'none';
-    pageContainer.classList.remove('active', 'loading');
-    
-    // Показываем главный контент
-    mainContent.style.display = 'block';
-    
-    // Скрываем кнопку "Назад"
-    backButton.style.display = 'none';
-}
-
-// --- ОСНОВНАЯ ЛОГИКА (адаптированная для SPA) ---
+// --- ОСНОВНАЯ ЛОГИКА ---
 function handleAction(type) {
     const email = localStorage.getItem('userEmail');
     const p = userPermissions[email];
@@ -632,7 +555,7 @@ function handleAction(type) {
 
     if (available.length === 1) {
         // Загружаем страницу через SPA
-        loadPage(available[0].page);
+        loadPage(`pages/${available[0].page}`);
     } else {
         const drop = document.getElementById(`drop-${type}`);
         const isActive = drop.classList.contains('active');
@@ -642,7 +565,7 @@ function handleAction(type) {
         
         if (!isActive) {
             drop.innerHTML = available.map(item => 
-                `<div class="action-link" onclick="loadPage('${item.page}')">${item.name}</div>`
+                `<div class="action-link" onclick="loadPage('pages/${item.page}')">${item.name}</div>`
             ).join('');
             drop.classList.add('active');
         }
