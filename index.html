@@ -95,7 +95,7 @@
 
         #logout-btn:hover { background: var(--accent); color: white; }
 
-        /* ===== TOP NAV BUTTONS — теперь как карточки ===== */
+        /* ===== TOP NAV BUTTONS ===== */
         .top-buttons {
             display: flex;
             gap: 20px;
@@ -159,7 +159,7 @@
             color: var(--accent);
         }
 
-        /* ===== ACTION GRID (всегда 2 колонки) ===== */
+        /* ===== ACTION GRID ===== */
         .action-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -179,7 +179,6 @@
             flex-direction: column;
         }
 
-        /* Квадратная кнопка с соотношением 1:1 */
         .action-btn {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -269,27 +268,15 @@
         #access-denied h3 { color: var(--accent); }
         .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
 
-        /* --- АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ --- */
         @media (max-width: 480px) {
-            .action-grid, .top-buttons {
-                gap: 15px;
-            }
-            .action-btn, .top-card .action-btn {
-                padding: 8px;
-            }
-            .action-btn i, .top-card .action-btn i {
-                font-size: 28px;
-            }
-            .action-btn span, .top-card .action-btn span {
-                font-size: 12px;
-            }
+            .action-grid, .top-buttons { gap: 15px; }
+            .action-btn, .top-card .action-btn { padding: 8px; }
+            .action-btn i, .top-card .action-btn i { font-size: 28px; }
+            .action-btn span, .top-card .action-btn span { font-size: 12px; }
         }
 
-        /* Если экран совсем узкий, можно переключить основные кнопки в 1 колонку */
         @media (max-width: 360px) {
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
+            .action-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -328,20 +315,20 @@
     </div>
 
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
-        <!-- Две квадратные карточки в ряд: Manuals и Store -->
+        <!-- Две квадратные карточки в ряд -->
         <div class="top-buttons">
-            <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="top-card" id="manuals-btn" target="_blank">
+            <a href="pages/manuals.html" class="top-card" id="manuals-btn">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
             </a>
-            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
+            <div class="top-card" id="store-btn" style="opacity: 0.4; filter: grayscale(1); pointer-events: none;">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
                     <span>STORE</span>
                 </div>
-            </a>
+            </div>
         </div>
 
         <!-- Сетка 2x2 для основных разделов -->
@@ -382,41 +369,42 @@
 </div>
 
 <script>
-// --- CONFIGURATION ---
+// --- КОНФИГУРАЦИЯ ---
 const userPermissions = {
     'vadiksss900@gmail.com': {
-        manuals: true, store: true,
-        luckyStrike: { parts: true, maintenance: true, fps: true },
+        manuals: true, store: false,
+        luckyStrike: { parts: true, maintenance: true, fps: true, analysis: false },
         blockbuster: { parts: true, maintenance: true, analysis: true, fps: true },
         skymall: { parts: true, maintenance: true, analysis: true, fps: true }
     },
     'csportsua@gmail.com': {
         manuals: true, store: false,
-        luckyStrike: { parts: false, maintenance: false, fps: false },
+        luckyStrike: { parts: false, maintenance: false, fps: false, analysis: false },
         blockbuster: { parts: false, maintenance: false, analysis: false, fps: false },
         skymall: { parts: true, maintenance: false, analysis: false, fps: false }
     }
 };
 
-const linksMap = {
+// ВНУТРЕННИЕ ССЫЛКИ (страницы внутри проекта)
+const pagesMap = {
     parts: [
-        { name: 'Lucky Strike KH', url: 'https://smart-bowling.github.io/PARTS-KH/', key: 'luckyStrike' },
-        { name: 'Blockbuster', url: 'https://smart-bowling.github.io/PARTS-BB/', key: 'blockbuster' },
-        { name: 'Skymall', url: 'https://smart-bowling.github.io/PARTS-SKYMALL/', key: 'skymall' }
+        { name: 'Lucky Strike KH', page: 'parts-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'parts-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'parts-sm.html', key: 'skymall' }
     ],
     maintenance: [
-        { name: 'Lucky Strike KH', url: 'https://smart-bowling.github.io/SMB-LS-KH/', key: 'luckyStrike' },
-        { name: 'Blockbuster', url: 'https://smart-bowling.github.io/SMB-BB/', key: 'blockbuster' },
-        { name: 'Skymall', url: 'https://smart-bowling.github.io/SMB-SKYMALL/', key: 'skymall' }
+        { name: 'Lucky Strike KH', page: 'maintenance-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'maintenance-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'maintenance-sm.html', key: 'skymall' }
     ],
     fps: [
-        { name: 'Lucky Strike KH', url: 'https://smart-bowling.github.io/PS-STOP-KH/', key: 'luckyStrike' },
-        { name: 'Blockbuster', url: 'https://smart-bowling.github.io/PS-STOP-BB/', key: 'blockbuster' },
-        { name: 'Skymall', url: 'https://smart-bowling.github.io/PS-STOP-SKYMALL/', key: 'skymall' }
+        { name: 'Lucky Strike KH', page: 'fps-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'fps-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'fps-sm.html', key: 'skymall' }
     ],
     analysis: [
-        { name: 'Blockbuster', url: 'https://smart-bowling.github.io/ANALYSIS-BB/', key: 'blockbuster' },
-        { name: 'Skymall', url: 'https://smart-bowling.github.io/ANALYSIS-SM/', key: 'skymall' }
+        { name: 'Blockbuster', page: 'analysis-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'analysis-sm.html', key: 'skymall' }
     ]
 };
 
@@ -449,18 +437,19 @@ function loginUser(payload) {
     applyPermissions(payload.email.toLowerCase());
 }
 
-// --- CORE LOGIC ---
+// --- ОСНОВНАЯ ЛОГИКА ---
 function handleAction(type) {
     const email = localStorage.getItem('userEmail');
     const p = userPermissions[email];
     
-    // Фильтруем ссылки, к которым есть доступ
-    const available = linksMap[type].filter(item => p[item.key] && p[item.key][type]);
+    // Фильтруем страницы, к которым есть доступ
+    const available = pagesMap[type].filter(item => p[item.key] && p[item.key][type]);
 
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        window.open(available[0].url, '_blank');
+        // Открываем в этой же вкладке (не _blank)
+        window.location.href = `pages/${available[0].page}`;
     } else {
         const drop = document.getElementById(`drop-${type}`);
         const isActive = drop.classList.contains('active');
@@ -469,8 +458,8 @@ function handleAction(type) {
         document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
         
         if (!isActive) {
-            drop.innerHTML = available.map(link => 
-                `<a href="${link.url}" target="_blank" class="action-link">${link.name}</a>`
+            drop.innerHTML = available.map(item => 
+                `<a href="pages/${item.page}" class="action-link">${item.name}</a>`
             ).join('');
             drop.classList.add('active');
         }
@@ -480,18 +469,17 @@ function handleAction(type) {
 function applyPermissions(email) {
     const p = userPermissions[email];
     
-    // Top cards (Manuals & Store)
+    // Top cards
     document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
-    document.getElementById('store-btn').classList.toggle('disabled', !p.store);
-
+    
     // Cards
-    Object.keys(linksMap).forEach(type => {
-        const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
+    Object.keys(pagesMap).forEach(type => {
+        const hasAccess = pagesMap[type].some(item => p[item.key] && p[item.key][type]);
         document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
     });
 }
 
-// --- UTILS ---
+// --- УТИЛИТЫ ---
 function parseJwt(token) {
     return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
 }
