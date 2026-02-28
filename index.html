@@ -256,70 +256,6 @@
             padding-left: 25px;
         }
 
-        /* ===== IFRAME MODAL ===== */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal-content {
-            width: 90%;
-            height: 90%;
-            background: var(--white);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .modal-header {
-            padding: 15px 20px;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .modal-close:hover {
-            background: var(--accent);
-            transform: rotate(90deg);
-        }
-
-        .modal-iframe {
-            flex: 1;
-            width: 100%;
-            border: none;
-        }
-
         /* ===== UTILS ===== */
         .disabled {
             opacity: 0.4;
@@ -379,14 +315,14 @@
     <!-- Main content -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <!-- Кнопка Manuals теперь ведет на локальный файл в модальном окне -->
-            <div class="top-card" id="manuals-btn" onclick="openManualPage()">
+            <!-- Кнопка Manuals теперь ведет на локальный файл как обычная ссылка -->
+            <a href="pages/manuals.html" class="top-card" id="manuals-btn">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
-            </div>
-            <!-- Store пока оставляем как внешнюю ссылку -->
+            </a>
+            <!-- Store как внешняя ссылка -->
             <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
@@ -425,19 +361,6 @@
                 <div class="action-dropdown" id="drop-analysis"></div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Модальное окно для Manuals -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h3><i class="fas fa-book" style="margin-right: 10px;"></i>MANUALS</h3>
-            <button class="modal-close" onclick="closeModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <iframe class="modal-iframe" id="modalIframe" src="about:blank"></iframe>
     </div>
 </div>
 
@@ -480,32 +403,6 @@ const linksMap = {
     ]
 };
 
-// --- MODAL FUNCTIONS ---
-function openModal(url, title) {
-    const modal = document.getElementById('modalOverlay');
-    const iframe = document.getElementById('modalIframe');
-    iframe.src = url;
-    modal.style.display = 'flex';
-    document.querySelector('.modal-header h3').innerHTML = `<i class="fas fa-book" style="margin-right: 10px;"></i>${title}`;
-}
-
-function closeModal() {
-    const modal = document.getElementById('modalOverlay');
-    const iframe = document.getElementById('modalIframe');
-    modal.style.display = 'none';
-    iframe.src = 'about:blank';
-}
-
-// Новая функция для открытия Manuals
-function openManualPage() {
-    const email = localStorage.getItem('userEmail');
-    if (!email || !userPermissions[email]?.manuals) return;
-    
-    // Открываем локальный файл manuals.html из папки pages
-    // Путь можно изменить в зависимости от вашей структуры
-    openModal('pages/manuals.html', 'MANUALS');
-}
-
 // --- AUTH LOGIC ---
 function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
@@ -535,7 +432,30 @@ function loginUser(payload) {
     applyPermissions(payload.email.toLowerCase());
 }
 
-// --- CORE LOGIC ---
+// --- PERMISSIONS ---
+function applyPermissions(email) {
+    const p = userPermissions[email];
+    
+    // Для Manuals используем обычную ссылку, но блокируем если нет доступа
+    const manualsBtn = document.getElementById('manuals-btn');
+    if (!p.manuals) {
+        manualsBtn.classList.add('disabled');
+        manualsBtn.addEventListener('click', (e) => e.preventDefault());
+    } else {
+        manualsBtn.classList.remove('disabled');
+    }
+    
+    // Store
+    document.getElementById('store-btn').classList.toggle('disabled', !p.store);
+
+    // Карточки
+    Object.keys(linksMap).forEach(type => {
+        const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
+        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
+    });
+}
+
+// --- ACTION HANDLER ---
 function handleAction(type) {
     const email = localStorage.getItem('userEmail');
     const p = userPermissions[email];
@@ -545,7 +465,6 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        // Для других разделов открываем в новой вкладке
         window.open(available[0].url, '_blank');
     } else {
         const drop = document.getElementById(`drop-${type}`);
@@ -562,18 +481,6 @@ function handleAction(type) {
     }
 }
 
-function applyPermissions(email) {
-    const p = userPermissions[email];
-    
-    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
-    document.getElementById('store-btn').classList.toggle('disabled', !p.store);
-
-    Object.keys(linksMap).forEach(type => {
-        const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
-        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
-    });
-}
-
 // --- UTILS ---
 function parseJwt(token) {
     return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
@@ -581,7 +488,6 @@ function parseJwt(token) {
 
 function signOut() {
     localStorage.clear();
-    closeModal(); // Закрываем модальное окно если открыто
     location.reload();
 }
 
@@ -605,11 +511,6 @@ window.onload = () => {
         }
     }
 }
-
-// Закрытие модального окна по Escape
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-});
 </script>
 </body>
 </html>
