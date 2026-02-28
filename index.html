@@ -120,6 +120,7 @@
         .top-card:hover:not(.disabled) {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            cursor: pointer;
         }
 
         .top-card .action-btn {
@@ -127,7 +128,6 @@
             height: 100%;
             border: none;
             background: transparent;
-            cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -216,6 +216,7 @@
 
         .action-card:hover:not(.disabled) .action-btn i { color: var(--accent); }
 
+        /* ===== DROPDOWN CONTENT ===== */
         .action-dropdown {
             max-height: 0;
             overflow: hidden;
@@ -254,17 +255,59 @@
             background: var(--primary);
             color: white;
             padding-left: 25px;
+            cursor: pointer;
         }
 
-        /* ===== CONTENT AREA FOR SPA ===== */
+        /* ===== DYNAMIC CONTENT AREA (для SPA) ===== */
         #spa-content {
             width: 100%;
-            min-height: 400px;
             background: var(--white);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
             display: none;
+            margin-top: 20px;
+            animation: slideUp 0.4s ease;
+        }
+
+        #back-to-dashboard {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        #back-to-dashboard:hover {
+            background: var(--accent);
+            transform: translateX(-5px);
+        }
+
+        #back-to-dashboard i {
+            font-size: 14px;
+        }
+
+        .spa-page-content {
+            line-height: 1.6;
+        }
+
+        .spa-page-content h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* ===== UTILS ===== */
@@ -292,7 +335,7 @@
 <body>
 
 <div class="container">
-    <!-- Auth blocks -->
+    <!-- Авторизация -->
     <div id="login">
         <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
         <h2>SMB Login</h2>
@@ -323,76 +366,66 @@
         <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
     </div>
 
-    <!-- Main dashboard content -->
+    <!-- Главная панель (дашборд) -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <!-- Кнопка Manuals теперь вызывает SPA загрузку -->
-            <div class="top-card" id="manuals-btn" onclick="loadSPAPage('manuals')">
+            <div class="top-card" id="manuals-btn" onclick="loadPage('manuals')">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
             </div>
-            <!-- Store пока оставляем как внешнюю ссылку -->
-            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
+            <div class="top-card" id="store-btn" onclick="loadPage('store')">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
                     <span>STORE</span>
                 </div>
-            </a>
-        </div>
-
-        <!-- Кнопка "Назад" для возврата в дашборд -->
-        <div id="back-to-dashboard" style="display: none; margin-bottom: 20px;">
-            <button onclick="showDashboard()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </button>
-        </div>
-
-        <!-- Сетка 2x2 для основных разделов (изначально видна) -->
-        <div id="dashboard-grid" style="display: grid;">
-            <div class="action-grid">
-                <div class="action-card" id="card-parts">
-                    <button class="action-btn" onclick="handleAction('parts')">
-                        <i class="fas fa-cog"></i>
-                        <span>PARTS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-parts"></div>
-                </div>
-
-                <div class="action-card" id="card-maintenance">
-                    <button class="action-btn" onclick="handleAction('maintenance')">
-                        <i class="fas fa-tools"></i>
-                        <span>MAINTENANCE</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-maintenance"></div>
-                </div>
-
-                <div class="action-card" id="card-fps">
-                    <button class="action-btn" onclick="handleAction('fps')">
-                        <i class="fas fa-chart-line"></i>
-                        <span>FPS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-fps"></div>
-                </div>
-
-                <div class="action-card" id="card-analysis">
-                    <button class="action-btn" onclick="handleAction('analysis')">
-                        <i class="fas fa-bowling-ball"></i>
-                        <span>ANALYSIS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-analysis"></div>
-                </div>
             </div>
         </div>
 
-        <!-- SPA Content Area (скрыта изначально) -->
-        <div id="spa-content"></div>
+        <div class="action-grid">
+            <div class="action-card" id="card-parts">
+                <button class="action-btn" onclick="handleAction('parts')">
+                    <i class="fas fa-cog"></i>
+                    <span>PARTS</span>
+                </button>
+                <div class="action-dropdown" id="drop-parts"></div>
+            </div>
+            <div class="action-card" id="card-maintenance">
+                <button class="action-btn" onclick="handleAction('maintenance')">
+                    <i class="fas fa-tools"></i>
+                    <span>MAINTENANCE</span>
+                </button>
+                <div class="action-dropdown" id="drop-maintenance"></div>
+            </div>
+            <div class="action-card" id="card-fps">
+                <button class="action-btn" onclick="handleAction('fps')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FPS</span>
+                </button>
+                <div class="action-dropdown" id="drop-fps"></div>
+            </div>
+            <div class="action-card" id="card-analysis">
+                <button class="action-btn" onclick="handleAction('analysis')">
+                    <i class="fas fa-bowling-ball"></i>
+                    <span>ANALYSIS</span>
+                </button>
+                <div class="action-dropdown" id="drop-analysis"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPA контейнер для динамической загрузки страниц -->
+    <div id="spa-content">
+        <button id="back-to-dashboard" onclick="showDashboard()">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <div id="page-content"></div>
     </div>
 </div>
 
 <script>
-// --- CONFIGURATION ---
+// --- КОНФИГУРАЦИЯ ---
 const userPermissions = {
     'vadiksss900@gmail.com': {
         manuals: true, store: true,
@@ -430,66 +463,118 @@ const linksMap = {
     ]
 };
 
-// --- SPA FUNCTIONS ---
-async function loadSPAPage(page) {
-    const email = localStorage.getItem('userEmail');
-    if (!email || !userPermissions[email]?.manuals) return;
+// --- МОК-ДАННЫЕ ДЛЯ СТРАНИЦ (чтобы не ломать ссылки) ---
+const pageContents = {
+    manuals: `
+        <h2>📚 MANUALS</h2>
+        <p>Welcome to the Manuals section. Here you'll find documentation and guides.</p>
+        <ul style="margin-top: 20px;">
+            <li><strong>Lucky Strike KH</strong> - <a href="https://smart-bowling.github.io/MANUALS-SMART/" target="_blank">Open original (new tab)</a></li>
+            <li><strong>Blockbuster</strong> - Maintenance guide v2.3</li>
+            <li><strong>Skymall</strong> - Quick start guide</li>
+        </ul>
+        <p style="color: var(--text-muted); margin-top: 20px;"><i class="fas fa-info-circle"></i> This content is loaded dynamically without page reload.</p>
+    `,
+    store: `
+        <h2>🛒 PARTS STORE</h2>
+        <p>Browse available parts and accessories.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-bolt"></i> Motors</div>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-cogs"></i> Gearboxes</div>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-microchip"></i> Controllers</div>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 12px;"><i class="fas fa-wrench"></i> Tools</div>
+        </div>
+        <p style="margin-top: 20px;"><a href="https://smart-bowling.github.io/PARTS-STORE/" target="_blank">Open full store in new tab →</a></p>
+    `
+};
 
-    try {
-        // Загружаем контент страницы
-        let content = '';
-        
-        if (page === 'manuals') {
-            // Здесь вы можете загрузить содержимое manuals.html
-            // Например, через fetch или просто вставить HTML
-            content = `
-                <div style="padding: 20px;">
-                    <h1><i class="fas fa-book"></i> MANUALS</h1>
-                    <p>Welcome to Manuals section</p>
-                    <div style="display: grid; gap: 15px; margin-top: 20px;">
-                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
-                            <h3>User Manual</h3>
-                            <p>Basic operations and setup guide</p>
-                        </div>
-                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
-                            <h3>Technical Manual</h3>
-                            <p>Advanced configuration and troubleshooting</p>
-                        </div>
-                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
-                            <h3>Maintenance Guide</h3>
-                            <p>Regular maintenance procedures</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+// --- СОСТОЯНИЕ SPA ---
+let currentUserEmail = null;
 
-        // Скрываем дашборд и показываем SPA контент
-        document.getElementById('dashboard-grid').style.display = 'none';
-        document.getElementById('back-to-dashboard').style.display = 'block';
+// --- ФУНКЦИИ ЗАГРУЗКИ СТРАНИЦ (SPA) ---
+function loadPage(pageName) {
+    // Закрываем все дропдауны
+    document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
+    
+    // Прячем дашборд, показываем SPA-контейнер
+    document.getElementById('main-content').style.display = 'none';
+    document.getElementById('spa-content').style.display = 'block';
+    
+    // Загружаем контент (имитация загрузки с сервера)
+    const contentDiv = document.getElementById('page-content');
+    
+    if (pageContents[pageName]) {
+        contentDiv.innerHTML = pageContents[pageName];
+    } else {
+        // Если страница не найдена, пытаемся загрузить с GitHub Pages
+        contentDiv.innerHTML = `<h2>Loading ${pageName}...</h2>`;
         
-        const spaContent = document.getElementById('spa-content');
-        spaContent.innerHTML = content;
-        spaContent.style.display = 'block';
+        // Пытаемся загрузить реальный HTML с GitHub
+        const url = `https://smart-bowling.github.io/pages/${pageName}.html`;
         
-        // URL в браузере НЕ МЕНЯЕТСЯ - всегда https://smart-bowling.github.io/TEST/
-        // Никто не сможет скопировать прямую ссылку на страницу
-        
-    } catch (error) {
-        console.error('Error loading page:', error);
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Page not found');
+                return response.text();
+            })
+            .then(html => {
+                // Извлекаем только контент из body
+                const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+                const content = match ? match[1] : html;
+                contentDiv.innerHTML = `<h2>${pageName.toUpperCase()}</h2>${content}`;
+            })
+            .catch(err => {
+                console.warn('Could not load from GitHub, using fallback');
+                contentDiv.innerHTML = `
+                    <h2>${pageName.toUpperCase()} (Demo)</h2>
+                    <p>This is a dynamically loaded page. In production, this would load from <code>https://smart-bowling.github.io/pages/${pageName}.html</code></p>
+                    <p><a href="https://smart-bowling.github.io/pages/${pageName}.html" target="_blank">Open original in new tab →</a></p>
+                `;
+            });
     }
+    
+    // Обновляем историю БЕЗ изменения URL (требование SPA)
+    // history.replaceState({page: pageName}, '', '/TEST/'); // закомментировано, чтобы URL не менялся
 }
 
 function showDashboard() {
-    // Показываем дашборд и скрываем SPA контент
-    document.getElementById('dashboard-grid').style.display = 'grid';
-    document.getElementById('back-to-dashboard').style.display = 'none';
     document.getElementById('spa-content').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
     
-    // URL остается тем же
+    // Обновляем историю, возвращаясь к корню без изменения URL
+    // history.replaceState({page: null}, '', '/TEST/'); // закомментировано
 }
 
-// --- AUTH LOGIC ---
+// --- ОБРАБОТКА ДЕЙСТВИЙ (Dropdowns) ---
+function handleAction(type) {
+    const email = localStorage.getItem('userEmail');
+    if (!email || !userPermissions[email]) return;
+    
+    const p = userPermissions[email];
+    
+    const available = linksMap[type].filter(item => p[item.key] && p[item.key][type]);
+
+    if (available.length === 0) return;
+
+    if (available.length === 1) {
+        // Если только одна опция - открываем в новой вкладке (оригинальное поведение)
+        window.open(available[0].url, '_blank');
+    } else {
+        const drop = document.getElementById(`drop-${type}`);
+        const isActive = drop.classList.contains('active');
+        
+        document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
+        
+        if (!isActive) {
+            drop.innerHTML = available.map(link => 
+                `<div class="action-link" onclick="window.open('${link.url}', '_blank')">${link.name}</div>`
+            ).join('');
+            drop.classList.add('active');
+        }
+    }
+}
+
+// --- АВТОРИЗАЦИЯ ---
 function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
     const email = payload.email.toLowerCase();
@@ -515,58 +600,26 @@ function loginUser(payload) {
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
 
-    applyPermissions(payload.email.toLowerCase());
+    currentUserEmail = payload.email.toLowerCase();
+    applyPermissions(currentUserEmail);
+    
+    // Всегда показываем дашборд при логине
+    showDashboard();
 }
 
-// --- PERMISSIONS ---
 function applyPermissions(email) {
     const p = userPermissions[email];
     
-    // Для Manuals
-    const manualsBtn = document.getElementById('manuals-btn');
-    if (!p.manuals) {
-        manualsBtn.classList.add('disabled');
-    } else {
-        manualsBtn.classList.remove('disabled');
-    }
-    
-    // Store
+    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
     document.getElementById('store-btn').classList.toggle('disabled', !p.store);
 
-    // Карточки
     Object.keys(linksMap).forEach(type => {
         const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
         document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
     });
 }
 
-// --- ACTION HANDLER ---
-function handleAction(type) {
-    const email = localStorage.getItem('userEmail');
-    const p = userPermissions[email];
-    
-    const available = linksMap[type].filter(item => p[item.key] && p[item.key][type]);
-
-    if (available.length === 0) return;
-
-    if (available.length === 1) {
-        window.open(available[0].url, '_blank');
-    } else {
-        const drop = document.getElementById(`drop-${type}`);
-        const isActive = drop.classList.contains('active');
-        
-        document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
-        
-        if (!isActive) {
-            drop.innerHTML = available.map(link => 
-                `<a href="${link.url}" target="_blank" class="action-link">${link.name}</a>`
-            ).join('');
-            drop.classList.add('active');
-        }
-    }
-}
-
-// --- UTILS ---
+// --- УТИЛИТЫ ---
 function parseJwt(token) {
     return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
 }
@@ -582,9 +635,17 @@ function showDenied(email) {
     document.getElementById('denied-email').textContent = email;
 }
 
-function backToLogin() { location.reload(); }
+function backToLogin() { 
+    location.reload(); 
+}
 
+// --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
 window.onload = () => {
+    // Убеждаемся, что URL всегда /TEST/
+    if (window.location.pathname !== '/TEST/') {
+        history.replaceState(null, '', '/TEST/');
+    }
+    
     if (localStorage.getItem('userLoggedIn') === 'true') {
         const email = localStorage.getItem('userEmail');
         if (userPermissions[email]) {
@@ -593,9 +654,17 @@ window.onload = () => {
                 name: localStorage.getItem('userName'),
                 picture: localStorage.getItem('userPic')
             });
+        } else {
+            localStorage.clear();
         }
     }
-}
+    
+    // Обработка кнопки "назад" в браузере - остаемся на месте
+    window.addEventListener('popstate', (event) => {
+        // Ничего не делаем, остаемся на текущей странице
+        console.log('URL change prevented');
+    });
+};
 </script>
 </body>
 </html>
