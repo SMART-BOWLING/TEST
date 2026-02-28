@@ -1,3 +1,5 @@
+<!-- pages/manuals.html -->
+
 <!-- ЭКРАН ЗАГРУЗКИ (НОВЫЙ ДИЗАЙН) -->
 <div class="loading-screen" id="loadingScreen">
   <div class="logo-wrapper">
@@ -7,7 +9,7 @@
 </div>
 
 <header>
-  <!-- Логотип теперь вызывает goBack() для возврата на дашборд -->
+  <!-- Логотип теперь использует SPA функцию goBack() -->
   <div class="logo" onclick="goBack()">
     <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
   </div>
@@ -38,26 +40,24 @@
 </div>
 
 <style>
-/* ===== ПОЛНОСТЬЮ ОРИГИНАЛЬНЫЕ СТИЛИ ИЗ manuals.html ===== */
 /* ===== ОТКЛЮЧЕНИЕ DOUBLE TAP ZOOM ===== */
 html, body {
   touch-action: manipulation;
 }
 
+/* Все стили из оригинального файла, но без дублирования общих стилей */
 body {
   margin:0;
   font-family:'Segoe UI',sans-serif;
   background:#ffffff;
   color:#1f2937;
   padding-top:70px;
-  /* ===== ОТСТУП ДЛЯ НИЖНИХ КНОПОК ТОЛЬКО НА ТЕЛЕФОНЕ ===== */
-  /* По умолчанию отступа нет */
 }
 
 /* Только для мобильных устройств добавляем отступ */
 @media screen and (max-width: 768px) {
   body {
-    padding-bottom: 80px; /* Увеличенный отступ только на телефонах */
+    padding-bottom: 80px;
   }
 }
 
@@ -108,19 +108,16 @@ header {
   pointer-events:none;
 }
 
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР С ОТСТУПАМИ ПО БОКАМ ДЛЯ ПК ===== */
 #manualContainer {
   display:flex;
   flex-direction:column;
   gap:0;
   padding:0;
-  max-width: 1200px; /* Максимальная ширина контента */
-  margin: 0 auto; /* Центрирование */
+  max-width: 1200px;
+  margin: 0 auto;
   width: 100%;
 }
 
-/* Отступы по бокам через padding у body или дополнительного контейнера */
-/* Для ПК добавляем отступы через media query */
 @media screen and (min-width: 768px) {
   body {
     padding-left: 30px;
@@ -136,7 +133,7 @@ header {
 }
 
 .block {
-  margin:10px 0; /* Убрали горизонтальные margin, теперь они через body padding */
+  margin:10px 0;
   border:1px solid #e5e7eb;
   border-radius:0;
   overflow:hidden;
@@ -197,11 +194,10 @@ header {
   background:white;
 }
 
-/* Стилизация активной кнопки детали (ТОНКАЯ ЛИНИЯ 2px) */
 .btn.active-detail {
   background: #fef2f2 !important;
   border-left: 2px solid #dc143c;
-  padding-left: 14px; /* Чуть изменил паддинг для компенсации */
+  padding-left: 14px;
 }
 
 .buttons-container .btn:nth-child(odd) {
@@ -215,7 +211,6 @@ header {
   background:#f0e6e6;
 }
 
-/* ===== СПИСОК КЛУБОВ С ТОНКОЙ ЛИНИЕЙ ОТ КРАЯ (2px) ===== */
 .detail-info {
   overflow:hidden;
   max-height:0;
@@ -287,7 +282,6 @@ header {
   background:#374151; 
 }
 
-/* ===== ОБНОВЛЕННАЯ ПАНЕЛЬ НАВИГАЦИИ ПОИСКА ===== */
 .search-nav-bottom {
   position:fixed;
   bottom:20px;
@@ -325,7 +319,6 @@ header {
   transform:scale(0.95);
 }
 
-/* Кнопка очистки поиска */
 #clearSearchBtn {
   background:#dc143c;
   color:white;
@@ -362,14 +355,13 @@ header {
 
 .shop-fab-left:active { transform: scale(0.95); }
 
-/* ===== НОВАЯ КНОПКА СПРАВА СНИЗУ (ЦВЕТ ШАПКИ, СТРЕЛКА ВЛЕВО) ===== */
 .shop-fab-right {
   position: fixed;
   bottom: 20px;
   right: 20px;
   width: 54px;
   height: 54px;
-  background: #1f2937;  /* Цвет как у шапки сайта */
+  background: #1f2937;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -387,10 +379,9 @@ header {
 }
 
 .shop-fab-right:hover {
-  background: #374151; /* Эффект при наведении как у шапки */
+  background: #374151;
 }
 
-/* ===== ЭКРАН ЗАГРУЗКИ (НОВАЯ АНИМАЦИЯ) ===== */
 .loading-screen {
   position: fixed;
   inset: 0;
@@ -437,9 +428,6 @@ header {
 </style>
 
 <script>
-// Сохраняем ссылку на goBack из родительского окна
-const goBack = window.goBack;
-
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData=[];
@@ -487,7 +475,6 @@ async function loadManuals(){
     stockData=data.stock;
     renderManualGroups();
     
-    // Скрываем экран загрузки после завершения
     setTimeout(() => {
       loadingScreen.classList.add('fade-out');
     }, 500);
@@ -498,21 +485,14 @@ async function loadManuals(){
   }
 }
 
-/**
- * Разбирает составную строку с номерами деталей вида:
- * "(14) 070-011-411 (14А) 070-011-412 (14А1) 070-011-413"
- * Возвращает массив объектов {code, number}
- */
 function parseCompositeParts(partString) {
   const result = [];
-  // Регулярное выражение ищет паттерн: (код) пробел номер
-  // Номер может содержать цифры и дефисы
   const regex = /\(([^)]+)\)\s+([\d-]+)/g;
   let match;
   
   while ((match = regex.exec(partString)) !== null) {
     result.push({
-      code: match[1].trim(),  // Оригинальный код из скобок (14, 14А, 14А1, 6А и т.д.)
+      code: match[1].trim(),
       number: match[2].trim()
     });
   }
@@ -520,10 +500,6 @@ function parseCompositeParts(partString) {
   return result;
 }
 
-/**
- * Проверяет, содержит ли строка номер в скобках
- * Возвращает объект с кодом и номером, если есть, иначе null
- */
 function extractSingleCode(partString) {
   const regex = /^\(([^)]+)\)\s+([\d-]+)$/;
   const match = partString.match(regex);
@@ -536,9 +512,6 @@ function extractSingleCode(partString) {
   return null;
 }
 
-/**
- * Проверяет, является ли строка составной (содержит несколько номеров в скобках)
- */
 function isCompositePart(partString) {
   const matches = partString.match(/\([^)]+\)\s+[\d-]+/g);
   return matches && matches.length > 1;
@@ -578,22 +551,17 @@ function renderManualsByName(name){
     const image=block.querySelector(".clickable-image");
     image.onclick=()=>cont.style.display=cont.style.display==="flex"?"none":"flex";
 
-    // Обрабатываем каждую деталь
     manual.parts.forEach((part, index) => {
-      // Проверяем, есть ли одиночный код в скобках
       const singleCode = extractSingleCode(part);
       
       if (singleCode) {
-        // Случай: (6А) 000-021-408 - меняем метку на код из скобок
         createPartButton(cont, singleCode.number, singleCode.code, image);
       } else if (isCompositePart(part)) {
-        // Составная деталь с несколькими номерами
         const parsedParts = parseCompositeParts(part);
         parsedParts.forEach((parsedPart) => {
           createPartButton(cont, parsedPart.number, parsedPart.code, image);
         });
       } else {
-        // Обычная деталь без скобок - используем порядковый номер
         createPartButton(cont, part, (index + 1).toString(), image);
       }
     });
@@ -602,13 +570,6 @@ function renderManualsByName(name){
   });
 }
 
-/**
- * Создает кнопку для одной детали
- * @param {HTMLElement} container - контейнер для кнопок
- * @param {string} partNumber - номер детали
- * @param {string} label - метка (оригинальный код из скобок или номер)
- * @param {HTMLElement} image - элемент изображения для подсветки
- */
 function createPartButton(container, partNumber, label, image) {
   const btn = document.createElement("div");
   btn.className = "btn";
@@ -667,7 +628,6 @@ function toggleDetail(btn){
   setTimeout(()=>info.classList.add("open"),10);
 }
 
-// Функция очистки поиска
 function clearSearch() {
   searchInput.value = "";
   searchResults = [];
@@ -695,24 +655,19 @@ searchInput.oninput = e => {
   searchNav.style.display = "flex";
   
   manualsData.forEach(m => {
-    // Проверяем, есть ли совпадение в обычных или составных деталях
     let hasMatch = false;
     
-    // Функция для проверки номера детали
     const checkPart = (part) => {
-      // Проверяем одиночный код в скобках
       const singleCode = extractSingleCode(part);
       if (singleCode && singleCode.number.includes(v)) {
         return true;
       }
       
-      // Проверяем составную деталь
       if (isCompositePart(part)) {
         const parsed = parseCompositeParts(part);
         return parsed.some(p => p.number.includes(v));
       }
       
-      // Обычная деталь
       return part.includes(v);
     };
     
@@ -752,5 +707,6 @@ function prevResult(){
   searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
 
+// Загружаем данные при инициализации страницы
 loadManuals();
 </script>
