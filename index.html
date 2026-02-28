@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Все ваши существующие стили остаются без изменений */
         :root {
             --primary: #1f2937;
             --accent: #dc143c;
@@ -87,6 +86,17 @@
         @keyframes slideIn {
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Сообщение об ошибке */
+        .error-message {
+            background: #fee;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px;
         }
 
         /* ===== AUTH BLOCKS ===== */
@@ -458,7 +468,7 @@ const pagesMap = {
     ]
 };
 
-// --- ИСПРАВЛЕННЫЕ ФУНКЦИИ SPA ---
+// --- ФУНКЦИИ SPA ---
 
 /**
  * Загружает HTML-фрагмент из папки pages и вставляет его в page-container
@@ -489,21 +499,21 @@ async function loadPage(pageName) {
         // Вставляем загруженный контент
         pageContainer.innerHTML = html;
         
-        // ВАЖНО: выполняем скрипты в загруженном контенте
+        // Выполняем скрипты в загруженном контенте
         executeScripts(pageContainer);
         
-        // Опционально: обновляем заголовок страницы
+        // Обновляем заголовок страницы
         document.title = `SMB | ${pageName.replace('.html', '').toUpperCase()}`;
         
     } catch (error) {
         console.error('Error loading page:', error);
         document.getElementById('page-container').innerHTML = `
-            <div style="background: var(--white); padding: 30px; border-radius: 24px; text-align: center;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--accent); margin-bottom: 20px;"></i>
-                <h3>Error Loading Page</h3>
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                <h3>Ошибка загрузки</h3>
                 <p>${error.message}</p>
                 <button class="back-btn" onclick="goBack()" style="margin: 20px auto;">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> Вернуться
                 </button>
             </div>
         `;
@@ -511,24 +521,19 @@ async function loadPage(pageName) {
 }
 
 /**
- * Выполняет все скрипты в загруженном контенте
- * @param {HTMLElement} container - контейнер с загруженным HTML
+ * Выполняет все скрипты в загруженном контейнере
+ * @param {HTMLElement} container 
  */
 function executeScripts(container) {
-    const scripts = container.getElementsByTagName('script');
-    
-    // Преобразуем HTMLCollection в массив для безопасной итерации
-    Array.from(scripts).forEach(oldScript => {
+    const scripts = container.querySelectorAll('script');
+    scripts.forEach(oldScript => {
         const newScript = document.createElement('script');
-        
         // Копируем все атрибуты
         Array.from(oldScript.attributes).forEach(attr => {
             newScript.setAttribute(attr.name, attr.value);
         });
-        
         // Копируем содержимое
         newScript.textContent = oldScript.textContent;
-        
         // Заменяем старый скрипт новым (это вызывает выполнение)
         oldScript.parentNode.replaceChild(newScript, oldScript);
     });
