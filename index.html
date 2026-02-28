@@ -256,6 +256,17 @@
             padding-left: 25px;
         }
 
+        /* ===== CONTENT AREA FOR SPA ===== */
+        #spa-content {
+            width: 100%;
+            min-height: 400px;
+            background: var(--white);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            display: none;
+        }
+
         /* ===== UTILS ===== */
         .disabled {
             opacity: 0.4;
@@ -312,17 +323,17 @@
         <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
     </div>
 
-    <!-- Main content -->
+    <!-- Main dashboard content -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
         <div class="top-buttons">
-            <!-- Кнопка Manuals теперь ведет на https://smart-bowling.github.io/TEST/ -->
-            <a href="https://smart-bowling.github.io/TEST/" class="top-card" id="manuals-btn">
+            <!-- Кнопка Manuals теперь вызывает SPA загрузку -->
+            <div class="top-card" id="manuals-btn" onclick="loadSPAPage('manuals')">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
-            </a>
-            <!-- Store как внешняя ссылка -->
+            </div>
+            <!-- Store пока оставляем как внешнюю ссылку -->
             <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
@@ -331,36 +342,52 @@
             </a>
         </div>
 
-        <div class="action-grid">
-            <div class="action-card" id="card-parts">
-                <button class="action-btn" onclick="handleAction('parts')">
-                    <i class="fas fa-cog"></i>
-                    <span>PARTS</span>
-                </button>
-                <div class="action-dropdown" id="drop-parts"></div>
-            </div>
-            <div class="action-card" id="card-maintenance">
-                <button class="action-btn" onclick="handleAction('maintenance')">
-                    <i class="fas fa-tools"></i>
-                    <span>MAINTENANCE</span>
-                </button>
-                <div class="action-dropdown" id="drop-maintenance"></div>
-            </div>
-            <div class="action-card" id="card-fps">
-                <button class="action-btn" onclick="handleAction('fps')">
-                    <i class="fas fa-chart-line"></i>
-                    <span>FPS</span>
-                </button>
-                <div class="action-dropdown" id="drop-fps"></div>
-            </div>
-            <div class="action-card" id="card-analysis">
-                <button class="action-btn" onclick="handleAction('analysis')">
-                    <i class="fas fa-bowling-ball"></i>
-                    <span>ANALYSIS</span>
-                </button>
-                <div class="action-dropdown" id="drop-analysis"></div>
+        <!-- Кнопка "Назад" для возврата в дашборд -->
+        <div id="back-to-dashboard" style="display: none; margin-bottom: 20px;">
+            <button onclick="showDashboard()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+
+        <!-- Сетка 2x2 для основных разделов (изначально видна) -->
+        <div id="dashboard-grid" style="display: grid;">
+            <div class="action-grid">
+                <div class="action-card" id="card-parts">
+                    <button class="action-btn" onclick="handleAction('parts')">
+                        <i class="fas fa-cog"></i>
+                        <span>PARTS</span>
+                    </button>
+                    <div class="action-dropdown" id="drop-parts"></div>
+                </div>
+
+                <div class="action-card" id="card-maintenance">
+                    <button class="action-btn" onclick="handleAction('maintenance')">
+                        <i class="fas fa-tools"></i>
+                        <span>MAINTENANCE</span>
+                    </button>
+                    <div class="action-dropdown" id="drop-maintenance"></div>
+                </div>
+
+                <div class="action-card" id="card-fps">
+                    <button class="action-btn" onclick="handleAction('fps')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>FPS</span>
+                    </button>
+                    <div class="action-dropdown" id="drop-fps"></div>
+                </div>
+
+                <div class="action-card" id="card-analysis">
+                    <button class="action-btn" onclick="handleAction('analysis')">
+                        <i class="fas fa-bowling-ball"></i>
+                        <span>ANALYSIS</span>
+                    </button>
+                    <div class="action-dropdown" id="drop-analysis"></div>
+                </div>
             </div>
         </div>
+
+        <!-- SPA Content Area (скрыта изначально) -->
+        <div id="spa-content"></div>
     </div>
 </div>
 
@@ -403,6 +430,65 @@ const linksMap = {
     ]
 };
 
+// --- SPA FUNCTIONS ---
+async function loadSPAPage(page) {
+    const email = localStorage.getItem('userEmail');
+    if (!email || !userPermissions[email]?.manuals) return;
+
+    try {
+        // Загружаем контент страницы
+        let content = '';
+        
+        if (page === 'manuals') {
+            // Здесь вы можете загрузить содержимое manuals.html
+            // Например, через fetch или просто вставить HTML
+            content = `
+                <div style="padding: 20px;">
+                    <h1><i class="fas fa-book"></i> MANUALS</h1>
+                    <p>Welcome to Manuals section</p>
+                    <div style="display: grid; gap: 15px; margin-top: 20px;">
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
+                            <h3>User Manual</h3>
+                            <p>Basic operations and setup guide</p>
+                        </div>
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
+                            <h3>Technical Manual</h3>
+                            <p>Advanced configuration and troubleshooting</p>
+                        </div>
+                        <div style="background: #f8fafc; padding: 20px; border-radius: 10px;">
+                            <h3>Maintenance Guide</h3>
+                            <p>Regular maintenance procedures</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Скрываем дашборд и показываем SPA контент
+        document.getElementById('dashboard-grid').style.display = 'none';
+        document.getElementById('back-to-dashboard').style.display = 'block';
+        
+        const spaContent = document.getElementById('spa-content');
+        spaContent.innerHTML = content;
+        spaContent.style.display = 'block';
+        
+        // URL в браузере НЕ МЕНЯЕТСЯ - всегда https://smart-bowling.github.io/TEST/
+        // Никто не сможет скопировать прямую ссылку на страницу
+        
+    } catch (error) {
+        console.error('Error loading page:', error);
+    }
+}
+
+function showDashboard() {
+    // Показываем дашборд и скрываем SPA контент
+    document.getElementById('dashboard-grid').style.display = 'grid';
+    document.getElementById('back-to-dashboard').style.display = 'none';
+    document.getElementById('spa-content').style.display = 'none';
+    
+    // URL остается тем же
+}
+
 // --- AUTH LOGIC ---
 function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
@@ -436,11 +522,10 @@ function loginUser(payload) {
 function applyPermissions(email) {
     const p = userPermissions[email];
     
-    // Для Manuals используем ссылку, но блокируем если нет доступа
+    // Для Manuals
     const manualsBtn = document.getElementById('manuals-btn');
     if (!p.manuals) {
         manualsBtn.classList.add('disabled');
-        manualsBtn.addEventListener('click', (e) => e.preventDefault());
     } else {
         manualsBtn.classList.remove('disabled');
     }
