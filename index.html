@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>SMB | SPA Hub</title>
+    <title>SMB | Dashboard SPA</title>
 
     <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
     <link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
@@ -95,7 +95,7 @@
 
         #logout-btn:hover { background: var(--accent); color: white; }
 
-        /* ===== TOP NAV BUTTONS — теперь как карточки ===== */
+        /* ===== TOP NAV BUTTONS ===== */
         .top-buttons {
             display: flex;
             gap: 20px;
@@ -159,7 +159,7 @@
             color: var(--accent);
         }
 
-        /* ===== ACTION GRID (всегда 2 колонки) ===== */
+        /* ===== ACTION GRID ===== */
         .action-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -179,7 +179,6 @@
             flex-direction: column;
         }
 
-        /* Квадратная кнопка с соотношением 1:1 */
         .action-btn {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -217,7 +216,6 @@
 
         .action-card:hover:not(.disabled) .action-btn i { color: var(--accent); }
 
-        /* ===== DROPDOWN CONTENT ===== */
         .action-dropdown {
             max-height: 0;
             overflow: hidden;
@@ -258,6 +256,70 @@
             padding-left: 25px;
         }
 
+        /* ===== IFRAME MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            width: 90%;
+            height: 90%;
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        .modal-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
+
         /* ===== UTILS ===== */
         .disabled {
             opacity: 0.4;
@@ -269,73 +331,21 @@
         #access-denied h3 { color: var(--accent); }
         .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
 
-        /* --- АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ --- */
         @media (max-width: 480px) {
-            .action-grid, .top-buttons {
-                gap: 15px;
-            }
-            .action-btn, .top-card .action-btn {
-                padding: 8px;
-            }
-            .action-btn i, .top-card .action-btn i {
-                font-size: 28px;
-            }
-            .action-btn span, .top-card .action-btn span {
-                font-size: 12px;
-            }
+            .action-grid, .top-buttons { gap: 15px; }
+            .action-btn i, .top-card .action-btn i { font-size: 28px; }
+            .action-btn span, .top-card .action-btn span { font-size: 12px; }
         }
 
         @media (max-width: 360px) {
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Стили для iframe (SPA-режим) */
-        .spa-frame {
-            width: 100%;
-            border: none;
-            border-radius: 24px;
-            background: white;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-            min-height: 500px;
-            transition: opacity 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .back-button {
-            align-self: flex-start;
-            background: var(--white);
-            border: none;
-            border-radius: 40px;
-            padding: 8px 18px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary);
-            cursor: pointer;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.03);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-            margin-bottom: 5px;
-        }
-
-        .back-button:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateX(-3px);
-        }
-
-        .back-button i {
-            font-size: 12px;
+            .action-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<div class="container" id="app-container">
-    <!-- Авторизация (всегда отображается вверху) -->
+<div class="container">
+    <!-- Auth blocks -->
     <div id="login">
         <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
         <h2>SMB Login</h2>
@@ -366,15 +376,73 @@
         <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
     </div>
 
-    <!-- Динамическая SPA область: дашборд ИЛИ встроенная страница -->
-    <div id="spa-view" style="width: 100%;">
-        <!-- Сюда будет рендериться либо дашборд, либо manuals iframe -->
-    </div>
+    <!-- Main content -->
+    <div class="main-content" id="main-content" style="display:none; width: 100%;">
+        <div class="top-buttons">
+            <!-- Кнопка Manuals теперь ведет на локальный файл в модальном окне -->
+            <div class="top-card" id="manuals-btn" onclick="openManualPage()">
+                <div class="action-btn">
+                    <i class="fas fa-book"></i>
+                    <span>MANUALS</span>
+                </div>
+            </div>
+            <!-- Store пока оставляем как внешнюю ссылку -->
+            <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
+                <div class="action-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>STORE</span>
+                </div>
+            </a>
+        </div>
 
+        <div class="action-grid">
+            <div class="action-card" id="card-parts">
+                <button class="action-btn" onclick="handleAction('parts')">
+                    <i class="fas fa-cog"></i>
+                    <span>PARTS</span>
+                </button>
+                <div class="action-dropdown" id="drop-parts"></div>
+            </div>
+            <div class="action-card" id="card-maintenance">
+                <button class="action-btn" onclick="handleAction('maintenance')">
+                    <i class="fas fa-tools"></i>
+                    <span>MAINTENANCE</span>
+                </button>
+                <div class="action-dropdown" id="drop-maintenance"></div>
+            </div>
+            <div class="action-card" id="card-fps">
+                <button class="action-btn" onclick="handleAction('fps')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FPS</span>
+                </button>
+                <div class="action-dropdown" id="drop-fps"></div>
+            </div>
+            <div class="action-card" id="card-analysis">
+                <button class="action-btn" onclick="handleAction('analysis')">
+                    <i class="fas fa-bowling-ball"></i>
+                    <span>ANALYSIS</span>
+                </button>
+                <div class="action-dropdown" id="drop-analysis"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для Manuals -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3><i class="fas fa-book" style="margin-right: 10px;"></i>MANUALS</h3>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <iframe class="modal-iframe" id="modalIframe" src="about:blank"></iframe>
+    </div>
 </div>
 
 <script>
-// --- КОНФИГУРАЦИЯ И ДАННЫЕ (без изменений) ---
+// --- CONFIGURATION ---
 const userPermissions = {
     'vadiksss900@gmail.com': {
         manuals: true, store: true,
@@ -412,150 +480,33 @@ const linksMap = {
     ]
 };
 
-// --- СОСТОЯНИЕ SPA ---
-let currentUserEmail = null;
-let isDashboardVisible = true; // true = показываем главное меню, false = показываем iframe
-
-// Получаем контейнер для отображения
-const spaView = document.getElementById('spa-view');
-
-// --- ФУНКЦИИ РЕНДЕРИНГА ---
-
-// Отрисовка дашборда (главное меню)
-function renderDashboard() {
-    isDashboardVisible = true;
-    const email = currentUserEmail || localStorage.getItem('userEmail');
-    if (!email) return;
-
-    const p = userPermissions[email];
-    if (!p) return;
-
-    // Генерируем HTML дашборда
-    const dashboardHTML = `
-        <div class="main-content" id="main-content" style="width: 100%;">
-            <!-- Две квадратные карточки в ряд: Manuals и Store -->
-            <div class="top-buttons">
-                <div class="top-card" id="manuals-btn" data-spa-manuals style="cursor:pointer;">
-                    <div class="action-btn">
-                        <i class="fas fa-book"></i>
-                        <span>MANUALS</span>
-                    </div>
-                </div>
-                <a href="https://smart-bowling.github.io/PARTS-STORE/" class="top-card" id="store-btn" target="_blank">
-                    <div class="action-btn">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>STORE</span>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Сетка 2x2 для основных разделов -->
-            <div class="action-grid">
-                <div class="action-card" id="card-parts">
-                    <button class="action-btn" onclick="handleAction('parts')">
-                        <i class="fas fa-cog"></i>
-                        <span>PARTS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-parts"></div>
-                </div>
-
-                <div class="action-card" id="card-maintenance">
-                    <button class="action-btn" onclick="handleAction('maintenance')">
-                        <i class="fas fa-tools"></i>
-                        <span>MAINTENANCE</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-maintenance"></div>
-                </div>
-
-                <div class="action-card" id="card-fps">
-                    <button class="action-btn" onclick="handleAction('fps')">
-                        <i class="fas fa-chart-line"></i>
-                        <span>FPS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-fps"></div>
-                </div>
-
-                <div class="action-card" id="card-analysis">
-                    <button class="action-btn" onclick="handleAction('analysis')">
-                        <i class="fas fa-bowling-ball"></i>
-                        <span>ANALYSIS</span>
-                    </button>
-                    <div class="action-dropdown" id="drop-analysis"></div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    spaView.innerHTML = dashboardHTML;
-
-    // Применяем permission-классы после вставки
-    applyPermissionsToDashboard(email);
-
-    // Вешаем обработчик на кнопку Manuals (SPA-переход)
-    const manualsBtn = document.querySelector('[data-spa-manuals]');
-    if (manualsBtn) {
-        manualsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!manualsBtn.classList.contains('disabled')) {
-                loadManualsPage();
-            }
-        });
-    }
-
-    // Переопределяем классы disabled на карточках
-    function applyPermissionsToDashboard(email) {
-        const p = userPermissions[email];
-        if (!p) return;
-
-        // Top cards (Manuals & Store)
-        const manualsEl = document.getElementById('manuals-btn');
-        const storeEl = document.getElementById('store-btn');
-        if (manualsEl) manualsEl.classList.toggle('disabled', !p.manuals);
-        if (storeEl) storeEl.classList.toggle('disabled', !p.store);
-
-        // Cards (parts, maintenance, fps, analysis)
-        Object.keys(linksMap).forEach(type => {
-            const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
-            const card = document.getElementById(`card-${type}`);
-            if (card) card.classList.toggle('disabled', !hasAccess);
-        });
-    }
+// --- MODAL FUNCTIONS ---
+function openModal(url, title) {
+    const modal = document.getElementById('modalOverlay');
+    const iframe = document.getElementById('modalIframe');
+    iframe.src = url;
+    modal.style.display = 'flex';
+    document.querySelector('.modal-header h3').innerHTML = `<i class="fas fa-book" style="margin-right: 10px;"></i>${title}`;
 }
 
-// Загрузка страницы manuals в iframe
-function loadManualsPage() {
-    isDashboardVisible = false;
-    // Используем относительный путь к папке pages. Предполагается, что файл manuals.html лежит рядом с index.html в папке pages
-    // Гид Хаб: для GitHub Pages корень репозитория. Создайте папку pages и положите manuals.html
-    const manualsPath = 'pages/manuals.html'; 
-
-    const iframeHTML = `
-        <button class="back-button" id="back-to-dashboard">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </button>
-        <iframe src="${manualsPath}" class="spa-frame" id="manuals-iframe" title="Manuals"></iframe>
-    `;
-
-    spaView.innerHTML = iframeHTML;
-
-    // Обработчик кнопки назад
-    document.getElementById('back-to-dashboard').addEventListener('click', () => {
-        renderDashboard();
-    });
-
-    // Небольшая адаптация iframe по высоте (можно подстраивать по содержимому, но оставим так)
-    const iframe = document.getElementById('manuals-iframe');
-    iframe.onload = () => {
-        // Попытка подогнать высоту под контент (опционально)
-        try {
-            const iframeDoc = iframe.contentWindow.document;
-            iframe.style.height = iframeDoc.body.scrollHeight + 'px';
-        } catch (e) { /* ignore cross-origin */ }
-    };
+function closeModal() {
+    const modal = document.getElementById('modalOverlay');
+    const iframe = document.getElementById('modalIframe');
+    modal.style.display = 'none';
+    iframe.src = 'about:blank';
 }
 
-// --- АУТЕНТИФИКАЦИЯ (почти без изменений, адаптировано под SPA) ---
+// Новая функция для открытия Manuals
+function openManualPage() {
+    const email = localStorage.getItem('userEmail');
+    if (!email || !userPermissions[email]?.manuals) return;
+    
+    // Открываем локальный файл manuals.html из папки pages
+    // Путь можно изменить в зависимости от вашей структуры
+    openModal('pages/manuals.html', 'MANUALS');
+}
 
+// --- AUTH LOGIC ---
 function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
     const email = payload.email.toLowerCase();
@@ -570,6 +521,7 @@ function handleCredentialResponse(response) {
 function loginUser(payload) {
     document.getElementById('login').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('main-content').style.display = 'block';
     
     document.getElementById('user-pic').src = payload.picture;
     document.getElementById('user-name').textContent = payload.name;
@@ -580,16 +532,12 @@ function loginUser(payload) {
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
 
-    currentUserEmail = payload.email.toLowerCase();
-
-    // Рендерим дашборд
-    renderDashboard();
+    applyPermissions(payload.email.toLowerCase());
 }
 
-// Обработчик действий (для Parts, Maintenance, FPS, Analysis)
+// --- CORE LOGIC ---
 function handleAction(type) {
-    const email = currentUserEmail || localStorage.getItem('userEmail');
-    if (!email) return;
+    const email = localStorage.getItem('userEmail');
     const p = userPermissions[email];
     
     const available = linksMap[type].filter(item => p[item.key] && p[item.key][type]);
@@ -597,13 +545,12 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
+        // Для других разделов открываем в новой вкладке
         window.open(available[0].url, '_blank');
     } else {
         const drop = document.getElementById(`drop-${type}`);
-        if (!drop) return;
         const isActive = drop.classList.contains('active');
         
-        // Закрываем все остальные
         document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
         
         if (!isActive) {
@@ -615,12 +562,26 @@ function handleAction(type) {
     }
 }
 
+function applyPermissions(email) {
+    const p = userPermissions[email];
+    
+    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
+    document.getElementById('store-btn').classList.toggle('disabled', !p.store);
+
+    Object.keys(linksMap).forEach(type => {
+        const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
+        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
+    });
+}
+
+// --- UTILS ---
 function parseJwt(token) {
     return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
 }
 
 function signOut() {
     localStorage.clear();
+    closeModal(); // Закрываем модальное окно если открыто
     location.reload();
 }
 
@@ -628,31 +589,27 @@ function showDenied(email) {
     document.getElementById('login').style.display = 'none';
     document.getElementById('access-denied').style.display = 'block';
     document.getElementById('denied-email').textContent = email;
-    spaView.innerHTML = ''; // очищаем контент
 }
 
 function backToLogin() { location.reload(); }
 
-// Восстановление сессии при загрузке
 window.onload = () => {
     if (localStorage.getItem('userLoggedIn') === 'true') {
         const email = localStorage.getItem('userEmail');
         if (userPermissions[email]) {
-            currentUserEmail = email;
             loginUser({
                 email: email,
                 name: localStorage.getItem('userName'),
                 picture: localStorage.getItem('userPic')
             });
-        } else {
-            // Невалидная сессия
-            localStorage.clear();
         }
     }
-};
+}
 
-// Чтобы handleAction была глобальной
-window.handleAction = handleAction;
+// Закрытие модального окна по Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+});
 </script>
 </body>
 </html>
