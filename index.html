@@ -242,6 +242,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
         }
 
         .action-link:after {
@@ -267,6 +268,51 @@
 
         #access-denied h3 { color: var(--accent); }
         .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
+
+        /* ===== SPA CONTAINER ===== */
+        #page-container {
+            width: 100%;
+            min-height: 100vh;
+            display: none;
+        }
+
+        #page-container.active {
+            display: block;
+        }
+
+        /* ===== BACK BUTTON ===== */
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 54px;
+            height: 54px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+            border: none;
+        }
+
+        .back-button:hover {
+            background: #374151;
+            transform: scale(1.05);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .back-button i {
+            font-size: 20px;
+        }
 
         @media (max-width: 480px) {
             .action-grid, .top-buttons { gap: 15px; }
@@ -314,15 +360,15 @@
         <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
     </div>
 
+    <!-- Главный дашборд -->
     <div class="main-content" id="main-content" style="display:none; width: 100%;">
-        <!-- Две квадратные карточки в ряд -->
         <div class="top-buttons">
-            <a href="pages/manuals.html" class="top-card" id="manuals-btn">
+            <div class="top-card" id="manuals-btn" onclick="loadPage('manuals.html')">
                 <div class="action-btn">
                     <i class="fas fa-book"></i>
                     <span>MANUALS</span>
                 </div>
-            </a>
+            </div>
             <div class="top-card" id="store-btn" style="opacity: 0.4; filter: grayscale(1); pointer-events: none;">
                 <div class="action-btn">
                     <i class="fas fa-shopping-cart"></i>
@@ -331,7 +377,6 @@
             </div>
         </div>
 
-        <!-- Сетка 2x2 для основных разделов -->
         <div class="action-grid">
             <div class="action-card" id="card-parts">
                 <button class="action-btn" onclick="handleAction('parts')">
@@ -366,6 +411,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Контейнер для загружаемых страниц -->
+    <div id="page-container"></div>
+
+    <!-- Кнопка возврата (изначально скрыта) -->
+    <button class="back-button" id="back-button" onclick="goBack()" style="display: none;">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
 </div>
 
 <script>
@@ -437,7 +491,81 @@ function loginUser(payload) {
     applyPermissions(payload.email.toLowerCase());
 }
 
-// --- ОСНОВНАЯ ЛОГИКА ---
+// --- SPA FUNCTIONS ---
+
+/**
+ * Загружает HTML-фрагмент из папки /pages/
+ * @param {string} pageName - имя файла (например, 'manuals.html')
+ */
+async function loadPage(pageName) {
+    try {
+        // Показываем индикатор загрузки (можно добавить свой спиннер)
+        const mainContent = document.getElementById('main-content');
+        const pageContainer = document.getElementById('page-container');
+        const backButton = document.getElementById('back-button');
+        
+        // Скрываем главный контент, показываем контейнер для страницы
+        mainContent.style.display = 'none';
+        pageContainer.style.display = 'block';
+        pageContainer.classList.add('active');
+        
+        // Показываем кнопку "Назад"
+        backButton.style.display = 'flex';
+        
+        // Загружаем страницу
+        const response = await fetch(`pages/${pageName}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const html = await response.text();
+        
+        // Вставляем загруженный контент
+        pageContainer.innerHTML = html;
+        
+        // Выполняем скрипты, если они есть в загруженном контенте
+        const scripts = pageContainer.getElementsByTagName('script');
+        for (let script of scripts) {
+            const newScript = document.createElement('script');
+            if (script.src) {
+                newScript.src = script.src;
+            } else {
+                newScript.textContent = script.textContent;
+            }
+            document.body.appendChild(newScript).parentNode.removeChild(newScript);
+        }
+        
+        // Если это страница manuals, инициализируем её
+        if (pageName === 'manuals.html' && typeof initializeManuals === 'function') {
+            initializeManuals();
+        }
+        
+    } catch (error) {
+        console.error('Ошибка загрузки страницы:', error);
+        pageContainer.innerHTML = '<div style="text-align: center; padding: 50px; color: var(--accent);"><i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i><h3>Ошибка загрузки страницы</h3></div>';
+    }
+}
+
+/**
+ * Возвращает на главный дашборд
+ */
+function goBack() {
+    const mainContent = document.getElementById('main-content');
+    const pageContainer = document.getElementById('page-container');
+    const backButton = document.getElementById('back-button');
+    
+    // Очищаем контейнер страницы
+    pageContainer.innerHTML = '';
+    pageContainer.style.display = 'none';
+    pageContainer.classList.remove('active');
+    
+    // Показываем главный контент
+    mainContent.style.display = 'block';
+    
+    // Скрываем кнопку "Назад"
+    backButton.style.display = 'none';
+}
+
+// --- ОСНОВНАЯ ЛОГИКА (адаптированная для SPA) ---
 function handleAction(type) {
     const email = localStorage.getItem('userEmail');
     const p = userPermissions[email];
@@ -448,8 +576,8 @@ function handleAction(type) {
     if (available.length === 0) return;
 
     if (available.length === 1) {
-        // Открываем в этой же вкладке (не _blank)
-        window.location.href = `pages/${available[0].page}`;
+        // Загружаем страницу через SPA
+        loadPage(available[0].page);
     } else {
         const drop = document.getElementById(`drop-${type}`);
         const isActive = drop.classList.contains('active');
@@ -459,7 +587,7 @@ function handleAction(type) {
         
         if (!isActive) {
             drop.innerHTML = available.map(item => 
-                `<a href="pages/${item.page}" class="action-link">${item.name}</a>`
+                `<div class="action-link" onclick="loadPage('${item.page}')">${item.name}</div>`
             ).join('');
             drop.classList.add('active');
         }
