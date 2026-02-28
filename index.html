@@ -1,30 +1,662 @@
-<!-- pages/manuals.html -->
-<div class="manuals-container">
-    <h1 class="manuals-title">Manuals & Documentation</h1>
-    
-    <div class="manuals-grid">
-        <div class="manual-card">
-            <i class="fas fa-file-pdf" style="font-size: 32px; color: var(--accent); margin-bottom: 10px;"></i>
-            <h3>User Manual</h3>
-            <p>Complete guide for operators</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>SMB | Dashboard</title>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
+    <link rel="shortcut icon" href="https://i.postimg.cc/QNkbRTbS/1.png">
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #1f2937;
+            --accent: #dc143c;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --text-dark: #1f2937;
+            --text-muted: #6b7280;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Кнопка "Назад" */
+        .back-button {
+            align-self: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            background: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            transform: translateX(-5px);
+            color: var(--accent);
+        }
+
+        /* Контейнер для загружаемого контента */
+        #page-container {
+            width: 100%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Стили для страницы manuals (добавьте сюда стили из manuals.html) */
+        .manuals-container {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+
+        .manuals-title {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .manuals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .manual-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .manual-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* ===== AUTH BLOCKS ===== */
+        #login, #user-info, #access-denied {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        #user-info {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 15px;
+            text-align: left;
+            padding: 12px 20px;
+        }
+
+        #user-info img {
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            border: 2px solid var(--accent);
+        }
+
+        #user-info .user-details { flex-grow: 1; }
+        #user-info p { margin: 0; font-size: 14px; font-weight: 600; }
+        #user-info #user-email { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+
+        #logout-btn {
+            background: #f1f5f9;
+            color: var(--text-dark);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #logout-btn:hover { background: var(--accent); color: white; }
+
+        /* ===== TOP NAV BUTTONS ===== */
+        .top-buttons {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .top-card {
+            flex: 1;
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1 / 1;
+        }
+
+        .top-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .top-card .action-btn {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            transition: var(--transition);
+            text-decoration: none;
+            color: inherit;
+            font-family: inherit;
+        }
+
+        .top-card .action-btn i {
+            font-size: 32px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .top-card .action-btn span {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .top-card:hover:not(.disabled) .action-btn i {
+            color: var(--accent);
+        }
+
+        /* ===== ACTION GRID ===== */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .action-card {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            transition: var(--transition);
+        }
+
+        .action-btn i {
+            font-size: 32px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .action-btn span {
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .action-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        }
+
+        .action-card:hover:not(.disabled) .action-btn i { color: var(--accent); }
+
+        /* ===== DROPDOWN CONTENT ===== */
+        .action-dropdown {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .action-dropdown.active {
+            max-height: 300px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .action-link {
+            padding: 14px 20px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #edf2f7;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .action-link:after {
+            content: '\f105';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            opacity: 0.3;
+        }
+
+        .action-link:hover {
+            background: var(--primary);
+            color: white;
+            padding-left: 25px;
+        }
+
+        /* ===== UTILS ===== */
+        .disabled {
+            opacity: 0.4;
+            filter: grayscale(1);
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        #access-denied h3 { color: var(--accent); }
+        .denied-email { background: #fff1f2; color: var(--accent); padding: 10px; border-radius: 10px; margin: 15px 0; font-family: monospace; }
+
+        @media (max-width: 480px) {
+            .action-grid, .top-buttons { gap: 15px; }
+            .action-btn, .top-card .action-btn { padding: 8px; }
+            .action-btn i, .top-card .action-btn i { font-size: 28px; }
+            .action-btn span, .top-card .action-btn span { font-size: 12px; }
+        }
+
+        @media (max-width: 360px) {
+            .action-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Кнопка "Назад" (изначально скрыта) -->
+    <div class="back-button" id="back-button" style="display: none;">
+        <button class="back-btn" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Dashboard</span>
+        </button>
+    </div>
+
+    <div id="login">
+        <i class="fas fa-shield-halved" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+        <h2>SMB Login</h2>
+        <div id="g_id_onload"
+             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
         </div>
-        
-        <div class="manual-card">
-            <i class="fas fa-file-pdf" style="font-size: 32px; color: var(--accent); margin-bottom: 10px;"></i>
-            <h3>Technical Manual</h3>
-            <p>Maintenance and repair instructions</p>
+        <div class="g_id_signin" data-type="standard" data-shape="pill"></div>
+    </div>
+
+    <div id="user-info" style="display: none;">
+        <img id="user-pic" src="" alt="Profile">
+        <div class="user-details">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
         </div>
-        
-        <div class="manual-card">
-            <i class="fas fa-file-pdf" style="font-size: 32px; color: var(--accent); margin-bottom: 10px;"></i>
-            <h3>Parts Catalog</h3>
-            <p>Exploded views and part numbers</p>
+        <button id="logout-btn" onclick="signOut()" title="Sign Out">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </div>
+
+    <div id="access-denied" style="display: none;">
+        <i class="fas fa-ban" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
+        <h3>Access Denied</h3>
+        <p>Your email is not registered:</p>
+        <div class="denied-email" id="denied-email"></div>
+        <button id="logout-btn" style="width:auto; padding: 10px 20px; margin: 0 auto;" onclick="backToLogin()">Go Back</button>
+    </div>
+
+    <!-- Основной контент дашборда -->
+    <div class="main-content" id="main-content" style="display:none; width: 100%;">
+        <!-- Две квадратные карточки в ряд -->
+        <div class="top-buttons">
+            <div class="top-card" id="manuals-btn" onclick="loadPage('manuals.html')">
+                <div class="action-btn">
+                    <i class="fas fa-book"></i>
+                    <span>MANUALS</span>
+                </div>
+            </div>
+            <div class="top-card" id="store-btn" style="opacity: 0.4; filter: grayscale(1); pointer-events: none;">
+                <div class="action-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>STORE</span>
+                </div>
+            </div>
         </div>
-        
-        <div class="manual-card">
-            <i class="fas fa-file-pdf" style="font-size: 32px; color: var(--accent); margin-bottom: 10px;"></i>
-            <h3>Safety Manual</h3>
-            <p>Safety guidelines and procedures</p>
+
+        <!-- Сетка 2x2 для основных разделов -->
+        <div class="action-grid">
+            <div class="action-card" id="card-parts">
+                <button class="action-btn" onclick="handleAction('parts')">
+                    <i class="fas fa-cog"></i>
+                    <span>PARTS</span>
+                </button>
+                <div class="action-dropdown" id="drop-parts"></div>
+            </div>
+
+            <div class="action-card" id="card-maintenance">
+                <button class="action-btn" onclick="handleAction('maintenance')">
+                    <i class="fas fa-tools"></i>
+                    <span>MAINTENANCE</span>
+                </button>
+                <div class="action-dropdown" id="drop-maintenance"></div>
+            </div>
+
+            <div class="action-card" id="card-fps">
+                <button class="action-btn" onclick="handleAction('fps')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FPS</span>
+                </button>
+                <div class="action-dropdown" id="drop-fps"></div>
+            </div>
+
+            <div class="action-card" id="card-analysis">
+                <button class="action-btn" onclick="handleAction('analysis')">
+                    <i class="fas fa-bowling-ball"></i>
+                    <span>ANALYSIS</span>
+                </button>
+                <div class="action-dropdown" id="drop-analysis"></div>
+            </div>
         </div>
     </div>
+
+    <!-- Контейнер для загружаемых страниц -->
+    <div id="page-container" style="width: 100%;"></div>
 </div>
+
+<script>
+// --- КОНФИГУРАЦИЯ ---
+const userPermissions = {
+    'vadiksss900@gmail.com': {
+        manuals: true, store: false,
+        luckyStrike: { parts: true, maintenance: true, fps: true, analysis: false },
+        blockbuster: { parts: true, maintenance: true, analysis: true, fps: true },
+        skymall: { parts: true, maintenance: true, analysis: true, fps: true }
+    },
+    'csportsua@gmail.com': {
+        manuals: true, store: false,
+        luckyStrike: { parts: false, maintenance: false, fps: false, analysis: false },
+        blockbuster: { parts: false, maintenance: false, analysis: false, fps: false },
+        skymall: { parts: true, maintenance: false, analysis: false, fps: false }
+    }
+};
+
+// ВНУТРЕННИЕ ССЫЛКИ (страницы внутри проекта)
+const pagesMap = {
+    parts: [
+        { name: 'Lucky Strike KH', page: 'parts-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'parts-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'parts-sm.html', key: 'skymall' }
+    ],
+    maintenance: [
+        { name: 'Lucky Strike KH', page: 'maintenance-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'maintenance-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'maintenance-sm.html', key: 'skymall' }
+    ],
+    fps: [
+        { name: 'Lucky Strike KH', page: 'fps-ls.html', key: 'luckyStrike' },
+        { name: 'Blockbuster', page: 'fps-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'fps-sm.html', key: 'skymall' }
+    ],
+    analysis: [
+        { name: 'Blockbuster', page: 'analysis-bb.html', key: 'blockbuster' },
+        { name: 'Skymall', page: 'analysis-sm.html', key: 'skymall' }
+    ]
+};
+
+// --- ФУНКЦИИ SPA ---
+
+/**
+ * Загружает HTML-фрагмент из папки pages и вставляет его в page-container
+ * @param {string} pageName - имя файла в папке pages (например, 'manuals.html')
+ */
+async function loadPage(pageName) {
+    try {
+        // Показываем кнопку "Назад"
+        document.getElementById('back-button').style.display = 'block';
+        
+        // Скрываем основной контент дашборда
+        document.getElementById('main-content').style.display = 'none';
+        
+        // Очищаем и показываем контейнер для страницы
+        const pageContainer = document.getElementById('page-container');
+        pageContainer.style.display = 'block';
+        
+        // Показываем индикатор загрузки
+        pageContainer.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fas fa-spinner fa-spin" style="font-size: 40px; color: var(--accent);"></i></div>';
+        
+        // Загружаем HTML-фрагмент
+        const response = await fetch(`pages/${pageName}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const html = await response.text();
+        
+        // Вставляем загруженный контент
+        pageContainer.innerHTML = html;
+        
+        // Опционально: обновляем заголовок страницы
+        document.title = `SMB | ${pageName.replace('.html', '').toUpperCase()}`;
+        
+    } catch (error) {
+        console.error('Error loading page:', error);
+        document.getElementById('page-container').innerHTML = `
+            <div style="background: var(--white); padding: 30px; border-radius: 24px; text-align: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--accent); margin-bottom: 20px;"></i>
+                <h3>Error Loading Page</h3>
+                <p>${error.message}</p>
+                <button class="back-btn" onclick="goBack()" style="margin: 20px auto;">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Возвращает пользователя на главный дашборд
+ */
+function goBack() {
+    // Скрываем кнопку "Назад"
+    document.getElementById('back-button').style.display = 'none';
+    
+    // Скрываем контейнер с загруженной страницей
+    document.getElementById('page-container').style.display = 'none';
+    document.getElementById('page-container').innerHTML = '';
+    
+    // Показываем основной контент
+    document.getElementById('main-content').style.display = 'block';
+    
+    // Возвращаем исходный заголовок
+    document.title = 'SMB | Dashboard';
+}
+
+// --- AUTH LOGIC ---
+function handleCredentialResponse(response) {
+    const payload = parseJwt(response.credential);
+    const email = payload.email.toLowerCase();
+    
+    if (userPermissions[email]) {
+        loginUser(payload);
+    } else {
+        showDenied(email);
+    }
+}
+
+function loginUser(payload) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('main-content').style.display = 'block';
+    
+    document.getElementById('user-pic').src = payload.picture;
+    document.getElementById('user-name').textContent = payload.name;
+    document.getElementById('user-email').textContent = payload.email;
+
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userEmail', payload.email.toLowerCase());
+    localStorage.setItem('userName', payload.name);
+    localStorage.setItem('userPic', payload.picture);
+
+    applyPermissions(payload.email.toLowerCase());
+}
+
+// --- ОСНОВНАЯ ЛОГИКА ---
+function handleAction(type) {
+    const email = localStorage.getItem('userEmail');
+    const p = userPermissions[email];
+    
+    // Фильтруем страницы, к которым есть доступ
+    const available = pagesMap[type].filter(item => p[item.key] && p[item.key][type]);
+
+    if (available.length === 0) return;
+
+    if (available.length === 1) {
+        // Загружаем страницу через SPA
+        loadPage(available[0].page);
+    } else {
+        const drop = document.getElementById(`drop-${type}`);
+        const isActive = drop.classList.contains('active');
+        
+        // Закрываем все остальные
+        document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('active'));
+        
+        if (!isActive) {
+            drop.innerHTML = available.map(item => 
+                `<div class="action-link" onclick="loadPage('${item.page}')">${item.name}</div>`
+            ).join('');
+            drop.classList.add('active');
+        }
+    }
+}
+
+function applyPermissions(email) {
+    const p = userPermissions[email];
+    
+    // Top cards
+    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
+    
+    // Cards
+    Object.keys(pagesMap).forEach(type => {
+        const hasAccess = pagesMap[type].some(item => p[item.key] && p[item.key][type]);
+        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
+    });
+}
+
+// --- УТИЛИТЫ ---
+function parseJwt(token) {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+}
+
+function signOut() {
+    localStorage.clear();
+    location.reload();
+}
+
+function showDenied(email) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('access-denied').style.display = 'block';
+    document.getElementById('denied-email').textContent = email;
+}
+
+function backToLogin() { location.reload(); }
+
+window.onload = () => {
+    if (localStorage.getItem('userLoggedIn') === 'true') {
+        const email = localStorage.getItem('userEmail');
+        if (userPermissions[email]) {
+            loginUser({
+                email: email,
+                name: localStorage.getItem('userName'),
+                picture: localStorage.getItem('userPic')
+            });
+        }
+    }
+}
+</script>
+</body>
+</html>
