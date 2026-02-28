@@ -421,8 +421,8 @@ header {
 </div>
 
 <header>
-  <!-- Логотип теперь ведет на указанную страницу и работает как SPA-навигация -->
-  <div class="logo" onclick="navigateTo('home')">
+  <!-- Логотип теперь ведет на указанную страницу -->
+  <div class="logo" onclick="window.location.href='https://smart-bowling.github.io/SMB/'">
     <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
   </div>
   <div class="site-name">MANUALS</div>
@@ -447,14 +447,11 @@ header {
 </div>
 
 <!-- Новая правая кнопка (стрелка влево, функция как у логотипа) -->
-<div class="shop-fab-right" onclick="navigateTo('home')">
+<div class="shop-fab-right" onclick="renderManualGroups()">
   <i class="fa-solid fa-arrow-left"></i>
 </div>
 
 <script>
-// ============================================
-// SPA-совместимая структура
-// ============================================
 const API_URL = "https://script.google.com/macros/s/AKfycbySUf3xM0QvtI1tQ8YYzNnmHfzTnPFFATw7rs0sv3LMAdoWvoLiKiYEwTWtrnDOv5B5tg/exec";
 
 let manualsData=[];
@@ -467,59 +464,6 @@ const manualContainer=document.getElementById("manualContainer");
 const searchInput=document.getElementById("searchInput");
 const loadingScreen=document.getElementById("loadingScreen");
 const clearSearchBtn=document.getElementById("clearSearchBtn");
-
-// SPA: Текущее состояние
-let currentView = 'home'; // 'home' или 'manual:Имя'
-let currentManualName = '';
-
-// ===== Функции навигации =====
-function navigateTo(view, manualName = '') {
-  if (view === 'home') {
-    currentView = 'home';
-    currentManualName = '';
-    renderManualGroups();
-    // Скрываем поисковую навигацию
-    searchNav.style.display = "none";
-    // Очищаем поле поиска
-    searchInput.value = "";
-    // Сбрасываем подсветки
-    document.querySelectorAll(".search-highlight,.active-highlight").forEach(el => 
-      el.classList.remove("search-highlight", "active-highlight")
-    );
-    searchResults = [];
-  } else if (view === 'manual') {
-    currentView = 'manual';
-    currentManualName = manualName;
-    renderManualsByName(manualName);
-  }
-  
-  // Обновляем URL без перезагрузки (опционально, для поддержки истории)
-  if (view === 'home') {
-    history.pushState({ view: 'home' }, '', '#/');
-  } else if (view === 'manual') {
-    history.pushState({ view: 'manual', name: manualName }, '', `#/manual/${encodeURIComponent(manualName)}`);
-  }
-}
-
-// Обработка кнопок "назад" в браузере
-window.addEventListener('popstate', (event) => {
-  if (event.state) {
-    if (event.state.view === 'home') {
-      navigateTo('home');
-    } else if (event.state.view === 'manual') {
-      navigateTo('manual', event.state.name);
-    }
-  } else {
-    // Если state нет (например,初始 хэш), показываем главную
-    const hash = window.location.hash;
-    if (hash.startsWith('#/manual/')) {
-      const manualName = decodeURIComponent(hash.replace('#/manual/', ''));
-      navigateTo('manual', manualName);
-    } else {
-      navigateTo('home');
-    }
-  }
-});
 
 function openShopSearch() {
   const partNumber = prompt("Введите номер детали:", "");
@@ -553,15 +497,7 @@ async function loadManuals(){
     const data=await res.json();
     manualsData=data.manuals;
     stockData=data.stock;
-    
-    // SPA: После загрузки данных проверяем хэш и показываем нужное состояние
-    const hash = window.location.hash;
-    if (hash.startsWith('#/manual/')) {
-      const manualName = decodeURIComponent(hash.replace('#/manual/', ''));
-      navigateTo('manual', manualName);
-    } else {
-      navigateTo('home'); // Показываем главную по умолчанию
-    }
+    renderManualGroups();
     
     // Скрываем экран загрузки после завершения
     setTimeout(() => {
@@ -631,8 +567,7 @@ function renderManualGroups(){
     span.textContent = name;
     b.appendChild(icon);
     b.appendChild(span);
-    // SPA: Используем navigateTo при клике
-    b.onclick=()=>navigateTo('manual', name);
+    b.onclick=()=>renderManualsByName(name);
     manualContainer.appendChild(b);
   });
   searchInput.value="";
@@ -752,14 +687,7 @@ function clearSearch() {
   document.querySelectorAll(".search-highlight,.active-highlight").forEach(el => 
     el.classList.remove("search-highlight", "active-highlight")
   );
-  
-  // Возвращаемся к текущему представлению (главная или мануал)
-  if (currentView === 'home') {
-    renderManualGroups();
-  } else if (currentView === 'manual') {
-    renderManualsByName(currentManualName);
-  }
-  
+  renderManualGroups();
   searchNav.style.display = "none";
 }
 
@@ -772,17 +700,12 @@ searchInput.oninput = e => {
   );
   
   if (!v) { 
-    if (currentView === 'home') {
-      renderManualGroups();
-    } else if (currentView === 'manual') {
-      renderManualsByName(currentManualName);
-    }
+    renderManualGroups(); 
     return; 
   }
   
   searchNav.style.display = "flex";
   
-  // Всегда ищем по всем мануалам, независимо от текущего вида
   manualsData.forEach(m => {
     // Проверяем, есть ли совпадение в обычных или составных деталях
     let hasMatch = false;
@@ -807,7 +730,6 @@ searchInput.oninput = e => {
     
     if (m.parts.some(checkPart)) {
       hasMatch = true;
-      // Показываем мануал, в котором есть совпадение
       renderManualsByName(m.name);
       setTimeout(() => {
         document.querySelectorAll(".detail-number").forEach(el => {
@@ -842,19 +764,10 @@ function prevResult(){
   searchResults[currentIndex].scrollIntoView({behavior:"smooth",block:"center"});
 }
 
-// Запускаем загрузку данных
-loadManuals();
+// Логотип теперь ведет на указанную страницу (изменено с renderManualGroups на переход по ссылке)
+// document.querySelector(".logo").onclick=renderManualGroups; // старая функция закомментирована
 
-// Инициализация начального состояния по URL при загрузке
-window.addEventListener('load', () => {
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#/manual/')) {
-    // Будет обработано в loadManuals после получения данных
-  } else {
-    // Если нет хэша, устанавливаем начальное состояние
-    history.replaceState({ view: 'home' }, '', '#/');
-  }
-});
+loadManuals();
 </script>
 </body>
 </html>
