@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -176,40 +176,47 @@
             font-size: 16px;
         }
 
+        /* НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ */
         .loader-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: white;
+            inset: 0;
+            background: #1f2937;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            gap: 20px;
         }
 
-        .loader {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #dc143c;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .logo-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glow-ring {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 100%;
+            background: conic-gradient(#dc143c, transparent 100%);
+            animation: spin 5s linear infinite;
+            filter: blur(20px);
+        }
+
+        .loader-container img {
+            width: 120px;
+            z-index: 2;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(365deg); }
         }
 
         .loading-text {
-            font-size: 16px;
-            color: #1a2f40;
-            font-weight: 600;
-            text-align: center;
+            display: none;
         }
 
         .container {
@@ -1495,9 +1502,12 @@
     </style>
 </head>
 <body>
+    <!-- НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
     <div class="loader-container" id="loader">
-        <div class="loader"></div>
-        <div class="loading-text"></div>
+        <div class="logo-wrapper">
+            <div class="glow-ring"></div>
+            <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+        </div>
     </div>
     
     <!-- Уведомление скрыто -->
@@ -1659,12 +1669,10 @@
         // Переменная для календаря
         let datePicker = null;
 
-        function showLoader(message = 'Загрузка...') {
+        function showLoader(message = '') {
             const loader = document.getElementById('loader');
             const mainContainer = document.getElementById('main-container');
-            const loadingText = loader.querySelector('.loading-text');
             
-            loadingText.textContent = message;
             loader.style.display = 'flex';
             mainContainer.style.display = 'none';
         }
@@ -2480,6 +2488,281 @@
                 }
             });
         });
+    </script>
+
+    <!-- ИСПРАВЛЕНИЕ ДЛЯ КНОПОК -->
+    <script>
+        (function fixButtonsOnAllPages() {
+            'use strict';
+            
+            // Сохраняем lastTouchEnd для всего документа
+            let lastTouchEnd = 0;
+            
+            // Полностью переопределяем обработчик touch событий
+            document.removeEventListener('touchend', document.touchEndHandler, false);
+            
+            document.addEventListener('touchend', function(event) {
+                const target = event.target;
+                
+                // Проверяем все возможные интерактивные элементы
+                const isInteractive = target.closest('button') || 
+                                     target.closest('a') || 
+                                     target.closest('select') || 
+                                     target.closest('.submit-btn') || 
+                                     target.closest('.open-button') || 
+                                     target.closest('.schema-button') ||
+                                     target.closest('.executor-select') ||
+                                     target.closest('.page-btn') ||
+                                     target.closest('.tab-btn') ||
+                                     target.closest('.menu-button') ||
+                                     target.closest('.site-name') ||
+                                     target.closest('.clear-filter-btn') ||
+                                     target.closest('#open-tasks-counter');
+                
+                // Для интерактивных элементов - разрешаем всё
+                if (isInteractive) {
+                    event.stopPropagation(); // Останавливаем всплытие
+                    return true; // Разрешаем стандартное поведение
+                }
+                
+                // Для остальных - предотвращаем двойное касание
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, { passive: false });
+            
+            // Принудительное восстановление обработчиков для кнопок
+            function forceButtonHandlers() {
+                // Для всех кнопок "открыть задачу" в реестре
+                document.querySelectorAll('#tab1 .schema-button').forEach(btn => {
+                    // Удаляем старые обработчики
+                    btn.removeEventListener('click', handleOpenClick);
+                    btn.removeEventListener('touchstart', handleTouchStart);
+                    
+                    // Добавляем новые
+                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    btn.addEventListener('click', handleOpenClick);
+                    
+                    if (!btn.hasAttribute('data-handler-fixed')) {
+                        btn.setAttribute('data-handler-fixed', 'true');
+                    }
+                });
+                
+                // Для всех кнопок "отправить" в реестре
+                document.querySelectorAll('#tab1 .submit-btn').forEach(btn => {
+                    btn.removeEventListener('click', handleSubmitClick);
+                    btn.removeEventListener('touchstart', handleTouchStart);
+                    
+                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    btn.addEventListener('click', handleSubmitClick);
+                    
+                    if (!btn.hasAttribute('data-handler-fixed')) {
+                        const card = btn.closest('.task-card');
+                        if (card) {
+                            const taskId = card.dataset.taskId;
+                            const rowIndex = card.dataset.rowIndex;
+                            if (taskId && rowIndex) {
+                                btn.setAttribute('data-task-id', taskId);
+                                btn.setAttribute('data-row-index', rowIndex);
+                            }
+                        }
+                        btn.setAttribute('data-handler-fixed', 'true');
+                    }
+                });
+                
+                // Для всех кнопок "открыть задачу" в каталоге
+                document.querySelectorAll('#tab2 .open-button').forEach(btn => {
+                    btn.removeEventListener('click', handleCatalogOpenClick);
+                    btn.removeEventListener('touchstart', handleTouchStart);
+                    
+                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    btn.addEventListener('click', handleCatalogOpenClick);
+                    
+                    if (!btn.hasAttribute('data-handler-fixed')) {
+                        btn.setAttribute('data-handler-fixed', 'true');
+                    }
+                });
+                
+                // Для всех select
+                document.querySelectorAll('.executor-select').forEach(select => {
+                    select.removeEventListener('change', handleSelectChange);
+                    select.removeEventListener('touchstart', handleTouchStart);
+                    select.removeEventListener('click', handleSelectClick);
+                    
+                    select.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    select.addEventListener('click', handleSelectClick);
+                    select.addEventListener('change', handleSelectChange);
+                });
+            }
+            
+            // Обработчики событий
+            function handleTouchStart(e) {
+                e.stopPropagation();
+            }
+            
+            function handleOpenClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const btn = e.currentTarget;
+                const onclickAttr = btn.getAttribute('onclick');
+                
+                if (onclickAttr) {
+                    try {
+                        const match = onclickAttr.match(/'([^']+)'/);
+                        if (match && match[1]) {
+                            window.open(convertGoogleDriveLink(match[1]) || match[1], '_blank');
+                        }
+                    } catch (error) {
+                        console.log('Ошибка открытия ссылки:', error);
+                    }
+                }
+            }
+            
+            function handleSubmitClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const btn = e.currentTarget;
+                if (btn.disabled) return;
+                
+                const card = btn.closest('.task-card');
+                if (!card) return;
+                
+                const select = card.querySelector('.executor-select');
+                if (!select || !select.value) {
+                    alert('Выберите исполнителя');
+                    return;
+                }
+                
+                const taskId = card.dataset.taskId || btn.dataset.taskId;
+                const rowIndex = card.dataset.rowIndex || btn.dataset.rowIndex;
+                
+                if (taskId && rowIndex) {
+                    completeTask(taskId, select.value, rowIndex);
+                }
+            }
+            
+            function handleCatalogOpenClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const btn = e.currentTarget;
+                const onclickAttr = btn.getAttribute('onclick');
+                
+                if (onclickAttr) {
+                    try {
+                        const match = onclickAttr.match(/'([^']+)'/);
+                        if (match && match[1]) {
+                            window.open(convertGoogleDriveLink(match[1]) || match[1], '_blank');
+                        }
+                    } catch (error) {
+                        console.log('Ошибка открытия ссылки:', error);
+                    }
+                }
+            }
+            
+            function handleSelectClick(e) {
+                e.stopPropagation();
+            }
+            
+            function handleSelectChange(e) {
+                e.stopPropagation();
+                const select = e.target;
+                const card = select.closest('.task-card');
+                if (card) {
+                    const submitBtn = card.querySelector('.submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !select.value;
+                    }
+                }
+            }
+            
+            // Добавляем CSS для улучшения кликабельности
+            const style = document.createElement('style');
+            style.textContent = `
+                .schema-button, .submit-btn, .open-button, .executor-select {
+                    position: relative;
+                    z-index: 9999 !important;
+                    cursor: pointer !important;
+                    pointer-events: auto !important;
+                    touch-action: manipulation !important;
+                    -webkit-tap-highlight-color: rgba(220,20,60,0.2) !important;
+                }
+                
+                .task-card:active {
+                    transform: none !important;
+                }
+                
+                button, a, select, .schema-button, .submit-btn, .open-button {
+                    pointer-events: auto !important;
+                    -webkit-user-select: none !important;
+                    user-select: none !important;
+                }
+                
+                .schema-button:active, .submit-btn:active:not(:disabled), 
+                .open-button:active {
+                    opacity: 0.7;
+                    transform: scale(0.98);
+                }
+                
+                .executor-select {
+                    background-color: #cccccc !important;
+                    border: 2px solid #cccccc !important;
+                    color: #666666 !important;
+                    -webkit-appearance: menulist !important;
+                    appearance: menulist !important;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Наблюдаем за изменениями в DOM и восстанавливаем обработчики
+            const observer = new MutationObserver(function(mutations) {
+                let needsUpdate = false;
+                
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        needsUpdate = true;
+                    }
+                });
+                
+                if (needsUpdate) {
+                    setTimeout(forceButtonHandlers, 50);
+                    setTimeout(forceButtonHandlers, 150);
+                }
+            });
+            
+            // Наблюдаем за контейнерами с карточками
+            const tab1 = document.getElementById('tab1');
+            const tab2 = document.getElementById('tab2');
+            
+            if (tab1) observer.observe(tab1, { childList: true, subtree: true });
+            if (tab2) observer.observe(tab2, { childList: true, subtree: true });
+            
+            // Запускаем восстановление при загрузке страницы
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(forceButtonHandlers, 100);
+                setTimeout(forceButtonHandlers, 500);
+                setTimeout(forceButtonHandlers, 1000);
+            });
+            
+            // Переопределяем функции пагинации для автоматического восстановления
+            const originalGoToPage = window.goToPage;
+            window.goToPage = function(type, pageNumber) {
+                originalGoToPage(type, pageNumber);
+                setTimeout(forceButtonHandlers, 100);
+            };
+            
+            const originalChangePage = window.changePage;
+            window.changePage = function(type, direction) {
+                originalChangePage(type, direction);
+                setTimeout(forceButtonHandlers, 100);
+            };
+            
+            console.log('Фикс кнопок установлен');
+        })();
     </script>
 </body>
 </html>
