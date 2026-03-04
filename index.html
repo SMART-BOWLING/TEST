@@ -1,268 +1,680 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BILLIARD PRO | ENTERPRISE CONTROL</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>SMB | Premium Dashboard</title>
+
+    <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --panel-bg: #1e293b;
-            --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.3);
-            --text-gold: #fbbf24;
-            --success: #10b981;
-            --danger: #f43f5e;
-            --border: #334155;
+            --primary: #0f172a;
+            --accent: #e11d48;
+            --accent-hover: #be123c;
+            --bg: #1f2937;
+            --white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --card-bg: #ffffff;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-dark);
-            color: #f8fafc;
-            font-family: 'Montserrat', sans-serif;
             margin: 0;
+            min-height: 100vh;
             display: flex;
-            height: 100vh;
-            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg);
+            font-family: 'Inter', sans-serif;
+            padding: 15px;
+            color: var(--text-dark);
         }
 
-        /* Боковая панель управления */
-        .sidebar {
-            width: 260px;
-            background: var(--panel-bg);
-            border-right: 1px solid var(--border);
+        .container {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* ===== AUTH BLOCKS ===== */
+        #login, #user-info, #access-denied {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            width: 100%;
+            max-width: 420px;
+            border: none;
+        }
+
+        #user-info {
+            display: none;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            padding: 12px 15px;
+            max-width: 100%;
+            background: var(--card-bg);
+            border: none;
+        }
+
+        #user-pic {
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border: none;
+        }
+
+        .user-details p { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        #user-email { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+
+        #logout-btn {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        #logout-btn:hover { background: var(--accent); color: white; }
+
+        /* ===== ACTION GRID ===== */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: visible;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            border: none;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .action-btn {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .action-btn i {
+            font-size: 26px;
+            color: #1f2937;
+            transition: var(--transition);
+        }
+
+        .action-btn span {
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .action-card:hover .action-btn i {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* ===== Bottom Sheet ===== */
+        .sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 100;
+        }
+
+        .sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 28px 28px 0 0;
+            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 200;
+            max-height: 70vh;
+            overflow-y: auto;
             padding: 20px;
         }
 
-        .logo {
-            font-weight: 700;
-            font-size: 20px;
-            color: var(--accent);
-            margin-bottom: 40px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .bottom-sheet.active {
+            transform: translateY(0);
         }
 
-        .nav-item {
-            padding: 12px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-bottom: 5px;
-            color: #94a3b8;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--accent);
-        }
-
-        /* Основная область */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            padding: 30px;
-        }
-
-        /* Заголовок и фильтры */
-        .header-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .date-picker-custom {
-            background: var(--panel-bg);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 10px 20px;
+        .sheet-handle {
+            width: 40px;
+            height: 5px;
+            background: var(--text-muted);
             border-radius: 10px;
-            font-family: 'Roboto Mono', monospace;
+            margin: 0 auto 20px auto;
+            opacity: 0.5;
         }
 
-        /* Сетка таймлайна */
-        .timeline-container {
-            background: var(--panel-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        th {
-            background: rgba(15, 23, 42, 0.5);
-            padding: 15px;
-            font-size: 12px;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-            color: #64748b;
-        }
-
-        td {
-            height: 50px;
-            border: 0.5px solid var(--border);
-            position: relative;
-            cursor: crosshair;
-        }
-
-        /* Стилизация времени */
-        .time-label {
-            width: 80px;
-            background: rgba(15, 23, 42, 0.8);
-            color: var(--accent);
-            font-family: 'Roboto Mono', monospace;
-            font-weight: bold;
+        .sheet-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-dark);
             text-align: center;
         }
 
-        /* Оживление ячеек */
-        td:hover {
-            background: rgba(255,255,255,0.05);
-        }
-
-        /* Пример активной брони */
-        .booking-slot {
-            position: absolute;
-            inset: 4px;
-            background: linear-gradient(90deg, #0369a1, #0ea5e9);
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 10px;
-            font-weight: 600;
+        .sheet-clubs-list {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 4px 12px var(--accent-glow);
-            border-left: 3px solid var(--text-gold);
-            cursor: pointer;
-            z-index: 10;
+            gap: 12px;
+            margin-bottom: 20px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
         }
 
-        .booking-slot:hover {
-            transform: scale(1.02);
-            filter: brightness(1.2);
+        .club-sheet-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #e2e8f0;
+            transform: none !important;
         }
 
-        /* Кнопка действия */
-        .btn-primary {
-            background: var(--accent);
-            color: #0f172a;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
+        .club-sheet-btn:hover {
+            background: #1f2937;
+            color: white;
+            border-color: #1f2937;
+            box-shadow: 0 8px 15px -6px rgba(0, 0, 0, 0.3);
+            transform: none !important;
+        }
+
+        .club-sheet-btn i {
+            color: #1f2937;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .club-sheet-btn:hover i {
+            color: white;
+        }
+
+        .close-sheet-btn {
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+            padding: 16px;
+            background: none;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
             font-weight: 700;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 0 20px var(--accent-glow);
+            transition: var(--transition);
+            margin-top: 10px;
         }
 
-        .btn-primary:hover {
-            background: white;
-            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+        .close-sheet-btn:hover {
+            background: #f1f5f9;
+            border-color: var(--text-muted);
         }
 
-        /* Скроллбар */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+        }
+
+        .action-card.pulse {
+            animation: pulse 1s ease;
+        }
+
+        .disabled { 
+            opacity: 0.4; 
+            pointer-events: none; 
+            filter: grayscale(1);
+        }
+
+        .disabled .action-btn i {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .action-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 12px;
+            }
+            .action-btn { padding: 10px; }
+            .action-btn i { font-size: 24px; }
+            .action-btn span { font-size: 10px; }
+            
+            .sheet-clubs-list {
+                max-width: 100%;
+            }
+            .close-sheet-btn {
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="logo">
-            <div style="width:12px; height:12px; background:var(--accent); border-radius:50%"></div>
-            BILLIARD PRO
+<div class="container">
+    <div id="login">
+        <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+            <i class="fas fa-shield-halved" style="font-size: 24px; color: var(--accent);"></i>
         </div>
-        <nav>
-            <div class="nav-item active">📅 Расписание</div>
-            <div class="nav-item">🗺️ Карта залов</div>
-            <div class="nav-item">👤 Клиенты</div>
-            <div class="nav-item">📊 Отчеты</div>
-            <div class="nav-item">⚙️ Настройки</div>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <header class="header-actions">
-            <div>
-                <h1 style="margin:0; font-size: 24px;">Панель управления</h1>
-                <p style="color: #64748b; margin: 5px 0 0 0;">Клуб: "Lucky Strike" • Смена: Иван Иванов</p>
-            </div>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <input type="date" class="date-picker-custom" id="mainDate">
-                <button class="btn-primary">+ НОВАЯ БРОНЬ</button>
-            </div>
-        </header>
-
-        <div class="timeline-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:80px">Время</th>
-                        <th>Стол 1</th>
-                        <th>Стол 2</th>
-                        <th>Стол 3</th>
-                        <th>Стол 4</th>
-                        <th>Стол 5</th>
-                        <th>Стол 6</th>
-                        <th>Стол 7</th>
-                        <th>Стол 8</th>
-                    </tr>
-                </thead>
-                <tbody id="gridBody">
-                    </tbody>
-            </table>
+        <h2 style="margin: 0 0 5px; font-weight: 800; font-size: 20px;">SMB Dashboard</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Sign in to access</p>
+        <div id="g_id_onload" 
+             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
+             data-callback="handleCredentialResponse" 
+             data-auto_prompt="false"
+             data-auto_select="false">
         </div>
-    </main>
+        <div class="g_id_signin" 
+             data-type="standard" 
+             data-shape="pill" 
+             data-theme="outline" 
+             data-text="signin_with" 
+             data-size="large" 
+             data-logo_alignment="left">
+        </div>
+    </div>
 
-    <script>
-        const gridBody = document.getElementById('gridBody');
-        const startH = 11;
-        const endH = 23;
+    <div id="user-info">
+        <img id="user-pic" src="" alt="Profile">
+        <div class="user-details" style="flex-grow:1">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+        <button id="logout-btn" onclick="signOut()"><i class="fas fa-power-off"></i></button>
+    </div>
 
-        // Генерация сетки
-        for(let h = startH; h <= endH; h++) {
-            [0, 30].forEach(m => {
-                const row = document.createElement('tr');
-                const timeCell = document.createElement('td');
-                timeCell.className = 'time-label';
-                timeCell.textContent = `${h}:${m === 0 ? '00' : '30'}`;
-                row.appendChild(timeCell);
+    <div class="main-content" id="main-content" style="display:none; width: 100%;">
+        <div class="action-grid">
+            <div class="action-card" id="manuals-btn">
+                <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="action-btn">
+                    <i class="fas fa-book-open"></i>
+                    <span>Manuals</span>
+                </a>
+            </div>
+            <div class="action-card" id="store-btn">
+                <a href="https://smart-bowling.github.io/PARTS-STORE/" class="action-btn">
+                    <i class="fas fa-bag-shopping"></i>
+                    <span>Store</span>
+                </a>
+            </div>
+            <div class="action-card" id="card-parts">
+                <button class="action-btn" onclick="handleAction('parts', this)">
+                    <i class="fas fa-gears"></i>
+                    <span>Parts</span>
+                </button>
+            </div>
+            <div class="action-card" id="card-maintenance">
+                <button class="action-btn" onclick="handleAction('maintenance', this)">
+                    <i class="fas fa-screwdriver-wrench"></i>
+                    <span>Maintenance</span>
+                </button>
+            </div>
+            <div class="action-card" id="card-fps">
+                <button class="action-btn" onclick="handleAction('fps', this)">
+                    <i class="fas fa-chart-line"></i>
+                    <span>FPS</span>
+                </button>
+            </div>
+            <div class="action-card" id="card-analysis">
+                <button class="action-btn" onclick="handleAction('analysis', this)">
+                    <i class="fas fa-bowling-ball"></i>
+                    <span>Analysis</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                for(let s = 1; s <= 8; s++) {
-                    const cell = document.createElement('td');
-                    
-                    // Пример вставки брони для теста (на 14:00 стол 3)
-                    if(h === 14 && m === 0 && s === 3) {
-                        cell.innerHTML = `
-                            <div class="booking-slot">
-                                <div style="color:var(--text-gold)">МАРК А.</div>
-                                <div style="opacity:0.8">+380 99...</div>
-                            </div>
-                        `;
-                    }
-                    row.appendChild(cell);
-                }
-                gridBody.appendChild(row);
-            });
+<!-- Bottom Sheet для выбора ресурса -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="bottom-sheet" id="clubSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Выберите ресурс</div>
+    <div class="sheet-clubs-list" id="sheetClubsList"></div>
+    <button class="close-sheet-btn" onclick="closeClubSheet()">Закрыть</button>
+</div>
+
+<script>
+// Конфигурация
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxk1D-sLeaX3RBXd8s07h6psShgV7QY63YtycxF6nh4AEDasqc0UmonBC9UfFVEPG2C9Q/exec'; // ЗАМЕНИТЕ НА ВАШ URL!
+const GOOGLE_CLIENT_ID = '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com';
+
+// Глобальные переменные
+let currentActionType = null;
+let userLinks = []; // Ссылки полученные из таблицы для текущего пользователя
+
+// Предопределенные соответствия для ссылок (можно расширить)
+const linksMap = {
+    parts: { keywords: ['parts', 'kh', 'bb', 'skymall'] },
+    maintenance: { keywords: ['smb', 'ls', 'kh', 'bb', 'skymall'] },
+    fps: { keywords: ['ps-stop', 'fps', 'kh', 'bb', 'skymall'] },
+    analysis: { keywords: ['analysis', 'bb', 'sm'] }
+};
+
+// Обработка ответа Google
+function handleCredentialResponse(response) {
+    console.log("Google response received");
+    try {
+        const payload = parseJwt(response.credential);
+        console.log("User email:", payload.email);
+        const email = payload.email.toLowerCase().trim();
+        
+        // Проверяем email через Google Apps Script
+        checkEmailAccess(email, payload);
+        
+    } catch (e) {
+        console.error("Error parsing Google response:", e);
+        alert('Ошибка аутентификации');
+    }
+}
+
+// Проверка email через скрипт
+function checkEmailAccess(email, payload) {
+    showLoading(true);
+    
+    // Используем JSONP для обхода CORS
+    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(document.getElementById('jsonpScript'));
+        showLoading(false);
+        
+        console.log('Response from server:', data);
+        
+        if (data.access) {
+            // Сохраняем ссылки пользователя
+            userLinks = data.links || [];
+            
+            // Выполняем вход
+            loginUser(payload, data.links);
+        } else {
+            alert('Доступ запрещен: ' + (data.message || 'Ваш email не авторизован'));
+            console.log('Unauthorized email:', email);
         }
+    };
+    
+    // Создаем скрипт для JSONP запроса
+    const script = document.createElement('script');
+    script.id = 'jsonpScript';
+    script.src = `${SCRIPT_URL}?action=checkEmail&email=${encodeURIComponent(email)}&callback=${callbackName}`;
+    document.body.appendChild(script);
+    
+    // Таймаут на случай ошибки
+    setTimeout(() => {
+        if (window[callbackName]) {
+            window[callbackName]({ access: false, message: 'Таймаут запроса' });
+        }
+    }, 10000);
+}
 
-        // Установка текущей даты
-        document.getElementById('mainDate').valueAsDate = new Date();
-    </script>
+// Показать/скрыть индикатор загрузки
+function showLoading(show) {
+    // Можно добавить индикатор загрузки
+    console.log(show ? 'Loading...' : 'Loading finished');
+}
+
+// Вход пользователя
+function loginUser(payload, links) {
+    console.log("Logging in user:", payload.email);
+    
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('main-content').style.display = 'block';
+    
+    document.getElementById('user-pic').src = payload.picture;
+    document.getElementById('user-name').textContent = payload.name;
+    document.getElementById('user-email').textContent = payload.email;
+    
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userEmail', payload.email.toLowerCase());
+    localStorage.setItem('userName', payload.name);
+    localStorage.setItem('userPic', payload.picture);
+    
+    // Применяем доступ на основе ссылок
+    applyPermissionsFromLinks(links);
+}
+
+// Применение разрешений на основе ссылок из таблицы
+function applyPermissionsFromLinks(links) {
+    // По умолчанию открываем все основные разделы
+    document.getElementById('manuals-btn').classList.remove('disabled');
+    document.getElementById('store-btn').classList.remove('disabled');
+    
+    // Анализируем ссылки и активируем соответствующие карточки
+    const hasParts = links.some(link => 
+        link.url.toLowerCase().includes('parts') || 
+        link.url.toLowerCase().includes('kh') || 
+        link.url.toLowerCase().includes('bb')
+    );
+    
+    const hasMaintenance = links.some(link => 
+        link.url.toLowerCase().includes('smb') || 
+        link.url.toLowerCase().includes('ls')
+    );
+    
+    const hasFps = links.some(link => 
+        link.url.toLowerCase().includes('ps-stop') || 
+        link.url.toLowerCase().includes('fps')
+    );
+    
+    const hasAnalysis = links.some(link => 
+        link.url.toLowerCase().includes('analysis')
+    );
+    
+    document.getElementById('card-parts').classList.toggle('disabled', !hasParts);
+    document.getElementById('card-maintenance').classList.toggle('disabled', !hasMaintenance);
+    document.getElementById('card-fps').classList.toggle('disabled', !hasFps);
+    document.getElementById('card-analysis').classList.toggle('disabled', !hasAnalysis);
+}
+
+// Обработка действия (нажатие на карточку)
+function handleAction(type, buttonElement) {
+    // Фильтруем ссылки по типу
+    const availableLinks = userLinks.filter(link => {
+        const url = link.url.toLowerCase();
+        switch(type) {
+            case 'parts':
+                return url.includes('parts') || url.includes('kh') || url.includes('bb') || url.includes('skymall');
+            case 'maintenance':
+                return url.includes('smb') || url.includes('ls') || url.includes('kh') || url.includes('bb') || url.includes('skymall');
+            case 'fps':
+                return url.includes('ps-stop') || url.includes('fps') || url.includes('kh') || url.includes('bb') || url.includes('skymall');
+            case 'analysis':
+                return url.includes('analysis') || url.includes('bb') || url.includes('sm');
+            default:
+                return false;
+        }
+    });
+    
+    if (availableLinks.length === 0) {
+        alert('Нет доступных ресурсов для этого раздела');
+        return;
+    }
+    
+    if (availableLinks.length === 1) {
+        // Если только один доступный ресурс - переходим сразу
+        window.location.href = availableLinks[0].url;
+    } else if (availableLinks.length > 1) {
+        // Если несколько - показываем Bottom Sheet
+        const card = buttonElement.closest('.action-card');
+        
+        // Добавляем эффект пульсации
+        card.classList.add('pulse');
+        setTimeout(() => card.classList.remove('pulse'), 1000);
+        
+        // Заполняем и показываем Bottom Sheet
+        showClubSheet(type, availableLinks);
+    }
+}
+
+// Показать Bottom Sheet
+function showClubSheet(type, clubs) {
+    const sheet = document.getElementById('clubSheet');
+    const overlay = document.getElementById('sheetOverlay');
+    const title = document.getElementById('sheetTitle');
+    const listContainer = document.getElementById('sheetClubsList');
+    
+    // Устанавливаем заголовок
+    let typeName = {
+        parts: 'Запчасти',
+        maintenance: 'Обслуживание',
+        fps: 'FPS',
+        analysis: 'Аналитика'
+    }[type] || type;
+    
+    title.textContent = `Выберите ресурс: ${typeName}`;
+    
+    // Создаем кнопки для каждого ресурса
+    listContainer.innerHTML = '';
+    clubs.forEach((club, index) => {
+        const btn = document.createElement('a');
+        btn.href = club.url;
+        btn.className = 'club-sheet-btn';
+        btn.innerHTML = `${club.name || `Ресурс ${index + 1}`} <i class="fas fa-arrow-right"></i>`;
+        listContainer.appendChild(btn);
+    });
+    
+    // Показываем sheet и overlay
+    sheet.classList.add('active');
+    overlay.classList.add('active');
+    
+    // Блокируем прокрутку основного контента
+    document.body.style.overflow = 'hidden';
+}
+
+// Закрыть Bottom Sheet
+function closeClubSheet() {
+    const sheet = document.getElementById('clubSheet');
+    const overlay = document.getElementById('sheetOverlay');
+    
+    sheet.classList.remove('active');
+    overlay.classList.remove('active');
+    
+    // Возвращаем прокрутку
+    document.body.style.overflow = '';
+}
+
+// Парсинг JWT токена
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// Выход из системы
+function signOut() { 
+    console.log("Signing out");
+    localStorage.clear(); 
+    location.reload(); 
+}
+
+// Инициализация при загрузке
+window.onload = function() {
+    console.log("Page loaded");
+    
+    // Проверяем сохраненную сессию
+    if (localStorage.getItem('userLoggedIn') === 'true') {
+        const email = localStorage.getItem('userEmail');
+        const name = localStorage.getItem('userName');
+        const pic = localStorage.getItem('userPic');
+        
+        console.log("Found stored session for:", email);
+        
+        // Для восстановления сессии нужно снова проверить email
+        // Создаем payload из сохраненных данных
+        const payload = {
+            email: email,
+            name: name,
+            picture: pic
+        };
+        
+        // Проверяем email заново
+        checkEmailAccess(email, payload);
+    }
+};
+
+// Закрытие по клику на overlay
+document.getElementById('sheetOverlay').addEventListener('click', closeClubSheet);
+</script>
 </body>
 </html>
