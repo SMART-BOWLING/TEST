@@ -1,627 +1,2245 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>SMB | Premium Dashboard</title>
-
-    <link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/QNkbRTbS/1.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>ДЕТАЛИ KH</title>
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Identity Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <style>
+    /* Стили для выпадающего списка KH */
+    .site-name-dropdown {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
     
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      color: white;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    /* Базовые стили для надписи KH */
+    .site-name-text {
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    
+    .dropdown-sites {
+      display: none;
+      position: absolute;
+      top: calc(100% + 50px); /* Опускаем ниже шапки */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      border: 2px solid #444;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 1001;
+      min-width: 300px;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .dropdown-sites a {
+      display: block;
+      padding: 20px 100px;
+      font-size: 40px;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      transition: background 0.3s;
+      text-align: center;
+      white-space: nowrap; /* 🚫 запрещаем перенос */
+    }
+    
+    .dropdown-sites a:hover {
+      background-color: #374151;
+    }
 
-    <style>
-        :root {
-            --primary: #0f172a;
-            --accent: #e11d48;
-            --accent-hover: #be123c;
-            --bg: #1f2937;
-            --white: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-            --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            --card-bg: #ffffff;
+    header {
+      background-color: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 30px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      user-select: none;
+      z-index: 1000;
+      height: 140px;
+    }
+
+    .logo img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 0;
+    }
+
+    .menu-button {
+      width: 70px;
+      height: 50px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-button div {
+      height: 8px;
+      background-color: white;
+      border-radius: 4px;
+    }
+
+    .dropdown {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 170px;
+      right: 30px;
+      background-color: #1f2937;
+      border: 2px solid #444;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 9999;
+      min-width: 350px;
+    }
+
+    .dropdown a {
+      padding: 25px 30px;
+      font-size: 34px;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    .dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .icon-space {
+      margin-right: 16px;
+      width: 40px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    /* Стили для авторизации - ПОЛНОСТЬЮ СОХРАНЯЕМ ВИЗУАЛ */
+    #login {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+    
+    #login h2 {
+      color: #1a2f40;
+      margin-bottom: 20px;
+    }
+    
+    #content {
+      display: none;
+      width: 100%;
+      margin-top: 170px;
+      max-width: 1300px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+
+    /* ИСПРАВЛЕНО: Убраны зазоры между кнопками */
+    .top-controls {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 8px;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto 12px;
+      align-items: center;
+      padding: 0 4px 8px;
+      box-sizing: border-box;
+    }
+
+    .top-controls .btn-top {
+      height: 56px;
+      font-size: 18px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 0 10px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      gap: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .top-controls button.btn-top {
+      background: linear-gradient(to bottom, #1a2f40, #0d1a26);
+      color: #fff;
+    }
+
+    .top-controls button.btn-top:hover {
+      background: linear-gradient(to bottom, #223a51, #0f2233);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .select-wrapper {
+      position: relative;
+      flex: 1;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      min-width: 0;
+    }
+
+    .select-wrapper select {
+      width: 100%;
+      height: 100%;
+      padding: 0 45px 0 16px;
+      border: none;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: transparent;
+      font-weight: 600;
+      font-size: 18px;
+      cursor: pointer;
+      appearance: none;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .select-wrapper::before {
+      content: "\f0b0 Фильтр";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 90%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 18px;
+      font-family: "Font Awesome 6 Free", Arial, sans-serif;
+      pointer-events: none;
+      gap: 8px;
+    }
+
+    .select-wrapper::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      transform: translateY(-50%);
+      color: #fff;
+      pointer-events: none;
+      transition: transform 0.3s ease;
+    }
+
+    .select-wrapper:hover::after {
+      color: #ffccd5;
+    }
+
+    .select-wrapper.active::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .select-wrapper select option {
+      padding: 12px 16px;
+      background: #1a2f40;
+      color: #fff;
+      transition: background 0.2s ease;
+    }
+
+    .select-wrapper select option:hover {
+      background: #223a51 !important;
+    }
+
+    .select-wrapper select option:checked {
+      background: #dc143c;
+      color: white;
+      font-weight: bold;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: #f0f2f5;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+
+    .media-block {
+      position: relative;
+      width: 100%;
+      padding-top: 75%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .media-block img,
+    .media-block iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+      z-index: 0;
+    }
+
+    .media-block .img-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 1;
+    }
+
+    .media-block .icon {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 28px;
+      color: #fff;
+      z-index: 2;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .media-block .icon:hover {
+      background: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .remove {
+      top: 8px;
+      right: 8px;
+    }
+
+    /* Стили для названия детали */
+    .part-name-container {
+      display: flex;
+      align-items: center;
+      margin: 12px 0;
+      padding: 0 12px;
+      background: #ffffff;
+      border-radius: 16px;
+      min-height: 60px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .part-name-container.editing {
+      padding: 0 8px;
+    }
+
+    .part-name-text {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: left;
+      padding: 16px 0;
+      cursor: default;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .part-name-input {
+      flex: 1;
+      height: 52px;
+      border: 2px solid #dc143c;
+      border-radius: 12px;
+      outline: none;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 0 12px;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .part-name-edit-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-edit-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
+    }
+
+    .part-name-save-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a3648;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-save-btn:hover {
+      background: #34ce57;
+      transform: scale(1.05);
+    }
+
+    .part-name-cancel-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-cancel-btn:hover {
+      background: #5a6268;
+      transform: scale(1.05);
+    }
+
+    /* ИСПРАВЛЕНО: Контролы карточки - компактнее */
+    .controls {
+      display: flex;
+      flex-wrap: nowrap; /* Запрещаем перенос */
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 6px; /* Уменьшаем зазор */
+      padding: 8px 0;
+      overflow: hidden; /* Скрываем переполнение */
+    }
+
+    /* Стили для подложки номера детали (pill) */
+    .pill {
+      background: #fff;
+      border-radius: 20px;
+      padding: 0 15px;
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 120px;
+    }
+
+    .controls input {
+      width: 50px; /* Уменьшаем ширину */
+      height: 50px; /* Уменьшаем высоту */
+      padding: 0 8px; /* Уменьшаем отступы */
+      border: none;
+      border-radius: 12px;
+      text-align: center;
+      background: #fff;
+      font-size: 18px; /* Уменьшаем шрифт */
+      font-weight: bold;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      min-width: 50px;
+    }
+
+    .controls input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
+    }
+
+    .btn {
+      height: 50px; /* Уменьшаем высоту */
+      padding: 0 15px; /* Уменьшаем отступы */
+      border: none;
+      border-radius: 12px;
+      font-size: 16px; /* Уменьшаем шрифт */
+      font-weight: bold;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px; /* Уменьшаем зазор */
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-add {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: #fff;
+      min-width: 120px; /* Уменьшаем минимальную ширину */
+    }
+
+    .btn-add:hover {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+    }
+
+    .btn-info {
+      background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+      color: #000;
+      min-width: 50px; /* Уменьшаем минимальную ширину */
+      padding: 0 10px; /* Уменьшаем отступы */
+      justify-content: center;
+    }
+
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+    }
+
+    .btn-take {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: #fff;
+      min-width: 120px; /* Уменьшаем минимальную ширину */
+    }
+
+    .btn-take:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 80vw;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: auto;
+      z-index: 10000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalAppear {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 40px;
+      font-weight: bold;
+      color: #dc143c;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1a2f40;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    .modal pre {
+      white-space: pre-wrap;
+      font-size: 26px;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #dc143c;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 50px 0;
+      gap: 10px;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 1300px;
+      margin: 50px auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    .pagination button {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 18px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      min-width: 140px;
+      height: 60px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .pagination button:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .pagination button i {
+      font-size: 24px;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .page-numbers button {
+      min-width: 40px;
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border-radius: 16px;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button {
+      margin: 0 6px;
+    }
+
+    .page-numbers button:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .page-numbers button.active {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      transform: scale(1.1);
+    }
+
+    .no-data {
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #666;
+    }
+
+    /* Стили для индикатора загрузки */
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      display: none;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Для мобильных устройств (max-width: 1024px) */
+    @media (max-width: 1024px) {
+      /* РАЗМЕР ШРИФТА ДЛЯ МОБИЛЬНЫХ - МОЖНО МЕНЯТЬ */
+      .site-name-text {
+        font-size: 50px; /* ← ИЗМЕНИ ЭТО ЧИСЛО ДЛЯ МОБИЛЬНЫХ */
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        line-height: 1.2;
+      }
+      
+      /* ИСПРАВЛЕНО: Выравнивание всей шапки для мобильных */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 30px;
+        height: 140px;
+      }
+      
+      .site-name {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+      
+      body {
+        padding: 20px;
+      }
+      
+      .cards.desktop-layout,
+      .card.desktop-layout {
+        width: 100% !important;
+        max-width: 900px !important;
+        margin: 0 auto !important;
+      }
+      
+      .cards.desktop-layout {
+        flex-direction: column !important;
+      }
+      
+      /* Контролы карточки для мобильных */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        gap: 8px;
+        padding: 10px 0;
+      }
+      
+      /* Подложка номера детали для мобильных - делаем шире */
+      .pill {
+        background: #fff;
+        border-radius: 20px;
+        padding: 0 20px; /* Увеличиваем внутренние отступы */
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-width: 100px; /* Минимальная ширина больше */
+        max-width: 150px; /* Максимальная ширина больше */
+      }
+      
+      .controls input {
+        width: 60px;
+        height: 60px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 16px;
+        text-align: center;
+        background: #fff;
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+      }
+      
+      .btn {
+        height: 60px;
+        padding: 0 24px;
+        border: none;
+        border-radius: 16px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .btn-add {
+        background: linear-gradient(to bottom, #1f2937, #0d1520);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      .btn-info {
+        background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+        color: #000;
+        min-width: 60px;
+        justify-content: center;
+      }
+      
+      .btn-take {
+        background: linear-gradient(to bottom, #dc143c, #b01030);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      /* Часть названия детали */
+      .part-name-container {
+        display: flex;
+        align-items: center;
+        margin: 12px 0;
+        padding: 0 12px;
+        background: #ffffff;
+        border-radius: 16px;
+        min-height: 60px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .part-name-text {
+        flex: 1;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: left;
+        padding: 16px 0;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        color: #fff;
+        margin-left: 8px;
+      }
+      
+      .part-name-input {
+        flex: 1;
+        height: 52px;
+        border: 2px solid #dc143c;
+        border-radius: 12px;
+        outline: none;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 0 12px;
+      }
+      
+      /* Верхние контролы для мобильных */
+      .top-controls {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 8px;
+        max-width: 900px;
+        margin: 0 auto 20px;
+        align-items: center;
+        padding-bottom: 8px;
+        box-sizing: border-box;
+        overflow-x: auto;
+      }
+      
+      .top-controls .btn-top {
+        height: 56px;
+        font-size: 18px;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-grow: 1;
+        min-width: 90px;
+        max-width: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-family: inherit;
+        padding: 0 16px;
+        gap: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .select-wrapper {
+        position: relative;
+        min-width: 120px;
+        max-width: 150px;
+        height: 56px;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        flex-shrink: 0;
+      }
+      
+      /* Иконка удаления */
+      .media-block .icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 28px;
+        color: #fff;
+        z-index: 2;
+      }
+      
+      /* Пагинация для мобильных */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 50px 0;
+        gap: 10px;
+        flex-wrap: nowrap;
+        width: 100%;
+        max-width: 900px;
+        margin: 50px auto;
+      }
+      
+      .pagination button {
+        padding: 18px 30px;
+        font-size: 20px;
+        min-width: 140px;
+        height: 60px;
+      }
+      
+      .page-numbers button {
+        min-width: 40px;
+        height: 60px;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+      
+      /* Модальное окно для мобильных */
+      .modal {
+        padding: 40px;
+        width: 80vw;
+      }
+      
+      .modal pre {
+        font-size: 26px;
+        padding: 20px;
+      }
+      
+      .modal-close {
+        font-size: 40px;
+      }
+    }
+    
+    /* Стили для десктопной версии (1025px и выше) */
+    @media (min-width: 1025px) {
+      /* Уменьшаем шапку до минимума */
+      header {
+        height: 75px;
+        padding: 4px 8px;
+      }
+      
+      .logo img {
+        width: 50px;
+        height: 50px;
+      }
+      
+      /* РАЗМЕР ШРИФТА ДЛЯ ПК - МОЖНО МЕНЯТЬ */
+      .site-name-text {
+        font-size: 32px; /* ← ИЗМЕНИ ЭТО ЧИСЛО ДЛЯ ПК */
+        margin-bottom: 0;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        font-family: 'Arial', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      
+      .menu-button {
+        width: 40px;
+        height: 28px;
+      }
+      
+      .menu-button div {
+        height: 3px;
+        border-radius: 2px;
+      }
+      
+      /* Корректируем положение выпадающих меню */
+      .dropdown {
+        top: 95px;
+        right: 8px;
+        min-width: 220px;
+        border-radius: 8px;
+        border-width: 1px;
+      }
+      
+      .dropdown a {
+        padding: 12px 15px;
+        font-size: 18px;
+      }
+      
+      .dropdown-sites {
+        min-width: 180px;
+        border-radius: 8px;
+        top: calc(100% + 20px);
+        border-width: 1px;
+      }
+      
+      .dropdown-sites a {
+        padding: 8px 40px;
+        font-size: 20px;
+      }
+      
+      /* Корректируем отступ контента */
+      #content {
+        margin-top: 95px;
+      }
+      
+      /* ИСПРАВЛЕНО: Уменьшаем боковые отступы на body */
+      body {
+        padding: 8px 4px;
+      }
+      
+      /* ИСПРАВЛЕНО: Верхние контролы - равномерное распределение */
+      .top-controls {
+        max-width: 1300px;
+        margin-bottom: 8px;
+        gap: 6px;
+        padding: 0 4px 8px;
+      }
+      
+      .top-controls .btn-top {
+        height: 34px;
+        font-size: 12px;
+        padding: 0 8px;
+        border-radius: 8px;
+        gap: 4px;
+      }
+      
+      .select-wrapper {
+        height: 34px;
+        min-width: 0;
+        max-width: none;
+        border-radius: 8px;
+      }
+      
+      .select-wrapper::before {
+        font-size: 12px;
+        gap: 4px;
+      }
+      
+      .select-wrapper select {
+        font-size: 12px;
+        padding: 0 25px 0 8px;
+      }
+      
+      .select-wrapper::after {
+        right: 8px;
+        font-size: 12px;
+      }
+      
+      /* ИСПРАВЛЕНО: Десктопный layout для карточек */
+      .cards.desktop-layout {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 1300px;
+      }
+      
+      /* Делаем карточки шириной ровно под 3 в ряд */
+      .card.desktop-layout {
+        width: calc((100% - 16px) / 3) !important;
+        max-width: none !important;
+        margin: 0 !important;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        min-height: 320px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      
+      .media-block {
+        border-radius: 6px;
+        padding-top: 65%;
+      }
+      
+      .media-block .icon {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        border-radius: 3px;
+      }
+      
+      .remove {
+        top: 4px;
+        right: 4px;
+      }
+      
+      .part-name-container {
+        min-height: 34px;
+        margin: 6px 0;
+        padding: 0 6px;
+        border-radius: 8px;
+      }
+      
+      .part-name-text {
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      
+      .part-name-input {
+        height: 30px;
+        font-size: 13px;
+        border-radius: 6px;
+        padding: 0 6px;
+        border-width: 1px;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        margin-left: 4px;
+        border-radius: 4px;
+      }
+      
+      /* ИСПРАВЛЕНО: Делаем контролы карточки компактнее для ПК */
+      .controls {
+        margin-top: 8px;
+        gap: 4px;
+        padding: 6px 0;
+        flex-wrap: nowrap;
+      }
+      
+      .pill {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        border-radius: 12px;
+        max-width: 100px;
+        min-width: 60px;
+      }
+      
+      .controls input {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+        border-radius: 6px;
+        padding: 0 2px;
+        min-width: 30px;
+      }
+      
+      .btn {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        min-width: 70px;
+        border-radius: 6px;
+        gap: 3px;
+      }
+      
+      .btn-info {
+        min-width: 30px;
+        padding: 0 4px;
+      }
+      
+      /* Иконки в кнопках */
+      .btn i {
+        font-size: 10px;
+      }
+      
+      /* Скрываем текст в кнопках на очень узких карточках */
+      @media (min-width: 1025px) and (max-width: 1150px) {
+        .btn-add span,
+        .btn-take span {
+          display: none;
         }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--bg);
-            font-family: 'Inter', sans-serif;
-            padding: 15px;
-            color: var(--text-dark);
+        
+        .btn-add,
+        .btn-take {
+          min-width: 40px;
+          padding: 0 6px;
+          justify-content: center;
         }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            width: 100%;
-            max-width: 800px;
+        
+        .btn-add i,
+        .btn-take i {
+          margin: 0;
         }
-
-        /* ===== AUTH BLOCKS ===== */
-        #login, #user-info, #access-denied {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            width: 100%;
-            max-width: 420px;
-            border: none;
-        }
-
-        #user-info {
-            display: none;
-            flex-direction: row;
-            align-items: center;
-            gap: 12px;
-            text-align: left;
-            padding: 12px 15px;
-            max-width: 100%;
-            background: var(--card-bg);
-            border: none;
-        }
-
-        #user-pic {
-            border-radius: 12px;
-            width: 44px;
-            height: 44px;
-            object-fit: cover;
-            border: none;
-        }
-
-        .user-details p { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-dark); }
-        #user-email { font-weight: 400; color: var(--text-muted); font-size: 12px; }
-
-        #logout-btn {
-            background: #f1f5f9;
-            color: var(--text-muted);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-
-        #logout-btn:hover { background: var(--accent); color: white; }
-
-        /* ===== ACTION GRID ===== */
-        .action-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            width: 100%;
-        }
-
-        .action-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: visible;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            position: relative;
-            border: none;
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .action-btn {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            text-decoration: none;
-            color: inherit;
-            border-radius: 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .action-btn i {
-            font-size: 26px;
-            color: #1f2937;
-            transition: var(--transition);
-        }
-
-        .action-btn span {
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
-            color: var(--text-dark);
-        }
-
-        .action-card:hover .action-btn i {
-            color: var(--accent);
-            transform: scale(1.1);
-        }
-
-        /* ===== Bottom Sheet ===== */
-        .sheet-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            z-index: 100;
-        }
-
-        .sheet-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .bottom-sheet {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: var(--card-bg);
-            border-radius: 28px 28px 0 0;
-            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3);
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 200;
-            max-height: 70vh;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .bottom-sheet.active {
-            transform: translateY(0);
-        }
-
-        .sheet-handle {
-            width: 40px;
-            height: 5px;
-            background: var(--text-muted);
-            border-radius: 10px;
-            margin: 0 auto 20px auto;
-            opacity: 0.5;
-        }
-
-        .sheet-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--text-dark);
-            text-align: center;
-        }
-
-        /* Контейнер для списка клубов */
-        .sheet-clubs-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-            /* Ограничиваем максимальную ширину для ПК */
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-        }
-
-        /* Исправленные стили для кнопок выбора клуба */
-        .club-sheet-btn {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 20px;
-            background: #f8fafc;
-            border-radius: 16px;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 600;
-            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid #e2e8f0;
-            /* Убираем transform, который вызывал прыжки */
-            transform: none !important;
-        }
-
-        .club-sheet-btn:hover {
-            background: #1f2937;
-            color: white;
-            border-color: #1f2937;
-            /* Используем box-shadow для эффекта приподнятости, без transform */
-            box-shadow: 0 8px 15px -6px rgba(0, 0, 0, 0.3);
-            transform: none !important;
-        }
-
-        .club-sheet-btn i {
-            color: #1f2937;
-            font-size: 14px;
-            transition: color 0.2s ease;
-        }
-
-        .club-sheet-btn:hover i {
-            color: white;
-        }
-
-        .close-sheet-btn {
-            width: 100%;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
-            padding: 16px;
-            background: none;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            font-weight: 700;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: var(--transition);
-            margin-top: 10px;
-        }
-
-        .close-sheet-btn:hover {
-            background: #f1f5f9;
-            border-color: var(--text-muted);
-        }
-
-        /* Эффект пульсации при активации */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(225, 29, 72, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
-        }
-
-        .action-card.pulse {
-            animation: pulse 1s ease;
-        }
-
-        .disabled { 
-            opacity: 0.4; 
-            pointer-events: none; 
-            filter: grayscale(1);
-        }
-
-        .disabled .action-btn i {
-            color: var(--text-muted);
-        }
-
-        /* Мобильная адаптация */
-        @media (max-width: 768px) {
-            .action-grid {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 12px;
-            }
-            .action-btn { padding: 10px; }
-            .action-btn i { font-size: 24px; }
-            .action-btn span { font-size: 10px; }
-            
-            .sheet-clubs-list {
-                max-width: 100%;
-            }
-            .close-sheet-btn {
-                max-width: 100%;
-            }
-        }
-    </style>
+      }
+      
+      /* Уменьшаем пагинацию */
+      .pagination {
+        max-width: 1300px;
+        margin: 20px auto;
+        gap: 4px;
+      }
+      
+      .pagination button {
+        padding: 8px 12px;
+        font-size: 13px;
+        height: 36px;
+        min-width: 90px;
+        border-radius: 6px;
+        gap: 4px;
+      }
+      
+      .page-numbers button {
+        height: 36px;
+        font-size: 13px;
+        padding: 0 12px;
+        min-width: 24px;
+        border-radius: 8px;
+      }
+      
+      .pagination button i {
+        font-size: 14px;
+      }
+      
+      /* Уменьшаем модальное окно */
+      .modal {
+        padding: 12px;
+        border-radius: 8px;
+      }
+      
+      .modal h3 {
+        font-size: 14px;
+        padding-bottom: 6px;
+      }
+      
+      .modal pre {
+        font-size: 12px;
+        padding: 6px;
+        line-height: 1.2;
+      }
+      
+      .modal-close {
+        font-size: 20px;
+        top: 4px;
+        right: 8px;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div class="container">
-    <div id="login">
-        <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-            <i class="fas fa-shield-halved" style="font-size: 24px; color: var(--accent);"></i>
-        </div>
-        <h2 style="margin: 0 0 5px; font-weight: 800; font-size: 20px;">SMB Dashboard</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Sign in to access</p>
-        <div id="g_id_onload" 
-             data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
-             data-callback="handleCredentialResponse" 
-             data-auto_prompt="false"
-             data-auto_select="false">
-        </div>
-        <div class="g_id_signin" 
-             data-type="standard" 
-             data-shape="pill" 
-             data-theme="outline" 
-             data-text="signin_with" 
-             data-size="large" 
-             data-logo_alignment="left">
-        </div>
-    </div>
-
-    <div id="user-info">
-        <img id="user-pic" src="" alt="Profile">
-        <div class="user-details" style="flex-grow:1">
-            <p id="user-name"></p>
-            <p id="user-email"></p>
-        </div>
-        <button id="logout-btn" onclick="signOut()"><i class="fas fa-power-off"></i></button>
-    </div>
-
-    <div class="main-content" id="main-content" style="display:none; width: 100%;">
-        <div class="action-grid">
-            <div class="action-card" id="manuals-btn">
-                <a href="https://smart-bowling.github.io/MANUALS-SMART/" class="action-btn">
-                    <i class="fas fa-book-open"></i>
-                    <span>Manuals</span>
-                </a>
-            </div>
-            <div class="action-card" id="store-btn">
-                <a href="https://smart-bowling.github.io/PARTS-STORE/" class="action-btn">
-                    <i class="fas fa-bag-shopping"></i>
-                    <span>Store</span>
-                </a>
-            </div>
-            <div class="action-card" id="card-parts">
-                <button class="action-btn" onclick="handleAction('parts', this)">
-                    <i class="fas fa-gears"></i>
-                    <span>Parts</span>
-                </button>
-            </div>
-            <div class="action-card" id="card-maintenance">
-                <button class="action-btn" onclick="handleAction('maintenance', this)">
-                    <i class="fas fa-screwdriver-wrench"></i>
-                    <span>Maintenance</span>
-                </button>
-            </div>
-            <div class="action-card" id="card-fps">
-                <button class="action-btn" onclick="handleAction('fps', this)">
-                    <i class="fas fa-chart-line"></i>
-                    <span>FPS</span>
-                </button>
-            </div>
-            <div class="action-card" id="card-analysis">
-                <button class="action-btn" onclick="handleAction('analysis', this)">
-                    <i class="fas fa-bowling-ball"></i>
-                    <span>Analysis</span>
-                </button>
-            </div>
-        </div>
-    </div>
+<!-- Индикатор загрузки -->
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
 </div>
 
-<!-- Bottom Sheet для выбора клуба -->
-<div class="sheet-overlay" id="sheetOverlay"></div>
-<div class="bottom-sheet" id="clubSheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" id="sheetTitle">Выберите клуб</div>
-    <div class="sheet-clubs-list" id="sheetClubsList"></div>
-    <button class="close-sheet-btn" onclick="closeClubSheet()">Закрыть</button>
+<!-- Шапка -->
+<header>
+ <div class="logo">
+  <a href="https://smart-bowling.github.io/SMB/">
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+  </a>
+</div>
+  <div class="site-name">
+    <div class="site-name-dropdown" onclick="toggleSitesDropdown(event)">
+      <span class="site-name-text">LUCKY STRIKE KH</span> <!-- ← ДОБАВЛЕН КЛАСС -->
+      <div class="dropdown-sites" id="sitesDropdown">
+        <a href="https://smart-bowling.github.io/PARTS-BB/">BLOCKBUSTER</a>
+        <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">SKYMALL</a>
+      </div>
+    </div>
+  </div>
+  <div class="menu-button" onclick="toggleDropdown()">
+    <div></div><div></div><div></div>
+  </div>
+  <div class="dropdown" id="dropdownMenu">
+    <a href="https://smart-bowling.github.io/MANUALS-HTML/">
+      <i class="fas fa-book"></i> МАНУАЛЫ
+    </a>
+    <a href="https://smart-bowling.github.io/SMB-LS-KH/">
+      <i class="fas fa-screwdriver-wrench"></i> ОБСЛУЖИВАНИЕ
+    </a>
+    <a href="https://smart-bowling.github.io/PS-STOP-KH/">
+      <i class="fas fa-exclamation-triangle"></i> STOP LANE
+    </a>
+  </div>
+</header>
+
+<!-- Блок авторизации - ПОЛНОСТЬЮ СОХРАНЯЕМ ОРИГИНАЛЬНЫЙ ВИД -->
+<div id="login">
+  <h2>Вход на сайт</h2>
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
+
+<!-- Контент для авторизованных -->
+<div id="content" style="display:none">
+  <div class="top-controls">
+    <div class="select-wrapper">
+      <select id="sortSelect" title="Фильтр">
+        <option value="all">Все детали</option>
+        <option value="popular">Пос. взят. за 30 дней</option>
+        <option value="mostPopular">Популярные</option>
+        <option value="sortByQty">Остатки</option>
+      </select>
+    </div>
+    
+  <button id="btnSearch" class="btn-top">
+    <i class="fas fa-search"></i> Поиск
+  </button>
+
+  <button id="btnReset" class="btn-top">
+    <i class="fas fa-sync-alt"></i> Сбросить
+  </button>
+
+<button onclick="window.location.href='https://smart-bowling.github.io/PARTS-STORE/'" class="btn-top">
+  <i class="fas fa-store"></i> Магазин
+</button>
+    
+  <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')" class="btn-top">
+    <i class="fas fa-plus-circle"></i> Добавить
+  </button>
+</div>
+
+
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
 </div>
 
 <script>
-// Глобальная функция для обработки ответа Google
-function handleCredentialResponse(response) {
-    console.log("Google response received", response);
-    try {
-        const payload = parseJwt(response.credential);
-        console.log("User email:", payload.email);
-        const email = payload.email.toLowerCase();
-        
-        if (userPermissions[email]) {
-            loginUser(payload);
-        } else {
-            alert('Access Denied: Your email is not authorized');
-            console.log('Unauthorized email:', email);
-        }
-    } catch (e) {
-        console.error("Error parsing Google response:", e);
-        alert('Authentication error');
-    }
-}
+  // Функция для показа/скрытия индикатора загрузки
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
 
-const userPermissions = {
-    'vadiksss900@gmail.com': { manuals:true, store:true, luckyStrike:{parts:true,maintenance:true,fps:true}, blockbuster:{parts:true,maintenance:true,analysis:true,fps:true}, skymall:{parts:true,maintenance:true,analysis:true,fps:true} },
-    'csportsua@gmail.com': { manuals:true, store:false, luckyStrike:{parts:false,maintenance:false,fps:false}, blockbuster:{parts:false,maintenance:false,analysis:false,fps:false}, skymall:{parts:true,maintenance:false,analysis:false,fps:false} }
-};
+  // Функция для выпадающего меню
+  function toggleDropdown() {
+    const menu = document.getElementById("dropdownMenu");
+    menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+  }
 
-const linksMap = {
-    parts:[
-        {name:'Lucky Strike KH', url:'https://smart-bowling.github.io/PARTS-KH/', key:'luckyStrike'},
-        {name:'Blockbuster', url:'https://smart-bowling.github.io/PARTS-BB/', key:'blockbuster'},
-        {name:'Skymall', url:'https://smart-bowling.github.io/PARTS-SKYMALL/', key:'skymall'}
-    ],
-    maintenance:[
-        {name:'Lucky Strike KH', url:'https://smart-bowling.github.io/SMB-LS-KH/', key:'luckyStrike'},
-        {name:'Blockbuster', url:'https://smart-bowling.github.io/SMB-BB/', key:'blockbuster'},
-        {name:'Skymall', url:'https://smart-bowling.github.io/SMB-SKYMALL/', key:'skymall'}
-    ],
-    fps:[
-        {name:'Lucky Strike KH', url:'https://smart-bowling.github.io/PS-STOP-KH/', key:'luckyStrike'},
-        {name:'Blockbuster', url:'https://smart-bowling.github.io/PS-STOP-BB/', key:'blockbuster'},
-        {name:'Skymall', url:'https://smart-bowling.github.io/PS-STOP-SKYMALL/', key:'skymall'}
-    ],
-    analysis:[
-        {name:'Blockbuster', url:'https://smart-bowling.github.io/ANALYSIS-BB/', key:'blockbuster'},
-        {name:'Skymall', url:'https://smart-bowling.github.io/ANALYSIS-SM/', key:'skymall'}
-    ]
-};
+  // Функция для выпадающего списка сайтов
+  function toggleSitesDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById("sitesDropdown");
+    dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+  }
 
-let currentActionType = null;
-
-function loginUser(payload) {
-    console.log("Logging in user:", payload.email);
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('user-info').style.display = 'flex';
-    document.getElementById('main-content').style.display = 'block';
+  // Закрытие выпадающего списка при клике вне его
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById("sitesDropdown");
+    const siteName = document.querySelector('.site-name-dropdown');
     
-    document.getElementById('user-pic').src = payload.picture;
-    document.getElementById('user-name').textContent = payload.name;
-    document.getElementById('user-email').textContent = payload.email;
+    if (dropdown.style.display === 'block' && !siteName.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ===
+  const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+  const SHEET_NAME = '1';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+  const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/'; // Текущий сайт
+
+  let currentUser = null;
+
+  // Загрузка Google API
+  function loadSheetsAPI() {
+    return new Promise((resolve, reject) => {
+      gapi.load('client', {
+        callback: () => resolve(),
+        onerror: () => reject('Ошибка загрузки Google API'),
+        timeout: 10000,
+        ontimeout: () => reject('Таймаут загрузки Google API')
+      });
+    });
+  }
+
+  // Парсинг JWT
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Error parsing JWT:', e);
+      return {};
+    }
+  }
+
+  // Обработчик ответа от Google
+  function handleCredentialResponse(response) {
+    console.log("Google response received");
+    showLoader(true);
+    
+    try {
+      const payload = parseJwt(response.credential);
+      console.log("User email:", payload.email);
+      
+      currentUser = {
+        email: payload.email.toLowerCase().trim(),
+        name: payload.name,
+        picture: payload.picture
+      };
+      
+      initAndCheckEmail();
+      
+    } catch (e) {
+      console.error("Error parsing Google response:", e);
+      showLoader(false);
+      alert('Ошибка аутентификации');
+    }
+  }
+
+  // Инициализация API и проверка email
+  async function initAndCheckEmail() {
+    try {
+      await loadSheetsAPI();
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      
+      await checkEmailInSheet(currentUser.email);
+      
+    } catch (error) {
+      console.error('API initialization error:', error);
+      showLoader(false);
+      alert('Ошибка инициализации Google API: ' + error);
+    }
+  }
+
+  // Проверка email в Google Sheets
+  async function checkEmailInSheet(email) {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A:Z`,
+      });
+      
+      const rows = response.result.values;
+      if (!rows || rows.length === 0) {
+        showLoader(false);
+        alert('Таблица пуста');
+        return;
+      }
+      
+      // Ищем email в колонке A
+      let hasAccess = false;
+      let userRow = null;
+      
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i][0]) continue;
+        
+        const rowEmail = rows[i][0].toLowerCase().trim();
+        if (rowEmail === email) {
+          userRow = rows[i];
+          break;
+        }
+      }
+      
+      if (userRow) {
+        // Проверяем наличие ссылки на текущий сайт в строке пользователя
+        for (let j = 1; j < userRow.length; j++) {
+          const cellValue = userRow[j];
+          if (!cellValue || cellValue.trim() === '') continue;
+          
+          const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
+          
+          // Проверяем содержит ли ссылка текущий сайт
+          if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
+            hasAccess = true;
+            break;
+          }
+        }
+      }
+      
+      if (hasAccess) {
+        loginUser(currentUser);
+      } else {
+        showLoader(false);
+        alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
+      }
+      
+    } catch (error) {
+      console.error('Sheets API error:', error);
+      showLoader(false);
+      
+      let errorMessage = 'Ошибка доступа к таблице';
+      if (error.result && error.result.error && error.result.error.message) {
+        errorMessage += ': ' + error.result.error.message;
+      }
+      alert(errorMessage);
+    }
+  }
+
+  // Функция входа пользователя
+  function loginUser(payload) {
+    console.log("Logging in user:", payload.email);
+    
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
     
     localStorage.setItem('userLoggedIn', 'true');
     localStorage.setItem('userEmail', payload.email.toLowerCase());
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
     
-    applyPermissions(payload.email.toLowerCase());
-}
+    showLoader(false);
+    
+    // Инициализация приложения после успешного входа
+    initApp();
+  }
 
-// Открытие Bottom Sheet
-function handleAction(type, buttonElement) {
-    const email = localStorage.getItem('userEmail');
-    const p = userPermissions[email];
-    const available = linksMap[type].filter(item => p[item.key] && p[item.key][type]);
-    
-    if (available.length === 1) {
-        // Если только один доступный клуб - переходим сразу
-        window.location.href = available[0].url;
-    } else if (available.length > 1) {
-        // Если несколько - показываем Bottom Sheet
-        const card = buttonElement.closest('.action-card');
-        
-        // Добавляем эффект пульсации
-        card.classList.add('pulse');
-        setTimeout(() => card.classList.remove('pulse'), 1000);
-        
-        // Заполняем и показываем Bottom Sheet
-        showClubSheet(type, available);
-    }
-}
-
-// Показать Bottom Sheet
-function showClubSheet(type, clubs) {
-    const sheet = document.getElementById('clubSheet');
-    const overlay = document.getElementById('sheetOverlay');
-    const title = document.getElementById('sheetTitle');
-    const listContainer = document.getElementById('sheetClubsList');
-    
-    // Устанавливаем заголовок
-    let typeName = {
-        parts: 'Запчасти',
-        maintenance: 'Обслуживание',
-        fps: 'FPS',
-        analysis: 'Аналитика'
-    }[type] || type;
-    title.textContent = `Выберите клуб: ${typeName}`;
-    
-    // Создаем кнопки для каждого клуба
-    listContainer.innerHTML = '';
-    clubs.forEach(club => {
-        const btn = document.createElement('a');
-        btn.href = club.url;
-        btn.className = 'club-sheet-btn';
-        btn.innerHTML = `${club.name} <i class="fas fa-arrow-right"></i>`;
-        listContainer.appendChild(btn);
-    });
-    
-    // Показываем sheet и overlay
-    sheet.classList.add('active');
-    overlay.classList.add('active');
-    
-    // Блокируем прокрутку основного контента
-    document.body.style.overflow = 'hidden';
-}
-
-// Закрыть Bottom Sheet
-function closeClubSheet() {
-    const sheet = document.getElementById('clubSheet');
-    const overlay = document.getElementById('sheetOverlay');
-    
-    sheet.classList.remove('active');
-    overlay.classList.remove('active');
-    
-    // Возвращаем прокрутку
-    document.body.style.overflow = '';
-}
-
-function applyPermissions(email) {
-    const p = userPermissions[email];
-    document.getElementById('manuals-btn').classList.toggle('disabled', !p.manuals);
-    document.getElementById('store-btn').classList.toggle('disabled', !p.store);
-    
-    Object.keys(linksMap).forEach(type => {
-        const hasAccess = linksMap[type].some(item => p[item.key] && p[item.key][type]);
-        document.getElementById(`card-${type}`).classList.toggle('disabled', !hasAccess);
-    });
-}
-
-function parseJwt(token) {
-    var base64Url = token.split('.')[1];
-    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
-}
-
-function signOut() { 
+  // Выход
+  function signOut() {
     console.log("Signing out");
-    localStorage.clear(); 
-    location.reload(); 
-}
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  }
 
-// Закрытие по клику на overlay
-document.getElementById('sheetOverlay').addEventListener('click', closeClubSheet);
-
-// Проверяем, загружен ли Google API
-window.onload = function() {
+  // Проверка сессии при загрузке
+  window.addEventListener('load', function() {
     console.log("Page loaded, checking localStorage...");
     
-    // Проверяем, есть ли уже сохраненная сессия
-    if (localStorage.getItem('userLoggedIn') === 'true') {
-        const email = localStorage.getItem('userEmail');
-        const name = localStorage.getItem('userName');
-        const pic = localStorage.getItem('userPic');
-        
-        console.log("Found stored session for:", email);
-        
-        if (userPermissions[email]) {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('user-info').style.display = 'flex';
-            
-            document.getElementById('user-name').textContent = name || 'User';
-            document.getElementById('user-email').textContent = email;
-            if (pic) document.getElementById('user-pic').src = pic;
-            
-            applyPermissions(email);
-            console.log("Session restored");
-        } else {
-            console.log("Stored email not authorized, signing out");
-            signOut();
-        }
+    const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    const email = localStorage.getItem('userEmail');
+    
+    if (isLoggedIn && email) {
+      console.log("Found stored session for:", email);
+      
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      
+      currentUser = {
+        email: email,
+        name: localStorage.getItem('userName'),
+        picture: localStorage.getItem('userPic')
+      };
+      
+      showLoader(true);
+      
+      // Проверяем доступ при восстановлении сессии
+      loadSheetsAPI()
+        .then(() => gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        }))
+        .then(() => checkEmailInSheet(email))
+        .catch(error => {
+          console.error('Session restore error:', error);
+          showLoader(false);
+          alert('Ошибка восстановления сессии');
+          signOut();
+        });
+      
     } else {
-        console.log("No stored session, showing login button");
-        // Убеждаемся, что кнопка логина видна
-        document.getElementById('login').style.display = 'block';
+      console.log("No stored session, showing login button");
+      document.getElementById('login').style.display = 'block';
     }
-}
+  });
 
-// Добавляем дополнительную проверку для Google API
-if (typeof google !== 'undefined' && google.accounts) {
-    console.log("Google API loaded");
-} else {
-    console.log("Waiting for Google API to load...");
-}
+  // Глобальный объект для пагинации
+  const pagination = {
+    prevPage: function() {},
+    nextPage: function() {}
+  };
+
+  // Функция для включения/выключения десктопного layout
+  function toggleDesktopLayout(enable) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cards = document.querySelectorAll('.card');
+    const topControls = document.querySelector('.top-controls');
+    
+    if (!cardsContainer || cards.length === 0) return;
+    
+    if (enable) {
+      cardsContainer.classList.add('desktop-layout');
+      cards.forEach(card => {
+        card.classList.add('desktop-layout');
+      });
+      cardsContainer.style.maxWidth = '1300px';
+      cardsContainer.style.margin = '0 auto';
+      cardsContainer.style.padding = '0';
+      cardsContainer.style.boxSizing = 'border-box';
+      
+      if (topControls) {
+        topControls.style.maxWidth = '1300px';
+        topControls.style.margin = '0 auto 12px';
+      }
+    } else {
+      cardsContainer.classList.remove('desktop-layout');
+      cards.forEach(card => {
+        card.classList.remove('desktop-layout');
+      });
+      cardsContainer.style.maxWidth = 'none';
+      cardsContainer.style.margin = '0';
+      cardsContainer.style.padding = '0';
+      
+      if (topControls) {
+        topControls.style.maxWidth = 'none';
+        topControls.style.margin = '0 auto 20px';
+      }
+    }
+  }
+
+  // Инициализация приложения
+  function initApp() {
+    const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+
+    let allEntries = [];
+    let currentEntries = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const cardsPerPage = 30;
+
+    async function getEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updateQuantity(partNumber, delta) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function deleteEntry(rowIndex) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getHistory(partNumber) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+        return await res.text();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getMostPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updatePartName(partNumber, newName) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function createCard(entry) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.row = entry.rowIndex;
+      div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+      const media = document.createElement('div');
+      media.className = 'media-block';
+
+      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else if (entry.fileUrl) {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        media.appendChild(img);
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'img-overlay';
+      media.appendChild(overlay);
+
+      const rem = document.createElement('div');
+      rem.className = 'icon remove';
+      rem.textContent = 'Х';
+      media.append(rem);
+
+      div.append(media);
+
+      const partNameContainer = document.createElement('div');
+      partNameContainer.className = 'part-name-container';
+      partNameContainer.dataset.partNumber = entry.partNumber;
+      
+      const partNameText = document.createElement('div');
+      partNameText.className = 'part-name-text';
+      partNameText.textContent = entry.partName || 'Название детали';
+      
+      const editButton = document.createElement('button');
+      editButton.className = 'part-name-edit-btn';
+      editButton.innerHTML = '<i class="fas fa-edit"></i>';
+      editButton.title = 'Редактировать название';
+      
+      partNameContainer.appendChild(partNameText);
+      partNameContainer.appendChild(editButton);
+      div.append(partNameContainer);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = entry.partNumber;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'text';
+      qtyInput.value = entry.quantity;
+      qtyInput.readOnly = true;
+
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn btn-add';
+      btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
+
+      const btnInfo = document.createElement('button');
+      btnInfo.className = 'btn btn-info';
+      btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
+
+      const btnTake = document.createElement('button');
+      btnTake.className = 'btn btn-take';
+      btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
+
+      controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+      div.append(controls);
+
+      editButton.addEventListener('click', function() {
+        const partNumber = partNameContainer.dataset.partNumber;
+        const currentName = partNameText.textContent;
+        
+        partNameContainer.classList.add('editing');
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'part-name-input';
+        input.value = currentName;
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'part-name-save-btn';
+        saveButton.innerHTML = '<i class="fas fa-check"></i>';
+        saveButton.title = 'Сохранить';
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'part-name-cancel-btn';
+        cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+        cancelButton.title = 'Отменить';
+        
+        partNameText.style.display = 'none';
+        editButton.style.display = 'none';
+        
+        partNameContainer.appendChild(input);
+        partNameContainer.appendChild(saveButton);
+        partNameContainer.appendChild(cancelButton);
+        
+        input.focus();
+        input.select();
+        
+        const finishEdit = async (save = false) => {
+          const newName = save ? input.value.trim() : currentName;
+          
+          partNameContainer.classList.remove('editing');
+          input.remove();
+          saveButton.remove();
+          cancelButton.remove();
+          
+          partNameText.style.display = '';
+          editButton.style.display = '';
+          
+          if (save && newName && newName !== currentName) {
+            const res = await updatePartName(partNumber, newName);
+            if (res.status === 'success') {
+              partNameText.textContent = newName;
+              const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
+              if (updatedEntry) updatedEntry.partName = newName;
+            } else {
+              alert(res.message || 'Ошибка при обновлении названия');
+            }
+          }
+        };
+        
+        saveButton.addEventListener('click', () => finishEdit(true));
+        cancelButton.addEventListener('click', () => finishEdit(false));
+        
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            finishEdit(true);
+          }
+        });
+      });
+
+      rem.onclick = async () => {
+        if (confirm('Удалить эту запись?')) {
+          await deleteEntry(entry.rowIndex);
+          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          updateTotalPages();
+          if (currentPage > totalPages) currentPage = totalPages;
+          renderPage(currentPage);
+        }
+      };
+
+      btnAdd.onclick = async () => {
+        const deltaStr = prompt('Введите число для добавления:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnTake.onclick = async () => {
+        const deltaStr = prompt('Введите число для вычитания:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, -delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnInfo.onclick = async () => {
+        const hist = await getHistory(entry.partNumber);
+        document.getElementById('modalContent').textContent = hist;
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      return div;
+    }
+
+    function updateTotalPages() {
+      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+    }
+
+    function renderPage(page) {
+      const container = document.getElementById('cardsContainer');
+      if (!container) {
+        console.error('Cards container not found!');
+        return;
+      }
+      
+      container.innerHTML = '';
+
+      const start = (page - 1) * cardsPerPage;
+      const end = start + cardsPerPage;
+      const pageData = currentEntries.slice(start, end);
+
+      if (pageData.length === 0) {
+        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+        return;
+      }
+
+      pageData.forEach(entry => {
+        const card = createCard(entry);
+        container.appendChild(card);
+      });
+
+      renderPageNumbers();
+      updatePaginationControls();
+      window.scrollTo(0, 0);
+      
+      if (window.innerWidth > 1024) {
+        toggleDesktopLayout(true);
+      }
+    }
+
+    function renderPageNumbers() {
+      const pageContainer = document.getElementById('pageNumbers');
+      if (!pageContainer) {
+        console.error('Page numbers container not found!');
+        return;
+      }
+      
+      pageContainer.innerHTML = '';
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(currentPage - 2, 1);
+      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+      
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addDots();
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          addDots();
+        }
+        addPageButton(totalPages);
+      }
+      
+      function addPageButton(page) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) {
+          btn.classList.add('active');
+        }
+        btn.onclick = () => goToPage(page);
+        pageContainer.appendChild(btn);
+      }
+      
+      function addDots() {
+        const dots = document.createElement('span');
+        dots.textContent = '...';
+        dots.style.padding = '0 10px';
+        pageContainer.appendChild(dots);
+      }
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      renderPage(currentPage);
+      updatePaginationControls();
+    }
+
+    pagination.nextPage = function() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    };
+
+    pagination.prevPage = function() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    };
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function resetSearch() {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    }
+
+    document.getElementById('btnSearch')?.addEventListener('click', () => {
+      const term = prompt('Введите номер детали для поиска:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById('sortSelect').value = 'all';
+      }
+    });
+
+    document.getElementById('btnReset')?.addEventListener('click', () => {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    });
+
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
+          }
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+        }
+        
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    async function loadData() {
+      showLoader(true);
+      try {
+        allEntries = await getEntries();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    loadData();
+  }
+
+  window.addEventListener('resize', function() {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+    
+    if (window.innerWidth > 1024) {
+      toggleDesktopLayout(true);
+    } else {
+      toggleDesktopLayout(false);
+    }
+  });
 </script>
 </body>
 </html>
