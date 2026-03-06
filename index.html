@@ -5,324 +5,2121 @@
   <title>ДЕТАЛИ KH</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Identity Script -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    :root {
-      --primary: #dc143c;
-      --dark: #1f2937;
-      --bg: #f0f2f5;
-      --header-h: 120px;
+    /* Стили для выпадающего списка KH - УДАЛЕНЫ */
+    
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      color: white;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
     }
-
-    body { margin: 0; background: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; }
-
-    /* --- ШАПКА --- */
+    
+    /* Базовые стили для надписи KH */
+    .site-name-text {
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 32px; /* Будет адаптироваться под медиазапросы */
+    }
+    
     header {
-      background-color: var(--dark);
+      background-color: #1f2937;
       color: white;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 10px 30px;
       position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 1000;
-      height: var(--header-h);
-    }
-
-    .logo img { width: 80px; height: 80px; object-fit: contain; }
-
-    .site-name {
-      font-weight: 800;
-      font-size: 38px;
-      text-align: center;
-      flex-grow: 1;
-      letter-spacing: 1px;
-    }
-
-    /* --- ПОИСК В ШАПКЕ --- */
-    .search-box {
-      display: flex;
-      align-items: center;
-      position: relative;
-    }
-
-    #headerSearchInput {
-      position: absolute;
+      top: 0;
+      left: 0;
       right: 0;
-      width: 0;
-      opacity: 0;
-      height: 50px;
-      border-radius: 25px;
-      border: 2px solid var(--primary);
-      padding: 0;
-      font-size: 18px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      outline: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      user-select: none;
+      z-index: 1000;
+      height: 140px;
     }
 
-    #headerSearchInput.active {
-      width: 250px;
-      opacity: 1;
-      padding: 0 50px 0 20px;
-      background: white;
+    .logo img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 0;
     }
 
-    .search-btn {
-      width: 60px;
-      height: 60px;
-      background: var(--primary);
-      border: none;
-      border-radius: 50%;
+    /* Новая кнопка поиска в шапке */
+    .header-search-btn {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
       color: white;
+      border: none;
+      border-radius: 50px;
+      width: 70px;
+      height: 70px;
+      font-size: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .header-search-btn:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .header-search-btn i {
+      font-size: 35px;
+    }
+
+    .icon-space {
+      margin-right: 16px;
+      width: 40px;
+      text-align: center;
       font-size: 24px;
-      cursor: pointer;
-      z-index: 2;
+    }
+
+    /* Стили для авторизации - ПОЛНОСТЬЮ СОХРАНЯЕМ ВИЗУАЛ */
+    #login {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(220, 20, 60, 0.3);
-    }
-
-    /* --- ПАНЕЛЬ УПРАВЛЕНИЯ (НОВАЯ СТРУКТУРА) --- */
-    .action-bar {
-      display: flex;
-      background: white;
-      margin: calc(var(--header-h) + 15px) 15px 20px;
-      border-radius: 20px;
-      padding: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      gap: 10px;
       align-items: center;
+      z-index: 10000;
+      padding: 20px;
     }
-
-    .filter-group {
-      flex: 2;
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: #f8f9fa;
-      border-radius: 15px;
-      padding: 0 15px;
-      height: 60px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .filter-group i { color: var(--primary); margin-right: 10px; font-size: 18px; }
-
-    .filter-group select {
-      width: 100%;
-      background: transparent;
-      border: none;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--dark);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .add-btn-circle {
-      width: 60px;
-      height: 60px;
-      background: var(--dark);
-      color: white;
-      border: none;
-      border-radius: 15px;
-      font-size: 22px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      flex-shrink: 0;
-    }
-
-    .add-btn-circle:hover { background: var(--primary); transform: translateY(-2px); }
-
-    /* --- КОНТЕНТ --- */
-    #content { padding: 0 15px 100px; max-width: 1300px; margin: 0 auto; }
     
-    .cards { 
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 20px; 
+    #login h2 {
+      color: #1a2f40;
+      margin-bottom: 20px;
+    }
+    
+    #content {
+      display: none;
+      width: 100%;
+      margin-top: 170px;
+      max-width: 1300px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+
+    /* ИСПРАВЛЕНО: Убраны зазоры между кнопками */
+    .top-controls {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 8px;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto 12px;
+      align-items: center;
+      padding: 0 4px 8px;
+      box-sizing: border-box;
+    }
+
+    .top-controls .btn-top {
+      height: 56px;
+      font-size: 18px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 0 10px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      gap: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .top-controls button.btn-top {
+      background: linear-gradient(to bottom, #1a2f40, #0d1a26);
+      color: #fff;
+    }
+
+    .top-controls button.btn-top:hover {
+      background: linear-gradient(to bottom, #223a51, #0f2233);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .select-wrapper {
+      position: relative;
+      flex: 1;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      min-width: 0;
+    }
+
+    .select-wrapper select {
+      width: 100%;
+      height: 100%;
+      padding: 0 45px 0 16px;
+      border: none;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: transparent;
+      font-weight: 600;
+      font-size: 18px;
+      cursor: pointer;
+      appearance: none;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .select-wrapper::before {
+      content: "\f0b0 Фильтр";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 90%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 18px;
+      font-family: "Font Awesome 6 Free", Arial, sans-serif;
+      pointer-events: none;
+      gap: 8px;
+    }
+
+    .select-wrapper::after {
+      content: "\f078";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      transform: translateY(-50%);
+      color: #fff;
+      pointer-events: none;
+      transition: transform 0.3s ease;
+    }
+
+    .select-wrapper:hover::after {
+      color: #ffccd5;
+    }
+
+    .select-wrapper.active::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .select-wrapper select option {
+      padding: 12px 16px;
+      background: #1a2f40;
+      color: #fff;
+      transition: background 0.2s ease;
+    }
+
+    .select-wrapper select option:hover {
+      background: #223a51 !important;
+    }
+
+    .select-wrapper select option:checked {
+      background: #dc143c;
+      color: white;
+      font-weight: bold;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
 
     .card {
-      background: white;
-      border-radius: 25px;
-      overflow: hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-      border: 1px solid #eee;
-    }
-
-    .image-holder {
       width: 100%;
-      padding-top: 70%;
-      background: #eee;
+      max-width: 900px;
+      background: #f0f2f5;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+
+    .media-block {
       position: relative;
+      width: 100%;
+      padding-top: 75%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
-    .image-holder img {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-    }
-
-    .card-info { padding: 20px; }
-
-    .card-title { font-size: 22px; font-weight: 700; margin-bottom: 15px; color: var(--dark); }
-
-    .card-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .qty-badge {
-      background: #f3f4f6;
-      padding: 12px 20px;
-      border-radius: 15px;
-      font-weight: 800;
-      font-size: 20px;
-      color: var(--primary);
-    }
-
-    .btn-qty {
-      flex: 1;
-      height: 55px;
+    .media-block img,
+    .media-block iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       border: none;
-      border-radius: 15px;
-      font-weight: 700;
-      font-size: 16px;
+      z-index: 0;
+    }
+
+    .media-block .img-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 1;
+    }
+
+    .media-block .icon {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 28px;
+      color: #fff;
+      z-index: 2;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
-    .btn-take { background: var(--primary); color: white; }
-    .btn-add { background: var(--dark); color: white; }
-
-    /* --- АДАПТИВ --- */
-    @media (min-width: 1025px) {
-      :root { --header-h: 80px; }
-      .site-name { font-size: 30px; text-align: left; margin-left: 20px; }
-      .cards { grid-template-columns: repeat(3, 1fr); }
-      .action-bar { max-width: 1300px; margin-left: auto; margin-right: auto; }
-      .add-btn-circle { width: auto; padding: 0 25px; border-radius: 15px; }
-      .add-btn-circle span { display: inline; margin-left: 10px; font-size: 16px; }
+    .media-block .icon:hover {
+      background: #ff1940;
+      transform: scale(1.1);
     }
 
+    .remove {
+      top: 8px;
+      right: 8px;
+    }
+
+    /* Стили для названия детали */
+    .part-name-container {
+      display: flex;
+      align-items: center;
+      margin: 12px 0;
+      padding: 0 12px;
+      background: #ffffff;
+      border-radius: 16px;
+      min-height: 60px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .part-name-container.editing {
+      padding: 0 8px;
+    }
+
+    .part-name-text {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: left;
+      padding: 16px 0;
+      cursor: default;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .part-name-input {
+      flex: 1;
+      height: 52px;
+      border: 2px solid #dc143c;
+      border-radius: 12px;
+      outline: none;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 0 12px;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .part-name-edit-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-edit-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
+    }
+
+    .part-name-save-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a3648;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-save-btn:hover {
+      background: #34ce57;
+      transform: scale(1.05);
+    }
+
+    .part-name-cancel-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-cancel-btn:hover {
+      background: #5a6268;
+      transform: scale(1.05);
+    }
+
+    /* ИСПРАВЛЕНО: Контролы карточки - компактнее */
+    .controls {
+      display: flex;
+      flex-wrap: nowrap; /* Запрещаем перенос */
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 6px; /* Уменьшаем зазор */
+      padding: 8px 0;
+      overflow: hidden; /* Скрываем переполнение */
+    }
+
+    /* Стили для подложки номера детали (pill) */
+    .pill {
+      background: #fff;
+      border-radius: 20px;
+      padding: 0 15px;
+      font-size: 18px;
+      font-weight: bold;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 120px;
+    }
+
+    .controls input {
+      width: 50px; /* Уменьшаем ширину */
+      height: 50px; /* Уменьшаем высоту */
+      padding: 0 8px; /* Уменьшаем отступы */
+      border: none;
+      border-radius: 12px;
+      text-align: center;
+      background: #fff;
+      font-size: 18px; /* Уменьшаем шрифт */
+      font-weight: bold;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      min-width: 50px;
+    }
+
+    .controls input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
+    }
+
+    .btn {
+      height: 50px; /* Уменьшаем высоту */
+      padding: 0 15px; /* Уменьшаем отступы */
+      border: none;
+      border-radius: 12px;
+      font-size: 16px; /* Уменьшаем шрифт */
+      font-weight: bold;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px; /* Уменьшаем зазор */
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-add {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: #fff;
+      min-width: 120px; /* Уменьшаем минимальную ширину */
+    }
+
+    .btn-add:hover {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+    }
+
+    .btn-info {
+      background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+      color: #000;
+      min-width: 50px; /* Уменьшаем минимальную ширину */
+      padding: 0 10px; /* Уменьшаем отступы */
+      justify-content: center;
+    }
+
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+    }
+
+    .btn-take {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: #fff;
+      min-width: 120px; /* Уменьшаем минимальную ширину */
+    }
+
+    .btn-take:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 80vw;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: auto;
+      z-index: 10000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalAppear {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 40px;
+      font-weight: bold;
+      color: #dc143c;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1a2f40;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    .modal pre {
+      white-space: pre-wrap;
+      font-size: 26px;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #dc143c;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 50px 0;
+      gap: 10px;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 1300px;
+      margin: 50px auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    .pagination button {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 18px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      min-width: 140px;
+      height: 60px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .pagination button:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .pagination button i {
+      font-size: 24px;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .page-numbers button {
+      min-width: 40px;
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border-radius: 16px;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button {
+      margin: 0 6px;
+    }
+
+    .page-numbers button:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .page-numbers button.active {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      transform: scale(1.1);
+    }
+
+    .no-data {
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #666;
+    }
+
+    /* Стили для индикатора загрузки */
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      display: none;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Для мобильных устройств (max-width: 1024px) */
     @media (max-width: 1024px) {
-      .add-btn-circle span { display: none; }
-    }
+      /* РАЗМЕР ШРИФТА ДЛЯ МОБИЛЬНЫХ - МОЖНО МЕНЯТЬ */
+      .site-name-text {
+        font-size: 50px; /* ← ИЗМЕНИ ЭТО ЧИСЛО ДЛЯ МОБИЛЬНЫХ */
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        line-height: 1.2;
+      }
+      
+      /* ИСПРАВЛЕНО: Выравнивание всей шапки для мобильных */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 30px;
+        height: 140px;
+      }
+      
+      .site-name {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
 
-    /* Лоадер */
-    .loader-wrap { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; }
-    .spinner { width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+      .header-search-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 30px;
+      }
+
+      .header-search-btn i {
+        font-size: 35px;
+      }
+      
+      body {
+        padding: 20px;
+      }
+      
+      .cards.desktop-layout,
+      .card.desktop-layout {
+        width: 100% !important;
+        max-width: 900px !important;
+        margin: 0 auto !important;
+      }
+      
+      .cards.desktop-layout {
+        flex-direction: column !important;
+      }
+      
+      /* Контролы карточки для мобильных */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        gap: 8px;
+        padding: 10px 0;
+      }
+      
+      /* Подложка номера детали для мобильных - делаем шире */
+      .pill {
+        background: #fff;
+        border-radius: 20px;
+        padding: 0 20px; /* Увеличиваем внутренние отступы */
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-width: 100px; /* Минимальная ширина больше */
+        max-width: 150px; /* Максимальная ширина больше */
+      }
+      
+      .controls input {
+        width: 60px;
+        height: 60px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 16px;
+        text-align: center;
+        background: #fff;
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+      }
+      
+      .btn {
+        height: 60px;
+        padding: 0 24px;
+        border: none;
+        border-radius: 16px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .btn-add {
+        background: linear-gradient(to bottom, #1f2937, #0d1520);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      .btn-info {
+        background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+        color: #000;
+        min-width: 60px;
+        justify-content: center;
+      }
+      
+      .btn-take {
+        background: linear-gradient(to bottom, #dc143c, #b01030);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      /* Часть названия детали */
+      .part-name-container {
+        display: flex;
+        align-items: center;
+        margin: 12px 0;
+        padding: 0 12px;
+        background: #ffffff;
+        border-radius: 16px;
+        min-height: 60px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .part-name-text {
+        flex: 1;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: left;
+        padding: 16px 0;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        color: #fff;
+        margin-left: 8px;
+      }
+      
+      .part-name-input {
+        flex: 1;
+        height: 52px;
+        border: 2px solid #dc143c;
+        border-radius: 12px;
+        outline: none;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 0 12px;
+      }
+      
+      /* Верхние контролы для мобильных */
+      .top-controls {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 8px;
+        max-width: 900px;
+        margin: 0 auto 20px;
+        align-items: center;
+        padding-bottom: 8px;
+        box-sizing: border-box;
+        overflow-x: auto;
+      }
+      
+      .top-controls .btn-top {
+        height: 56px;
+        font-size: 18px;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-grow: 1;
+        min-width: 90px;
+        max-width: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-family: inherit;
+        padding: 0 16px;
+        gap: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .select-wrapper {
+        position: relative;
+        min-width: 120px;
+        max-width: 150px;
+        height: 56px;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        flex-shrink: 0;
+      }
+      
+      /* Иконка удаления */
+      .media-block .icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 28px;
+        color: #fff;
+        z-index: 2;
+      }
+      
+      /* Пагинация для мобильных */
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 50px 0;
+        gap: 10px;
+        flex-wrap: nowrap;
+        width: 100%;
+        max-width: 900px;
+        margin: 50px auto;
+      }
+      
+      .pagination button {
+        padding: 18px 30px;
+        font-size: 20px;
+        min-width: 140px;
+        height: 60px;
+      }
+      
+      .page-numbers button {
+        min-width: 40px;
+        height: 60px;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+      
+      /* Модальное окно для мобильных */
+      .modal {
+        padding: 40px;
+        width: 80vw;
+      }
+      
+      .modal pre {
+        font-size: 26px;
+        padding: 20px;
+      }
+      
+      .modal-close {
+        font-size: 40px;
+      }
+    }
+    
+    /* Стили для десктопной версии (1025px и выше) */
+    @media (min-width: 1025px) {
+      /* Уменьшаем шапку до минимума */
+      header {
+        height: 75px;
+        padding: 4px 8px;
+      }
+      
+      .logo img {
+        width: 50px;
+        height: 50px;
+      }
+      
+      /* РАЗМЕР ШРИФТА ДЛЯ ПК - МОЖНО МЕНЯТЬ */
+      .site-name-text {
+        font-size: 32px; /* ← ИЗМЕНИ ЭТО ЧИСЛО ДЛЯ ПК */
+        margin-bottom: 0;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        font-family: 'Arial', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .header-search-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+      }
+
+      .header-search-btn i {
+        font-size: 24px;
+      }
+      
+      /* Корректируем отступ контента */
+      #content {
+        margin-top: 95px;
+      }
+      
+      /* ИСПРАВЛЕНО: Уменьшаем боковые отступы на body */
+      body {
+        padding: 8px 4px;
+      }
+      
+      /* ИСПРАВЛЕНО: Верхние контролы - равномерное распределение */
+      .top-controls {
+        max-width: 1300px;
+        margin-bottom: 8px;
+        gap: 6px;
+        padding: 0 4px 8px;
+      }
+      
+      .top-controls .btn-top {
+        height: 34px;
+        font-size: 12px;
+        padding: 0 8px;
+        border-radius: 8px;
+        gap: 4px;
+      }
+      
+      .select-wrapper {
+        height: 34px;
+        min-width: 0;
+        max-width: none;
+        border-radius: 8px;
+      }
+      
+      .select-wrapper::before {
+        font-size: 12px;
+        gap: 4px;
+      }
+      
+      .select-wrapper select {
+        font-size: 12px;
+        padding: 0 25px 0 8px;
+      }
+      
+      .select-wrapper::after {
+        right: 8px;
+        font-size: 12px;
+      }
+      
+      /* ИСПРАВЛЕНО: Десктопный layout для карточек */
+      .cards.desktop-layout {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 1300px;
+      }
+      
+      /* Делаем карточки шириной ровно под 3 в ряд */
+      .card.desktop-layout {
+        width: calc((100% - 16px) / 3) !important;
+        max-width: none !important;
+        margin: 0 !important;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        min-height: 320px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      
+      .media-block {
+        border-radius: 6px;
+        padding-top: 65%;
+      }
+      
+      .media-block .icon {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        border-radius: 3px;
+      }
+      
+      .remove {
+        top: 4px;
+        right: 4px;
+      }
+      
+      .part-name-container {
+        min-height: 34px;
+        margin: 6px 0;
+        padding: 0 6px;
+        border-radius: 8px;
+      }
+      
+      .part-name-text {
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      
+      .part-name-input {
+        height: 30px;
+        font-size: 13px;
+        border-radius: 6px;
+        padding: 0 6px;
+        border-width: 1px;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        margin-left: 4px;
+        border-radius: 4px;
+      }
+      
+      /* ИСПРАВЛЕНО: Делаем контролы карточки компактнее для ПК */
+      .controls {
+        margin-top: 8px;
+        gap: 4px;
+        padding: 6px 0;
+        flex-wrap: nowrap;
+      }
+      
+      .pill {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        border-radius: 12px;
+        max-width: 100px;
+        min-width: 60px;
+      }
+      
+      .controls input {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+        border-radius: 6px;
+        padding: 0 2px;
+        min-width: 30px;
+      }
+      
+      .btn {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        min-width: 70px;
+        border-radius: 6px;
+        gap: 3px;
+      }
+      
+      .btn-info {
+        min-width: 30px;
+        padding: 0 4px;
+      }
+      
+      /* Иконки в кнопках */
+      .btn i {
+        font-size: 10px;
+      }
+      
+      /* Скрываем текст в кнопках на очень узких карточках */
+      @media (min-width: 1025px) and (max-width: 1150px) {
+        .btn-add span,
+        .btn-take span {
+          display: none;
+        }
+        
+        .btn-add,
+        .btn-take {
+          min-width: 40px;
+          padding: 0 6px;
+          justify-content: center;
+        }
+        
+        .btn-add i,
+        .btn-take i {
+          margin: 0;
+        }
+      }
+      
+      /* Уменьшаем пагинацию */
+      .pagination {
+        max-width: 1300px;
+        margin: 20px auto;
+        gap: 4px;
+      }
+      
+      .pagination button {
+        padding: 8px 12px;
+        font-size: 13px;
+        height: 36px;
+        min-width: 90px;
+        border-radius: 6px;
+        gap: 4px;
+      }
+      
+      .page-numbers button {
+        height: 36px;
+        font-size: 13px;
+        padding: 0 12px;
+        min-width: 24px;
+        border-radius: 8px;
+      }
+      
+      .pagination button i {
+        font-size: 14px;
+      }
+      
+      /* Уменьшаем модальное окно */
+      .modal {
+        padding: 12px;
+        border-radius: 8px;
+      }
+      
+      .modal h3 {
+        font-size: 14px;
+        padding-bottom: 6px;
+      }
+      
+      .modal pre {
+        font-size: 12px;
+        padding: 6px;
+        line-height: 1.2;
+      }
+      
+      .modal-close {
+        font-size: 20px;
+        top: 4px;
+        right: 8px;
+      }
+    }
   </style>
 </head>
 <body>
+<!-- Индикатор загрузки -->
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
+</div>
 
-<div class="loader-wrap" id="loader"><div class="spinner"></div></div>
-
+<!-- Шапка -->
 <header>
-  <div class="logo">
+ <div class="logo">
+  <a href="https://smart-bowling.github.io/SMB/">
     <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+  </a>
+</div>
+  <div class="site-name">
+    <span class="site-name-text">LUCKY STRIKE KH</span>
   </div>
-  
-  <div class="site-name">LUCKY STRIKE KH</div>
-
-  <div class="search-box">
-    <input type="text" id="headerSearchInput" placeholder="Поиск детали...">
-    <button class="search-btn" onclick="toggleSearch()">
-      <i class="fas fa-search" id="searchIcon"></i>
-    </button>
-  </div>
+  <!-- Кнопка поиска вместо меню -->
+  <button class="header-search-btn" id="headerSearchBtn" title="Поиск детали">
+    <i class="fas fa-search"></i>
+  </button>
 </header>
 
-<div id="login" style="position:fixed; inset:0; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-  <h2 style="color:var(--dark); margin-bottom:20px;">Авторизация</h2>
-  <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="onSignIn"></div>
+<!-- Блок авторизации - ПОЛНОСТЬЮ СОХРАНЯЕМ ОРИГИНАЛЬНЫЙ ВИД -->
+<div id="login">
+  <h2>Вход на сайт</h2>
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
   <div class="g_id_signin" data-type="standard"></div>
 </div>
 
-<div id="content">
-  <div class="action-bar">
-    <div class="filter-group">
-      <i class="fas fa-filter"></i>
-      <select id="sortSelect">
-        <option value="all">Все запчасти</option>
-        <option value="popular">Популярные (30 дн)</option>
-        <option value="sortByQty">Мало на складе</option>
+<!-- Контент для авторизованных -->
+<div id="content" style="display:none">
+  <div class="top-controls">
+    <!-- Только ФИЛЬТР и ДОБАВИТЬ ДЕТАЛЬ -->
+    <div class="select-wrapper">
+      <select id="sortSelect" title="Фильтр">
+        <option value="all">Все детали</option>
+        <option value="popular">Пос. взят. за 30 дней</option>
+        <option value="mostPopular">Популярные</option>
+        <option value="sortByQty">Остатки</option>
       </select>
     </div>
     
-    <button class="add-btn-circle" onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')">
-      <i class="fas fa-plus"></i>
-      <span>Добавить деталь</span>
+    <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')" class="btn-top">
+      <i class="fas fa-plus-circle"></i> ДОБАВИТЬ ДЕТАЛЬ
     </button>
   </div>
 
   <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
 </div>
 
 <script>
-  // Логика поиска
-  function toggleSearch() {
-    const input = document.getElementById('headerSearchInput');
-    const icon = document.getElementById('searchIcon');
-    input.classList.toggle('active');
-    
-    if(input.classList.contains('active')) {
-      input.focus();
-      icon.classList.replace('fa-search', 'fa-times');
-    } else {
-      input.value = '';
-      icon.classList.replace('fa-times', 'fa-search');
-      filterData('');
-    }
+  // Функция для показа/скрытия индикатора загрузки
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
 
-  function filterData(term) {
-    const container = document.getElementById('cardsContainer');
-    const cards = container.getElementsByClassName('card');
-    const val = term.toLowerCase();
-    
-    Array.from(cards).forEach(card => {
-      const txt = card.textContent.toLowerCase();
-      card.style.display = txt.includes(val) ? '' : 'none';
+  // Функции для выпадающих меню - УДАЛЕНЫ
+
+  // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ===
+  const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+  const SHEET_NAME = '1';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+  const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/'; // Текущий сайт
+
+  let currentUser = null;
+
+  // Загрузка Google API
+  function loadSheetsAPI() {
+    return new Promise((resolve, reject) => {
+      gapi.load('client', {
+        callback: () => resolve(),
+        onerror: () => reject('Ошибка загрузки Google API'),
+        timeout: 10000,
+        ontimeout: () => reject('Таймаут загрузки Google API')
+      });
     });
   }
 
-  document.getElementById('headerSearchInput').addEventListener('input', (e) => {
-    filterData(e.target.value);
-  });
-
-  // Имитация входа (для демонстрации структуры)
-  function onSignIn(resp) {
-    document.getElementById('login').style.display = 'none';
-    document.body.style.overflow = 'auto';
-    loadMockData();
-  }
-
-  function loadMockData() {
-    const container = document.getElementById('cardsContainer');
-    // Здесь будет ваш цикл отрисовки из Google Sheets
-    for(let i=1; i<=6; i++) {
-      container.innerHTML += `
-        <div class="card">
-          <div class="image-holder"><img src="https://via.placeholder.com/400x300?text=Part+${i}"></div>
-          <div class="card-info">
-            <div class="card-title">Деталь #${i} - Название</div>
-            <div class="card-actions">
-              <div class="qty-badge">12 шт</div>
-              <button class="btn-qty btn-add">ВЗЯТЬ</button>
-              <button class="btn-qty btn-take">ДОБ.</button>
-            </div>
-          </div>
-        </div>
-      `;
+  // Парсинг JWT
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Error parsing JWT:', e);
+      return {};
     }
   }
+
+  // Обработчик ответа от Google
+  function handleCredentialResponse(response) {
+    console.log("Google response received");
+    showLoader(true);
+    
+    try {
+      const payload = parseJwt(response.credential);
+      console.log("User email:", payload.email);
+      
+      currentUser = {
+        email: payload.email.toLowerCase().trim(),
+        name: payload.name,
+        picture: payload.picture
+      };
+      
+      initAndCheckEmail();
+      
+    } catch (e) {
+      console.error("Error parsing Google response:", e);
+      showLoader(false);
+      alert('Ошибка аутентификации');
+    }
+  }
+
+  // Инициализация API и проверка email
+  async function initAndCheckEmail() {
+    try {
+      await loadSheetsAPI();
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      
+      await checkEmailInSheet(currentUser.email);
+      
+    } catch (error) {
+      console.error('API initialization error:', error);
+      showLoader(false);
+      alert('Ошибка инициализации Google API: ' + error);
+    }
+  }
+
+  // Проверка email в Google Sheets
+  async function checkEmailInSheet(email) {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A:Z`,
+      });
+      
+      const rows = response.result.values;
+      if (!rows || rows.length === 0) {
+        showLoader(false);
+        alert('Таблица пуста');
+        return;
+      }
+      
+      // Ищем email в колонке A
+      let hasAccess = false;
+      let userRow = null;
+      
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i][0]) continue;
+        
+        const rowEmail = rows[i][0].toLowerCase().trim();
+        if (rowEmail === email) {
+          userRow = rows[i];
+          break;
+        }
+      }
+      
+      if (userRow) {
+        // Проверяем наличие ссылки на текущий сайт в строке пользователя
+        for (let j = 1; j < userRow.length; j++) {
+          const cellValue = userRow[j];
+          if (!cellValue || cellValue.trim() === '') continue;
+          
+          const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
+          
+          // Проверяем содержит ли ссылка текущий сайт
+          if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
+            hasAccess = true;
+            break;
+          }
+        }
+      }
+      
+      if (hasAccess) {
+        loginUser(currentUser);
+      } else {
+        showLoader(false);
+        alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
+      }
+      
+    } catch (error) {
+      console.error('Sheets API error:', error);
+      showLoader(false);
+      
+      let errorMessage = 'Ошибка доступа к таблице';
+      if (error.result && error.result.error && error.result.error.message) {
+        errorMessage += ': ' + error.result.error.message;
+      }
+      alert(errorMessage);
+    }
+  }
+
+  // Функция входа пользователя
+  function loginUser(payload) {
+    console.log("Logging in user:", payload.email);
+    
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userEmail', payload.email.toLowerCase());
+    localStorage.setItem('userName', payload.name);
+    localStorage.setItem('userPic', payload.picture);
+    
+    showLoader(false);
+    
+    // Инициализация приложения после успешного входа
+    initApp();
+  }
+
+  // Выход
+  function signOut() {
+    console.log("Signing out");
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  }
+
+  // Проверка сессии при загрузке
+  window.addEventListener('load', function() {
+    console.log("Page loaded, checking localStorage...");
+    
+    const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    const email = localStorage.getItem('userEmail');
+    
+    if (isLoggedIn && email) {
+      console.log("Found stored session for:", email);
+      
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      
+      currentUser = {
+        email: email,
+        name: localStorage.getItem('userName'),
+        picture: localStorage.getItem('userPic')
+      };
+      
+      showLoader(true);
+      
+      // Проверяем доступ при восстановлении сессии
+      loadSheetsAPI()
+        .then(() => gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        }))
+        .then(() => checkEmailInSheet(email))
+        .catch(error => {
+          console.error('Session restore error:', error);
+          showLoader(false);
+          alert('Ошибка восстановления сессии');
+          signOut();
+        });
+      
+    } else {
+      console.log("No stored session, showing login button");
+      document.getElementById('login').style.display = 'block';
+    }
+  });
+
+  // Глобальный объект для пагинации
+  const pagination = {
+    prevPage: function() {},
+    nextPage: function() {}
+  };
+
+  // Функция для включения/выключения десктопного layout
+  function toggleDesktopLayout(enable) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cards = document.querySelectorAll('.card');
+    const topControls = document.querySelector('.top-controls');
+    
+    if (!cardsContainer || cards.length === 0) return;
+    
+    if (enable) {
+      cardsContainer.classList.add('desktop-layout');
+      cards.forEach(card => {
+        card.classList.add('desktop-layout');
+      });
+      cardsContainer.style.maxWidth = '1300px';
+      cardsContainer.style.margin = '0 auto';
+      cardsContainer.style.padding = '0';
+      cardsContainer.style.boxSizing = 'border-box';
+      
+      if (topControls) {
+        topControls.style.maxWidth = '1300px';
+        topControls.style.margin = '0 auto 12px';
+      }
+    } else {
+      cardsContainer.classList.remove('desktop-layout');
+      cards.forEach(card => {
+        card.classList.remove('desktop-layout');
+      });
+      cardsContainer.style.maxWidth = 'none';
+      cardsContainer.style.margin = '0';
+      cardsContainer.style.padding = '0';
+      
+      if (topControls) {
+        topControls.style.maxWidth = 'none';
+        topControls.style.margin = '0 auto 20px';
+      }
+    }
+  }
+
+  // Инициализация приложения
+  function initApp() {
+    const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+
+    let allEntries = [];
+    let currentEntries = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const cardsPerPage = 30;
+
+    async function getEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updateQuantity(partNumber, delta) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function deleteEntry(rowIndex) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getHistory(partNumber) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+        return await res.text();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getMostPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updatePartName(partNumber, newName) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function createCard(entry) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.row = entry.rowIndex;
+      div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+      const media = document.createElement('div');
+      media.className = 'media-block';
+
+      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else if (entry.fileUrl) {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        media.appendChild(img);
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'img-overlay';
+      media.appendChild(overlay);
+
+      const rem = document.createElement('div');
+      rem.className = 'icon remove';
+      rem.textContent = 'Х';
+      media.append(rem);
+
+      div.append(media);
+
+      const partNameContainer = document.createElement('div');
+      partNameContainer.className = 'part-name-container';
+      partNameContainer.dataset.partNumber = entry.partNumber;
+      
+      const partNameText = document.createElement('div');
+      partNameText.className = 'part-name-text';
+      partNameText.textContent = entry.partName || 'Название детали';
+      
+      const editButton = document.createElement('button');
+      editButton.className = 'part-name-edit-btn';
+      editButton.innerHTML = '<i class="fas fa-edit"></i>';
+      editButton.title = 'Редактировать название';
+      
+      partNameContainer.appendChild(partNameText);
+      partNameContainer.appendChild(editButton);
+      div.append(partNameContainer);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = entry.partNumber;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'text';
+      qtyInput.value = entry.quantity;
+      qtyInput.readOnly = true;
+
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn btn-add';
+      btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
+
+      const btnInfo = document.createElement('button');
+      btnInfo.className = 'btn btn-info';
+      btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
+
+      const btnTake = document.createElement('button');
+      btnTake.className = 'btn btn-take';
+      btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
+
+      controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+      div.append(controls);
+
+      editButton.addEventListener('click', function() {
+        const partNumber = partNameContainer.dataset.partNumber;
+        const currentName = partNameText.textContent;
+        
+        partNameContainer.classList.add('editing');
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'part-name-input';
+        input.value = currentName;
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'part-name-save-btn';
+        saveButton.innerHTML = '<i class="fas fa-check"></i>';
+        saveButton.title = 'Сохранить';
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'part-name-cancel-btn';
+        cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+        cancelButton.title = 'Отменить';
+        
+        partNameText.style.display = 'none';
+        editButton.style.display = 'none';
+        
+        partNameContainer.appendChild(input);
+        partNameContainer.appendChild(saveButton);
+        partNameContainer.appendChild(cancelButton);
+        
+        input.focus();
+        input.select();
+        
+        const finishEdit = async (save = false) => {
+          const newName = save ? input.value.trim() : currentName;
+          
+          partNameContainer.classList.remove('editing');
+          input.remove();
+          saveButton.remove();
+          cancelButton.remove();
+          
+          partNameText.style.display = '';
+          editButton.style.display = '';
+          
+          if (save && newName && newName !== currentName) {
+            const res = await updatePartName(partNumber, newName);
+            if (res.status === 'success') {
+              partNameText.textContent = newName;
+              const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
+              if (updatedEntry) updatedEntry.partName = newName;
+            } else {
+              alert(res.message || 'Ошибка при обновлении названия');
+            }
+          }
+        };
+        
+        saveButton.addEventListener('click', () => finishEdit(true));
+        cancelButton.addEventListener('click', () => finishEdit(false));
+        
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            finishEdit(true);
+          }
+        });
+      });
+
+      rem.onclick = async () => {
+        if (confirm('Удалить эту запись?')) {
+          await deleteEntry(entry.rowIndex);
+          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          updateTotalPages();
+          if (currentPage > totalPages) currentPage = totalPages;
+          renderPage(currentPage);
+        }
+      };
+
+      btnAdd.onclick = async () => {
+        const deltaStr = prompt('Введите число для добавления:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnTake.onclick = async () => {
+        const deltaStr = prompt('Введите число для вычитания:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, -delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnInfo.onclick = async () => {
+        const hist = await getHistory(entry.partNumber);
+        document.getElementById('modalContent').textContent = hist;
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      return div;
+    }
+
+    function updateTotalPages() {
+      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+    }
+
+    function renderPage(page) {
+      const container = document.getElementById('cardsContainer');
+      if (!container) {
+        console.error('Cards container not found!');
+        return;
+      }
+      
+      container.innerHTML = '';
+
+      const start = (page - 1) * cardsPerPage;
+      const end = start + cardsPerPage;
+      const pageData = currentEntries.slice(start, end);
+
+      if (pageData.length === 0) {
+        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+        return;
+      }
+
+      pageData.forEach(entry => {
+        const card = createCard(entry);
+        container.appendChild(card);
+      });
+
+      renderPageNumbers();
+      updatePaginationControls();
+      window.scrollTo(0, 0);
+      
+      if (window.innerWidth > 1024) {
+        toggleDesktopLayout(true);
+      }
+    }
+
+    function renderPageNumbers() {
+      const pageContainer = document.getElementById('pageNumbers');
+      if (!pageContainer) {
+        console.error('Page numbers container not found!');
+        return;
+      }
+      
+      pageContainer.innerHTML = '';
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(currentPage - 2, 1);
+      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+      
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addDots();
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          addDots();
+        }
+        addPageButton(totalPages);
+      }
+      
+      function addPageButton(page) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) {
+          btn.classList.add('active');
+        }
+        btn.onclick = () => goToPage(page);
+        pageContainer.appendChild(btn);
+      }
+      
+      function addDots() {
+        const dots = document.createElement('span');
+        dots.textContent = '...';
+        dots.style.padding = '0 10px';
+        pageContainer.appendChild(dots);
+      }
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      renderPage(currentPage);
+      updatePaginationControls();
+    }
+
+    pagination.nextPage = function() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    };
+
+    pagination.prevPage = function() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    };
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function resetSearch() {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    }
+
+    // Функция поиска (вызывается из кнопки в шапке и из консоли при необходимости)
+    window.performSearch = function() {
+      const term = prompt('Введите номер детали для поиска:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById('sortSelect').value = 'all';
+      }
+    };
+
+    // Назначаем обработчик на кнопку поиска в шапке
+    document.getElementById('headerSearchBtn').addEventListener('click', window.performSearch);
+
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
+          }
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+        }
+        
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    async function loadData() {
+      showLoader(true);
+      try {
+        allEntries = await getEntries();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    loadData();
+  }
+
+  window.addEventListener('resize', function() {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+    
+    if (window.innerWidth > 1024) {
+      toggleDesktopLayout(true);
+    } else {
+      toggleDesktopLayout(false);
+    }
+  });
 </script>
 </body>
 </html>
