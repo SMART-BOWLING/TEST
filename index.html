@@ -9,7 +9,64 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    /* === Стили шапки (убрано меню, выпадающий список, добавлен значок +) === */
+    /* Стили для выпадающего списка KH */
+    .site-name-dropdown {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+    
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      color: white;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    
+    .site-name-text {
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    
+    .dropdown-sites {
+      display: none;
+      position: absolute;
+      top: calc(100% + 50px);
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2937;
+      border: 2px solid #444;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 1001;
+      min-width: 300px;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .dropdown-sites a {
+      display: block;
+      padding: 20px 100px;
+      font-size: 40px;
+      font-weight: bold;
+      color: white;
+      text-decoration: none;
+      transition: background 0.3s;
+      text-align: center;
+      white-space: nowrap;
+    }
+    
+    .dropdown-sites a:hover {
+      background-color: #374151;
+    }
+
     header {
       background-color: #1f2937;
       color: white;
@@ -34,44 +91,71 @@
       border-radius: 0;
     }
 
-    .site-name {
-      flex: 1;
-      text-align: center;
-      font-weight: bold;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-
-    .site-name-text {
-      margin: 0;
-      padding: 0;
-      display: inline-block;
-      vertical-align: middle;
-      font-size: 50px; /* адаптируется через медиазапросы */
-    }
-
-    /* Кнопка добавления детали (знак +) */
+    /* Новая кнопка добавления в виде + */
     .add-button {
-      color: white;
-      font-size: 60px;
-      line-height: 1;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       width: 70px;
       height: 70px;
-      transition: transform 0.2s;
+      background-color: #dc143c;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
+
     .add-button:hover {
+      background-color: #ff1940;
       transform: scale(1.1);
     }
 
-    /* === Панель фильтра и поиска (из предоставленного блока) === */
-    .panel {
+    .add-button i {
+      font-size: 40px;
+      color: white;
+    }
+
+    /* Стили для авторизации */
+    #login {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+    
+    #login h2 {
+      color: #1a2f40;
+      margin-bottom: 20px;
+    }
+    
+    #content {
+      display: none;
+      width: 100%;
+      margin-top: 170px;
+      max-width: 1300px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Новая панель фильтрации */
+    .filter-panel {
       background: #fff;
       padding: 12px 14px;
       border-radius: 10px;
@@ -79,11 +163,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      max-width: 1300px;
       margin: 0 auto 12px;
+      max-width: 1300px;
     }
 
-    .filter {
+    .filter-container {
       position: relative;
     }
 
@@ -95,9 +179,16 @@
       border-radius: 6px;
       font-size: 14px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .dropdown-filter {
+    .filter-btn i {
+      font-size: 14px;
+    }
+
+    .filter-dropdown {
       position: absolute;
       top: 38px;
       left: 0;
@@ -110,17 +201,22 @@
       z-index: 100;
     }
 
-    .dropdown-filter div {
+    .filter-dropdown div {
       padding: 10px 12px;
       cursor: pointer;
       font-size: 14px;
     }
 
-    .dropdown-filter div:hover {
+    .filter-dropdown div:hover {
       background: #f0f2f5;
     }
 
-    .search {
+    .filter-dropdown div.active {
+      background: #dc143c;
+      color: white;
+    }
+
+    .search-input {
       border: 1px solid #ddd;
       border-radius: 6px;
       padding: 8px 12px;
@@ -129,27 +225,8 @@
       flex: 1;
     }
 
-    .search:focus {
+    .search-input:focus {
       border-color: #dc143c;
-    }
-
-    /* === Остальные стили (без изменений, кроме удалённых элементов) === */
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #f0f2f5;
-      font-family: Arial, sans-serif;
-    }
-
-    #content {
-      display: none;
-      width: 100%;
-      margin-top: 170px;
-      max-width: 1300px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 0 8px;
-      box-sizing: border-box;
     }
 
     .cards {
@@ -275,8 +352,50 @@
       font-family: inherit;
     }
 
-    .part-name-edit-btn,
-    .part-name-save-btn,
+    .part-name-edit-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #dc143c;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-edit-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
+    }
+
+    .part-name-save-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a3648;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      transition: all 0.2s ease;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .part-name-save-btn:hover {
+      background: #34ce57;
+      transform: scale(1.05);
+    }
+
     .part-name-cancel-btn {
       width: 44px;
       height: 44px;
@@ -294,17 +413,8 @@
       flex-shrink: 0;
     }
 
-    .part-name-edit-btn:hover,
     .part-name-cancel-btn:hover {
-      background: #ff1940;
-      transform: scale(1.05);
-    }
-
-    .part-name-save-btn {
-      background: #2a3648;
-    }
-    .part-name-save-btn:hover {
-      background: #34ce57;
+      background: #5a6268;
       transform: scale(1.05);
     }
 
@@ -394,6 +504,10 @@
       min-width: 120px;
     }
 
+    .btn-add:hover {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+    }
+
     .btn-info {
       background: linear-gradient(to bottom, #ffffff, #f0f0f0);
       color: #000;
@@ -402,10 +516,18 @@
       justify-content: center;
     }
 
+    .btn-info:hover {
+      background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+    }
+
     .btn-take {
       background: linear-gradient(to bottom, #dc143c, #b01030);
       color: #fff;
       min-width: 120px;
+    }
+
+    .btn-take:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
     .modal-overlay {
@@ -530,6 +652,10 @@
       opacity: 0.7;
     }
 
+    .pagination button i {
+      font-size: 24px;
+    }
+
     .page-numbers {
       display: flex;
       gap: 4px;
@@ -554,6 +680,10 @@
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button {
+      margin: 0 6px;
     }
 
     .page-numbers button:hover {
@@ -601,91 +731,508 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
-    /* Стили для авторизации */
-    #login {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      padding: 20px;
-    }
-
-    #login h2 {
-      color: #1a2f40;
-      margin-bottom: 20px;
-    }
-
-    /* Адаптация для мобильных */
+    
+    /* Мобильные стили */
     @media (max-width: 1024px) {
       .site-name-text {
         font-size: 50px;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        line-height: 1.2;
       }
+      
       header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 10px 30px;
         height: 140px;
       }
+      
+      .site-name {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+      
       .add-button {
-        font-size: 60px;
         width: 70px;
         height: 70px;
       }
-      .panel {
+      
+      .add-button i {
+        font-size: 40px;
+      }
+      
+      .filter-panel {
         flex-wrap: wrap;
       }
-      .filter {
+      
+      .search-input {
         width: 100%;
       }
-      .filter-btn {
-        width: 100%;
+      
+      .cards.desktop-layout,
+      .card.desktop-layout {
+        width: 100% !important;
+        max-width: 900px !important;
+        margin: 0 auto !important;
+      }
+      
+      .cards.desktop-layout {
+        flex-direction: column !important;
+      }
+      
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        gap: 8px;
+        padding: 10px 0;
+      }
+      
+      .pill {
+        background: #fff;
+        border-radius: 20px;
+        padding: 0 20px;
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-width: 100px;
+        max-width: 150px;
+      }
+      
+      .controls input {
+        width: 60px;
+        height: 60px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 16px;
         text-align: center;
+        background: #fff;
+        font-size: 20px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
       }
-      .search {
+      
+      .btn {
+        height: 60px;
+        padding: 0 24px;
+        border: none;
+        border-radius: 16px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      
+      .btn-add {
+        background: linear-gradient(to bottom, #1f2937, #0d1520);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      .btn-info {
+        background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+        color: #000;
+        min-width: 60px;
+        justify-content: center;
+      }
+      
+      .btn-take {
+        background: linear-gradient(to bottom, #dc143c, #b01030);
+        color: #fff;
+        min-width: 140px;
+      }
+      
+      .part-name-container {
+        display: flex;
+        align-items: center;
+        margin: 12px 0;
+        padding: 0 12px;
+        background: #ffffff;
+        border-radius: 16px;
+        min-height: 60px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .part-name-text {
+        flex: 1;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: left;
+        padding: 16px 0;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        color: #fff;
+        margin-left: 8px;
+      }
+      
+      .part-name-input {
+        flex: 1;
+        height: 52px;
+        border: 2px solid #dc143c;
+        border-radius: 12px;
+        outline: none;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 0 12px;
+      }
+      
+      .media-block .icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc143c;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 28px;
+        color: #fff;
+        z-index: 2;
+      }
+      
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 50px 0;
+        gap: 10px;
+        flex-wrap: nowrap;
         width: 100%;
+        max-width: 900px;
+        margin: 50px auto;
+      }
+      
+      .pagination button {
+        padding: 18px 30px;
+        font-size: 20px;
+        min-width: 140px;
+        height: 60px;
+      }
+      
+      .page-numbers button {
+        min-width: 40px;
+        height: 60px;
+        padding: 0 20px;
+        font-size: 20px;
+      }
+      
+      .modal {
+        padding: 40px;
+        width: 80vw;
+      }
+      
+      .modal pre {
+        font-size: 26px;
+        padding: 20px;
+      }
+      
+      .modal-close {
+        font-size: 40px;
       }
     }
-
+    
+    /* Десктопные стили */
     @media (min-width: 1025px) {
       header {
         height: 75px;
         padding: 4px 8px;
       }
+      
       .logo img {
         width: 50px;
         height: 50px;
       }
+      
       .site-name-text {
         font-size: 32px;
+        margin-bottom: 0;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        font-family: 'Arial', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
       }
+      
       .add-button {
-        font-size: 40px;
         width: 50px;
         height: 50px;
       }
+      
+      .add-button i {
+        font-size: 28px;
+      }
+      
+      .dropdown-sites {
+        min-width: 180px;
+        border-radius: 8px;
+        top: calc(100% + 20px);
+        border-width: 1px;
+      }
+      
+      .dropdown-sites a {
+        padding: 8px 40px;
+        font-size: 20px;
+      }
+      
       #content {
         margin-top: 95px;
       }
-      .panel {
+      
+      body {
+        padding: 8px 4px;
+      }
+      
+      .filter-panel {
+        max-width: 1300px;
         margin-bottom: 8px;
+        gap: 6px;
+        padding: 8px 12px;
       }
+      
       .filter-btn {
-        padding: 6px 12px;
+        height: 34px;
+        font-size: 12px;
+        padding: 0 10px;
+        border-radius: 6px;
+      }
+      
+      .filter-btn i {
         font-size: 12px;
       }
-      .dropdown-filter div {
-        font-size: 12px;
-        padding: 6px 10px;
+      
+      .filter-dropdown {
+        top: 36px;
+        min-width: 120px;
       }
-      .search {
-        padding: 6px 10px;
+      
+      .filter-dropdown div {
+        padding: 8px 10px;
         font-size: 12px;
+      }
+      
+      .search-input {
+        height: 34px;
+        font-size: 12px;
+        padding: 0 8px;
+      }
+      
+      .cards.desktop-layout {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+        box-sizing: border-box;
+        max-width: 1300px;
+      }
+      
+      .card.desktop-layout {
+        width: calc((100% - 16px) / 3) !important;
+        max-width: none !important;
+        margin: 0 !important;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        min-height: 320px;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      
+      .media-block {
+        border-radius: 6px;
+        padding-top: 65%;
+      }
+      
+      .media-block .icon {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        border-radius: 3px;
+      }
+      
+      .remove {
+        top: 4px;
+        right: 4px;
+      }
+      
+      .part-name-container {
+        min-height: 34px;
+        margin: 6px 0;
+        padding: 0 6px;
+        border-radius: 8px;
+      }
+      
+      .part-name-text {
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      
+      .part-name-input {
+        height: 30px;
+        font-size: 13px;
+        border-radius: 6px;
+        padding: 0 6px;
+        border-width: 1px;
+      }
+      
+      .part-name-edit-btn,
+      .part-name-save-btn,
+      .part-name-cancel-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+        margin-left: 4px;
+        border-radius: 4px;
+      }
+      
+      .controls {
+        margin-top: 8px;
+        gap: 4px;
+        padding: 6px 0;
+        flex-wrap: nowrap;
+      }
+      
+      .pill {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        border-radius: 12px;
+        max-width: 100px;
+        min-width: 60px;
+      }
+      
+      .controls input {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+        border-radius: 6px;
+        padding: 0 2px;
+        min-width: 30px;
+      }
+      
+      .btn {
+        height: 30px;
+        font-size: 11px;
+        padding: 0 8px;
+        min-width: 70px;
+        border-radius: 6px;
+        gap: 3px;
+      }
+      
+      .btn-info {
+        min-width: 30px;
+        padding: 0 4px;
+      }
+      
+      .btn i {
+        font-size: 10px;
+      }
+      
+      @media (min-width: 1025px) and (max-width: 1150px) {
+        .btn-add span,
+        .btn-take span {
+          display: none;
+        }
+        
+        .btn-add,
+        .btn-take {
+          min-width: 40px;
+          padding: 0 6px;
+          justify-content: center;
+        }
+        
+        .btn-add i,
+        .btn-take i {
+          margin: 0;
+        }
+      }
+      
+      .pagination {
+        max-width: 1300px;
+        margin: 20px auto;
+        gap: 4px;
+      }
+      
+      .pagination button {
+        padding: 8px 12px;
+        font-size: 13px;
+        height: 36px;
+        min-width: 90px;
+        border-radius: 6px;
+        gap: 4px;
+      }
+      
+      .page-numbers button {
+        height: 36px;
+        font-size: 13px;
+        padding: 0 12px;
+        min-width: 24px;
+        border-radius: 8px;
+      }
+      
+      .pagination button i {
+        font-size: 14px;
+      }
+      
+      .modal {
+        padding: 12px;
+        border-radius: 8px;
+      }
+      
+      .modal h3 {
+        font-size: 14px;
+        padding-bottom: 6px;
+      }
+      
+      .modal pre {
+        font-size: 12px;
+        padding: 6px;
+        line-height: 1.2;
+      }
+      
+      .modal-close {
+        font-size: 20px;
+        top: 4px;
+        right: 8px;
       }
     }
   </style>
@@ -696,7 +1243,7 @@
   <div class="loader"></div>
 </div>
 
-<!-- Шапка (без кнопки меню и выпадающего списка сайтов, добавлен +) -->
+<!-- Шапка -->
 <header>
   <div class="logo">
     <a href="https://smart-bowling.github.io/SMB/">
@@ -704,12 +1251,18 @@
     </a>
   </div>
   <div class="site-name">
-    <span class="site-name-text">LUCKY STRIKE KH</span>
+    <div class="site-name-dropdown" onclick="toggleSitesDropdown(event)">
+      <span class="site-name-text">LUCKY STRIKE KH</span>
+      <div class="dropdown-sites" id="sitesDropdown">
+        <a href="https://smart-bowling.github.io/PARTS-BB/">BLOCKBUSTER</a>
+        <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">SKYMALL</a>
+      </div>
+    </div>
   </div>
-  <!-- Кнопка добавления детали (значок +) -->
-  <a href="https://smart-bowling.github.io/ADD-PARTS-KH/" target="_blank" class="add-button">
-    <i class="fas fa-plus-circle"></i>
-  </a>
+  <!-- Кнопка добавления в виде + вместо меню -->
+  <div class="add-button" onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')">
+    <i class="fas fa-plus"></i>
+  </div>
 </header>
 
 <!-- Блок авторизации -->
@@ -725,18 +1278,20 @@
 
 <!-- Контент для авторизованных -->
 <div id="content" style="display:none">
-  <!-- Новая панель фильтра и поиска (вместо старых кнопок) -->
-  <div class="panel">
-    <div class="filter">
-      <button class="filter-btn" onclick="toggleFilterDropdown()">Фильтр</button>
-      <div class="dropdown-filter" id="filterDropdown">
-        <div data-filter="all">Все</div>
-        <div data-filter="popular">Новые</div>        <!-- соответствует popular (последние взятые) -->
-        <div data-filter="mostPopular">В работе</div> <!-- соответствует mostPopular -->
-        <div data-filter="sortByQty">Завершено</div>  <!-- соответствует сортировке по остаткам -->
+  <!-- Новая панель фильтрации -->
+  <div class="filter-panel">
+    <div class="filter-container">
+      <button class="filter-btn" onclick="toggleFilter()">
+        <i class="fas fa-filter"></i> Фильтр
+      </button>
+      <div class="filter-dropdown" id="filterDropdown">
+        <div data-filter="all" class="active">Все</div>
+        <div data-filter="popular">Пос. взят. за 30 дней</div>
+        <div data-filter="mostPopular">Популярные</div>
+        <div data-filter="sortByQty">Остатки</div>
       </div>
     </div>
-    <input class="search" type="text" id="searchInput" placeholder="Поиск...">
+    <input class="search-input" type="text" id="searchInput" placeholder="Поиск по номеру детали...">
   </div>
 
   <div class="cards" id="cardsContainer"></div>
@@ -762,20 +1317,24 @@
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
 
-  // Функция для выпадающего списка фильтра
-  function toggleFilterDropdown() {
-    const menu = document.getElementById("filterDropdown");
-    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  // Функция для выпадающего списка сайтов
+  function toggleSitesDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById("sitesDropdown");
+    dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
   }
 
   // Закрытие выпадающего списка при клике вне его
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.filter')) {
-      document.getElementById('filterDropdown').style.display = 'none';
+    const dropdown = document.getElementById("sitesDropdown");
+    const siteName = document.querySelector('.site-name-dropdown');
+    
+    if (dropdown.style.display === 'block' && !siteName.contains(e.target)) {
+      dropdown.style.display = 'none';
     }
   });
 
-  // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ (без изменений) ===
+  // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ===
   const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
   const SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -783,6 +1342,7 @@
 
   let currentUser = null;
 
+  // Загрузка Google API
   function loadSheetsAPI() {
     return new Promise((resolve, reject) => {
       gapi.load('client', {
@@ -794,6 +1354,7 @@
     });
   }
 
+  // Парсинг JWT
   function parseJwt(token) {
     try {
       const base64Url = token.split('.')[1];
@@ -808,18 +1369,23 @@
     }
   }
 
+  // Обработчик ответа от Google
   function handleCredentialResponse(response) {
     console.log("Google response received");
     showLoader(true);
+    
     try {
       const payload = parseJwt(response.credential);
       console.log("User email:", payload.email);
+      
       currentUser = {
         email: payload.email.toLowerCase().trim(),
         name: payload.name,
         picture: payload.picture
       };
+      
       initAndCheckEmail();
+      
     } catch (e) {
       console.error("Error parsing Google response:", e);
       showLoader(false);
@@ -827,6 +1393,7 @@
     }
   }
 
+  // Инициализация API и проверка email
   async function initAndCheckEmail() {
     try {
       await loadSheetsAPI();
@@ -834,7 +1401,9 @@
         apiKey: API_KEY,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       });
+      
       await checkEmailInSheet(currentUser.email);
+      
     } catch (error) {
       console.error('API initialization error:', error);
       showLoader(false);
@@ -842,6 +1411,7 @@
     }
   }
 
+  // Проверка email в Google Sheets
   async function checkEmailInSheet(email) {
     try {
       const response = await gapi.client.sheets.spreadsheets.values.get({
@@ -861,6 +1431,7 @@
       
       for (let i = 0; i < rows.length; i++) {
         if (!rows[i][0]) continue;
+        
         const rowEmail = rows[i][0].toLowerCase().trim();
         if (rowEmail === email) {
           userRow = rows[i];
@@ -872,7 +1443,9 @@
         for (let j = 1; j < userRow.length; j++) {
           const cellValue = userRow[j];
           if (!cellValue || cellValue.trim() === '') continue;
+          
           const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
+          
           if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
             hasAccess = true;
             break;
@@ -886,9 +1459,11 @@
         showLoader(false);
         alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
       }
+      
     } catch (error) {
       console.error('Sheets API error:', error);
       showLoader(false);
+      
       let errorMessage = 'Ошибка доступа к таблице';
       if (error.result && error.result.error && error.result.error.message) {
         errorMessage += ': ' + error.result.error.message;
@@ -897,18 +1472,24 @@
     }
   }
 
+  // Функция входа пользователя
   function loginUser(payload) {
     console.log("Logging in user:", payload.email);
+    
     document.getElementById('login').style.display = 'none';
     document.getElementById('content').style.display = 'block';
+    
     localStorage.setItem('userLoggedIn', 'true');
     localStorage.setItem('userEmail', payload.email.toLowerCase());
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
+    
     showLoader(false);
+    
     initApp();
   }
 
+  // Выход
   function signOut() {
     console.log("Signing out");
     localStorage.clear();
@@ -916,20 +1497,27 @@
     location.reload();
   }
 
+  // Проверка сессии при загрузке
   window.addEventListener('load', function() {
     console.log("Page loaded, checking localStorage...");
+    
     const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
     const email = localStorage.getItem('userEmail');
+    
     if (isLoggedIn && email) {
       console.log("Found stored session for:", email);
+      
       document.getElementById('login').style.display = 'none';
       document.getElementById('content').style.display = 'block';
+      
       currentUser = {
         email: email,
         name: localStorage.getItem('userName'),
         picture: localStorage.getItem('userPic')
       };
+      
       showLoader(true);
+      
       loadSheetsAPI()
         .then(() => gapi.client.init({
           apiKey: API_KEY,
@@ -942,456 +1530,549 @@
           alert('Ошибка восстановления сессии');
           signOut();
         });
+      
     } else {
       console.log("No stored session, showing login button");
       document.getElementById('login').style.display = 'block';
     }
   });
 
-  // Глобальные переменные для пагинации и данных
-  let allEntries = [];
-  let currentEntries = [];
-  let currentPage = 1;
-  let totalPages = 1;
-  const cardsPerPage = 30;
+  // Функция для фильтра
+  function toggleFilter() {
+    const menu = document.getElementById("filterDropdown");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
 
+  // Закрытие фильтра при клике вне его
+  document.addEventListener("click", function(e) {
+    if(!e.target.closest(".filter-container")){
+      document.getElementById("filterDropdown").style.display = "none";
+    }
+  });
+
+  // Глобальный объект для пагинации
   const pagination = {
-    prevPage: function() { if (currentPage > 1) goToPage(currentPage - 1); },
-    nextPage: function() { if (currentPage < totalPages) goToPage(currentPage + 1); }
+    prevPage: function() {},
+    nextPage: function() {}
   };
 
-  function goToPage(page) {
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
-    renderPage(currentPage);
-    updatePaginationControls();
-  }
-
-  function updateTotalPages() {
-    totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
-  }
-
-  function updatePaginationControls() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    if (prevBtn) prevBtn.disabled = currentPage <= 1;
-    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-  }
-
-  function renderPageNumbers() {
-    const pageContainer = document.getElementById('pageNumbers');
-    if (!pageContainer) return;
-    pageContainer.innerHTML = '';
-    
-    const maxVisiblePages = 5;
-    let startPage = Math.max(currentPage - 2, 1);
-    let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
-    
-    if (startPage > 1) {
-      addPageButton(1);
-      if (startPage > 2) addDots();
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      addPageButton(i);
-    }
-    
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) addDots();
-      addPageButton(totalPages);
-    }
-    
-    function addPageButton(page) {
-      const btn = document.createElement('button');
-      btn.textContent = page;
-      if (page === currentPage) btn.classList.add('active');
-      btn.onclick = () => goToPage(page);
-      pageContainer.appendChild(btn);
-    }
-    
-    function addDots() {
-      const dots = document.createElement('span');
-      dots.textContent = '...';
-      dots.style.padding = '0 10px';
-      pageContainer.appendChild(dots);
-    }
-  }
-
-  function renderPage(page) {
-    const container = document.getElementById('cardsContainer');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    const start = (page - 1) * cardsPerPage;
-    const end = start + cardsPerPage;
-    const pageData = currentEntries.slice(start, end);
-    
-    if (pageData.length === 0) {
-      container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
-      return;
-    }
-    
-    pageData.forEach(entry => {
-      const card = createCard(entry);
-      container.appendChild(card);
-    });
-    
-    renderPageNumbers();
-    updatePaginationControls();
-    window.scrollTo(0, 0);
-    if (window.innerWidth > 1024) toggleDesktopLayout(true);
-  }
-
+  // Функция для включения/выключения десктопного layout
   function toggleDesktopLayout(enable) {
     const cardsContainer = document.getElementById('cardsContainer');
     const cards = document.querySelectorAll('.card');
-    if (!cardsContainer) return;
+    const filterPanel = document.querySelector('.filter-panel');
+    
+    if (!cardsContainer || cards.length === 0) return;
+    
     if (enable) {
       cardsContainer.classList.add('desktop-layout');
-      cards.forEach(c => c.classList.add('desktop-layout'));
+      cards.forEach(card => {
+        card.classList.add('desktop-layout');
+      });
+      cardsContainer.style.maxWidth = '1300px';
+      cardsContainer.style.margin = '0 auto';
+      cardsContainer.style.padding = '0';
+      cardsContainer.style.boxSizing = 'border-box';
+      
+      if (filterPanel) {
+        filterPanel.style.maxWidth = '1300px';
+        filterPanel.style.margin = '0 auto 8px';
+      }
     } else {
       cardsContainer.classList.remove('desktop-layout');
-      cards.forEach(c => c.classList.remove('desktop-layout'));
-    }
-  }
-
-  // Функции работы с API (без изменений)
-  async function getEntries() {
-    showLoader(true);
-    try {
-      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getEntries');
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function updateQuantity(partNumber, delta) {
-    showLoader(true);
-    try {
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function deleteEntry(rowIndex) {
-    showLoader(true);
-    try {
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=deleteEntry&rowIndex=${rowIndex}`);
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function getHistory(partNumber) {
-    showLoader(true);
-    try {
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
-      return await res.text();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function getPopularEntries() {
-    showLoader(true);
-    try {
-      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getPopularEntries');
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function getMostPopularEntries() {
-    showLoader(true);
-    try {
-      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getMostPopularEntries');
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function updatePartName(partNumber, newName) {
-    showLoader(true);
-    try {
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
-      return await res.json();
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  function createCard(entry) {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.dataset.row = entry.rowIndex;
-    div.dataset.partNumber = entry.partNumber.toLowerCase();
-
-    const media = document.createElement('div');
-    media.className = 'media-block';
-
-    if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
-      const iframe = document.createElement('iframe');
-      iframe.src = entry.fileUrl;
-      media.appendChild(iframe);
-    } else if (entry.fileUrl) {
-      const img = document.createElement('img');
-      img.src = entry.fileUrl;
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      media.appendChild(img);
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'img-overlay';
-    media.appendChild(overlay);
-
-    const rem = document.createElement('div');
-    rem.className = 'icon remove';
-    rem.textContent = 'Х';
-    media.append(rem);
-
-    div.append(media);
-
-    const partNameContainer = document.createElement('div');
-    partNameContainer.className = 'part-name-container';
-    partNameContainer.dataset.partNumber = entry.partNumber;
-    
-    const partNameText = document.createElement('div');
-    partNameText.className = 'part-name-text';
-    partNameText.textContent = entry.partName || 'Название детали';
-    
-    const editButton = document.createElement('button');
-    editButton.className = 'part-name-edit-btn';
-    editButton.innerHTML = '<i class="fas fa-edit"></i>';
-    editButton.title = 'Редактировать название';
-    
-    partNameContainer.appendChild(partNameText);
-    partNameContainer.appendChild(editButton);
-    div.append(partNameContainer);
-
-    const controls = document.createElement('div');
-    controls.className = 'controls';
-
-    const pill = document.createElement('div');
-    pill.className = 'pill';
-    pill.textContent = entry.partNumber;
-
-    const qtyInput = document.createElement('input');
-    qtyInput.type = 'text';
-    qtyInput.value = entry.quantity;
-    qtyInput.readOnly = true;
-
-    const btnAdd = document.createElement('button');
-    btnAdd.className = 'btn btn-add';
-    btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
-
-    const btnInfo = document.createElement('button');
-    btnInfo.className = 'btn btn-info';
-    btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
-
-    const btnTake = document.createElement('button');
-    btnTake.className = 'btn btn-take';
-    btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
-
-    controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
-    div.append(controls);
-
-    editButton.addEventListener('click', function() {
-      const partNumber = partNameContainer.dataset.partNumber;
-      const currentName = partNameText.textContent;
-      
-      partNameContainer.classList.add('editing');
-      
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'part-name-input';
-      input.value = currentName;
-      
-      const saveButton = document.createElement('button');
-      saveButton.className = 'part-name-save-btn';
-      saveButton.innerHTML = '<i class="fas fa-check"></i>';
-      saveButton.title = 'Сохранить';
-      
-      const cancelButton = document.createElement('button');
-      cancelButton.className = 'part-name-cancel-btn';
-      cancelButton.innerHTML = '<i class="fas fa-times"></i>';
-      cancelButton.title = 'Отменить';
-      
-      partNameText.style.display = 'none';
-      editButton.style.display = 'none';
-      
-      partNameContainer.appendChild(input);
-      partNameContainer.appendChild(saveButton);
-      partNameContainer.appendChild(cancelButton);
-      
-      input.focus();
-      input.select();
-      
-      const finishEdit = async (save = false) => {
-        const newName = save ? input.value.trim() : currentName;
-        
-        partNameContainer.classList.remove('editing');
-        input.remove();
-        saveButton.remove();
-        cancelButton.remove();
-        
-        partNameText.style.display = '';
-        editButton.style.display = '';
-        
-        if (save && newName && newName !== currentName) {
-          const res = await updatePartName(partNumber, newName);
-          if (res.status === 'success') {
-            partNameText.textContent = newName;
-            const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
-            if (updatedEntry) updatedEntry.partName = newName;
-          } else {
-            alert(res.message || 'Ошибка при обновлении названия');
-          }
-        }
-      };
-      
-      saveButton.addEventListener('click', () => finishEdit(true));
-      cancelButton.addEventListener('click', () => finishEdit(false));
-      
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') finishEdit(true);
+      cards.forEach(card => {
+        card.classList.remove('desktop-layout');
       });
-    });
-
-    rem.onclick = async () => {
-      if (confirm('Удалить эту запись?')) {
-        await deleteEntry(entry.rowIndex);
-        allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
-        currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
-        updateTotalPages();
-        if (currentPage > totalPages) currentPage = totalPages;
-        renderPage(currentPage);
+      cardsContainer.style.maxWidth = 'none';
+      cardsContainer.style.margin = '0';
+      cardsContainer.style.padding = '0';
+      
+      if (filterPanel) {
+        filterPanel.style.maxWidth = 'none';
+        filterPanel.style.margin = '0 auto 12px';
       }
-    };
-
-    btnAdd.onclick = async () => {
-      const deltaStr = prompt('Введите число для добавления:');
-      const delta = Number(deltaStr);
-      if (deltaStr !== null && !isNaN(delta)) {
-        const res = await updateQuantity(entry.partNumber, delta);
-        if (res.status === 'success') {
-          qtyInput.value = res.quantity;
-          entry.quantity = res.quantity;
-        } else {
-          alert(res.message);
-        }
-      }
-    };
-
-    btnTake.onclick = async () => {
-      const deltaStr = prompt('Введите число для вычитания:');
-      const delta = Number(deltaStr);
-      if (deltaStr !== null && !isNaN(delta)) {
-        const res = await updateQuantity(entry.partNumber, -delta);
-        if (res.status === 'success') {
-          qtyInput.value = res.quantity;
-          entry.quantity = res.quantity;
-        } else {
-          alert(res.message);
-        }
-      }
-    };
-
-    btnInfo.onclick = async () => {
-      const hist = await getHistory(entry.partNumber);
-      document.getElementById('modalContent').textContent = hist;
-      document.getElementById('modalOverlay').style.display = 'flex';
-    };
-
-    return div;
+    }
   }
 
   // Инициализация приложения
   function initApp() {
-    // Создаём скрытый select для сохранения логики сортировки (он не отображается)
-    const hiddenSelect = document.createElement('select');
-    hiddenSelect.id = 'sortSelect';
-    hiddenSelect.style.display = 'none';
-    hiddenSelect.innerHTML = `
-      <option value="all">Все детали</option>
-      <option value="popular">Пос. взят. за 30 дней</option>
-      <option value="mostPopular">Популярные</option>
-      <option value="sortByQty">Остатки</option>
-    `;
-    document.getElementById('content').prepend(hiddenSelect);
+    const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
 
-    // Вешаем обработчик change на скрытый select
-    document.getElementById('sortSelect').addEventListener('change', async function() {
+    let allEntries = [];
+    let currentEntries = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    const cardsPerPage = 30;
+
+    async function getEntries() {
       showLoader(true);
       try {
-        if (this.value === 'all') {
-          currentEntries = [...allEntries];
-        } else if (this.value === 'popular') {
-          currentEntries = await getPopularEntries();
-          if (currentEntries && currentEntries[0]?.lastChangeDate) {
-            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
-          }
-        } else if (this.value === 'mostPopular') {
-          currentEntries = await getMostPopularEntries();
-          if (!currentEntries?.length) {
-            alert('Нет данных для сортировки "всё время"');
-            return;
-          }
-        } else if (this.value === 'sortByQty') {
-          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
-        }
-        updateTotalPages();
-        currentPage = 1;
-        renderPage(currentPage);
+        const res = await fetch(`${API_URL}?action=getEntries`);
+        return await res.json();
       } finally {
         showLoader(false);
       }
+    }
+
+    async function updateQuantity(partNumber, delta) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function deleteEntry(rowIndex) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getHistory(partNumber) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+        return await res.text();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function getMostPopularEntries() {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function updatePartName(partNumber, newName) {
+      showLoader(true);
+      try {
+        const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+        return await res.json();
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function createCard(entry) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.row = entry.rowIndex;
+      div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+      const media = document.createElement('div');
+      media.className = 'media-block';
+
+      if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else if (entry.fileUrl) {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        media.appendChild(img);
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'img-overlay';
+      media.appendChild(overlay);
+
+      const rem = document.createElement('div');
+      rem.className = 'icon remove';
+      rem.textContent = 'Х';
+      media.append(rem);
+
+      div.append(media);
+
+      const partNameContainer = document.createElement('div');
+      partNameContainer.className = 'part-name-container';
+      partNameContainer.dataset.partNumber = entry.partNumber;
+      
+      const partNameText = document.createElement('div');
+      partNameText.className = 'part-name-text';
+      partNameText.textContent = entry.partName || 'Название детали';
+      
+      const editButton = document.createElement('button');
+      editButton.className = 'part-name-edit-btn';
+      editButton.innerHTML = '<i class="fas fa-edit"></i>';
+      editButton.title = 'Редактировать название';
+      
+      partNameContainer.appendChild(partNameText);
+      partNameContainer.appendChild(editButton);
+      div.append(partNameContainer);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = entry.partNumber;
+
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'text';
+      qtyInput.value = entry.quantity;
+      qtyInput.readOnly = true;
+
+      const btnAdd = document.createElement('button');
+      btnAdd.className = 'btn btn-add';
+      btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
+
+      const btnInfo = document.createElement('button');
+      btnInfo.className = 'btn btn-info';
+      btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
+
+      const btnTake = document.createElement('button');
+      btnTake.className = 'btn btn-take';
+      btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
+
+      controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+      div.append(controls);
+
+      editButton.addEventListener('click', function() {
+        const partNumber = partNameContainer.dataset.partNumber;
+        const currentName = partNameText.textContent;
+        
+        partNameContainer.classList.add('editing');
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'part-name-input';
+        input.value = currentName;
+        
+        const saveButton = document.createElement('button');
+        saveButton.className = 'part-name-save-btn';
+        saveButton.innerHTML = '<i class="fas fa-check"></i>';
+        saveButton.title = 'Сохранить';
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.className = 'part-name-cancel-btn';
+        cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+        cancelButton.title = 'Отменить';
+        
+        partNameText.style.display = 'none';
+        editButton.style.display = 'none';
+        
+        partNameContainer.appendChild(input);
+        partNameContainer.appendChild(saveButton);
+        partNameContainer.appendChild(cancelButton);
+        
+        input.focus();
+        input.select();
+        
+        const finishEdit = async (save = false) => {
+          const newName = save ? input.value.trim() : currentName;
+          
+          partNameContainer.classList.remove('editing');
+          input.remove();
+          saveButton.remove();
+          cancelButton.remove();
+          
+          partNameText.style.display = '';
+          editButton.style.display = '';
+          
+          if (save && newName && newName !== currentName) {
+            const res = await updatePartName(partNumber, newName);
+            if (res.status === 'success') {
+              partNameText.textContent = newName;
+              const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
+              if (updatedEntry) updatedEntry.partName = newName;
+            } else {
+              alert(res.message || 'Ошибка при обновлении названия');
+            }
+          }
+        };
+        
+        saveButton.addEventListener('click', () => finishEdit(true));
+        cancelButton.addEventListener('click', () => finishEdit(false));
+        
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            finishEdit(true);
+          }
+        });
+      });
+
+      rem.onclick = async () => {
+        if (confirm('Удалить эту запись?')) {
+          await deleteEntry(entry.rowIndex);
+          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
+          updateTotalPages();
+          if (currentPage > totalPages) currentPage = totalPages;
+          renderPage(currentPage);
+        }
+      };
+
+      btnAdd.onclick = async () => {
+        const deltaStr = prompt('Введите число для добавления:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnTake.onclick = async () => {
+        const deltaStr = prompt('Введите число для вычитания:');
+        const delta = Number(deltaStr);
+        if (deltaStr !== null && !isNaN(delta)) {
+          const res = await updateQuantity(entry.partNumber, -delta);
+          if (res.status === 'success') {
+            qtyInput.value = res.quantity;
+            entry.quantity = res.quantity;
+          } else {
+            alert(res.message);
+          }
+        }
+      };
+
+      btnInfo.onclick = async () => {
+        const hist = await getHistory(entry.partNumber);
+        document.getElementById('modalContent').textContent = hist;
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      return div;
+    }
+
+    function updateTotalPages() {
+      totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+    }
+
+    function renderPage(page) {
+      const container = document.getElementById('cardsContainer');
+      if (!container) {
+        console.error('Cards container not found!');
+        return;
+      }
+      
+      container.innerHTML = '';
+
+      const start = (page - 1) * cardsPerPage;
+      const end = start + cardsPerPage;
+      const pageData = currentEntries.slice(start, end);
+
+      if (pageData.length === 0) {
+        container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+        return;
+      }
+
+      pageData.forEach(entry => {
+        const card = createCard(entry);
+        container.appendChild(card);
+      });
+
+      renderPageNumbers();
+      updatePaginationControls();
+      window.scrollTo(0, 0);
+      
+      if (window.innerWidth > 1024) {
+        toggleDesktopLayout(true);
+      }
+    }
+
+    function renderPageNumbers() {
+      const pageContainer = document.getElementById('pageNumbers');
+      if (!pageContainer) {
+        console.error('Page numbers container not found!');
+        return;
+      }
+      
+      pageContainer.innerHTML = '';
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(currentPage - 2, 1);
+      let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+      
+      if (startPage > 1) {
+        addPageButton(1);
+        if (startPage > 2) {
+          addDots();
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          addDots();
+        }
+        addPageButton(totalPages);
+      }
+      
+      function addPageButton(page) {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        if (page === currentPage) {
+          btn.classList.add('active');
+        }
+        btn.onclick = () => goToPage(page);
+        pageContainer.appendChild(btn);
+      }
+      
+      function addDots() {
+        const dots = document.createElement('span');
+        dots.textContent = '...';
+        dots.style.padding = '0 10px';
+        pageContainer.appendChild(dots);
+      }
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      renderPage(currentPage);
+      updatePaginationControls();
+    }
+
+    pagination.nextPage = function() {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    };
+
+    pagination.prevPage = function() {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    };
+
+    function updatePaginationControls() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    function resetFilterAndSearch() {
+      // Сброс фильтра
+      document.querySelectorAll('.filter-dropdown div').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.querySelector('[data-filter="all"]').classList.add('active');
+      
+      // Очистка поиска
+      document.getElementById('searchInput').value = '';
+      
+      // Сброс данных
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+    }
+
+    // Обработчик поиска
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      // Сначала применяем текущий фильтр
+      let filtered = applyCurrentFilter(allEntries);
+      
+      // Затем применяем поиск
+      if (searchTerm.length > 0) {
+        filtered = filtered.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+      }
+      
+      currentEntries = filtered;
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
     });
 
-    // Обработка выбора фильтра из выпадающего списка
-    document.querySelectorAll('.dropdown-filter div').forEach(item => {
-      item.addEventListener('click', function(e) {
-        const filterValue = this.dataset.filter;
-        const sortSelect = document.getElementById('sortSelect');
-        if (!sortSelect) return;
-        
-        // Устанавливаем значение селекта и вызываем событие change
-        sortSelect.value = filterValue;
-        const event = new Event('change', { bubbles: true });
-        sortSelect.dispatchEvent(event);
+    // Функция применения текущего фильтра
+    function applyCurrentFilter(entries) {
+      const activeFilter = document.querySelector('.filter-dropdown div.active')?.dataset.filter || 'all';
+      
+      switch(activeFilter) {
+        case 'all':
+          return [...entries];
+        case 'popular':
+          // Здесь нужно будет реализовать логику получения популярных
+          // Пока просто возвращаем все
+          return [...entries];
+        case 'mostPopular':
+          // Здесь нужно будет реализовать логику получения самых популярных
+          return [...entries];
+        case 'sortByQty':
+          return [...entries].sort((a, b) => a.quantity - b.quantity);
+        default:
+          return [...entries];
+      }
+    }
+
+    // Обработчик фильтра
+    document.querySelectorAll('.filter-dropdown div').forEach(item => {
+      item.addEventListener('click', async function() {
+        // Обновляем активный класс
+        document.querySelectorAll('.filter-dropdown div').forEach(el => {
+          el.classList.remove('active');
+        });
+        this.classList.add('active');
         
         // Закрываем дропдаун
         document.getElementById('filterDropdown').style.display = 'none';
-      });
-    });
-
-    // Обработка поиска с debounce (сбрасываем фильтр на "Все")
-    let searchTimeout;
-    document.getElementById('searchInput')?.addEventListener('input', function(e) {
-      clearTimeout(searchTimeout);
-      const term = e.target.value.trim().toLowerCase();
-      searchTimeout = setTimeout(() => {
-        // Сбрасываем скрытый select на "all" (без вызова change, просто меняем value)
-        const sortSelect = document.getElementById('sortSelect');
-        if (sortSelect) sortSelect.value = 'all';
         
-        if (term === '') {
-          currentEntries = [...allEntries];
-        } else {
-          currentEntries = allEntries.filter(entry => 
-            entry.partNumber.toLowerCase().includes(term)
-          );
+        // Получаем тип фильтра
+        const filterType = this.dataset.filter;
+        
+        // Применяем фильтр
+        showLoader(true);
+        try {
+          if (filterType === 'popular') {
+            currentEntries = await getPopularEntries();
+          } else if (filterType === 'mostPopular') {
+            currentEntries = await getMostPopularEntries();
+          } else {
+            currentEntries = [...allEntries];
+            if (filterType === 'sortByQty') {
+              currentEntries.sort((a, b) => a.quantity - b.quantity);
+            }
+          }
+          
+          // Применяем текущий поиск
+          const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+          if (searchTerm.length > 0) {
+            currentEntries = currentEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+          }
+          
+          updateTotalPages();
+          currentPage = 1;
+          renderPage(currentPage);
+        } finally {
+          showLoader(false);
         }
-        updateTotalPages();
-        currentPage = 1;
-        renderPage(currentPage);
-      }, 300);
+      });
     });
 
     document.getElementById('modalClose')?.addEventListener('click', () => {
@@ -1422,6 +2103,7 @@
   window.addEventListener('resize', function() {
     const cardsContainer = document.getElementById('cardsContainer');
     if (!cardsContainer) return;
+    
     if (window.innerWidth > 1024) {
       toggleDesktopLayout(true);
     } else {
