@@ -9,26 +9,32 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
+    :root {
+      --primary-red: #dc143c;
+      --dark-blue: #1f2937;
+      --bg-gray: #f0f2f5;
+    }
+
     body {
       margin: 0;
-      padding: 20px;
-      background: #f0f2f5;
+      padding: 0;
+      background: var(--bg-gray);
       font-family: 'Segoe UI', Arial, sans-serif;
     }
 
     /* --- ШАПКА --- */
     header {
-      background-color: #1f2937;
+      background-color: var(--dark-blue);
       color: white;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 30px;
+      padding: 0 30px;
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       z-index: 1000;
       height: 140px;
     }
@@ -39,28 +45,30 @@
       object-fit: cover;
     }
 
-    .site-name {
+    .site-name-text {
       flex: 1;
       text-align: center;
       font-weight: bold;
       font-size: 50px;
+      color: white;
+      margin: 0;
     }
 
-    /* Кнопка ПЛЮС вместо меню */
+    /* Кнопка ПЛЮС */
     .add-part-btn {
-      width: 70px;
-      height: 70px;
-      background: #dc143c;
+      width: 80px;
+      height: 80px;
+      background: var(--primary-red);
       border: none;
       border-radius: 50%;
       color: white;
-      font-size: 40px;
+      font-size: 45px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
     }
 
     .add-part-btn:hover {
@@ -68,30 +76,29 @@
       background: #ff1940;
     }
 
-    /* --- НОВАЯ ПАНЕЛЬ ФИЛЬТРОВ (вместо старых кнопок) --- */
+    /* --- ПАНЕЛЬ УПРАВЛЕНИЯ (ФИЛЬТР И ПОИСК) --- */
     .controls-panel {
       background: #fff;
       padding: 15px 20px;
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
       max-width: 1300px;
-      margin: 170px auto 20px; /* Отступ сверху из-за высокой шапки */
+      margin: 170px auto 20px;
+      box-sizing: border-box;
     }
 
-    .filter-container {
-      position: relative;
-    }
+    .filter-container { position: relative; }
 
-    .filter-trigger-btn {
-      background: #dc143c;
+    .filter-btn {
+      background: var(--primary-red);
       color: #fff;
       border: none;
       padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 16px;
+      border-radius: 10px;
+      font-size: 18px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -99,138 +106,272 @@
       gap: 8px;
     }
 
-    .filter-dropdown {
+    .dropdown-menu {
       position: absolute;
-      top: 55px;
+      top: 60px;
       left: 0;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
       display: none;
-      min-width: 180px;
-      z-index: 100;
+      min-width: 200px;
+      z-index: 1001;
       overflow: hidden;
       border: 1px solid #eee;
     }
 
-    .filter-dropdown div {
-      padding: 12px 16px;
+    .dropdown-menu div {
+      padding: 14px 20px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 16px;
       transition: background 0.2s;
     }
 
-    .filter-dropdown div:hover {
-      background: #f0f2f5;
-      color: #dc143c;
+    .dropdown-menu div:hover {
+      background: var(--bg-gray);
+      color: var(--primary-red);
     }
 
     .search-input {
       flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px 15px;
-      font-size: 16px;
+      border: 2px solid #eee;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 18px;
       outline: none;
-      transition: border-color 0.3s;
+      transition: all 0.3s;
     }
 
-    .search-input:focus {
-      border-color: #dc143c;
-    }
+    .search-input:focus { border-color: var(--primary-red); }
 
-    /* --- КОНТЕНТ --- */
+    /* --- КОНТЕНТ И КАРТОЧКИ --- */
     #content {
-      width: 100%;
       max-width: 1300px;
       margin: 0 auto;
-      padding: 0 8px;
+      padding: 0 15px 50px;
+      display: none; /* Скрыто до авторизации */
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    /* Стили карточки из вашего кода */
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       box-sizing: border-box;
     }
 
-    /* Адаптация для ПК */
-    @media (min-width: 1025px) {
-      header { height: 80px; padding: 0 20px; }
-      .logo img { width: 60px; height: 60px; }
-      .site-name { font-size: 32px; }
-      .add-part-btn { width: 50px; height: 50px; font-size: 28px; }
-      .controls-panel { margin-top: 100px; padding: 10px 15px; }
-      .filter-trigger-btn { padding: 8px 16px; font-size: 14px; }
-      .search-input { padding: 8px 12px; font-size: 14px; }
+    .media-block {
+      position: relative;
+      width: 100%;
+      padding-top: 75%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    /* Стили карточек (сокращено для примера) */
-    .cards { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
-    .card { background: white; border-radius: 15px; padding: 15px; width: 100%; max-width: 400px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .media-block img {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+
+    .remove-icon {
+      position: absolute; top: 10px; right: 10px;
+      background: var(--primary-red); color: white;
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; cursor: pointer; font-size: 24px; z-index: 5;
+    }
+
+    .part-name-container {
+      display: flex; align-items: center; background: #f9f9f9;
+      border-radius: 12px; margin: 15px 0; padding: 10px 15px; min-height: 60px;
+    }
+
+    .part-name-text { flex: 1; font-size: 20px; font-weight: bold; }
+
+    .controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    .pill {
+      background: white; border: 1px solid #ddd; border-radius: 20px;
+      height: 50px; padding: 0 20px; display: flex; align-items: center; font-weight: bold;
+    }
+
+    .btn-take {
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white; border: none; border-radius: 12px; height: 50px;
+      padding: 0 25px; font-weight: bold; cursor: pointer;
+    }
+
+    /* --- АВТОРИЗАЦИЯ --- */
+    #login {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: white; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 10000;
+    }
+
+    /* --- МОБИЛЬНАЯ АДАПТАЦИЯ --- */
+    @media (max-width: 1024px) {
+      .site-name-text { font-size: 40px; }
+      header { height: 120px; }
+      .controls-panel { margin-top: 140px; flex-wrap: wrap; }
+    }
+
+    @media (min-width: 1025px) {
+      header { height: 80px; }
+      .logo img { width: 60px; height: 60px; }
+      .site-name-text { font-size: 32px; }
+      .add-part-btn { width: 50px; height: 50px; font-size: 24px; }
+      .controls-panel { margin-top: 100px; padding: 10px; }
+      .cards { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+      .card { width: calc(33.33% - 14px); }
+    }
   </style>
 </head>
-
 <body>
 
-<header>
-  <div class="logo">
-    <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Logo">
-  </div>
-  
-  <div class="site-name">ДЕТАЛИ KH</div>
-
-  <button class="add-part-btn" onclick="addNewPart()" title="Добавить деталь">
-    <i class="fa-solid fa-plus"></i>
-  </button>
-</header>
-
-<div class="controls-panel">
-  <div class="filter-container">
-    <button class="filter-trigger-btn" onclick="toggleFilterMenu()">
-      <i class="fa-solid fa-filter"></i> Фильтр
-    </button>
-    <div class="filter-dropdown" id="filterDropdown">
-      <div onclick="applyFilter('all')">Все детали</div>
-      <div onclick="applyFilter('new')">Новые</div>
-      <div onclick="applyFilter('work')">В работе</div>
-      <div onclick="applyFilter('done')">Завершено</div>
-    </div>
-  </div>
-
-  <input type="text" class="search-input" id="searchInput" placeholder="Поиск по названию или номеру..." oninput="handleSearch()">
+<div id="login">
+  <img src="https://i.postimg.cc/dtSpKx0W/1.png" width="120" style="margin-bottom: 20px;">
+  <h2>ДЕТАЛИ KH</h2>
+  <div id="buttonDiv"></div>
 </div>
 
-<main id="content" style="display: block;">
-  <div class="cards" id="cardsContainer">
-    <div class="no-data">Загрузка данных...</div>
+<header id="mainHeader" style="display:none;">
+  <div class="logo"><img src="https://i.postimg.cc/dtSpKx0W/1.png"></div>
+  <h1 class="site-name-text">ДЕТАЛИ KH</h1>
+  <button class="add-part-btn" onclick="addNewPart()"><i class="fa-solid fa-plus"></i></button>
+</header>
+
+<div id="appContent" style="display:none;">
+  <div class="controls-panel">
+    <div class="filter-container">
+      <button class="filter-btn" onclick="toggleDropdown()">
+        <i class="fa-solid fa-filter"></i> Фильтр
+      </button>
+      <div class="dropdown-menu" id="filterMenu">
+        <div onclick="filterByStatus('all')">Все детали</div>
+        <div onclick="filterByStatus('new')">Новые</div>
+        <div onclick="filterByStatus('process')">В работе</div>
+        <div onclick="filterByStatus('done')">Завершено</div>
+      </div>
+    </div>
+    <input type="text" class="search-input" id="searchInput" placeholder="Поиск детали..." oninput="handleSearch()">
   </div>
-</main>
+
+  <main id="content">
+    <div class="cards" id="cardsContainer">
+      </div>
+    
+    <div class="pagination" id="pagination">
+      </div>
+  </main>
+</div>
 
 <script>
-  // Функция открытия/закрытия фильтра
-  function toggleFilterMenu() {
-    const dropdown = document.getElementById("filterDropdown");
-    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  // --- ДАННЫЕ И СОСТОЯНИЕ ---
+  let allParts = [
+    { id: 1, name: "Крыло переднее левое", status: "new", img: "https://via.placeholder.com/400x300", code: "A100" },
+    { id: 2, name: "Бампер задний", status: "process", img: "https://via.placeholder.com/400x300", code: "B250" },
+    { id: 3, name: "Фара правая", status: "done", img: "https://via.placeholder.com/400x300", code: "C003" }
+  ];
+  let filteredParts = [...allParts];
+
+  // --- АВТОРИЗАЦИЯ ---
+  window.onload = function () {
+    google.accounts.id.initialize({
+      client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("buttonDiv"),
+      { theme: "outline", size: "large" }
+    );
+  };
+
+  function handleCredentialResponse(response) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("mainHeader").style.display = "flex";
+    document.getElementById("appContent").style.display = "block";
+    document.getElementById("content").style.display = "block";
+    renderCards();
   }
 
-  // Закрытие при клике мимо
-  document.addEventListener("click", function(e) {
-    if (!e.target.closest(".filter-container")) {
-      document.getElementById("filterDropdown").style.display = "none";
+  // --- ЛОГИКА ИНТЕРФЕЙСА ---
+  function toggleDropdown() {
+    const menu = document.getElementById("filterMenu");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+
+  window.onclick = function(event) {
+    if (!event.target.matches('.filter-btn')) {
+      document.getElementById("filterMenu").style.display = "none";
     }
-  });
-
-  // Заглушки для функций (интегрируйте сюда вашу логику из старого кода)
-  function applyFilter(status) {
-    console.log("Фильтр по статусу:", status);
-    document.getElementById("filterDropdown").style.display = "none";
-    // Здесь вызовите вашу функцию фильтрации
   }
 
+  function renderCards() {
+    const container = document.getElementById("cardsContainer");
+    container.innerHTML = "";
+
+    filteredParts.forEach(part => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="media-block">
+          <img src="${part.img}">
+          <div class="remove-icon" onclick="removePart(${part.id})"><i class="fa-solid fa-trash"></i></div>
+        </div>
+        <div class="part-name-container">
+          <div class="part-name-text">${part.name}</div>
+        </div>
+        <div class="controls">
+          <div class="pill">№ ${part.code}</div>
+          <button class="btn-take">ВЗЯТЬ</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // --- ФУНКЦИИ ПОИСКА И ФИЛЬТРАЦИИ ---
   function handleSearch() {
     const query = document.getElementById("searchInput").value.toLowerCase();
-    console.log("Поиск:", query);
-    // Здесь вызовите вашу функцию поиска
+    filteredParts = allParts.filter(p => p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query));
+    renderCards();
+  }
+
+  function filterByStatus(status) {
+    if(status === 'all') filteredParts = [...allParts];
+    else filteredParts = allParts.filter(p => p.status === status);
+    renderCards();
+  }
+
+  function removePart(id) {
+    if(confirm("Удалить деталь?")) {
+      allParts = allParts.filter(p => p.id !== id);
+      handleSearch();
+    }
   }
 
   function addNewPart() {
-    alert("Кнопка добавления нажата!");
-    // Здесь вызовите открытие формы добавления
+    const name = prompt("Введите название детали:");
+    if(name) {
+      const newPart = {
+        id: Date.now(),
+        name: name,
+        status: "new",
+        img: "https://via.placeholder.com/400x300",
+        code: "NEW-" + Math.floor(Math.random()*100)
+      };
+      allParts.unshift(newPart);
+      handleSearch();
+    }
   }
 </script>
 
