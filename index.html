@@ -9,15 +9,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    /* === ОБЩИЕ СТИЛИ === */
-    body {
-      margin: 0;
-      padding: 20px;
-      background: #f0f2f5;
-      font-family: Arial, sans-serif;
-    }
-
-    /* Шапка */
+    /* Стили для шапки (убрано меню, выпадающий список сайтов, добавлена кнопка +) */
     header {
       background-color: #1f2937;
       color: white;
@@ -39,29 +31,46 @@
       width: 100px;
       height: 100px;
       object-fit: cover;
+      border-radius: 0;
     }
 
-    /* Новая кнопка добавления детали (+) */
-    .add-button {
-      width: 70px;
-      height: 70px;
-      background-color: #dc143c;
-      border-radius: 12px;
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      font-weight: bold;
-      color: white;
-      text-decoration: none;
-      transition: background 0.3s;
-      cursor: pointer;
-    }
-    .add-button:hover {
-      background-color: #b01030;
+      height: 100%;
     }
 
-    /* Белая панель фильтрации (из первого примера) */
+    .site-name-text {
+      margin: 0;
+      padding: 0;
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 50px; /* адаптируется под мобильные через медиазапросы */
+    }
+
+    /* Новая кнопка добавления + */
+    .add-button {
+      color: white;
+      font-size: 60px;
+      line-height: 1;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      height: 70px;
+      transition: transform 0.2s;
+    }
+    .add-button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Стили для выпадающего списка фильтра (из предоставленного блока) */
     .panel {
       background: #fff;
       padding: 12px 14px;
@@ -71,9 +80,7 @@
       align-items: center;
       gap: 10px;
       max-width: 1300px;
-      margin: 0 auto 20px;
-      width: 100%;
-      box-sizing: border-box;
+      margin: 0 auto 12px;
     }
 
     .filter {
@@ -88,10 +95,9 @@
       border-radius: 6px;
       font-size: 14px;
       cursor: pointer;
-      white-space: nowrap;
     }
 
-    .dropdown {
+    .dropdown-filter {
       position: absolute;
       top: 38px;
       left: 0;
@@ -99,18 +105,18 @@
       border-radius: 8px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.12);
       display: none;
-      min-width: 160px;
+      min-width: 140px;
       overflow: hidden;
       z-index: 100;
     }
 
-    .dropdown div {
+    .dropdown-filter div {
       padding: 10px 12px;
       cursor: pointer;
       font-size: 14px;
     }
 
-    .dropdown div:hover {
+    .dropdown-filter div:hover {
       background: #f0f2f5;
     }
 
@@ -127,7 +133,14 @@
       border-color: #dc143c;
     }
 
-    /* Контент */
+    /* Остальные стили (без изменений, кроме удалённых элементов) */
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f2f5;
+      font-family: Arial, sans-serif;
+    }
+
     #content {
       display: none;
       width: 100%;
@@ -139,7 +152,6 @@
       box-sizing: border-box;
     }
 
-    /* Карточки */
     .cards {
       display: flex;
       flex-direction: column;
@@ -182,6 +194,17 @@
       height: 100%;
       object-fit: cover;
       border: none;
+      z-index: 0;
+    }
+
+    .media-block .img-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 1;
     }
 
     .media-block .icon {
@@ -211,7 +234,6 @@
       right: 8px;
     }
 
-    /* Название детали */
     .part-name-container {
       display: flex;
       align-items: center;
@@ -221,6 +243,11 @@
       border-radius: 16px;
       min-height: 60px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .part-name-container.editing {
+      padding: 0 8px;
     }
 
     .part-name-text {
@@ -229,12 +256,28 @@
       font-weight: 600;
       text-align: left;
       padding: 16px 0;
+      cursor: default;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .part-name-edit-btn {
+    .part-name-input {
+      flex: 1;
+      height: 52px;
+      border: 2px solid #dc143c;
+      border-radius: 12px;
+      outline: none;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 0 12px;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .part-name-edit-btn,
+    .part-name-save-btn,
+    .part-name-cancel-btn {
       width: 44px;
       height: 44px;
       display: flex;
@@ -246,10 +289,25 @@
       cursor: pointer;
       font-size: 16px;
       color: #fff;
+      transition: all 0.2s ease;
       margin-left: 8px;
+      flex-shrink: 0;
     }
 
-    /* Контролы карточки */
+    .part-name-edit-btn:hover,
+    .part-name-cancel-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
+    }
+
+    .part-name-save-btn {
+      background: #2a3648;
+    }
+    .part-name-save-btn:hover {
+      background: #34ce57;
+      transform: scale(1.05);
+    }
+
     .controls {
       display: flex;
       flex-wrap: nowrap;
@@ -258,6 +316,7 @@
       margin-top: 16px;
       gap: 6px;
       padding: 8px 0;
+      overflow: hidden;
     }
 
     .pill {
@@ -272,15 +331,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      max-width: 120px;
+      box-sizing: border-box;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      max-width: 120px;
     }
 
     .controls input {
       width: 50px;
       height: 50px;
+      padding: 0 8px;
       border: none;
       border-radius: 12px;
       text-align: center;
@@ -289,6 +351,13 @@
       font-weight: bold;
       flex-shrink: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      min-width: 50px;
+    }
+
+    .controls input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.3);
     }
 
     .btn {
@@ -306,78 +375,39 @@
       transition: all 0.2s ease;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       white-space: nowrap;
+      min-width: 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .btn-add {
       background: linear-gradient(to bottom, #1f2937, #0d1520);
       color: #fff;
+      min-width: 120px;
     }
 
     .btn-info {
       background: linear-gradient(to bottom, #ffffff, #f0f0f0);
       color: #000;
+      min-width: 50px;
+      padding: 0 10px;
+      justify-content: center;
     }
 
     .btn-take {
       background: linear-gradient(to bottom, #dc143c, #b01030);
       color: #fff;
+      min-width: 120px;
     }
 
-    /* Пагинация */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 50px 0;
-      gap: 10px;
-      flex-wrap: nowrap;
-      width: 100%;
-      max-width: 1300px;
-      margin: 50px auto;
-    }
-
-    .pagination button {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 10px;
-      padding: 18px 30px;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      min-width: 140px;
-      height: 60px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .page-numbers {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .page-numbers button {
-      min-width: 40px;
-      height: 60px;
-      padding: 0 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      border-radius: 16px;
-      background: linear-gradient(to bottom, #dc143c, #b01030);
-      color: white;
-    }
-
-    .page-numbers button.active {
-      background: linear-gradient(to bottom, #1f2937, #0d1520);
-    }
-
-    /* Модальное окно */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -403,6 +433,18 @@
       overflow: auto;
       z-index: 10000;
       box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: modalAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalAppear {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .modal-close {
@@ -413,9 +455,125 @@
       font-size: 40px;
       font-weight: bold;
       color: #dc143c;
+      transition: all 0.2s ease;
     }
 
-    /* Индикатор загрузки */
+    .modal-close:hover {
+      color: #ff1940;
+      transform: scale(1.1);
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #1a2f40;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f2f5;
+    }
+
+    .modal pre {
+      white-space: pre-wrap;
+      font-size: 26px;
+      line-height: 1.6;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #dc143c;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 50px 0;
+      gap: 10px;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 1300px;
+      margin: 50px auto;
+      padding: 0 8px;
+      box-sizing: border-box;
+    }
+
+    .pagination button {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      color: white;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 18px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      min-width: 140px;
+      height: 60px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: linear-gradient(to bottom, #2a3648, #111b29);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+
+    .pagination button:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .pagination button:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .page-numbers {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+
+    .page-numbers button {
+      min-width: 40px;
+      height: 60px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border-radius: 16px;
+      background: linear-gradient(to bottom, #dc143c, #b01030);
+      color: white;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .page-numbers button:hover {
+      background: linear-gradient(to bottom, #e51c47, #c01238);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .page-numbers button.active {
+      background: linear-gradient(to bottom, #1f2937, #0d1520);
+      transform: scale(1.1);
+    }
+
+    .no-data {
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #666;
+    }
+
     .loader-container {
       position: fixed;
       top: 0;
@@ -444,7 +602,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Авторизация */
+    /* Стили для авторизации */
     #login {
       position: fixed;
       top: 0;
@@ -460,68 +618,37 @@
       padding: 20px;
     }
 
+    #login h2 {
+      color: #1a2f40;
+      margin-bottom: 20px;
+    }
+
     /* Адаптация для мобильных */
     @media (max-width: 1024px) {
+      .site-name-text {
+        font-size: 50px;
+      }
       header {
         padding: 10px 30px;
         height: 140px;
       }
-
-      .logo img {
-        width: 100px;
-        height: 100px;
-      }
-
       .add-button {
+        font-size: 60px;
         width: 70px;
         height: 70px;
-        font-size: 48px;
       }
-
       .panel {
-        padding: 12px 14px;
-        gap: 10px;
+        flex-wrap: wrap;
       }
-
+      .filter {
+        width: 100%;
+      }
       .filter-btn {
-        padding: 8px 14px;
-        font-size: 14px;
+        width: 100%;
+        text-align: center;
       }
-
       .search {
-        padding: 8px 12px;
-        font-size: 14px;
-      }
-
-      .dropdown div {
-        padding: 10px 12px;
-        font-size: 14px;
-      }
-
-      .part-name-text {
-        font-size: 18px;
-      }
-
-      .controls {
-        gap: 8px;
-      }
-
-      .pill {
-        height: 60px;
-        font-size: 20px;
-        max-width: 150px;
-      }
-
-      .controls input {
-        width: 60px;
-        height: 60px;
-        font-size: 20px;
-      }
-
-      .btn {
-        height: 60px;
-        font-size: 20px;
-        padding: 0 24px;
+        width: 100%;
       }
     }
 
@@ -530,650 +657,780 @@
         height: 75px;
         padding: 4px 8px;
       }
-
       .logo img {
         width: 50px;
         height: 50px;
       }
-
+      .site-name-text {
+        font-size: 32px;
+      }
       .add-button {
+        font-size: 40px;
         width: 50px;
         height: 50px;
-        font-size: 32px;
-        border-radius: 8px;
       }
-
-      .panel {
-        padding: 6px 8px;
-        gap: 6px;
-        margin-bottom: 12px;
-      }
-
-      .filter-btn {
-        padding: 4px 10px;
-        font-size: 12px;
-        border-radius: 4px;
-      }
-
-      .search {
-        padding: 4px 8px;
-        font-size: 12px;
-        border-radius: 4px;
-      }
-
-      .dropdown {
-        top: 28px;
-        min-width: 140px;
-      }
-
-      .dropdown div {
-        padding: 6px 8px;
-        font-size: 12px;
-      }
-
       #content {
         margin-top: 95px;
       }
-
-      .cards.desktop-layout {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
+      .panel {
+        margin-bottom: 8px;
       }
-
-      .card.desktop-layout {
-        width: calc((100% - 16px) / 3) !important;
-        min-height: 320px;
-        padding: 10px;
+      .filter-btn {
+        padding: 6px 12px;
+        font-size: 12px;
       }
-
-      .media-block {
-        padding-top: 65%;
+      .dropdown-filter div {
+        font-size: 12px;
+        padding: 6px 10px;
       }
-
-      .media-block .icon {
-        width: 28px;
-        height: 28px;
-        font-size: 18px;
-      }
-
-      .part-name-container {
-        min-height: 34px;
-        margin: 6px 0;
-        padding: 0 6px;
-        border-radius: 8px;
-      }
-
-      .part-name-text {
-        font-size: 13px;
-        padding: 8px 0;
-      }
-
-      .part-name-edit-btn {
-        width: 26px;
-        height: 26px;
-        font-size: 10px;
-      }
-
-      .controls {
-        margin-top: 8px;
-        gap: 4px;
-      }
-
-      .pill {
-        height: 30px;
-        font-size: 11px;
-        padding: 0 8px;
-        max-width: 100px;
-      }
-
-      .controls input {
-        width: 30px;
-        height: 30px;
-        font-size: 11px;
-        min-width: 30px;
-      }
-
-      .btn {
-        height: 30px;
-        font-size: 11px;
-        padding: 0 8px;
-        min-width: 70px;
-      }
-
-      .pagination button {
-        padding: 8px 12px;
-        font-size: 13px;
-        height: 36px;
-        min-width: 90px;
-      }
-
-      .page-numbers button {
-        height: 36px;
-        font-size: 13px;
-        padding: 0 12px;
-        min-width: 24px;
+      .search {
+        padding: 6px 10px;
+        font-size: 12px;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Индикатор загрузки -->
-  <div class="loader-container" id="loader">
-    <div class="loader"></div>
+<!-- Индикатор загрузки -->
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
+</div>
+
+<!-- Шапка (без кнопки меню и выпадающего списка сайтов) -->
+<header>
+  <div class="logo">
+    <a href="https://smart-bowling.github.io/SMB/">
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+    </a>
   </div>
-
-  <!-- Шапка -->
-  <header>
-    <div class="logo">
-      <a href="https://smart-bowling.github.io/SMB/">
-        <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
-      </a>
-    </div>
-    <div class="site-name">
-      <span class="site-name-text">LUCKY STRIKE KH</span> <!-- выпадающий список удалён -->
-    </div>
-    <!-- Кнопка добавления детали (+) вместо меню -->
-    <a href="https://smart-bowling.github.io/ADD-PARTS-KH/" class="add-button" target="_blank">+</a>
-  </header>
-
-  <!-- Блок авторизации -->
-  <div id="login">
-    <h2>Вход на сайт</h2>
-    <div id="g_id_onload"
-         data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false">
-    </div>
-    <div class="g_id_signin" data-type="standard"></div>
+  <div class="site-name">
+    <span class="site-name-text">LUCKY STRIKE KH</span>
   </div>
+  <!-- Кнопка добавления детали (плюс) -->
+  <a href="https://smart-bowling.github.io/ADD-PARTS-KH/" target="_blank" class="add-button">
+    <i class="fas fa-plus-circle"></i>
+  </a>
+</header>
 
-  <!-- Контент для авторизованных -->
-  <div id="content">
-    <!-- Новая панель фильтрации (вместо старых кнопок) -->
-    <div class="panel">
-      <div class="filter">
-        <button class="filter-btn" id="filterButton">Фильтр</button>
-        <div class="dropdown" id="filterDropdown">
-          <div data-filter="all">Все детали</div>
-          <div data-filter="popular">Пос. взят. за 30 дней</div>
-          <div data-filter="mostPopular">Популярные</div>
-          <div data-filter="sortByQty">Остатки</div>
-        </div>
-      </div>
-      <input class="search" type="text" id="searchInput" placeholder="Поиск... (Enter)">
-    </div>
+<!-- Блок авторизации -->
+<div id="login">
+  <h2>Вход на сайт</h2>
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
 
-    <div class="cards" id="cardsContainer"></div>
-
-    <div class="pagination">
-      <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
-      <div class="page-numbers" id="pageNumbers"></div>
-      <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
-    </div>
-
-    <div id="modalOverlay" class="modal-overlay">
-      <div class="modal">
-        <div id="modalClose" class="modal-close">×</div>
-        <h3>История изменений</h3>
-        <pre id="modalContent"></pre>
+<!-- Контент для авторизованных -->
+<div id="content" style="display:none">
+  <!-- Новая панель фильтра и поиска (вместо старых кнопок) -->
+  <div class="panel">
+    <div class="filter">
+      <button class="filter-btn" onclick="toggleFilterDropdown()">Фильтр</button>
+      <div class="dropdown-filter" id="filterDropdown">
+        <div data-filter="all">Все</div>
+        <div data-filter="popular">Новые</div>        <!-- соответствует popular (последние взятые) -->
+        <div data-filter="mostPopular">В работе</div> <!-- соответствует mostPopular -->
+        <div data-filter="sortByQty">Завершено</div>  <!-- соответствует сортировке по остаткам -->
       </div>
     </div>
+    <input class="search" type="text" id="searchInput" placeholder="Поиск...">
   </div>
 
-  <script>
-    // === Функции для новой панели ===
-    function toggleFilterDropdown() {
-      const dropdown = document.getElementById('filterDropdown');
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Функция для показа/скрытия индикатора загрузки
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
+
+  // Функция для выпадающего списка фильтра (новая)
+  function toggleFilterDropdown() {
+    const menu = document.getElementById("filterDropdown");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+
+  // Закрытие выпадающего списка при клике вне его
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.filter')) {
+      document.getElementById('filterDropdown').style.display = 'none';
     }
+  });
 
-    // Закрытие дропдауна при клике вне
-    document.addEventListener('click', function(e) {
-      const filter = document.querySelector('.filter');
-      const dropdown = document.getElementById('filterDropdown');
-      if (!filter.contains(e.target) && dropdown.style.display === 'block') {
-        dropdown.style.display = 'none';
+  // Обработка выбора фильтра
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('.dropdown-filter div');
+    if (!target) return;
+    
+    const filterValue = target.dataset.filter;
+    const sortSelect = document.getElementById('sortSelect'); // скрытый селект для логики
+    if (!sortSelect) return;
+    
+    // Устанавливаем значение селекта и вызываем событие change
+    if (filterValue === 'all') sortSelect.value = 'all';
+    else if (filterValue === 'popular') sortSelect.value = 'popular';
+    else if (filterValue === 'mostPopular') sortSelect.value = 'mostPopular';
+    else if (filterValue === 'sortByQty') sortSelect.value = 'sortByQty';
+    
+    // Триггерим событие change вручную
+    const event = new Event('change', { bubbles: true });
+    sortSelect.dispatchEvent(event);
+    
+    // Закрываем дропдаун
+    document.getElementById('filterDropdown').style.display = 'none';
+  });
+
+  // Поиск по вводу с debounce
+  let searchTimeout;
+  document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    const term = e.target.value.trim().toLowerCase();
+    searchTimeout = setTimeout(() => {
+      if (!allEntries) return;
+      if (term === '') {
+        currentEntries = [...allEntries];
+      } else {
+        currentEntries = allEntries.filter(entry => 
+          entry.partNumber.toLowerCase().includes(term)
+        );
       }
-    });
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+    }, 300);
+  });
 
-    // === Остальной код авторизации и работы с данными (без изменений) ===
-    // Функция для показа/скрытия индикатора загрузки
-    function showLoader(show) {
-      document.getElementById('loader').style.display = show ? 'flex' : 'none';
-    }
+  // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ (без изменений) ===
+  const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+  const SHEET_NAME = '1';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+  const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/';
 
-    // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ===
-    const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-    const SHEET_NAME = '1';
-    const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-    const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/'; // Текущий сайт
+  let currentUser = null;
 
-    let currentUser = null;
-
-    // Загрузка Google API
-    function loadSheetsAPI() {
-      return new Promise((resolve, reject) => {
-        gapi.load('client', {
-          callback: () => resolve(),
-          onerror: () => reject('Ошибка загрузки Google API'),
-          timeout: 10000,
-          ontimeout: () => reject('Таймаут загрузки Google API')
-        });
+  function loadSheetsAPI() {
+    return new Promise((resolve, reject) => {
+      gapi.load('client', {
+        callback: () => resolve(),
+        onerror: () => reject('Ошибка загрузки Google API'),
+        timeout: 10000,
+        ontimeout: () => reject('Таймаут загрузки Google API')
       });
-    }
+    });
+  }
 
-    // Парсинг JWT
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-      } catch (e) {
-        console.error('Error parsing JWT:', e);
-        return {};
-      }
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Error parsing JWT:', e);
+      return {};
     }
+  }
 
-    // Обработчик ответа от Google
-    function handleCredentialResponse(response) {
-      console.log("Google response received");
-      showLoader(true);
+  function handleCredentialResponse(response) {
+    console.log("Google response received");
+    showLoader(true);
+    try {
+      const payload = parseJwt(response.credential);
+      console.log("User email:", payload.email);
+      currentUser = {
+        email: payload.email.toLowerCase().trim(),
+        name: payload.name,
+        picture: payload.picture
+      };
+      initAndCheckEmail();
+    } catch (e) {
+      console.error("Error parsing Google response:", e);
+      showLoader(false);
+      alert('Ошибка аутентификации');
+    }
+  }
+
+  async function initAndCheckEmail() {
+    try {
+      await loadSheetsAPI();
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      await checkEmailInSheet(currentUser.email);
+    } catch (error) {
+      console.error('API initialization error:', error);
+      showLoader(false);
+      alert('Ошибка инициализации Google API: ' + error);
+    }
+  }
+
+  async function checkEmailInSheet(email) {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A:Z`,
+      });
       
-      try {
-        const payload = parseJwt(response.credential);
-        console.log("User email:", payload.email);
-        
-        currentUser = {
-          email: payload.email.toLowerCase().trim(),
-          name: payload.name,
-          picture: payload.picture
-        };
-        
-        initAndCheckEmail();
-        
-      } catch (e) {
-        console.error("Error parsing Google response:", e);
+      const rows = response.result.values;
+      if (!rows || rows.length === 0) {
         showLoader(false);
-        alert('Ошибка аутентификации');
+        alert('Таблица пуста');
+        return;
       }
-    }
-
-    // Инициализация API и проверка email
-    async function initAndCheckEmail() {
-      try {
-        await loadSheetsAPI();
-        await gapi.client.init({
-          apiKey: API_KEY,
-          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-        });
-        
-        await checkEmailInSheet(currentUser.email);
-        
-      } catch (error) {
-        console.error('API initialization error:', error);
-        showLoader(false);
-        alert('Ошибка инициализации Google API: ' + error);
-      }
-    }
-
-    // Проверка email в Google Sheets
-    async function checkEmailInSheet(email) {
-      try {
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEET_NAME}!A:Z`,
-        });
-        
-        const rows = response.result.values;
-        if (!rows || rows.length === 0) {
-          showLoader(false);
-          alert('Таблица пуста');
-          return;
+      
+      let hasAccess = false;
+      let userRow = null;
+      
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i][0]) continue;
+        const rowEmail = rows[i][0].toLowerCase().trim();
+        if (rowEmail === email) {
+          userRow = rows[i];
+          break;
         }
-        
-        // Ищем email в колонке A
-        let hasAccess = false;
-        let userRow = null;
-        
-        for (let i = 0; i < rows.length; i++) {
-          if (!rows[i][0]) continue;
-          
-          const rowEmail = rows[i][0].toLowerCase().trim();
-          if (rowEmail === email) {
-            userRow = rows[i];
+      }
+      
+      if (userRow) {
+        for (let j = 1; j < userRow.length; j++) {
+          const cellValue = userRow[j];
+          if (!cellValue || cellValue.trim() === '') continue;
+          const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
+          if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
+            hasAccess = true;
             break;
           }
         }
-        
-        if (userRow) {
-          // Проверяем наличие ссылки на текущий сайт в строке пользователя
-          for (let j = 1; j < userRow.length; j++) {
-            const cellValue = userRow[j];
-            if (!cellValue || cellValue.trim() === '') continue;
-            
-            const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
-            
-            // Проверяем содержит ли ссылка текущий сайт
-            if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
-              hasAccess = true;
-              break;
-            }
-          }
-        }
-        
-        if (hasAccess) {
-          loginUser(currentUser);
-        } else {
-          showLoader(false);
-          alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
-        }
-        
-      } catch (error) {
-        console.error('Sheets API error:', error);
-        showLoader(false);
-        
-        let errorMessage = 'Ошибка доступа к таблице';
-        if (error.result && error.result.error && error.result.error.message) {
-          errorMessage += ': ' + error.result.error.message;
-        }
-        alert(errorMessage);
       }
-    }
-
-    // Функция входа пользователя
-    function loginUser(payload) {
-      console.log("Logging in user:", payload.email);
       
+      if (hasAccess) {
+        loginUser(currentUser);
+      } else {
+        showLoader(false);
+        alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
+      }
+    } catch (error) {
+      console.error('Sheets API error:', error);
+      showLoader(false);
+      let errorMessage = 'Ошибка доступа к таблице';
+      if (error.result && error.result.error && error.result.error.message) {
+        errorMessage += ': ' + error.result.error.message;
+      }
+      alert(errorMessage);
+    }
+  }
+
+  function loginUser(payload) {
+    console.log("Logging in user:", payload.email);
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userEmail', payload.email.toLowerCase());
+    localStorage.setItem('userName', payload.name);
+    localStorage.setItem('userPic', payload.picture);
+    showLoader(false);
+    initApp();
+  }
+
+  function signOut() {
+    console.log("Signing out");
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  }
+
+  window.addEventListener('load', function() {
+    console.log("Page loaded, checking localStorage...");
+    const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    const email = localStorage.getItem('userEmail');
+    if (isLoggedIn && email) {
+      console.log("Found stored session for:", email);
       document.getElementById('login').style.display = 'none';
       document.getElementById('content').style.display = 'block';
-      
-      localStorage.setItem('userLoggedIn', 'true');
-      localStorage.setItem('userEmail', payload.email.toLowerCase());
-      localStorage.setItem('userName', payload.name);
-      localStorage.setItem('userPic', payload.picture);
-      
+      currentUser = {
+        email: email,
+        name: localStorage.getItem('userName'),
+        picture: localStorage.getItem('userPic')
+      };
+      showLoader(true);
+      loadSheetsAPI()
+        .then(() => gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        }))
+        .then(() => checkEmailInSheet(email))
+        .catch(error => {
+          console.error('Session restore error:', error);
+          showLoader(false);
+          alert('Ошибка восстановления сессии');
+          signOut();
+        });
+    } else {
+      console.log("No stored session, showing login button");
+      document.getElementById('login').style.display = 'block';
+    }
+  });
+
+  // Глобальные переменные для пагинации и данных
+  let allEntries = [];
+  let currentEntries = [];
+  let currentPage = 1;
+  let totalPages = 1;
+  const cardsPerPage = 30;
+
+  const pagination = {
+    prevPage: function() { if (currentPage > 1) goToPage(currentPage - 1); },
+    nextPage: function() { if (currentPage < totalPages) goToPage(currentPage + 1); }
+  };
+
+  function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage(currentPage);
+    updatePaginationControls();
+  }
+
+  function updateTotalPages() {
+    totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+  }
+
+  function updatePaginationControls() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+  }
+
+  function renderPageNumbers() {
+    const pageContainer = document.getElementById('pageNumbers');
+    if (!pageContainer) return;
+    pageContainer.innerHTML = '';
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(currentPage - 2, 1);
+    let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+    
+    if (startPage > 1) {
+      addPageButton(1);
+      if (startPage > 2) addDots();
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      addPageButton(i);
+    }
+    
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) addDots();
+      addPageButton(totalPages);
+    }
+    
+    function addPageButton(page) {
+      const btn = document.createElement('button');
+      btn.textContent = page;
+      if (page === currentPage) btn.classList.add('active');
+      btn.onclick = () => goToPage(page);
+      pageContainer.appendChild(btn);
+    }
+    
+    function addDots() {
+      const dots = document.createElement('span');
+      dots.textContent = '...';
+      dots.style.padding = '0 10px';
+      pageContainer.appendChild(dots);
+    }
+  }
+
+  function renderPage(page) {
+    const container = document.getElementById('cardsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const start = (page - 1) * cardsPerPage;
+    const end = start + cardsPerPage;
+    const pageData = currentEntries.slice(start, end);
+    
+    if (pageData.length === 0) {
+      container.innerHTML = '<div class="no-data">Нет данных для отображения</div>';
+      return;
+    }
+    
+    pageData.forEach(entry => {
+      const card = createCard(entry);
+      container.appendChild(card);
+    });
+    
+    renderPageNumbers();
+    updatePaginationControls();
+    window.scrollTo(0, 0);
+    if (window.innerWidth > 1024) toggleDesktopLayout(true);
+  }
+
+  function toggleDesktopLayout(enable) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cards = document.querySelectorAll('.card');
+    if (!cardsContainer) return;
+    if (enable) {
+      cardsContainer.classList.add('desktop-layout');
+      cards.forEach(c => c.classList.add('desktop-layout'));
+    } else {
+      cardsContainer.classList.remove('desktop-layout');
+      cards.forEach(c => c.classList.remove('desktop-layout'));
+    }
+  }
+
+  // Функции работы с API (без изменений)
+  async function getEntries() {
+    showLoader(true);
+    try {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getEntries');
+      return await res.json();
+    } finally {
       showLoader(false);
-      
-      // Инициализация приложения после успешного входа
-      initApp();
+    }
+  }
+
+  async function updateQuantity(partNumber, delta) {
+    showLoader(true);
+    try {
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function deleteEntry(rowIndex) {
+    showLoader(true);
+    try {
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=deleteEntry&rowIndex=${rowIndex}`);
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getHistory(partNumber) {
+    showLoader(true);
+    try {
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+      return await res.text();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getPopularEntries() {
+    showLoader(true);
+    try {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getPopularEntries');
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getMostPopularEntries() {
+    showLoader(true);
+    try {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=getMostPopularEntries');
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function updatePartName(partNumber, newName) {
+    showLoader(true);
+    try {
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  function createCard(entry) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.dataset.row = entry.rowIndex;
+    div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+    const media = document.createElement('div');
+    media.className = 'media-block';
+
+    if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
+      const iframe = document.createElement('iframe');
+      iframe.src = entry.fileUrl;
+      media.appendChild(iframe);
+    } else if (entry.fileUrl) {
+      const img = document.createElement('img');
+      img.src = entry.fileUrl;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      media.appendChild(img);
     }
 
-    // Выход
-    function signOut() {
-      console.log("Signing out");
-      localStorage.clear();
-      sessionStorage.clear();
-      location.reload();
-    }
+    const overlay = document.createElement('div');
+    overlay.className = 'img-overlay';
+    media.appendChild(overlay);
 
-    // Проверка сессии при загрузке
-    window.addEventListener('load', function() {
-      console.log("Page loaded, checking localStorage...");
+    const rem = document.createElement('div');
+    rem.className = 'icon remove';
+    rem.textContent = 'Х';
+    media.append(rem);
+
+    div.append(media);
+
+    const partNameContainer = document.createElement('div');
+    partNameContainer.className = 'part-name-container';
+    partNameContainer.dataset.partNumber = entry.partNumber;
+    
+    const partNameText = document.createElement('div');
+    partNameText.className = 'part-name-text';
+    partNameText.textContent = entry.partName || 'Название детали';
+    
+    const editButton = document.createElement('button');
+    editButton.className = 'part-name-edit-btn';
+    editButton.innerHTML = '<i class="fas fa-edit"></i>';
+    editButton.title = 'Редактировать название';
+    
+    partNameContainer.appendChild(partNameText);
+    partNameContainer.appendChild(editButton);
+    div.append(partNameContainer);
+
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    pill.textContent = entry.partNumber;
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'text';
+    qtyInput.value = entry.quantity;
+    qtyInput.readOnly = true;
+
+    const btnAdd = document.createElement('button');
+    btnAdd.className = 'btn btn-add';
+    btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
+
+    const btnInfo = document.createElement('button');
+    btnInfo.className = 'btn btn-info';
+    btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
+
+    const btnTake = document.createElement('button');
+    btnTake.className = 'btn btn-take';
+    btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
+
+    controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+    div.append(controls);
+
+    editButton.addEventListener('click', function() {
+      const partNumber = partNameContainer.dataset.partNumber;
+      const currentName = partNameText.textContent;
       
-      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-      const email = localStorage.getItem('userEmail');
+      partNameContainer.classList.add('editing');
       
-      if (isLoggedIn && email) {
-        console.log("Found stored session for:", email);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'part-name-input';
+      input.value = currentName;
+      
+      const saveButton = document.createElement('button');
+      saveButton.className = 'part-name-save-btn';
+      saveButton.innerHTML = '<i class="fas fa-check"></i>';
+      saveButton.title = 'Сохранить';
+      
+      const cancelButton = document.createElement('button');
+      cancelButton.className = 'part-name-cancel-btn';
+      cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+      cancelButton.title = 'Отменить';
+      
+      partNameText.style.display = 'none';
+      editButton.style.display = 'none';
+      
+      partNameContainer.appendChild(input);
+      partNameContainer.appendChild(saveButton);
+      partNameContainer.appendChild(cancelButton);
+      
+      input.focus();
+      input.select();
+      
+      const finishEdit = async (save = false) => {
+        const newName = save ? input.value.trim() : currentName;
         
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
+        partNameContainer.classList.remove('editing');
+        input.remove();
+        saveButton.remove();
+        cancelButton.remove();
         
-        currentUser = {
-          email: email,
-          name: localStorage.getItem('userName'),
-          picture: localStorage.getItem('userPic')
-        };
+        partNameText.style.display = '';
+        editButton.style.display = '';
         
-        showLoader(true);
-        
-        // Проверяем доступ при восстановлении сессии
-        loadSheetsAPI()
-          .then(() => gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-          }))
-          .then(() => checkEmailInSheet(email))
-          .catch(error => {
-            console.error('Session restore error:', error);
-            showLoader(false);
-            alert('Ошибка восстановления сессии');
-            signOut();
-          });
-        
-      } else {
-        console.log("No stored session, showing login button");
-        document.getElementById('login').style.display = 'block';
-      }
+        if (save && newName && newName !== currentName) {
+          const res = await updatePartName(partNumber, newName);
+          if (res.status === 'success') {
+            partNameText.textContent = newName;
+            const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
+            if (updatedEntry) updatedEntry.partName = newName;
+          } else {
+            alert(res.message || 'Ошибка при обновлении названия');
+          }
+        }
+      };
+      
+      saveButton.addEventListener('click', () => finishEdit(true));
+      cancelButton.addEventListener('click', () => finishEdit(false));
+      
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') finishEdit(true);
+      });
     });
 
-    // Глобальный объект для пагинации
-    const pagination = {
-      prevPage: function() {},
-      nextPage: function() {}
+    rem.onclick = async () => {
+      if (confirm('Удалить эту запись?')) {
+        await deleteEntry(entry.rowIndex);
+        allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
+        currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
+        updateTotalPages();
+        if (currentPage > totalPages) currentPage = totalPages;
+        renderPage(currentPage);
+      }
     };
 
-    // Инициализация приложения
-    function initApp() {
-      const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
-
-      let allEntries = [];
-      let currentEntries = [];
-      let currentPage = 1;
-      let totalPages = 1;
-      const cardsPerPage = 30;
-
-      async function getEntries() {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=getEntries`);
-          return await res.json();
-        } finally {
-          showLoader(false);
+    btnAdd.onclick = async () => {
+      const deltaStr = prompt('Введите число для добавления:');
+      const delta = Number(deltaStr);
+      if (deltaStr !== null && !isNaN(delta)) {
+        const res = await updateQuantity(entry.partNumber, delta);
+        if (res.status === 'success') {
+          qtyInput.value = res.quantity;
+          entry.quantity = res.quantity;
+        } else {
+          alert(res.message);
         }
       }
+    };
 
-      async function updateQuantity(partNumber, delta) {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
-          return await res.json();
-        } finally {
-          showLoader(false);
+    btnTake.onclick = async () => {
+      const deltaStr = prompt('Введите число для вычитания:');
+      const delta = Number(deltaStr);
+      if (deltaStr !== null && !isNaN(delta)) {
+        const res = await updateQuantity(entry.partNumber, -delta);
+        if (res.status === 'success') {
+          qtyInput.value = res.quantity;
+          entry.quantity = res.quantity;
+        } else {
+          alert(res.message);
         }
       }
+    };
 
-      async function deleteEntry(rowIndex) {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
-          return await res.json();
-        } finally {
-          showLoader(false);
-        }
-      }
+    btnInfo.onclick = async () => {
+      const hist = await getHistory(entry.partNumber);
+      document.getElementById('modalContent').textContent = hist;
+      document.getElementById('modalOverlay').style.display = 'flex';
+    };
 
-      async function getHistory(partNumber) {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
-          return await res.text();
-        } finally {
-          showLoader(false);
-        }
-      }
+    return div;
+  }
 
-      async function getPopularEntries() {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=getPopularEntries`);
-          return await res.json();
-        } finally {
-          showLoader(false);
-        }
-      }
+  // Инициализация приложения
+  function initApp() {
+    // Создаём скрытый select для сохранения логики сортировки (он не отображается)
+    const hiddenSelect = document.createElement('select');
+    hiddenSelect.id = 'sortSelect';
+    hiddenSelect.style.display = 'none';
+    hiddenSelect.innerHTML = `
+      <option value="all">Все детали</option>
+      <option value="popular">Пос. взят. за 30 дней</option>
+      <option value="mostPopular">Популярные</option>
+      <option value="sortByQty">Остатки</option>
+    `;
+    document.getElementById('content').prepend(hiddenSelect);
 
-      async function getMostPopularEntries() {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=getMostPopularEntries`);
-          return await res.json();
-        } finally {
-          showLoader(false);
-        }
-      }
-
-      async function updatePartName(partNumber, newName) {
-        showLoader(true);
-        try {
-          const res = await fetch(`${API_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
-          return await res.json();
-        } finally {
-          showLoader(false);
-        }
-      }
-
-      function createCard(entry) {
-        // ... (полностью функция createCard из исходного кода, без изменений)
-        // Для краткости я оставлю сокращённую версию, но в реальном ответе нужно вставить полный код функции
-        // В оригинале она была большой, поэтому здесь я покажу заглушку, но в финальном решении необходимо её полностью скопировать.
-        // В целях экономии места в этом ответе я не буду дублировать все 200 строк, но подразумевается, что функция createCard остаётся той же.
-        // Важно: в финальном HTML она должна быть вставлена полностью.
-      }
-
-      function updateTotalPages() {
-        totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
-      }
-
-      function renderPage(page) {
-        // ... (полная функция renderPage из исходного кода)
-      }
-
-      function renderPageNumbers() {
-        // ... (полная функция renderPageNumbers из исходного кода)
-      }
-
-      function goToPage(page) {
-        // ... (полная функция goToPage из исходного кода)
-      }
-
-      pagination.nextPage = function() {
-        if (currentPage < totalPages) {
-          goToPage(currentPage + 1);
-        }
-      };
-
-      pagination.prevPage = function() {
-        if (currentPage > 1) {
-          goToPage(currentPage - 1);
-        }
-      };
-
-      function updatePaginationControls() {
-        // ... (полная функция updatePaginationControls из исходного кода)
-      }
-
-      // === НОВЫЕ ФУНКЦИИ ДЛЯ ФИЛЬТРАЦИИ ===
-      async function applyFilter(filterValue) {
-        showLoader(true);
-        try {
-          if (filterValue === 'all') {
-            currentEntries = [...allEntries];
-          } else if (filterValue === 'popular') {
-            currentEntries = await getPopularEntries();
-            if (currentEntries && currentEntries[0]?.lastChangeDate) {
-              currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
-            }
-          } else if (filterValue === 'mostPopular') {
-            currentEntries = await getMostPopularEntries();
-            if (!currentEntries?.length) {
-              alert('Нет данных для сортировки "всё время"');
-              return;
-            }
-          } else if (filterValue === 'sortByQty') {
-            currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+    // Вешаем обработчик change на скрытый select
+    document.getElementById('sortSelect').addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          currentEntries = await getPopularEntries();
+          if (currentEntries && currentEntries[0]?.lastChangeDate) {
+            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
           }
-          
-          updateTotalPages();
-          currentPage = 1;
-          renderPage(currentPage);
-        } finally {
-          showLoader(false);
+        } else if (this.value === 'mostPopular') {
+          currentEntries = await getMostPopularEntries();
+          if (!currentEntries?.length) {
+            alert('Нет данных для сортировки "всё время"');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
         }
-      }
-
-      function searchByTerm(term) {
-        const searchTerm = term.toLowerCase().trim();
-        currentEntries = searchTerm.length === 0 
-          ? [...allEntries] 
-          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
         updateTotalPages();
         currentPage = 1;
         renderPage(currentPage);
-      }
-
-      // === ОБРАБОТЧИКИ НОВОЙ ПАНЕЛИ ===
-      document.getElementById('filterButton').addEventListener('click', toggleFilterDropdown);
-
-      document.querySelectorAll('#filterDropdown div').forEach(item => {
-        item.addEventListener('click', function() {
-          const filter = this.dataset.filter;
-          document.getElementById('filterDropdown').style.display = 'none';
-          applyFilter(filter);
-        });
-      });
-
-      document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          searchByTerm(this.value);
-        }
-      });
-
-      // Закрытие модалки
-      document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('modalOverlay').style.display = 'none';
-      });
-
-      document.getElementById('modalOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modalOverlay')) {
-          document.getElementById('modalOverlay').style.display = 'none';
-        }
-      });
-
-      // Загрузка данных
-      async function loadData() {
-        showLoader(true);
-        try {
-          allEntries = await getEntries();
-          currentEntries = [...allEntries];
-          updateTotalPages();
-          renderPage(currentPage);
-        } finally {
-          showLoader(false);
-        }
-      }
-
-      loadData();
-    }
-
-    // Обработка ресайза для десктопного layout
-    window.addEventListener('resize', function() {
-      const cardsContainer = document.getElementById('cardsContainer');
-      if (!cardsContainer) return;
-      
-      if (window.innerWidth > 1024) {
-        cardsContainer.classList.add('desktop-layout');
-        document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
-      } else {
-        cardsContainer.classList.remove('desktop-layout');
-        document.querySelectorAll('.card').forEach(card => card.classList.remove('desktop-layout'));
+      } finally {
+        showLoader(false);
       }
     });
-  </script>
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    async function loadData() {
+      showLoader(true);
+      try {
+        allEntries = await getEntries();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    loadData();
+  }
+
+  window.addEventListener('resize', function() {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+    if (window.innerWidth > 1024) {
+      toggleDesktopLayout(true);
+    } else {
+      toggleDesktopLayout(false);
+    }
+  });
+</script>
 </body>
 </html>
