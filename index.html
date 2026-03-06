@@ -9,7 +9,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    /* Стили для шапки (убрано меню, выпадающий список сайтов, добавлена кнопка +) */
+    /* === Стили шапки (убрано меню, выпадающий список, добавлен значок +) === */
     header {
       background-color: #1f2937;
       color: white;
@@ -50,10 +50,10 @@
       padding: 0;
       display: inline-block;
       vertical-align: middle;
-      font-size: 50px; /* адаптируется под мобильные через медиазапросы */
+      font-size: 50px; /* адаптируется через медиазапросы */
     }
 
-    /* Новая кнопка добавления + */
+    /* Кнопка добавления детали (знак +) */
     .add-button {
       color: white;
       font-size: 60px;
@@ -70,7 +70,7 @@
       transform: scale(1.1);
     }
 
-    /* Стили для выпадающего списка фильтра (из предоставленного блока) */
+    /* === Панель фильтра и поиска (из предоставленного блока) === */
     .panel {
       background: #fff;
       padding: 12px 14px;
@@ -133,7 +133,7 @@
       border-color: #dc143c;
     }
 
-    /* Остальные стили (без изменений, кроме удалённых элементов) */
+    /* === Остальные стили (без изменений, кроме удалённых элементов) === */
     body {
       margin: 0;
       padding: 20px;
@@ -696,7 +696,7 @@
   <div class="loader"></div>
 </div>
 
-<!-- Шапка (без кнопки меню и выпадающего списка сайтов) -->
+<!-- Шапка (без кнопки меню и выпадающего списка сайтов, добавлен +) -->
 <header>
   <div class="logo">
     <a href="https://smart-bowling.github.io/SMB/">
@@ -706,7 +706,7 @@
   <div class="site-name">
     <span class="site-name-text">LUCKY STRIKE KH</span>
   </div>
-  <!-- Кнопка добавления детали (плюс) -->
+  <!-- Кнопка добавления детали (значок +) -->
   <a href="https://smart-bowling.github.io/ADD-PARTS-KH/" target="_blank" class="add-button">
     <i class="fas fa-plus-circle"></i>
   </a>
@@ -762,7 +762,7 @@
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
 
-  // Функция для выпадающего списка фильтра (новая)
+  // Функция для выпадающего списка фильтра
   function toggleFilterDropdown() {
     const menu = document.getElementById("filterDropdown");
     menu.style.display = menu.style.display === "block" ? "none" : "block";
@@ -773,49 +773,6 @@
     if (!e.target.closest('.filter')) {
       document.getElementById('filterDropdown').style.display = 'none';
     }
-  });
-
-  // Обработка выбора фильтра
-  document.addEventListener('click', function(e) {
-    const target = e.target.closest('.dropdown-filter div');
-    if (!target) return;
-    
-    const filterValue = target.dataset.filter;
-    const sortSelect = document.getElementById('sortSelect'); // скрытый селект для логики
-    if (!sortSelect) return;
-    
-    // Устанавливаем значение селекта и вызываем событие change
-    if (filterValue === 'all') sortSelect.value = 'all';
-    else if (filterValue === 'popular') sortSelect.value = 'popular';
-    else if (filterValue === 'mostPopular') sortSelect.value = 'mostPopular';
-    else if (filterValue === 'sortByQty') sortSelect.value = 'sortByQty';
-    
-    // Триггерим событие change вручную
-    const event = new Event('change', { bubbles: true });
-    sortSelect.dispatchEvent(event);
-    
-    // Закрываем дропдаун
-    document.getElementById('filterDropdown').style.display = 'none';
-  });
-
-  // Поиск по вводу с debounce
-  let searchTimeout;
-  document.getElementById('searchInput')?.addEventListener('input', function(e) {
-    clearTimeout(searchTimeout);
-    const term = e.target.value.trim().toLowerCase();
-    searchTimeout = setTimeout(() => {
-      if (!allEntries) return;
-      if (term === '') {
-        currentEntries = [...allEntries];
-      } else {
-        currentEntries = allEntries.filter(entry => 
-          entry.partNumber.toLowerCase().includes(term)
-        );
-      }
-      updateTotalPages();
-      currentPage = 1;
-      renderPage(currentPage);
-    }, 300);
   });
 
   // === НОВАЯ СИСТЕМА АВТОРИЗАЦИИ (без изменений) ===
@@ -1395,6 +1352,46 @@
       } finally {
         showLoader(false);
       }
+    });
+
+    // Обработка выбора фильтра из выпадающего списка
+    document.querySelectorAll('.dropdown-filter div').forEach(item => {
+      item.addEventListener('click', function(e) {
+        const filterValue = this.dataset.filter;
+        const sortSelect = document.getElementById('sortSelect');
+        if (!sortSelect) return;
+        
+        // Устанавливаем значение селекта и вызываем событие change
+        sortSelect.value = filterValue;
+        const event = new Event('change', { bubbles: true });
+        sortSelect.dispatchEvent(event);
+        
+        // Закрываем дропдаун
+        document.getElementById('filterDropdown').style.display = 'none';
+      });
+    });
+
+    // Обработка поиска с debounce (сбрасываем фильтр на "Все")
+    let searchTimeout;
+    document.getElementById('searchInput')?.addEventListener('input', function(e) {
+      clearTimeout(searchTimeout);
+      const term = e.target.value.trim().toLowerCase();
+      searchTimeout = setTimeout(() => {
+        // Сбрасываем скрытый select на "all" (без вызова change, просто меняем value)
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) sortSelect.value = 'all';
+        
+        if (term === '') {
+          currentEntries = [...allEntries];
+        } else {
+          currentEntries = allEntries.filter(entry => 
+            entry.partNumber.toLowerCase().includes(term)
+          );
+        }
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      }, 300);
     });
 
     document.getElementById('modalClose')?.addEventListener('click', () => {
