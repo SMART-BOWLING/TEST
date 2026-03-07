@@ -627,6 +627,9 @@
       justify-content: space-between;
       align-items: center;
       border-radius: 14px 14px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .analysis-header h3 {
@@ -668,6 +671,10 @@
       text-align: center;
       font-weight: 600;
       letter-spacing: .5px;
+      position: sticky;
+      top: 60px;
+      background: #1f2937;
+      z-index: 5;
     }
 
     .analysis-table td {
@@ -678,10 +685,17 @@
     .analysis-table tbody tr {
       border-bottom: 1px solid #eee;
       transition: .2s;
+      cursor: pointer;
     }
 
     .analysis-table tbody tr:hover {
-      background: #f9fafb;
+      background: #f0f7ff;
+      transform: scale(1.002);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .analysis-table tbody tr:active {
+      background: #e3f0ff;
     }
 
     .analysis-part {
@@ -738,6 +752,75 @@
     .analysis-summary span {
       font-weight: 600;
       color: #dc143c;
+    }
+
+    /* Модальное окно для фото */
+    .photo-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 11000;
+      backdrop-filter: blur(8px);
+    }
+
+    .photo-modal-content {
+      position: relative;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+
+    .photo-modal-content img {
+      max-width: 100%;
+      max-height: 70vh;
+      display: block;
+      border-radius: 8px;
+    }
+
+    .photo-modal-content h4 {
+      margin: 15px 0 5px;
+      color: #1f2937;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .photo-modal-content p {
+      margin: 0 0 15px;
+      color: #666;
+      text-align: center;
+    }
+
+    .photo-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: 30px;
+      font-weight: bold;
+      color: #dc143c;
+      background: white;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .photo-close:hover {
+      background: #dc143c;
+      color: white;
     }
 
     .modal-overlay {
@@ -1223,6 +1306,11 @@
         padding: 12px 8px;
         font-size: 14px;
       }
+      
+      .photo-modal-content {
+        width: 95vw;
+        padding: 15px;
+      }
     }
     
     /* Десктопная версия */
@@ -1536,6 +1624,14 @@
       .popularity-bar {
         height: 8px;
       }
+      
+      .photo-modal-content {
+        padding: 15px;
+      }
+      
+      .photo-modal-content img {
+        max-height: 70vh;
+      }
     }
   </style>
 </head>
@@ -1641,6 +1737,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Модальное окно для фото детали -->
+  <div id="photoModal" class="photo-modal">
+    <div class="photo-modal-content">
+      <div id="photoClose" class="photo-close">×</div>
+      <div id="photoContainer">
+        <!-- Сюда будет вставлено фото -->
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1685,6 +1791,7 @@
   const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/';
 
   let currentUser = null;
+  let allEntriesForAnalysis = []; // Сохраняем все записи для поиска фото
 
   // Загрузка Google API
   function loadSheetsAPI() {
@@ -1923,6 +2030,39 @@
     }
   }
 
+  // Функция для показа фото детали
+  function showPartPhoto(partNumber, partName) {
+    // Ищем запись с таким номером детали
+    const entry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
+    
+    const photoContainer = document.getElementById('photoContainer');
+    
+    if (entry && entry.fileUrl) {
+      // Если есть фото
+      photoContainer.innerHTML = `
+        <img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">
+        <h4>${partName || 'Деталь'} (${partNumber})</h4>
+        <p>Нажмите для увеличения</p>
+      `;
+      
+      // Добавляем возможность увеличения при клике
+      const img = photoContainer.querySelector('img');
+      img.style.cursor = 'pointer';
+      img.onclick = function() {
+        window.open(entry.fileUrl, '_blank');
+      };
+    } else {
+      // Если нет фото
+      photoContainer.innerHTML = `
+        <img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">
+        <h4>${partNumber}</h4>
+        <p>Фото отсутствует</p>
+      `;
+    }
+    
+    document.getElementById('photoModal').style.display = 'flex';
+  }
+
   // ФУНКЦИЯ АНАЛИЗА (создающая таблицу в стиле примера)
   async function showAnalysis() {
     showLoader(true);
@@ -1930,13 +2070,13 @@
       // Читаем столбцы A и G с листа KH
       const responseAG = await gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
-        range: 'BB!A:G', // A (номера) и G (добавлено)
+        range: 'KH!A:G', // A (номера) и G (добавлено)
       });
       
       // Читаем столбец H с листа KH
       const responseH = await gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
-        range: 'BB!H:H', // H (взято)
+        range: 'KH!H:H', // H (взято)
       });
       
       const rowsAG = responseAG.result.values || [];
@@ -2006,7 +2146,7 @@
       
       analysisData.forEach(item => {
         html += `
-          <tr>
+          <tr data-partnumber="${item.partNumber}">
             <td class="analysis-part">${item.partNumber}</td>
             <td class="analysis-added">${item.added}</td>
             <td class="analysis-taken">${item.taken}</td>
@@ -2023,6 +2163,18 @@
       
       document.getElementById('analysisContent').innerHTML = html;
       document.getElementById('analysisModal').style.display = 'flex';
+      
+      // Добавляем обработчики клика на строки таблицы
+      const rows = document.querySelectorAll('.analysis-table tbody tr');
+      rows.forEach(row => {
+        row.addEventListener('click', function() {
+          const partNumber = this.dataset.partnumber;
+          // Ищем название детали в allEntries
+          const entry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
+          const partName = entry ? entry.partName : 'Деталь';
+          showPartPhoto(partNumber, partName);
+        });
+      });
       
     } catch (error) {
       console.error('Analysis error:', error);
@@ -2236,6 +2388,10 @@
               partNameText.textContent = newName;
               const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
               if (updatedEntry) updatedEntry.partName = newName;
+              
+              // Обновляем также в allEntriesForAnalysis
+              const analysisEntry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
+              if (analysisEntry) analysisEntry.partName = newName;
             } else {
               alert(res.message || 'Ошибка при обновлении названия');
             }
@@ -2463,10 +2619,23 @@
       }
     });
 
+    // Обработчики для фото
+    document.getElementById('photoClose')?.addEventListener('click', () => {
+      document.getElementById('photoModal').style.display = 'none';
+    });
+
+    document.getElementById('photoModal')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('photoModal')) {
+        document.getElementById('photoModal').style.display = 'none';
+      }
+    });
+
     async function loadData() {
       showLoader(true);
       try {
         allEntries = await getEntries();
+        // Сохраняем копию для анализа
+        allEntriesForAnalysis = JSON.parse(JSON.stringify(allEntries));
         currentEntries = [...allEntries];
         updateTotalPages();
         renderPage(currentPage);
