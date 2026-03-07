@@ -654,11 +654,12 @@
       padding: 20px;
     }
 
-    /* Таблица в стиле примера */
+    /* Таблица в стиле примера с равными колонками */
     .analysis-table {
       width: 100%;
       border-collapse: collapse;
       font-family: "Segoe UI", sans-serif;
+      table-layout: fixed; /* Фиксированная ширина колонок */
     }
 
     .analysis-table thead {
@@ -677,9 +678,16 @@
       z-index: 5;
     }
 
+    /* Равные колонки */
+    .analysis-table th:nth-child(1) { width: 30%; }
+    .analysis-table th:nth-child(2) { width: 15%; }
+    .analysis-table th:nth-child(3) { width: 15%; }
+    .analysis-table th:nth-child(4) { width: 40%; }
+
     .analysis-table td {
       padding: 16px;
       text-align: center;
+      word-wrap: break-word;
     }
 
     .analysis-table tbody tr {
@@ -729,6 +737,51 @@
       transition: .4s;
     }
 
+    /* Итоговая шкала сверху */
+    .total-popularity {
+      background: #f8f9fa;
+      padding: 16px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    .total-popularity-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .total-popularity-bar {
+      width: 100%;
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .total-popularity-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #dc143c, #ff4d6d);
+      border-radius: 20px;
+      transition: .4s;
+    }
+
+    .total-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .total-stats span {
+      font-weight: 700;
+      color: #1f2937;
+    }
+
     .analysis-summary {
       background: #f8f9fa;
       padding: 16px;
@@ -754,73 +807,52 @@
       color: #dc143c;
     }
 
-    /* Модальное окно для фото */
+    /* Упрощенное модальное окно для фото */
     .photo-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.9);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 11000;
-      backdrop-filter: blur(8px);
     }
 
     .photo-modal-content {
       position: relative;
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
       max-width: 90vw;
       max-height: 90vh;
-      overflow: auto;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      text-align: center;
     }
 
     .photo-modal-content img {
       max-width: 100%;
-      max-height: 70vh;
+      max-height: 80vh;
       display: block;
       border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    .photo-modal-content h4 {
-      margin: 15px 0 5px;
-      color: #1f2937;
-      font-size: 18px;
-      text-align: center;
-    }
-
-    .photo-modal-content p {
-      margin: 0 0 15px;
-      color: #666;
-      text-align: center;
-    }
-
-    .photo-close {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      cursor: pointer;
-      font-size: 30px;
-      font-weight: bold;
-      color: #dc143c;
-      background: white;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    .photo-close:hover {
+    .photo-close-btn {
+      margin-top: 20px;
+      padding: 12px 40px;
       background: #dc143c;
       color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(220, 20, 60, 0.3);
+    }
+
+    .photo-close-btn:hover {
+      background: #ff1940;
+      transform: scale(1.05);
     }
 
     .modal-overlay {
@@ -1307,9 +1339,14 @@
         font-size: 14px;
       }
       
-      .photo-modal-content {
-        width: 95vw;
-        padding: 15px;
+      .photo-modal-content img {
+        max-width: 95vw;
+        max-height: 70vh;
+      }
+      
+      .photo-close-btn {
+        padding: 10px 30px;
+        font-size: 16px;
       }
     }
     
@@ -1625,12 +1662,17 @@
         height: 8px;
       }
       
-      .photo-modal-content {
-        padding: 15px;
+      .total-popularity-bar {
+        height: 16px;
       }
       
       .photo-modal-content img {
-        max-height: 70vh;
+        max-height: 75vh;
+      }
+      
+      .photo-close-btn {
+        padding: 10px 35px;
+        font-size: 16px;
       }
     }
   </style>
@@ -1738,13 +1780,11 @@
     </div>
   </div>
 
-  <!-- Модальное окно для фото детали -->
+  <!-- Упрощенное модальное окно для фото (только картинка и кнопка) -->
   <div id="photoModal" class="photo-modal">
     <div class="photo-modal-content">
-      <div id="photoClose" class="photo-close">×</div>
-      <div id="photoContainer">
-        <!-- Сюда будет вставлено фото -->
-      </div>
+      <div id="photoContainer"></div>
+      <button id="photoCloseBtn" class="photo-close-btn">ЗАКРЫТЬ</button>
     </div>
   </div>
 </div>
@@ -2030,8 +2070,8 @@
     }
   }
 
-  // Функция для показа фото детали
-  function showPartPhoto(partNumber, partName) {
+  // Упрощенная функция для показа фото (только картинка)
+  function showPartPhoto(partNumber) {
     // Ищем запись с таким номером детали
     const entry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
     
@@ -2039,31 +2079,16 @@
     
     if (entry && entry.fileUrl) {
       // Если есть фото
-      photoContainer.innerHTML = `
-        <img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">
-        <h4>${partName || 'Деталь'} (${partNumber})</h4>
-        <p>Нажмите для увеличения</p>
-      `;
-      
-      // Добавляем возможность увеличения при клике
-      const img = photoContainer.querySelector('img');
-      img.style.cursor = 'pointer';
-      img.onclick = function() {
-        window.open(entry.fileUrl, '_blank');
-      };
+      photoContainer.innerHTML = `<img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">`;
     } else {
       // Если нет фото
-      photoContainer.innerHTML = `
-        <img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">
-        <h4>${partNumber}</h4>
-        <p>Фото отсутствует</p>
-      `;
+      photoContainer.innerHTML = `<img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">`;
     }
     
     document.getElementById('photoModal').style.display = 'flex';
   }
 
-  // ФУНКЦИЯ АНАЛИЗА (создающая таблицу в стиле примера)
+  // ФУНКЦИЯ АНАЛИЗА (с итоговой шкалой и равными колонками)
   async function showAnalysis() {
     showLoader(true);
     try {
@@ -2124,12 +2149,24 @@
       // Сортируем по убыванию популярности
       analysisData.sort((a, b) => b.popularityPercent - a.popularityPercent);
       
-      // Формируем HTML в ТОЧНОМ стиле примера
+      // Общая популярность (процент взятых от всех добавленных)
+      const totalPopularityPercent = totalAdded > 0 ? Math.min(100, Math.round((totalTaken / totalAdded) * 100)) : 0;
+      
+      // Формируем HTML с итоговой шкалой сверху
       let html = `
-        <div class="analysis-summary">
-          <p><strong>Добавлено всего:</strong> <span>${totalAdded}</span></p>
-          <p><strong>Взято всего:</strong> <span>${totalTaken}</span></p>
-          <p><strong>Всего деталей:</strong> <span>${analysisData.length}</span></p>
+        <div class="total-popularity">
+          <div class="total-popularity-label">
+            <span>Общая популярность</span>
+            <span>${totalPopularityPercent}%</span>
+          </div>
+          <div class="total-popularity-bar">
+            <div class="total-popularity-fill" style="width:${totalPopularityPercent}%"></div>
+          </div>
+          <div class="total-stats">
+            <div><span>${totalAdded}</span> добавлено</div>
+            <div><span>${totalTaken}</span> взято</div>
+            <div><span>${analysisData.length}</span> деталей</div>
+          </div>
         </div>
         
         <table class="analysis-table">
@@ -2169,10 +2206,7 @@
       rows.forEach(row => {
         row.addEventListener('click', function() {
           const partNumber = this.dataset.partnumber;
-          // Ищем название детали в allEntries
-          const entry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
-          const partName = entry ? entry.partName : 'Деталь';
-          showPartPhoto(partNumber, partName);
+          showPartPhoto(partNumber);
         });
       });
       
@@ -2619,8 +2653,8 @@
       }
     });
 
-    // Обработчики для фото
-    document.getElementById('photoClose')?.addEventListener('click', () => {
+    // Обработчики для упрощенного фото
+    document.getElementById('photoCloseBtn')?.addEventListener('click', () => {
       document.getElementById('photoModal').style.display = 'none';
     });
 
