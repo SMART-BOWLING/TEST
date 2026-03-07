@@ -665,12 +665,25 @@
       box-shadow: 0 6px 10px rgba(0,0,0,0.15);
     }
 
+    .analysis-progress {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #1a2f40;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      display: none;
+    }
+
     .analysis-results {
       margin-top: 20px;
       padding: 20px;
       background: #f8f9fa;
       border-radius: 10px;
       border-left: 4px solid #dc143c;
+      max-height: 50vh;
+      overflow-y: auto;
     }
 
     .result-item {
@@ -688,17 +701,23 @@
     .result-item .part-number {
       font-weight: bold;
       color: #1a2f40;
+      min-width: 120px;
     }
 
     .result-item .part-name {
       color: #666;
       flex: 1;
       padding: 0 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .result-item .part-count {
       font-weight: bold;
       color: #dc143c;
+      min-width: 80px;
+      text-align: right;
     }
 
     .pagination {
@@ -986,8 +1005,21 @@
         font-size: 20px;
       }
       
+      .analysis-progress {
+        font-size: 18px;
+        padding: 20px;
+      }
+      
       .result-item {
         font-size: 18px;
+      }
+      
+      .result-item .part-number {
+        min-width: 100px;
+      }
+      
+      .result-item .part-count {
+        min-width: 70px;
       }
     }
     
@@ -1261,9 +1293,22 @@
         font-size: 16px;
       }
       
+      .analysis-progress {
+        font-size: 14px;
+        padding: 15px;
+      }
+      
       .result-item {
         font-size: 14px;
         padding: 8px 0;
+      }
+      
+      .result-item .part-number {
+        min-width: 80px;
+      }
+      
+      .result-item .part-count {
+        min-width: 60px;
       }
     }
   </style>
@@ -1375,9 +1420,12 @@
           <label>Дата по:</label>
           <input type="date" id="dateTo">
         </div>
-        <button onclick="analyzeTakenParts()" class="analysis-btn">
+        <button onclick="analyzeTakenPartsOptimized()" class="analysis-btn">
           <i class="fas fa-search"></i> Показать взятые детали
         </button>
+      </div>
+      <div id="analysisProgress" class="analysis-progress">
+        <i class="fas fa-spinner fa-spin"></i> Анализ данных...
       </div>
       <div id="analysisResults" class="analysis-results" style="display:none;"></div>
     </div>
@@ -1416,6 +1464,7 @@
     document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
     document.getElementById('dateTo').value = today.toISOString().split('T')[0];
     document.getElementById('analysisResults').style.display = 'none';
+    document.getElementById('analysisProgress').style.display = 'none';
     document.getElementById('analysisModal').style.display = 'flex';
   }
 
@@ -1423,8 +1472,8 @@
     document.getElementById('analysisModal').style.display = 'none';
   }
 
-  // Функция анализа взятых деталей за период
-  async function analyzeTakenParts() {
+  // ОПТИМИЗИРОВАННАЯ функция анализа взятых деталей за период
+  async function analyzeTakenPartsOptimized() {
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo = document.getElementById('dateTo').value;
     
@@ -1433,25 +1482,49 @@
       return;
     }
     
-    showLoader(true);
+    // Показываем прогресс
+    document.getElementById('analysisProgress').style.display = 'block';
+    document.getElementById('analysisResults').style.display = 'none';
     
     try {
-      // Получаем все детали
+      // Получаем все детали одним запросом
       const allEntries = await getEntries();
       
-      // Для каждой детали получаем историю и анализируем взятые за период
+      // Создаем массив промисов для параллельной загрузки историй
+      const historyPromises = allEntries.map(entry => 
+        getHistory(entry.partNumber).catch(() => '') // Игнорируем ошибки для отдельных деталей
+      );
+      
+      // Запускаем все запросы параллельно
+      const histories = await Promise.all(historyPromises);
+      
+      const fromDate = new Date(dateFrom);
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      
       const takenParts = [];
       
-      for (const entry of allEntries) {
-        const history = await getHistory(entry.partNumber);
-        const takenCount = parseTakenHistory(history, dateFrom, dateTo);
+      // Обрабатываем результаты
+      for (let i = 0; i < allEntries.length; i++) {
+        const entry = allEntries[i];
+        const history = histories[i];
         
-        if (takenCount > 0) {
-          takenParts.push({
-            partNumber: entry.partNumber,
-            partName: entry.partName || 'Название детали',
-            takenCount: takenCount
-          });
+        if (history) {
+          const takenCount = parseTakenHistory(history, fromDate, toDate);
+          
+          if (takenCount > 0) {
+            takenParts.push({
+              partNumber: entry.partNumber,
+              partName: entry.partName || 'Название детали',
+              takenCount: takenCount
+            });
+          }
+        }
+        
+        // Обновляем прогресс каждые 10 деталей
+        if (i % 10 === 0) {
+          document.getElementById('analysisProgress').innerHTML = 
+            `<i class="fas fa-spinner fa-spin"></i> Анализ данных... ${Math.round((i / allEntries.length) * 100)}%`;
         }
       }
       
@@ -1462,18 +1535,14 @@
       
     } catch (error) {
       console.error('Analysis error:', error);
-      alert('Ошибка при анализе данных');
+      alert('Ошибка при анализе данных: ' + error.message);
     } finally {
-      showLoader(false);
+      document.getElementById('analysisProgress').style.display = 'none';
     }
   }
 
   // Парсинг истории для подсчета взятых деталей за период
-  function parseTakenHistory(historyText, dateFrom, dateTo) {
-    const fromDate = new Date(dateFrom);
-    const toDate = new Date(dateTo);
-    toDate.setHours(23, 59, 59, 999); // Конец дня
-    
+  function parseTakenHistory(historyText, fromDate, toDate) {
     let totalTaken = 0;
     const lines = historyText.split('\n');
     
@@ -1516,7 +1585,7 @@
       html += `
         <div class="result-item">
           <span class="part-number">${part.partNumber}</span>
-          <span class="part-name">${part.partName}</span>
+          <span class="part-name" title="${part.partName}">${part.partName}</span>
           <span class="part-count">${part.takenCount} шт.</span>
         </div>
       `;
@@ -1822,12 +1891,13 @@
   }
 
   async function getHistory(partNumber) {
-    showLoader(true);
+    // Не показываем loader для истории, чтобы не перегружать интерфейс
     try {
       const res = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
       return await res.text();
-    } finally {
-      showLoader(false);
+    } catch (error) {
+      console.error('Error getting history for', partNumber, error);
+      return '';
     }
   }
 
