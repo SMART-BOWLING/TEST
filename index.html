@@ -1472,6 +1472,69 @@
     document.getElementById('analysisModal').style.display = 'none';
   }
 
+  // ИСПРАВЛЕННАЯ функция парсинга истории для подсчета взятых деталей за период
+  function parseTakenHistory(historyText, fromDate, toDate) {
+    if (!historyText) return 0;
+    
+    let totalTaken = 0;
+    
+    // Разделяем на отдельные записи (каждая запись начинается с даты)
+    const entries = historyText.split('\n').filter(line => line.trim() !== '');
+    
+    for (const entry of entries) {
+      try {
+        // Извлекаем дату из начала строки (формат: YYYY-MM-DD)
+        const dateMatch = entry.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        
+        const entryDateStr = dateMatch[1];
+        const entryDate = new Date(entryDateStr);
+        
+        // Проверяем, попадает ли дата в диапазон
+        if (entryDate >= fromDate && entryDate <= toDate) {
+          // Ищем упоминания взятия (уменьшения количества)
+          // Может быть несколько форматов записи:
+          
+          // Формат 1: "Взято: -5" или "Взято: 5"
+          if (entry.includes('Взято:') || entry.includes('взято:')) {
+            const takenMatch = entry.match(/Взято:\s*(-?\d+)/i);
+            if (takenMatch) {
+              const value = parseInt(takenMatch[1]);
+              if (value < 0) {
+                // Если отрицательное - берем модуль
+                totalTaken += Math.abs(value);
+              } else if (value > 0) {
+                // Если положительное, но это "взято" - значит взяли value штук
+                totalTaken += value;
+              }
+            }
+          } 
+          // Формат 2: "вычитание: 5" или "вычитание: -5"
+          else if (entry.includes('вычитание:') || entry.includes('Вычитание:')) {
+            const takenMatch = entry.match(/вычитание:\s*(-?\d+)/i);
+            if (takenMatch) {
+              const value = parseInt(takenMatch[1]);
+              totalTaken += Math.abs(value);
+            }
+          }
+          // Формат 3: Просто отрицательное число в строке
+          else {
+            // Ищем отрицательные числа, которые могут означать взятие
+            const negativeMatch = entry.match(/(-\d+)/);
+            if (negativeMatch) {
+              totalTaken += Math.abs(parseInt(negativeMatch[1]));
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error parsing history entry:', entry, e);
+        continue;
+      }
+    }
+    
+    return totalTaken;
+  }
+
   // ОПТИМИЗИРОВАННАЯ функция анализа взятых деталей за период
   async function analyzeTakenPartsOptimized() {
     const dateFrom = document.getElementById('dateFrom').value;
@@ -1490,13 +1553,17 @@
       // Получаем все детали одним запросом
       const allEntries = await getEntries();
       
+      console.log(`Начинаем анализ ${allEntries.length} деталей за период с ${dateFrom} по ${dateTo}`);
+      
       // Создаем массив промисов для параллельной загрузки историй
       const historyPromises = allEntries.map(entry => 
-        getHistory(entry.partNumber).catch(() => '') // Игнорируем ошибки для отдельных деталей
+        getHistory(entry.partNumber)
+          .then(history => ({ partNumber: entry.partNumber, history }))
+          .catch(() => ({ partNumber: entry.partNumber, history: '' }))
       );
       
       // Запускаем все запросы параллельно
-      const histories = await Promise.all(historyPromises);
+      const historiesData = await Promise.all(historyPromises);
       
       const fromDate = new Date(dateFrom);
       const toDate = new Date(dateTo);
@@ -1504,29 +1571,35 @@
       
       const takenParts = [];
       
+      // Создаем map для быстрого доступа к данным деталей
+      const entriesMap = new Map(allEntries.map(e => [e.partNumber, e]));
+      
       // Обрабатываем результаты
-      for (let i = 0; i < allEntries.length; i++) {
-        const entry = allEntries[i];
-        const history = histories[i];
+      for (let i = 0; i < historiesData.length; i++) {
+        const { partNumber, history } = historiesData[i];
+        const entry = entriesMap.get(partNumber);
         
         if (history) {
           const takenCount = parseTakenHistory(history, fromDate, toDate);
           
           if (takenCount > 0) {
             takenParts.push({
-              partNumber: entry.partNumber,
-              partName: entry.partName || 'Название детали',
+              partNumber: partNumber,
+              partName: entry?.partName || 'Название детали',
               takenCount: takenCount
             });
           }
         }
         
         // Обновляем прогресс каждые 10 деталей
-        if (i % 10 === 0) {
+        if (i % 10 === 0 || i === historiesData.length - 1) {
+          const percent = Math.round(((i + 1) / historiesData.length) * 100);
           document.getElementById('analysisProgress').innerHTML = 
-            `<i class="fas fa-spinner fa-spin"></i> Анализ данных... ${Math.round((i / allEntries.length) * 100)}%`;
+            `<i class="fas fa-spinner fa-spin"></i> Анализ данных... ${percent}% (найдено взятых: ${takenParts.length})`;
         }
       }
+      
+      console.log(`Анализ завершен. Найдено деталей, которые брали: ${takenParts.length}`);
       
       // Сортируем по убыванию количества взятых
       takenParts.sort((a, b) => b.takenCount - a.takenCount);
@@ -1539,34 +1612,6 @@
     } finally {
       document.getElementById('analysisProgress').style.display = 'none';
     }
-  }
-
-  // Парсинг истории для подсчета взятых деталей за период
-  function parseTakenHistory(historyText, fromDate, toDate) {
-    let totalTaken = 0;
-    const lines = historyText.split('\n');
-    
-    for (const line of lines) {
-      // Ищем строки с "Взято: X" и датой
-      const takenMatch = line.match(/Взято:\s*(-?\d+)/i);
-      if (!takenMatch) continue;
-      
-      // Извлекаем дату из строки (формат: YYYY-MM-DD)
-      const dateMatch = line.match(/\d{4}-\d{2}-\d{2}/);
-      if (!dateMatch) continue;
-      
-      const lineDate = new Date(dateMatch[0]);
-      
-      // Проверяем, попадает ли дата в диапазон
-      if (lineDate >= fromDate && lineDate <= toDate) {
-        const takenValue = parseInt(takenMatch[1]);
-        if (takenValue < 0) { // Отрицательное значение = взяли
-          totalTaken += Math.abs(takenValue);
-        }
-      }
-    }
-    
-    return totalTaken;
   }
 
   // Отображение результатов анализа
