@@ -647,7 +647,7 @@
       border-radius: 16px;
       padding: 30px;
       width: 90vw;
-      max-width: 1000px;
+      max-width: 1200px;
       max-height: 80vh;
       overflow: auto;
       z-index: 10001;
@@ -691,11 +691,18 @@
       text-align: left;
       position: sticky;
       top: 0;
+      z-index: 10;
     }
 
     .analysis-table td {
       padding: 10px 12px;
       border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+    }
+
+    .analysis-table td:first-child {
+      font-family: monospace;
+      font-size: 14px;
     }
 
     .analysis-table tr:nth-child(even) {
@@ -712,14 +719,17 @@
 
     .percent-good {
       color: #28a745;
+      font-weight: bold;
     }
 
     .percent-warning {
       color: #ffc107;
+      font-weight: bold;
     }
 
     .percent-bad {
       color: #dc143c;
+      font-weight: bold;
     }
 
     .analysis-summary {
@@ -1964,36 +1974,52 @@
   async function showAnalysis() {
     showLoader(true);
     try {
-      // Получаем все записи
       const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+      
+      // Получаем все записи
       const res = await fetch(`${API_URL}?action=getEntries`);
       const entries = await res.json();
       
-      // Получаем историю для каждой детали
       const analysisData = [];
       let totalReceived = 0;
       let totalTaken = 0;
       let totalCurrent = 0;
       
+      // Для каждой детали получаем историю
       for (const entry of entries) {
         try {
+          // Получаем историю так же, как это делает кнопка "История"
           const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
           const historyText = await historyRes.text();
           
-          // Парсим историю для подсчета полученных и взятых деталей
-          const historyLines = historyText.split('\n');
+          // Парсим историю построчно
+          const lines = historyText.split('\n').filter(line => line.trim() !== '');
           let received = 0;
           let taken = 0;
           
-          historyLines.forEach(line => {
-            const addMatch = line.match(/Добавлено: (\d+)/);
-            const takeMatch = line.match(/Взято: (\d+)/);
-            
+          // Анализируем каждую строку истории
+          lines.forEach(line => {
+            // Ищем паттерн "+ число" для добавленных деталей
+            const addMatch = line.match(/\+\s*(\d+)/);
             if (addMatch) {
               received += parseInt(addMatch[1]);
             }
+            
+            // Ищем паттерн "- число" для взятых деталей
+            const takeMatch = line.match(/\-\s*(\d+)/);
             if (takeMatch) {
               taken += parseInt(takeMatch[1]);
+            }
+            
+            // Также проверяем текстовые паттерны "Добавлено: X" или "Взято: X"
+            const addTextMatch = line.match(/Добавлено:\s*(\d+)/i);
+            if (addTextMatch) {
+              received += parseInt(addTextMatch[1]);
+            }
+            
+            const takeTextMatch = line.match(/Взято:\s*(\d+)/i);
+            if (takeTextMatch) {
+              taken += parseInt(takeTextMatch[1]);
             }
           });
           
@@ -2012,11 +2038,23 @@
             taken: taken,
             current: current,
             usagePercent: usagePercent,
-            status: usagePercent >= 70 ? 'Активно используется' : 
-                    usagePercent >= 30 ? 'Используется средне' : 'Мало используется'
+            status: usagePercent >= 70 ? '✅ Активно используется' : 
+                    usagePercent >= 30 ? '⚠️ Используется средне' : '❌ Мало используется'
           });
+          
+          console.log(`Деталь ${entry.partNumber}: +${received}, -${taken}, =${current}`);
+          
         } catch (e) {
           console.error(`Error processing history for ${entry.partNumber}:`, e);
+          analysisData.push({
+            partNumber: entry.partNumber,
+            partName: entry.partName || 'Без названия',
+            received: 0,
+            taken: 0,
+            current: entry.quantity || 0,
+            usagePercent: 0,
+            status: '❌ Ошибка загрузки истории'
+          });
         }
       }
       
@@ -2026,21 +2064,22 @@
       // Формируем HTML для модального окна
       let html = `
         <div class="analysis-summary">
-          <p><strong>Общая статистика:</strong></p>
-          <p>📦 Всего получено деталей: ${totalReceived}</p>
-          <p>📤 Всего взято деталей: ${totalTaken}</p>
-          <p>📊 Текущий остаток: ${totalCurrent}</p>
-          <p>⚡ Общий процент использования: ${totalReceived > 0 ? Math.round((totalTaken / totalReceived) * 100) : 0}%</p>
+          <p><strong>📊 ОБЩАЯ СТАТИСТИКА:</strong></p>
+          <p>📦 Всего получено деталей: <strong>${totalReceived}</strong></p>
+          <p>📤 Всего взято деталей: <strong>${totalTaken}</strong></p>
+          <p>💾 Текущий остаток: <strong>${totalCurrent}</strong></p>
+          <p>⚡ Общий процент использования: <strong>${totalReceived > 0 ? Math.round((totalTaken / totalReceived) * 100) : 0}%</strong></p>
+          <p>📋 Всего позиций: <strong>${analysisData.length}</strong></p>
         </div>
         <table class="analysis-table">
           <thead>
             <tr>
               <th>№ детали</th>
               <th>Название</th>
-              <th>Получено</th>
-              <th>Взято</th>
-              <th>Остаток</th>
-              <th>% использования</th>
+              <th>📦 Получено</th>
+              <th>📤 Взято</th>
+              <th>💾 Остаток</th>
+              <th>⚡ % использования</th>
               <th>Статус</th>
             </tr>
           </thead>
@@ -2051,15 +2090,21 @@
         const percentClass = item.usagePercent >= 70 ? 'percent-good' : 
                             item.usagePercent >= 30 ? 'percent-warning' : 'percent-bad';
         
+        // Добавляем эмодзи в зависимости от статуса
+        let statusEmoji = '';
+        if (item.status.includes('✅')) statusEmoji = '✅';
+        else if (item.status.includes('⚠️')) statusEmoji = '⚠️';
+        else if (item.status.includes('❌')) statusEmoji = '❌';
+        
         html += `
           <tr>
             <td><strong>${item.partNumber}</strong></td>
             <td>${item.partName}</td>
-            <td>${item.received}</td>
-            <td>${item.taken}</td>
-            <td>${item.current}</td>
-            <td class="analysis-percent ${percentClass}">${item.usagePercent}%</td>
-            <td>${item.status}</td>
+            <td style="color: #28a745; font-weight: bold;">+${item.received}</td>
+            <td style="color: #dc143c; font-weight: bold;">-${item.taken}</td>
+            <td style="font-weight: bold;">${item.current}</td>
+            <td class="analysis-percent ${percentClass}"><strong>${item.usagePercent}%</strong></td>
+            <td>${statusEmoji} ${item.status.replace(/[✅⚠️❌]/g, '').trim()}</td>
           </tr>
         `;
       });
@@ -2067,6 +2112,10 @@
       html += `
           </tbody>
         </table>
+        <div class="analysis-summary" style="margin-top: 15px; background: #e8f0fe;">
+          <p><small>📌 Процент использования = (Взято / (Получено + Взято)) × 100%</small></p>
+          <p><small>🟢 >70% - Активно используется | 🟡 30-70% - Средне используется | 🔴 <30% - Мало используется</small></p>
+        </div>
       `;
       
       document.getElementById('analysisContent').innerHTML = html;
@@ -2074,7 +2123,7 @@
       
     } catch (error) {
       console.error('Analysis error:', error);
-      alert('Ошибка при анализе данных');
+      alert('Ошибка при анализе данных: ' + error.message);
     } finally {
       showLoader(false);
     }
