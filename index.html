@@ -595,6 +595,52 @@
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
+    /* НОВЫЙ СТИЛЬ: шкала популярности под карточкой */
+    .popularity-meter {
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: #ffffff;
+      border-radius: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .popularity-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      white-space: nowrap;
+    }
+    
+    .popularity-bar-container {
+      flex: 1;
+      height: 24px;
+      background: #e9ecef;
+      border-radius: 30px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .popularity-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff4d6d, #dc143c);
+      border-radius: 30px;
+      transition: width 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .popularity-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: #dc143c;
+      min-width: 45px;
+      text-align: right;
+    }
+
     /* ОКНО АНАЛИЗА - УВЕЛИЧЕНО (ширина и высота) */
     .analysis-modal {
       position: fixed;
@@ -1388,6 +1434,22 @@
         padding: 15px 0;
         font-size: 16px;
       }
+      
+      /* Мобильная адаптация шкалы популярности */
+      .popularity-meter {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .popularity-label {
+        font-size: 12px;
+      }
+      .popularity-bar-container {
+        height: 20px;
+      }
+      .popularity-value {
+        font-size: 13px;
+        min-width: 40px;
+      }
     }
     
     /* Десктопная версия */
@@ -1715,6 +1777,23 @@
       .photo-image-container img {
         max-height: 60vh;
       }
+      
+      /* Десктопная адаптация шкалы популярности */
+      .popularity-meter {
+        margin-top: 8px;
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .popularity-label {
+        font-size: 11px;
+      }
+      .popularity-bar-container {
+        height: 18px;
+      }
+      .popularity-value {
+        font-size: 12px;
+        min-width: 35px;
+      }
     }
   </style>
 </head>
@@ -1848,7 +1927,7 @@
   const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/';
 
   let currentUser = null;
-  let allEntriesForAnalysis = []; // Сохраняем все записи для поиска фото
+  let allEntriesForAnalysis = []; // Сохраняем все записи для поиска фото и популярности
   let allEntries = []; // Основной массив записей (для отображения)
 
   // Функция для показа/скрытия индикатора загрузки
@@ -2272,6 +2351,47 @@
     }
   }
 
+  // === НОВАЯ ФУНКЦИЯ: Получение данных популярности для конкретной детали ===
+  async function getPartPopularity(partNumber) {
+    try {
+      // Читаем столбцы G (добавлено) и H (взято) для конкретной детали
+      // Сначала найдем строку с этим номером
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'KH!A:A', // Только колонка A с номерами
+      });
+      
+      const rows = response.result.values || [];
+      let rowIndex = -1;
+      
+      // Ищем номер детали (пропускаем заголовок, начинаем с i=1)
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i] && rows[i][0] && rows[i][0].trim() === partNumber) {
+          rowIndex = i + 1; // +1 потому что в Sheets строки начинаются с 1
+          break;
+        }
+      }
+      
+      if (rowIndex === -1) return { added: 0, taken: 0, percent: 0 };
+      
+      // Получаем значения G и H для этой строки
+      const responseGH = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `KH!G${rowIndex}:H${rowIndex}`,
+      });
+      
+      const ghRow = responseGH.result.values?.[0] || [];
+      const added = parseInt(ghRow[0]) || 0;
+      const taken = parseInt(ghRow[1]) || 0;
+      const percent = added > 0 ? Math.min(100, Math.round((taken / added) * 100)) : 0;
+      
+      return { added, taken, percent };
+    } catch (error) {
+      console.error('Error getting popularity for', partNumber, error);
+      return { added: 0, taken: 0, percent: 0 };
+    }
+  }
+
   // === ОСНОВНЫЕ ФУНКЦИИ РАБОТЫ С ДАННЫМИ ===
   // Чтение данных через Sheets API (прямой доступ)
   async function getEntriesDirect() {
@@ -2301,7 +2421,8 @@
           partNumber: partNumber,
           quantity: quantity,
           fileUrl: fileUrl,
-          partName: partNumber // Используем номер как название по умолчанию
+          partName: partNumber, // Используем номер как название по умолчанию
+          popularityPercent: 0 // Временное значение, обновим позже
         });
       }
       
@@ -2376,7 +2497,7 @@
     }
   }
 
-  // === РЕНДЕРИНГ КАРТОЧЕК ===
+  // === РЕНДЕРИНГ КАРТОЧЕК (обновлен с добавлением шкалы популярности) ===
   function createCard(entry) {
     const div = document.createElement('div');
     div.className = 'card';
@@ -2452,6 +2573,32 @@
 
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
+
+    // === НОВЫЙ БЛОК: Шкала популярности ===
+    const popularityMeter = document.createElement('div');
+    popularityMeter.className = 'popularity-meter';
+    
+    const popularityLabel = document.createElement('span');
+    popularityLabel.className = 'popularity-label';
+    popularityLabel.textContent = 'Популярность:';
+    
+    const barContainer = document.createElement('div');
+    barContainer.className = 'popularity-bar-container';
+    
+    const barFill = document.createElement('div');
+    barFill.className = 'popularity-bar-fill';
+    barFill.style.width = `${entry.popularityPercent || 0}%`;
+    
+    const popularityValue = document.createElement('span');
+    popularityValue.className = 'popularity-value';
+    popularityValue.textContent = `${entry.popularityPercent || 0}%`;
+    
+    barContainer.appendChild(barFill);
+    popularityMeter.appendChild(popularityLabel);
+    popularityMeter.appendChild(barContainer);
+    popularityMeter.appendChild(popularityValue);
+    
+    div.appendChild(popularityMeter);
 
     editButton.addEventListener('click', function() {
       const partNumber = partNameContainer.dataset.partNumber;
@@ -2670,12 +2817,22 @@
     if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   }
 
-  // === ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===
+  // === ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (обновлена для загрузки популярности) ===
   async function initApp() {
     showLoader(true);
     try {
       // Читаем данные напрямую из таблицы
       allEntries = await getEntriesDirect();
+      
+      // Загружаем популярность для каждой детали
+      const popularityPromises = allEntries.map(async (entry) => {
+        const popData = await getPartPopularity(entry.partNumber);
+        entry.popularityPercent = popData.percent;
+        return entry;
+      });
+      
+      await Promise.all(popularityPromises);
+      
       allEntriesForAnalysis = JSON.parse(JSON.stringify(allEntries));
       currentEntries = [...allEntries];
       
