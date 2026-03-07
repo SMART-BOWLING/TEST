@@ -647,7 +647,7 @@
       border-radius: 16px;
       padding: 30px;
       width: 90vw;
-      max-width: 1200px;
+      max-width: 1400px;
       max-height: 80vh;
       overflow: auto;
       z-index: 10001;
@@ -1634,7 +1634,7 @@
       <i class="fas fa-sync-alt"></i> Сбросить
     </button>
 
-    <!-- Новая кнопка Анализ вместо Магазин -->
+    <!-- Новая кнопка Анализ -->
     <button id="btnAnalysis" class="btn-top">
       <i class="fas fa-chart-pie"></i> Анализ
     </button>
@@ -1988,7 +1988,7 @@
       // Для каждой детали получаем историю
       for (const entry of entries) {
         try {
-          // Получаем историю так же, как это делает кнопка "История"
+          // Получаем историю
           const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
           const historyText = await historyRes.text();
           
@@ -2026,10 +2026,22 @@
           const current = entry.quantity || 0;
           const totalMoved = received + taken;
           const usagePercent = totalMoved > 0 ? Math.round((taken / totalMoved) * 100) : 0;
+          const receivedPercent = totalMoved > 0 ? Math.round((received / totalMoved) * 100) : 0;
           
           totalReceived += received;
           totalTaken += taken;
           totalCurrent += current;
+          
+          // Определяем доминирующее движение
+          let dominantAction = '⚖️ Равновесие';
+          let dominantColor = '#6c757d';
+          if (taken > received) {
+            dominantAction = '📤 Преобладает ВЗЯТО';
+            dominantColor = '#dc143c';
+          } else if (received > taken) {
+            dominantAction = '📦 Преобладает ДОБАВЛЕНО';
+            dominantColor = '#28a745';
+          }
           
           analysisData.push({
             partNumber: entry.partNumber,
@@ -2038,11 +2050,13 @@
             taken: taken,
             current: current,
             usagePercent: usagePercent,
+            receivedPercent: receivedPercent,
+            totalMoves: received + taken,
+            dominantAction: dominantAction,
+            dominantColor: dominantColor,
             status: usagePercent >= 70 ? '✅ Активно используется' : 
                     usagePercent >= 30 ? '⚠️ Используется средне' : '❌ Мало используется'
           });
-          
-          console.log(`Деталь ${entry.partNumber}: +${received}, -${taken}, =${current}`);
           
         } catch (e) {
           console.error(`Error processing history for ${entry.partNumber}:`, e);
@@ -2053,19 +2067,23 @@
             taken: 0,
             current: entry.quantity || 0,
             usagePercent: 0,
+            receivedPercent: 0,
+            totalMoves: 0,
+            dominantAction: '❌ Нет данных',
+            dominantColor: '#6c757d',
             status: '❌ Ошибка загрузки истории'
           });
         }
       }
       
-      // Сортируем по проценту использования (от высокого к низкому)
-      analysisData.sort((a, b) => b.usagePercent - a.usagePercent);
+      // Сортируем по общему количеству движений (от большего к меньшему)
+      analysisData.sort((a, b) => b.totalMoves - a.totalMoves);
       
       // Формируем HTML для модального окна
       let html = `
         <div class="analysis-summary">
-          <p><strong>📊 ОБЩАЯ СТАТИСТИКА:</strong></p>
-          <p>📦 Всего получено деталей: <strong>${totalReceived}</strong></p>
+          <p><strong>📊 ОБЩАЯ СТАТИСТИКА (Лист KH):</strong></p>
+          <p>📦 Всего добавлено деталей: <strong>${totalReceived}</strong></p>
           <p>📤 Всего взято деталей: <strong>${totalTaken}</strong></p>
           <p>💾 Текущий остаток: <strong>${totalCurrent}</strong></p>
           <p>⚡ Общий процент использования: <strong>${totalReceived > 0 ? Math.round((totalTaken / totalReceived) * 100) : 0}%</strong></p>
@@ -2076,11 +2094,11 @@
             <tr>
               <th>№ детали</th>
               <th>Название</th>
-              <th>📦 Получено</th>
+              <th>📦 Добавлено</th>
               <th>📤 Взято</th>
               <th>💾 Остаток</th>
-              <th>⚡ % использования</th>
-              <th>Статус</th>
+              <th>⚡ % взято</th>
+              <th>📊 Баланс</th>
             </tr>
           </thead>
           <tbody>
@@ -2090,11 +2108,20 @@
         const percentClass = item.usagePercent >= 70 ? 'percent-good' : 
                             item.usagePercent >= 30 ? 'percent-warning' : 'percent-bad';
         
-        // Добавляем эмодзи в зависимости от статуса
-        let statusEmoji = '';
-        if (item.status.includes('✅')) statusEmoji = '✅';
-        else if (item.status.includes('⚠️')) statusEmoji = '⚠️';
-        else if (item.status.includes('❌')) statusEmoji = '❌';
+        // Определяем эмодзи для баланса
+        let balanceEmoji = '';
+        if (item.taken > item.received) {
+          balanceEmoji = '📤⬆️';
+        } else if (item.received > item.taken) {
+          balanceEmoji = '📦⬆️';
+        } else {
+          balanceEmoji = '⚖️';
+        }
+        
+        // Создаем мини-прогресс бар для визуализации соотношения добавлено/взято
+        const totalMoves = item.received + item.taken;
+        const receivedWidth = totalMoves > 0 ? (item.received / totalMoves) * 100 : 50;
+        const takenWidth = totalMoves > 0 ? (item.taken / totalMoves) * 100 : 50;
         
         html += `
           <tr>
@@ -2104,7 +2131,15 @@
             <td style="color: #dc143c; font-weight: bold;">-${item.taken}</td>
             <td style="font-weight: bold;">${item.current}</td>
             <td class="analysis-percent ${percentClass}"><strong>${item.usagePercent}%</strong></td>
-            <td>${statusEmoji} ${item.status.replace(/[✅⚠️❌]/g, '').trim()}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <div style="flex: 1; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex;">
+                  <div style="width: ${receivedWidth}%; background: #28a745; height: 100%;"></div>
+                  <div style="width: ${takenWidth}%; background: #dc143c; height: 100%;"></div>
+                </div>
+                <span style="font-size: 16px;" title="${item.dominantAction}">${balanceEmoji}</span>
+              </div>
+            </td>
           </tr>
         `;
       });
@@ -2113,8 +2148,8 @@
           </tbody>
         </table>
         <div class="analysis-summary" style="margin-top: 15px; background: #e8f0fe;">
-          <p><small>📌 Процент использования = (Взято / (Получено + Взято)) × 100%</small></p>
-          <p><small>🟢 >70% - Активно используется | 🟡 30-70% - Средне используется | 🔴 <30% - Мало используется</small></p>
+          <p><small>📌 Зеленая полоса = ДОБАВЛЕНО, Красная полоса = ВЗЯТО</small></p>
+          <p><small>🟢 Зеленый процент >70% - Активно используется | 🟡 Желтый 30-70% - Средне | 🔴 Красный <30% - Мало используется</small></p>
         </div>
       `;
       
