@@ -607,44 +607,36 @@
       gap: 10px;
     }
     
-    .popularity-added {
-      font-size: 15px;
-      font-weight: 700;
-      color: #059669; /* зеленый для добавлено */
-      background: #e6f7e6;
-      padding: 6px 12px; /* Увеличено для соответствия высоте */
-      border-radius: 30px;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      min-width: 60px;
-      justify-content: center;
-      height: 36px; /* Фиксированная высота */
-    }
-    
-    .popularity-added i {
-      font-size: 14px;
-    }
-    
     .popularity-taken {
       font-size: 15px;
       font-weight: 700;
       color: #dc143c; /* красный для взято */
       background: #ffe6e6;
-      padding: 6px 12px; /* Увеличено для соответствия высоте */
+      padding: 6px 12px;
       border-radius: 30px;
       white-space: nowrap;
       display: flex;
       align-items: center;
-      gap: 4px;
-      min-width: 60px;
       justify-content: center;
+      min-width: 60px;
       height: 36px; /* Фиксированная высота */
+      order: 1; /* Слева */
     }
     
-    .popularity-taken i {
-      font-size: 14px;
+    .popularity-added {
+      font-size: 15px;
+      font-weight: 700;
+      color: #059669; /* зеленый для добавлено */
+      background: #e6f7e6;
+      padding: 6px 12px;
+      border-radius: 30px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 60px;
+      height: 36px; /* Фиксированная высота */
+      order: 3; /* Справа */
     }
     
     .popularity-bar-container {
@@ -655,6 +647,7 @@
       overflow: hidden;
       position: relative;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      order: 2; /* По середине */
     }
     
     .popularity-bar-fill {
@@ -1231,7 +1224,7 @@
         padding: 6px 10px;
         gap: 6px;
       }
-      .popularity-added, .popularity-taken {
+      .popularity-taken, .popularity-added {
         font-size: 14px;
         padding: 6px 10px;
         min-width: 55px;
@@ -1538,7 +1531,7 @@
         padding: 6px 10px;
         gap: 6px;
       }
-      .popularity-added, .popularity-taken {
+      .popularity-taken, .popularity-added {
         font-size: 12px;
         padding: 6px 10px;
         min-width: 50px;
@@ -2182,13 +2175,13 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // === НОВЫЙ БЛОК: Шкала популярности (только добавлено/взято) ===
+    // === НОВЫЙ БЛОК: Шкала популярности (взято слева, добавлено справа) ===
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
-    const addedSpan = document.createElement('span');
-    addedSpan.className = 'popularity-added';
-    addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added || 0}`;
+    const takenSpan = document.createElement('span');
+    takenSpan.className = 'popularity-taken';
+    takenSpan.textContent = entry.taken || 0;
     
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
@@ -2200,14 +2193,14 @@
     barFill.className = 'popularity-bar-fill';
     barFill.style.width = `${percent}%`;
     
-    const takenSpan = document.createElement('span');
-    takenSpan.className = 'popularity-taken';
-    takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken || 0}`;
+    const addedSpan = document.createElement('span');
+    addedSpan.className = 'popularity-added';
+    addedSpan.textContent = entry.added || 0;
     
     barContainer.appendChild(barFill);
-    popularityMeter.appendChild(addedSpan);
+    popularityMeter.appendChild(takenSpan);  // Взято слева
     popularityMeter.appendChild(barContainer);
-    popularityMeter.appendChild(takenSpan);
+    popularityMeter.appendChild(addedSpan);  // Добавлено справа
     
     div.appendChild(popularityMeter);
 
@@ -2309,8 +2302,8 @@
           entry.taken = popData.taken;
           
           // Обновляем отображение
-          addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added}`;
-          takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken}`;
+          takenSpan.textContent = entry.taken;
+          addedSpan.textContent = entry.added;
           const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
           barFill.style.width = `${newPercent}%`;
         } else {
@@ -2334,8 +2327,8 @@
           entry.taken = popData.taken;
           
           // Обновляем отображение
-          addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added}`;
-          takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken}`;
+          takenSpan.textContent = entry.taken;
+          addedSpan.textContent = entry.added;
           const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
           barFill.style.width = `${newPercent}%`;
         } else {
