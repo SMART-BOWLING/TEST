@@ -1665,7 +1665,7 @@
   <div id="analysisModal" class="analysis-modal">
     <div class="analysis-modal-content">
       <div id="analysisClose" class="analysis-close">×</div>
-      <h3 class="analysis-title">Анализ движения деталей</h3>
+      <h3 class="analysis-title">Анализ движения деталей (лист KH)</h3>
       <div id="analysisContent"></div>
     </div>
   </div>
@@ -1970,172 +1970,127 @@
     }
   }
 
-  // Функция для анализа движения деталей
+  // Функция для анализа движения деталей из столбцов A, G и H
   async function showAnalysis() {
     showLoader(true);
     try {
-      const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+      // Используем Google Sheets API для прямого чтения столбцов A, G, H с листа KH
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
+        range: 'KH!A:G', // Столбцы A (номер детали) и G (добавлено)
+      });
       
-      // Получаем все записи
-      const res = await fetch(`${API_URL}?action=getEntries`);
-      const entries = await res.json();
+      const response2 = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
+        range: 'KH!H:H', // Столбец H (взято)
+      });
+      
+      const rowsA_G = response.result.values || [];
+      const rowsH = response2.result.values || [];
       
       const analysisData = [];
-      let totalReceived = 0;
+      let totalAdded = 0;
       let totalTaken = 0;
-      let totalCurrent = 0;
       
-      // Для каждой детали получаем историю
-      for (const entry of entries) {
-        try {
-          // Получаем историю
-          const historyRes = await fetch(`${API_URL}?action=getHistory&partNumber=${encodeURIComponent(entry.partNumber)}`);
-          const historyText = await historyRes.text();
-          
-          // Парсим историю построчно
-          const lines = historyText.split('\n').filter(line => line.trim() !== '');
-          let received = 0;
-          let taken = 0;
-          
-          // Анализируем каждую строку истории
-          lines.forEach(line => {
-            // Ищем паттерн "+ число" для добавленных деталей
-            const addMatch = line.match(/\+\s*(\d+)/);
-            if (addMatch) {
-              received += parseInt(addMatch[1]);
-            }
-            
-            // Ищем паттерн "- число" для взятых деталей
-            const takeMatch = line.match(/\-\s*(\d+)/);
-            if (takeMatch) {
-              taken += parseInt(takeMatch[1]);
-            }
-            
-            // Также проверяем текстовые паттерны "Добавлено: X" или "Взято: X"
-            const addTextMatch = line.match(/Добавлено:\s*(\d+)/i);
-            if (addTextMatch) {
-              received += parseInt(addTextMatch[1]);
-            }
-            
-            const takeTextMatch = line.match(/Взято:\s*(\d+)/i);
-            if (takeTextMatch) {
-              taken += parseInt(takeTextMatch[1]);
-            }
-          });
-          
-          const current = entry.quantity || 0;
-          const totalMoved = received + taken;
-          const usagePercent = totalMoved > 0 ? Math.round((taken / totalMoved) * 100) : 0;
-          const receivedPercent = totalMoved > 0 ? Math.round((received / totalMoved) * 100) : 0;
-          
-          totalReceived += received;
-          totalTaken += taken;
-          totalCurrent += current;
-          
-          // Определяем доминирующее движение
-          let dominantAction = '⚖️ Равновесие';
-          let dominantColor = '#6c757d';
-          if (taken > received) {
-            dominantAction = '📤 Преобладает ВЗЯТО';
-            dominantColor = '#dc143c';
-          } else if (received > taken) {
-            dominantAction = '📦 Преобладает ДОБАВЛЕНО';
-            dominantColor = '#28a745';
-          }
-          
-          analysisData.push({
-            partNumber: entry.partNumber,
-            partName: entry.partName || 'Без названия',
-            received: received,
-            taken: taken,
-            current: current,
-            usagePercent: usagePercent,
-            receivedPercent: receivedPercent,
-            totalMoves: received + taken,
-            dominantAction: dominantAction,
-            dominantColor: dominantColor,
-            status: usagePercent >= 70 ? '✅ Активно используется' : 
-                    usagePercent >= 30 ? '⚠️ Используется средне' : '❌ Мало используется'
-          });
-          
-        } catch (e) {
-          console.error(`Error processing history for ${entry.partNumber}:`, e);
-          analysisData.push({
-            partNumber: entry.partNumber,
-            partName: entry.partName || 'Без названия',
-            received: 0,
-            taken: 0,
-            current: entry.quantity || 0,
-            usagePercent: 0,
-            receivedPercent: 0,
-            totalMoves: 0,
-            dominantAction: '❌ Нет данных',
-            dominantColor: '#6c757d',
-            status: '❌ Ошибка загрузки истории'
-          });
+      // Создаем карту для данных из столбца H
+      const takenMap = new Map();
+      for (let i = 1; i < rowsH.length; i++) { // Пропускаем заголовок
+        if (rowsH[i] && rowsH[i][0]) {
+          const value = parseInt(rowsH[i][0]) || 0;
+          takenMap.set(i, value);
+          totalTaken += value;
         }
       }
       
-      // Сортируем по общему количеству движений (от большего к меньшему)
+      // Обрабатываем данные из столбцов A и G
+      for (let i = 1; i < rowsA_G.length; i++) { // Пропускаем заголовок
+        const row = rowsA_G[i];
+        if (!row || row.length < 1) continue;
+        
+        const partNumber = row[0] || 'Без номера';
+        const added = row[6] ? parseInt(row[6]) || 0 : 0; // Столбец G (индекс 6)
+        const taken = takenMap.get(i) || 0;
+        
+        totalAdded += added;
+        
+        const totalMoves = added + taken;
+        const takenPercent = totalMoves > 0 ? Math.round((taken / totalMoves) * 100) : 0;
+        const addedPercent = totalMoves > 0 ? Math.round((added / totalMoves) * 100) : 0;
+        
+        // Определяем доминирующее действие
+        let dominantAction = '⚖️ Равновесие';
+        let dominantColor = '#6c757d';
+        if (taken > added) {
+          dominantAction = '📤 Преобладает ВЗЯТО';
+          dominantColor = '#dc143c';
+        } else if (added > taken) {
+          dominantAction = '📦 Преобладает ДОБАВЛЕНО';
+          dominantColor = '#28a745';
+        }
+        
+        analysisData.push({
+          partNumber: partNumber,
+          added: added,
+          taken: taken,
+          totalMoves: totalMoves,
+          takenPercent: takenPercent,
+          addedPercent: addedPercent,
+          dominantAction: dominantAction,
+          dominantColor: dominantColor
+        });
+      }
+      
+      // Сортируем по общему количеству движений
       analysisData.sort((a, b) => b.totalMoves - a.totalMoves);
       
-      // Формируем HTML для модального окна
+      // Формируем HTML
       let html = `
         <div class="analysis-summary">
-          <p><strong>📊 ОБЩАЯ СТАТИСТИКА (Лист KH):</strong></p>
-          <p>📦 Всего добавлено деталей: <strong>${totalReceived}</strong></p>
-          <p>📤 Всего взято деталей: <strong>${totalTaken}</strong></p>
-          <p>💾 Текущий остаток: <strong>${totalCurrent}</strong></p>
-          <p>⚡ Общий процент использования: <strong>${totalReceived > 0 ? Math.round((totalTaken / totalReceived) * 100) : 0}%</strong></p>
+          <p><strong>📊 ОБЩАЯ СТАТИСТИКА (лист KH):</strong></p>
+          <p>📦 Всего ДОБАВЛЕНО деталей: <strong>${totalAdded}</strong></p>
+          <p>📤 Всего ВЗЯТО деталей: <strong>${totalTaken}</strong></p>
+          <p>⚡ Общий процент использования: <strong>${totalAdded > 0 ? Math.round((totalTaken / totalAdded) * 100) : 0}%</strong></p>
           <p>📋 Всего позиций: <strong>${analysisData.length}</strong></p>
         </div>
         <table class="analysis-table">
           <thead>
             <tr>
-              <th>№ детали</th>
-              <th>Название</th>
-              <th>📦 Добавлено</th>
-              <th>📤 Взято</th>
-              <th>💾 Остаток</th>
+              <th>№ детали (A)</th>
+              <th>📦 Добавлено (G)</th>
+              <th>📤 Взято (H)</th>
               <th>⚡ % взято</th>
-              <th>📊 Баланс</th>
+              <th>📊 Соотношение</th>
             </tr>
           </thead>
           <tbody>
       `;
       
       analysisData.forEach(item => {
-        const percentClass = item.usagePercent >= 70 ? 'percent-good' : 
-                            item.usagePercent >= 30 ? 'percent-warning' : 'percent-bad';
+        // Определяем класс для процента
+        let percentClass = 'percent-warning';
+        if (item.takenPercent >= 70) percentClass = 'percent-good';
+        else if (item.takenPercent <= 30) percentClass = 'percent-bad';
         
-        // Определяем эмодзи для баланса
-        let balanceEmoji = '';
-        if (item.taken > item.received) {
-          balanceEmoji = '📤⬆️';
-        } else if (item.received > item.taken) {
-          balanceEmoji = '📦⬆️';
-        } else {
-          balanceEmoji = '⚖️';
-        }
+        // Создаем мини-прогресс бар
+        const addedWidth = item.totalMoves > 0 ? (item.added / item.totalMoves) * 100 : 50;
+        const takenWidth = item.totalMoves > 0 ? (item.taken / item.totalMoves) * 100 : 50;
         
-        // Создаем мини-прогресс бар для визуализации соотношения добавлено/взято
-        const totalMoves = item.received + item.taken;
-        const receivedWidth = totalMoves > 0 ? (item.received / totalMoves) * 100 : 50;
-        const takenWidth = totalMoves > 0 ? (item.taken / totalMoves) * 100 : 50;
+        // Эмодзи для баланса
+        let balanceEmoji = '⚖️';
+        if (item.taken > item.added) balanceEmoji = '📤⬆️';
+        else if (item.added > item.taken) balanceEmoji = '📦⬆️';
         
         html += `
           <tr>
             <td><strong>${item.partNumber}</strong></td>
-            <td>${item.partName}</td>
-            <td style="color: #28a745; font-weight: bold;">+${item.received}</td>
+            <td style="color: #28a745; font-weight: bold;">+${item.added}</td>
             <td style="color: #dc143c; font-weight: bold;">-${item.taken}</td>
-            <td style="font-weight: bold;">${item.current}</td>
-            <td class="analysis-percent ${percentClass}"><strong>${item.usagePercent}%</strong></td>
+            <td class="analysis-percent ${percentClass}"><strong>${item.takenPercent}%</strong></td>
             <td>
               <div style="display: flex; align-items: center; gap: 5px;">
                 <div style="flex: 1; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex;">
-                  <div style="width: ${receivedWidth}%; background: #28a745; height: 100%;"></div>
-                  <div style="width: ${takenWidth}%; background: #dc143c; height: 100%;"></div>
+                  <div style="width: ${addedWidth}%; background: #28a745; height: 100%;" title="Добавлено: ${item.added}"></div>
+                  <div style="width: ${takenWidth}%; background: #dc143c; height: 100%;" title="Взято: ${item.taken}"></div>
                 </div>
                 <span style="font-size: 16px;" title="${item.dominantAction}">${balanceEmoji}</span>
               </div>
@@ -2148,7 +2103,7 @@
           </tbody>
         </table>
         <div class="analysis-summary" style="margin-top: 15px; background: #e8f0fe;">
-          <p><small>📌 Зеленая полоса = ДОБАВЛЕНО, Красная полоса = ВЗЯТО</small></p>
+          <p><small>📌 Зеленая полоса = ДОБАВЛЕНО (столбец G), Красная полоса = ВЗЯТО (столбец H)</small></p>
           <p><small>🟢 Зеленый процент >70% - Активно используется | 🟡 Желтый 30-70% - Средне | 🔴 Красный <30% - Мало используется</small></p>
         </div>
       `;
