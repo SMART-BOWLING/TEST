@@ -604,14 +604,45 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     
-    .popularity-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1f2937;
+    .popularity-added {
+      font-size: 15px;
+      font-weight: 700;
+      color: #059669; /* зеленый для добавлено */
+      background: #e6f7e6;
+      padding: 4px 10px;
+      border-radius: 30px;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 60px;
+      justify-content: center;
+    }
+    
+    .popularity-added i {
+      font-size: 12px;
+    }
+    
+    .popularity-taken {
+      font-size: 15px;
+      font-weight: 700;
+      color: #dc143c; /* красный для взято */
+      background: #ffe6e6;
+      padding: 4px 10px;
+      border-radius: 30px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 60px;
+      justify-content: center;
+    }
+    
+    .popularity-taken i {
+      font-size: 12px;
     }
     
     .popularity-bar-container {
@@ -632,14 +663,6 @@
       position: relative;
       z-index: 1;
     }
-    
-    .popularity-value {
-      font-size: 15px;
-      font-weight: 700;
-      color: #dc143c;
-      min-width: 45px;
-      text-align: right;
-    }
 
     /* ОКНО АНАЛИЗА - УВЕЛИЧЕНО (ширина и высота) */
     .analysis-modal {
@@ -659,8 +682,8 @@
       background: white;
       border-radius: 20px 20px 0 0;
       width: 100%;
-      max-width: 1400px;  /* Увеличено с 1200px до 1400px */
-      max-height: 90vh;    /* Увеличено с 85vh до 90vh */
+      max-width: 1400px;
+      max-height: 90vh;
       overflow: auto;
       box-shadow: 0 -5px 25px rgba(0,0,0,0.2);
       animation: slideUp 0.3s ease-out;
@@ -1438,17 +1461,15 @@
       /* Мобильная адаптация шкалы популярности */
       .popularity-meter {
         padding: 6px 10px;
-        gap: 8px;
+        gap: 6px;
       }
-      .popularity-label {
-        font-size: 12px;
+      .popularity-added, .popularity-taken {
+        font-size: 13px;
+        padding: 3px 8px;
+        min-width: 50px;
       }
       .popularity-bar-container {
         height: 20px;
-      }
-      .popularity-value {
-        font-size: 13px;
-        min-width: 40px;
       }
     }
     
@@ -1782,17 +1803,15 @@
       .popularity-meter {
         margin-top: 8px;
         padding: 6px 10px;
-        gap: 8px;
+        gap: 6px;
       }
-      .popularity-label {
-        font-size: 11px;
+      .popularity-added, .popularity-taken {
+        font-size: 12px;
+        padding: 3px 8px;
+        min-width: 45px;
       }
       .popularity-bar-container {
         height: 18px;
-      }
-      .popularity-value {
-        font-size: 12px;
-        min-width: 35px;
       }
     }
   </style>
@@ -2422,7 +2441,8 @@
           quantity: quantity,
           fileUrl: fileUrl,
           partName: partNumber, // Используем номер как название по умолчанию
-          popularityPercent: 0 // Временное значение, обновим позже
+          added: 0, // Временное значение, обновим позже
+          taken: 0  // Временное значение, обновим позже
         });
       }
       
@@ -2574,29 +2594,32 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // === НОВЫЙ БЛОК: Шкала популярности ===
+    // === НОВЫЙ БЛОК: Шкала популярности (только добавлено/взято) ===
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
-    const popularityLabel = document.createElement('span');
-    popularityLabel.className = 'popularity-label';
-    popularityLabel.textContent = 'Популярность:';
+    const addedSpan = document.createElement('span');
+    addedSpan.className = 'popularity-added';
+    addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added || 0}`;
     
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
+    // Рассчитываем процент для шкалы
+    const percent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
+    
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
-    barFill.style.width = `${entry.popularityPercent || 0}%`;
+    barFill.style.width = `${percent}%`;
     
-    const popularityValue = document.createElement('span');
-    popularityValue.className = 'popularity-value';
-    popularityValue.textContent = `${entry.popularityPercent || 0}%`;
+    const takenSpan = document.createElement('span');
+    takenSpan.className = 'popularity-taken';
+    takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken || 0}`;
     
     barContainer.appendChild(barFill);
-    popularityMeter.appendChild(popularityLabel);
+    popularityMeter.appendChild(addedSpan);
     popularityMeter.appendChild(barContainer);
-    popularityMeter.appendChild(popularityValue);
+    popularityMeter.appendChild(takenSpan);
     
     div.appendChild(popularityMeter);
 
@@ -2691,6 +2714,17 @@
         if (res.status === 'success') {
           qtyInput.value = res.quantity;
           entry.quantity = res.quantity;
+          
+          // Обновляем данные популярности
+          const popData = await getPartPopularity(entry.partNumber);
+          entry.added = popData.added;
+          entry.taken = popData.taken;
+          
+          // Обновляем отображение
+          addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added}`;
+          takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken}`;
+          const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
+          barFill.style.width = `${newPercent}%`;
         } else {
           alert(res.message);
         }
@@ -2705,6 +2739,17 @@
         if (res.status === 'success') {
           qtyInput.value = res.quantity;
           entry.quantity = res.quantity;
+          
+          // Обновляем данные популярности
+          const popData = await getPartPopularity(entry.partNumber);
+          entry.added = popData.added;
+          entry.taken = popData.taken;
+          
+          // Обновляем отображение
+          addedSpan.innerHTML = `<i class="fas fa-plus-circle"></i> ${entry.added}`;
+          takenSpan.innerHTML = `<i class="fas fa-shopping-cart"></i> ${entry.taken}`;
+          const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
+          barFill.style.width = `${newPercent}%`;
         } else {
           alert(res.message);
         }
@@ -2827,7 +2872,8 @@
       // Загружаем популярность для каждой детали
       const popularityPromises = allEntries.map(async (entry) => {
         const popData = await getPartPopularity(entry.partNumber);
-        entry.popularityPercent = popData.percent;
+        entry.added = popData.added;
+        entry.taken = popData.taken;
         return entry;
       });
       
