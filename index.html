@@ -2,310 +2,265 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>ДЕТАЛИ KH</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ДЕТАЛИ KH — Система Учета</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    /* Базовые стили и шапка */
-    .site-name-dropdown { position: relative; display: inline-block; cursor: pointer; }
-    .site-name { flex: 1; text-align: center; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; height: 100%; }
-    .site-name-text { margin: 0; padding: 0; display: inline-block; vertical-align: middle; }
-    .dropdown-sites { display: none; position: absolute; top: calc(100% + 50px); left: 50%; transform: translateX(-50%); background-color: #1f2937; border: 2px solid #444; border-radius: 16px; overflow: hidden; z-index: 1001; min-width: 300px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .dropdown-sites a { display: block; padding: 20px 100px; font-size: 40px; font-weight: bold; color: white; text-decoration: none; transition: background 0.3s; text-align: center; white-space: nowrap; }
-    .dropdown-sites a:hover { background-color: #374151; }
-
-    header { background-color: #1f2937; color: white; display: flex; align-items: center; justify-content: space-between; padding: 10px 30px; position: fixed; top: 0; left: 0; right: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2); user-select: none; z-index: 1000; height: 140px; }
-    .logo img { width: 100px; height: 100px; object-fit: cover; }
-    .user-avatar { width: 70px; height: 70px; border-radius: 50%; border: 3px solid white; background-color: #4a5568; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: transform 0.2s ease; }
-    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-avatar i { font-size: 40px; color: white; }
-    .user-dropdown { display: none; position: absolute; top: 170px; right: 30px; background-color: #1f2937; border: 2px solid #444; border-radius: 16px; overflow: hidden; z-index: 9999; min-width: 350px; }
-    .user-dropdown a { display: block; padding: 25px 30px; font-size: 34px; font-weight: bold; color: white; text-decoration: none; }
-
-    #login { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
-    #content { display: none; width: 100%; margin-top: 170px; max-width: 1300px; margin-left: auto; margin-right: auto; padding: 0 8px; box-sizing: border-box; }
-    body { margin: 0; padding: 20px; background: #f0f2f5; font-family: Arial, sans-serif; }
-
+    /* Базовые стили */
+    body { margin: 0; padding: 20px; background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    header { background-color: #1f2937; color: white; display: flex; align-items: center; justify-content: space-between; padding: 10px 30px; position: fixed; top: 0; left: 0; right: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 1000; height: 80px; }
+    
+    .logo img { width: 60px; height: 60px; object-fit: cover; }
+    .site-name { flex: 1; text-align: center; font-weight: bold; cursor: pointer; font-size: 24px; }
+    
+    #content { display: none; width: 100%; margin-top: 100px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+    
     /* Кнопки управления */
-    .top-controls { display: flex; flex-wrap: nowrap; justify-content: space-between; gap: 8px; max-width: 1300px; width: 100%; margin: 0 auto 12px; align-items: center; padding: 0 4px 8px; box-sizing: border-box; }
-    .top-controls .btn-top { height: 56px; font-size: 18px; border-radius: 14px; border: none; cursor: pointer; white-space: nowrap; flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 600; background: linear-gradient(to bottom, #1a2f40, #0d1a26); color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .select-wrapper { position: relative; flex: 1; height: 56px; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .select-wrapper select { width: 100%; height: 100%; padding: 0 45px 0 16px; border: none; background: linear-gradient(to bottom, #dc143c, #b01030); color: transparent; cursor: pointer; appearance: none; outline: none; }
-    .select-wrapper::before { content: "\f0b0 Фильтр"; position: absolute; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-family: "Font Awesome 6 Free", Arial, sans-serif; pointer-events: none; }
-
-    /* Карточки */
-    .cards { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    .card { width: 100%; max-width: 900px; background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); box-sizing: border-box; }
-    .media-block { position: relative; width: 100%; padding-top: 75%; background: #000; border-radius: 8px; overflow: hidden; }
-    .media-block img, .media-block iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border: none; }
-    .media-block .icon { position: absolute; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #dc143c; border-radius: 4px; color: #fff; z-index: 2; cursor: pointer; top: 8px; right: 8px; }
+    .top-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .btn-top { flex: 1; height: 50px; border-radius: 12px; border: none; background: #1f2937; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+    .btn-top:hover { background: #374151; }
     
-    .part-name-container { display: flex; align-items: center; margin: 12px 0; padding: 0 12px; background: #f8fafc; border-radius: 12px; min-height: 50px; }
-    .part-name-text { flex: 1; font-size: 18px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .part-name-input { flex: 1; height: 40px; border: 2px solid #dc143c; border-radius: 8px; padding: 0 10px; }
-
-    .controls { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; gap: 8px; }
-    .pill { background: #f1f5f9; border-radius: 20px; padding: 0 12px; height: 50px; display: flex; align-items: center; font-weight: bold; }
-    .controls input { width: 50px; height: 50px; border: 1px solid #ddd; border-radius: 12px; text-align: center; font-weight: bold; }
-    .btn { height: 50px; padding: 0 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-add { background: #1f2937; color: #fff; }
-    .btn-take { background: #dc143c; color: #fff; }
-
-    /* МОДАЛЬНОЕ ОКНО АНАЛИЗА (ОБНОВЛЕНО) */
-    .analysis-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(8px); }
-    .analysis-modal-content { position: relative; background: #ffffff; border-radius: 24px; padding: 25px; width: 95vw; max-width: 1100px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
-    .analysis-close { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 32px; color: #94a3b8; z-index: 11; }
+    /* Карточки деталей */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .media-block { width: 100%; height: 200px; background: #eee; border-radius: 12px; overflow: hidden; position: relative; }
+    .media-block img { width: 100%; height: 100%; object-fit: cover; }
     
+    .controls { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; }
+    .qty-display { font-weight: bold; font-size: 18px; padding: 5px 15px; background: #f1f5f9; border-radius: 8px; }
+    .btn-action { width: 45px; height: 45px; border-radius: 10px; border: none; color: white; cursor: pointer; font-size: 20px; }
+    .btn-plus { background: #10b981; }
+    .btn-minus { background: #ef4444; }
+
+    /* --- МОДАЛЬНОЕ ОКНО АНАЛИЗА (ИСПРАВЛЕНО) --- */
+    .analysis-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(5px); }
+    .analysis-modal-content { 
+      background: white; 
+      width: 95%; 
+      max-width: 900px; 
+      max-height: 85vh; 
+      border-radius: 24px; 
+      padding: 25px; 
+      display: flex; 
+      flex-direction: column; 
+      position: relative; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .analysis-close { position: absolute; top: 15px; right: 20px; font-size: 30px; cursor: pointer; color: #64748b; }
+
     .analysis-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-    .summary-card { background: #f8fafc; padding: 12px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center; }
-    .summary-card span { font-size: 11px; color: #64748b; text-transform: uppercase; display: block; }
-    .summary-card strong { font-size: 18px; color: #0f172a; }
+    .summary-card { background: #f8fafc; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
+    .summary-card span { font-size: 12px; color: #64748b; display: block; margin-bottom: 5px; }
+    .summary-card strong { font-size: 20px; color: #1e293b; }
 
-    .table-wrapper { overflow-y: auto; border-radius: 12px; border: 1px solid #e2e8f0; flex-grow: 1; }
-    .analysis-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .analysis-table th { background: #f1f5f9; padding: 12px; font-size: 12px; position: sticky; top: 0; z-index: 5; text-align: left; }
+    /* Таблица со скроллом */
+    .table-wrapper { 
+      overflow-y: auto; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 12px; 
+      flex-grow: 1; /* Позволяет контейнеру растягиваться */
+    }
+    .analysis-table { width: 100%; border-collapse: collapse; table-layout: fixed; } /* Фиксированная разметка */
+    
+    .analysis-table th { 
+      position: sticky; 
+      top: 0; 
+      background: #f1f5f9; 
+      z-index: 10; 
+      padding: 12px; 
+      text-align: left; 
+      font-size: 13px; 
+      color: #475569; 
+    }
     .analysis-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; word-wrap: break-word; }
 
-    /* Ширина колонок */
-    .col-name { width: 35%; }
-    .col-num { width: 15%; }
-    .col-pop { width: 35%; }
+    /* Настройка ширины столбцов */
+    .col-part { width: 40%; }
+    .col-val { width: 15%; }
+    .col-progress { width: 30%; }
 
-    .progress-container { width: 80px; height: 8px; background: #e2e8f0; border-radius: 10px; display: inline-block; vertical-align: middle; margin-right: 8px; }
-    .progress-bar { height: 100%; border-radius: 10px; }
-    .popularity-badge { padding: 3px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .prog-bg { width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 10px; }
 
-    /* Пагинация и лоадер */
-    .pagination { display: flex; justify-content: center; align-items: center; margin: 40px auto; gap: 10px; max-width: 1300px; }
-    .pagination button { height: 50px; padding: 0 20px; border-radius: 10px; border: none; background: #1f2937; color: #fff; cursor: pointer; }
-    .page-numbers button { margin: 0 2px; height: 50px; width: 50px; border-radius: 12px; border: none; background: #dc143c; color: #fff; font-weight: bold; }
-    .page-numbers button.active { background: #1f2937; }
-
-    .loader-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 99999; }
-    .loader { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #dc143c; border-radius: 50%; animation: spin 1s linear infinite; }
+    /* Лоадер */
+    .loader-container { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
+    .loader { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1f2937; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Адаптив для десктопа */
-    @media (min-width: 1025px) {
-      header { height: 75px; padding: 4px 15px; }
-      .logo img { width: 50px; height: 50px; }
-      .site-name-text { font-size: 28px; }
-      .user-avatar { width: 50px; height: 50px; }
-      #content { margin-top: 95px; }
-      .cards.desktop-layout { display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; justify-content: center; }
-      .card.desktop-layout { width: calc(33% - 10px); min-width: 300px; }
-    }
   </style>
 </head>
 <body>
 
-<div class="loader-container" id="loader"><div class="loader"></div></div>
+<div class="loader-container" id="mainLoader"><div class="loader"></div></div>
 
 <header>
-  <div class="logo"><a href="#"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></a></div>
-  <div class="site-name" onclick="toggleSitesDropdown(event)">
-    <span class="site-name-text">LUCKY STRIKE KH <i class="fas fa-chevron-down" style="font-size: 14px;"></i></span>
-    <div class="dropdown-sites" id="sitesDropdown">
-      <a href="https://smart-bowling.github.io/PARTS-BB/">BLOCKBUSTER</a>
-      <a href="https://smart-bowling.github.io/PARTS-SKYMALL/">SKYMALL</a>
-    </div>
-  </div>
-  <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()"><i class="fas fa-user"></i></div>
-  <div class="user-dropdown" id="userDropdown"><a href="#" onclick="signOut()">ВЫЙТИ</a></div>
-</header>
+  <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+  <div class="site-name">LUCKY STRIKE KH</div>
+  <div style="width: 60px;"></div> </header>
 
-<div id="login">
-  <h2>Вход в систему</h2>
-  <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
+<div id="login" style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+  <h2>Авторизация</h2>
+  <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleAuth"></div>
   <div class="g_id_signin" data-type="standard"></div>
 </div>
 
 <div id="content">
   <div class="top-controls">
-    <div class="select-wrapper">
-      <select id="sortSelect">
-        <option value="all">Все детали</option>
-        <option value="popular">За 30 дней</option>
-        <option value="mostPopular">Популярные</option>
-        <option value="sortByQty">Остатки</option>
-      </select>
+    <button class="btn-top" id="btnAnalysis"><i class="fas fa-chart-line"></i> Анализ Склада</button>
+    <button class="btn-top" onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')"><i class="fas fa-plus"></i> Добавить деталь</button>
+  </div>
+
+  <div class="cards" id="cardsContainer">
     </div>
-    <button id="btnSearch" class="btn-top"><i class="fas fa-search"></i> Поиск</button>
-    <button id="btnAnalysis" class="btn-top"><i class="fas fa-chart-pie"></i> Анализ</button>
-    <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')" class="btn-top">Добавить</button>
-  </div>
-
-  <div class="cards" id="cardsContainer"></div>
-
-  <div class="pagination">
-    <button id="prevBtn" onclick="pagination.prevPage()">Назад</button>
-    <div class="page-numbers" id="pageNumbers"></div>
-    <button id="nextBtn" onclick="pagination.nextPage()">Вперёд</button>
-  </div>
 </div>
 
 <div id="analysisModal" class="analysis-modal">
   <div class="analysis-modal-content">
-    <span class="analysis-close" id="analysisClose">×</span>
-    <h3 style="margin-top: 0;">Статистика склада KH</h3>
-    <div id="analysisContent"></div>
+    <span class="analysis-close" onclick="closeAnalysis()">&times;</span>
+    <h2 style="margin-top: 0; color: #1e293b;">Статистика Движения</h2>
+    <div id="analysisBody"></div>
   </div>
 </div>
 
 <script>
-  const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-  const API_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+  const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4'; // ID вашей таблицы
+  const STATS_SHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ'; // ID таблицы для анализа
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
 
-  let allEntries = [];
-  let currentEntries = [];
-  let currentPage = 1;
-  const cardsPerPage = 30;
+  function showLoader(show) { document.getElementById('mainLoader').style.display = show ? 'flex' : 'none'; }
 
-  function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-  function toggleUserDropdown() { const m = document.getElementById("userDropdown"); m.style.display = m.style.display === "block" ? "none" : "block"; }
-  function toggleSitesDropdown(e) { e.stopPropagation(); const d = document.getElementById("sitesDropdown"); d.style.display = d.style.display === "block" ? "none" : "block"; }
-
-  // Auth
-  function handleCredentialResponse(response) {
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    localStorage.setItem('userLoggedIn', 'true');
-    localStorage.setItem('userEmail', payload.email);
-    localStorage.setItem('userPic', payload.picture);
-    location.reload();
+  function handleAuth(response) {
+    localStorage.setItem('kh_auth', 'true');
+    initApp();
   }
 
-  function signOut() { localStorage.clear(); location.reload(); }
+  async function initApp() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    
+    showLoader(true);
+    await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] });
+    loadCards();
+  }
 
-  // Анализ (ИСПРАВЛЕНО)
+  async function loadCards() {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'KH!A2:G',
+      });
+      const rows = response.result.values || [];
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
+      rows.forEach(row => {
+        const card = `
+          <div class="card">
+            <div class="media-block"><img src="${row[5] || ''}" alt=""></div>
+            <h3 style="margin: 10px 0 5px;">${row[0]}</h3>
+            <div style="color: #64748b; font-size: 13px;">Артикул: ${row[1]}</div>
+            <div class="controls">
+              <button class="btn-action btn-minus" onclick="updateStock('${row[1]}', -1)">-</button>
+              <div class="qty-display">${row[4]} шт</div>
+              <button class="btn-action btn-plus" onclick="updateStock('${row[1]}', 1)">+</button>
+            </div>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  // --- ФУНКЦИЯ АНАЛИЗА (ИСПРАВЛЕННАЯ) ---
   async function showAnalysis() {
     showLoader(true);
     try {
-      const resAG = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ', range: 'KH!A:G' });
-      const resH = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ', range: 'KH!H:H' });
+      const resData = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: STATS_SHEET_ID,
+        range: 'KH!A2:H'
+      });
       
-      const rowsAG = resAG.result.values || [];
-      const rowsH = resH.result.values || [];
-      const data = [];
-      let tAdd = 0, tTake = 0;
+      const rows = resData.result.values || [];
+      let totalAdded = 0;
+      let totalTaken = 0;
+      let analysisList = [];
 
-      for (let i = 1; i < rowsAG.length; i++) {
-        const add = parseInt(rowsAG[i][6]) || 0;
-        const take = parseInt(rowsH[i] ? rowsH[i][0] : 0) || 0;
-        const pop = add > 0 ? Math.min(100, Math.round((take / add) * 100)) : 0;
-        tAdd += add; tTake += take;
-        data.push({ id: rowsAG[i][0] || '?', add, take, pop });
-      }
+      rows.forEach(row => {
+        const added = parseInt(row[6]) || 0;
+        const taken = parseInt(row[7]) || 0;
+        totalAdded += added;
+        totalTaken += taken;
+        
+        let pop = added > 0 ? Math.round((taken / added) * 100) : 0;
+        if (pop > 100) pop = 100;
 
-      data.sort((a, b) => b.pop - a.pop);
+        analysisList.push({ name: row[0], added, taken, pop });
+      });
+
+      // Сортировка по популярности
+      analysisList.sort((a, b) => b.pop - a.pop);
 
       let html = `
         <div class="analysis-summary">
-          <div class="summary-card"><span>Добавлено</span><strong>${tAdd}</strong></div>
-          <div class="summary-card"><span>Взято</span><strong>${tTake}</strong></div>
-          <div class="summary-card"><span>Видов</span><strong>${data.length}</strong></div>
+          <div class="summary-card"><span>Всего добавлено</span><strong>${totalAdded}</strong></div>
+          <div class="summary-card"><span>Всего взято</span><strong>${totalTaken}</strong></div>
+          <div class="summary-card"><span>Позиций</span><strong>${analysisList.length}</strong></div>
         </div>
         <div class="table-wrapper">
           <table class="analysis-table">
             <thead>
-              <tr><th class="col-name">Деталь</th><th class="col-num">Доб.</th><th class="col-num">Взят.</th><th class="col-pop">Популярность</th></tr>
+              <tr>
+                <th class="col-part">Деталь</th>
+                <th class="col-val">Доб.</th>
+                <th class="col-val">Взят.</th>
+                <th class="col-progress">Популярность</th>
+              </tr>
             </thead>
-            <tbody>`;
-      
-      data.forEach(item => {
-        const color = `hsl(${item.pop * 1.2}, 70%, 45%)`;
+            <tbody>
+      `;
+
+      analysisList.forEach(item => {
+        const color = item.pop > 70 ? '#ef4444' : (item.pop > 30 ? '#f59e0b' : '#10b981');
         html += `
           <tr>
-            <td>${item.id}</td>
-            <td style="color:#10b981">${item.add}</td>
-            <td style="color:#ef4444">${item.take}</td>
+            <td>${item.name}</td>
+            <td style="color: #10b981; font-weight: bold;">${item.added}</td>
+            <td style="color: #ef4444; font-weight: bold;">${item.taken}</td>
             <td>
-              <div class="progress-container"><div class="progress-bar" style="width:${item.pop}%; background:${color}"></div></div>
-              <span class="popularity-badge" style="color:${color}; background:rgba(0,0,0,0.05)">${item.pop}%</span>
+              <div class="prog-bg"><div class="prog-fill" style="width: ${item.pop}%; background: ${color};"></div></div>
+              <div style="font-size: 11px; margin-top: 4px; color: ${color}; font-weight: bold;">${item.pop}%</div>
             </td>
-          </tr>`;
+          </tr>
+        `;
       });
 
       html += `</tbody></table></div>`;
-      document.getElementById('analysisContent').innerHTML = html;
+      document.getElementById('analysisBody').innerHTML = html;
       document.getElementById('analysisModal').style.display = 'flex';
-    } finally { showLoader(false); }
-  }
-
-  // Основная логика
-  async function initApp() {
-    showLoader(true);
-    const res = await fetch(`${API_URL}?action=getEntries`);
-    allEntries = await res.json();
-    currentEntries = [...allEntries];
-    renderPage(1);
-    showLoader(false);
-  }
-
-  function renderPage(page) {
-    currentPage = page;
-    const container = document.getElementById('cardsContainer');
-    container.innerHTML = '';
-    const start = (page - 1) * cardsPerPage;
-    const pageData = currentEntries.slice(start, start + cardsPerPage);
-    
-    pageData.forEach(entry => {
-      const card = document.createElement('div');
-      card.className = 'card' + (window.innerWidth > 1024 ? ' desktop-layout' : '');
-      card.innerHTML = `
-        <div class="media-block">
-          <img src="${entry.fileUrl || ''}" loading="lazy">
-          <div class="icon" onclick="deleteItem('${entry.rowIndex}')">✕</div>
-        </div>
-        <div class="part-name-container">
-          <div class="part-name-text">${entry.partName || 'Без названия'}</div>
-        </div>
-        <div class="controls">
-          <div class="pill">${entry.partNumber}</div>
-          <input type="text" value="${entry.quantity}" readonly>
-          <button class="btn btn-take" onclick="updateQty('${entry.partNumber}', -1)">-</button>
-          <button class="btn btn-add" onclick="updateQty('${entry.partNumber}', 1)">+</button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-    updatePagination();
-  }
-
-  function updatePagination() {
-    const total = Math.ceil(currentEntries.length / cardsPerPage);
-    const pNum = document.getElementById('pageNumbers');
-    pNum.innerHTML = '';
-    for(let i=1; i<=total; i++) {
-      if(i > 5 && i < total) continue; // Упрощенно
-      const b = document.createElement('button');
-      b.textContent = i;
-      if(i === currentPage) b.className = 'active';
-      b.onclick = () => renderPage(i);
-      pNum.appendChild(b);
+    } catch (e) {
+      console.error(e);
+      alert("Ошибка загрузки данных анализа");
+    } finally {
+      showLoader(false);
     }
   }
 
-  const pagination = {
-    nextPage: () => { if(currentPage < Math.ceil(currentEntries.length/cardsPerPage)) renderPage(currentPage+1) },
-    prevPage: () => { if(currentPage > 1) renderPage(currentPage-1) }
-  };
+  function closeAnalysis() {
+    document.getElementById('analysisModal').style.display = 'none';
+  }
 
-  // Слушатели
-  document.getElementById('btnAnalysis').onclick = showAnalysis;
-  document.getElementById('analysisClose').onclick = () => document.getElementById('analysisModal').style.display = 'none';
-  
+  document.getElementById('btnAnalysis').addEventListener('click', showAnalysis);
+
   window.onload = () => {
-    if(localStorage.getItem('userLoggedIn')) {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('content').style.display = 'block';
-      gapi.load('client', () => {
-        gapi.client.init({ apiKey: API_KEY, discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] }).then(initApp);
-      });
+    if(localStorage.getItem('kh_auth')) {
+      gapi.load('client', initApp);
     }
   };
 </script>
+
 </body>
 </html>
