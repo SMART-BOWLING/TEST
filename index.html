@@ -2,7 +2,6 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>ДЕТАЛИ KH</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -596,7 +595,7 @@
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
-    /* НОВЫЙ СТИЛЬ ОКНА АНАЛИЗА - ПОЯВЛЯЕТСЯ СНИЗУ */
+    /* ОКНО АНАЛИЗА - компактные колонки */
     .analysis-modal {
       position: fixed;
       top: 0;
@@ -668,7 +667,6 @@
       overflow: auto;
     }
 
-    /* Кнопка закрытия внизу */
     .analysis-footer {
       padding: 15px 20px;
       border-top: 1px solid #e5e7eb;
@@ -699,12 +697,12 @@
       transform: scale(1.02);
     }
 
-    /* Таблица в стиле примера с равными колонками */
+    /* КОМПАКТНАЯ ТАБЛИЦА: УМЕНЬШЕНЫ ОТСТУПЫ МЕЖДУ СТОЛБЦАМИ */
     .analysis-table {
       width: 100%;
       border-collapse: collapse;
       font-family: "Segoe UI", sans-serif;
-      table-layout: fixed; /* Фиксированная ширина колонок */
+      table-layout: fixed;
     }
 
     .analysis-table thead {
@@ -713,7 +711,7 @@
     }
 
     .analysis-table th {
-      padding: 16px;
+      padding: 12px 4px;  /* Уменьшен горизонтальный отступ */
       text-align: center;
       font-weight: 600;
       letter-spacing: .5px;
@@ -730,7 +728,7 @@
     .analysis-table th:nth-child(4) { width: 40%; }
 
     .analysis-table td {
-      padding: 16px;
+      padding: 12px 4px;  /* Уменьшен горизонтальный отступ — расстояние между столбцами */
       text-align: center;
       word-wrap: break-word;
     }
@@ -782,7 +780,6 @@
       transition: .4s;
     }
 
-    /* Итоговая шкала сверху */
     .total-popularity {
       background: #f8f9fa;
       padding: 16px;
@@ -827,7 +824,6 @@
       color: #1f2937;
     }
 
-    /* НОВЫЙ СТИЛЬ ДЛЯ ПРОСМОТРА ФОТО */
     .photo-modal {
       position: fixed;
       top: 0;
@@ -1373,7 +1369,7 @@
       
       .analysis-table th,
       .analysis-table td {
-        padding: 12px 8px;
+        padding: 12px 4px;  /* и на мобильных тоже компактно */
         font-size: 14px;
       }
       
@@ -1705,7 +1701,7 @@
       
       .analysis-table th,
       .analysis-table td {
-        padding: 12px 16px;
+        padding: 12px 4px;  /* компактно на десктопе */
         font-size: 14px;
       }
       
@@ -1719,48 +1715,6 @@
       
       .photo-image-container img {
         max-height: 60vh;
-      }
-    }
-
-    /* Мобильная оптимизация таблицы анализа - компактнее, меньше отступы */
-    @media (max-width: 600px) {
-      .analysis-table th,
-      .analysis-table td {
-        padding: 8px 4px;
-        font-size: 12px;
-      }
-      
-      .analysis-table th:nth-child(1) { width: 35%; }
-      .analysis-table th:nth-child(2) { width: 15%; }
-      .analysis-table th:nth-child(3) { width: 15%; }
-      .analysis-table th:nth-child(4) { width: 35%; }
-      
-      .analysis-table-container {
-        padding: 10px 5px;
-      }
-      
-      .total-popularity {
-        padding: 10px;
-        margin-bottom: 10px;
-      }
-      
-      .total-popularity-label {
-        font-size: 13px;
-        margin-bottom: 4px;
-      }
-      
-      .total-popularity-bar {
-        height: 14px;
-        margin-bottom: 6px;
-      }
-      
-      .total-stats {
-        font-size: 12px;
-        margin-top: 8px;
-      }
-      
-      .popularity-bar {
-        height: 8px;
       }
     }
   </style>
@@ -1855,7 +1809,7 @@
     </div>
   </div>
 
-  <!-- НОВОЕ ОКНО АНАЛИЗА - ПОЯВЛЯЕТСЯ СНИЗУ -->
+  <!-- ОКНО АНАЛИЗА - ПОЯВЛЯЕТСЯ СНИЗУ -->
   <div id="analysisModal" class="analysis-modal">
     <div class="analysis-modal-content">
       <div class="analysis-header">
@@ -2181,21 +2135,20 @@
     document.getElementById('photoModal').style.display = 'flex';
   }
 
-  // ФУНКЦИЯ АНАЛИЗА (с итоговой шкалой и равными колонками)
-  // ИЗМЕНЕНО: теперь читает с первой строки (i = 0)
+  // ФУНКЦИЯ АНАЛИЗА (чтение с ПЕРВОЙ строки + компактная таблица)
   async function showAnalysis() {
     showLoader(true);
     try {
-      // Читаем столбцы A и G с листа KH
+      // Читаем данные с листа KH, начиная с первой строки (чтобы учесть все данные)
       const responseAG = await gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
-        range: 'KH!A:G', // A (номера) и G (добавлено)
+        range: 'KH!A:G', // A (номера) и G (добавлено) — с первой строки
       });
       
       // Читаем столбец H с листа KH
       const responseH = await gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ',
-        range: 'KH!H:H', // H (взято)
+        range: 'KH!H:H', // H (взято) — с первой строки
       });
       
       const rowsAG = responseAG.result.values || [];
@@ -2205,9 +2158,8 @@
       let totalAdded = 0;
       let totalTaken = 0;
       
-      // Создаем карту для данных из столбца H
+      // Создаем карту для данных из столбца H (индекс строки -> значение)
       const takenMap = new Map();
-      // ИЗМЕНЕНО: начало с i = 0 (первая строка)
       for (let i = 0; i < rowsH.length; i++) {
         if (rowsH[i] && rowsH[i][0]) {
           const value = parseInt(rowsH[i][0]) || 0;
@@ -2216,8 +2168,7 @@
         }
       }
       
-      // Обрабатываем данные из столбцов A и G
-      // ИЗМЕНЕНО: начало с i = 0 (первая строка)
+      // Обрабатываем данные из столбцов A и G начиная с ПЕРВОЙ строки (i = 0)
       for (let i = 0; i < rowsAG.length; i++) {
         const row = rowsAG[i];
         if (!row || row.length < 1) continue;
