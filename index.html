@@ -2216,12 +2216,39 @@
       }
     };
 
+    // ИЗМЕНЕННЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ПРОВЕРКОЙ НАЛИЧИЯ
     btnTake.onclick = async () => {
       const deltaStr = prompt('Введите число для вычитания:');
+      
+      // Проверяем, что пользователь ввел число и не нажал "Отмена"
+      if (deltaStr === null) return;
+      
       const delta = Number(deltaStr);
-      if (deltaStr !== null && !isNaN(delta)) {
-        await updateQuantity(entry.partNumber, -delta);
+      
+      // Проверяем, что введено корректное число
+      if (isNaN(delta)) {
+        alert('Пожалуйста, введите корректное число');
+        return;
       }
+      
+      // Проверяем, что число положительное
+      if (delta <= 0) {
+        alert('Введите положительное число');
+        return;
+      }
+      
+      // ПОЛУЧАЕМ ТЕКУЩЕЕ КОЛИЧЕСТВО ИЗ allEntries (актуальные данные)
+      const currentEntry = allEntries.find(e => e.partNumber === entry.partNumber);
+      const currentQuantity = currentEntry ? currentEntry.quantity : entry.quantity;
+      
+      // Проверяем, достаточно ли деталей в наличии
+      if (delta > currentQuantity) {
+        alert('Недостаточно в наличии!');
+        return;
+      }
+      
+      // Если проверка пройдена, выполняем операцию
+      await updateQuantity(entry.partNumber, -delta);
     };
 
     btnInfo.onclick = async () => {
