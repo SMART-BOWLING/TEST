@@ -2148,6 +2148,9 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
+    // Определяем тип устройства
+    const isMobile = window.innerWidth <= 1024;
+    
     // НОВАЯ ЛОГИКА: синхронизированные расчёты
     let fillPercent = 0;
     let circlePosition = 100; // По умолчанию кружок справа
@@ -2160,20 +2163,23 @@
             // ПОЗИЦИЯ КРУЖКА: (1 - minStock/added) * 100%
             circlePosition = 100 - ((entry.minStock / entry.added) * 100);
             
-            // ОГРАНИЧЕНИЯ для визуального комфорта (5-95%)
-            circlePosition = Math.max(5, Math.min(95, circlePosition));
+            // АДАПТИВНЫЕ ОГРАНИЧЕНИЯ
+            const maxPosition = isMobile ? 92 : 88; // На ПК ограничиваем сильнее
+            const minPosition = 5;
             
-            // КРАСНАЯ ПОЛОСА: заполняется до usagePercent, но с отступом 1% от кружка
-            // Чтобы гарантированно не перелезать
-            fillPercent = Math.min(usagePercent, circlePosition - 1);
+            circlePosition = Math.max(minPosition, Math.min(maxPosition, circlePosition));
             
-            // Но если usagePercent очень маленький, не уходим в минус
+            // Отступ красной полосы от кружка
+            const offset = isMobile ? 1 : 3;
+            fillPercent = Math.min(usagePercent, circlePosition - offset);
+            
+            // Не уходим в минус
             fillPercent = Math.max(0, fillPercent);
         } else {
             // Если minStock не задан, используем обычный процент
             fillPercent = usagePercent;
-            // Ограничиваем 95% для визуального комфорта
-            fillPercent = Math.min(95, fillPercent);
+            // Ограничиваем для визуального комфорта
+            fillPercent = Math.min(isMobile ? 95 : 90, fillPercent);
         }
     }
     
@@ -2192,9 +2198,11 @@
         circle.textContent = entry.minStock;
         barContainer.appendChild(circle);
         
-        // Если использовано больше или равно позиции кружка (с учётом погрешности)
+        // Подсветка при приближении к кружку
         const usagePercent = (entry.taken / entry.added) * 100;
-        if (usagePercent >= circlePosition - 0.5) {
+        const threshold = isMobile ? 0.5 : 1.5; // На ПК больше погрешность
+        
+        if (usagePercent >= circlePosition - threshold) {
             barFill.classList.add('at-threshold');
         }
     }
