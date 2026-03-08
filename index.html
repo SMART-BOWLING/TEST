@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>ДЕТАЛИ KH (прямое чтение + запись через скрипт)</title>
+  <title>ДЕТАЛИ KH (оптимизированная загрузка)</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
@@ -627,13 +627,13 @@
     
     .popularity-bar-container {
       flex: 1;
-      height: 20px; /* Уменьшено с 36px до 20px для ПК */
+      height: 20px;
       background: #e9ecef;
       border-radius: 30px;
-      overflow: visible; /* Чтобы кружок не обрезался */
+      overflow: visible;
       position: relative;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-      order: 2; /* По середине */
+      order: 2;
     }
     
     .popularity-bar-fill {
@@ -645,31 +645,24 @@
       z-index: 1;
     }
     
-    /* Кружок минимального остатка - только если minStock > 0 */
     .popularity-min-stock-circle {
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 28px; /* Уменьшено с 42px до 28px для ПК */
-      height: 28px; /* Уменьшено с 42px до 28px для ПК */
+      width: 28px;
+      height: 28px;
       background: white;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 14px; /* Уменьшено с 18px до 14px для ПК */
+      font-size: 14px;
       color: #1f2937;
       border: 2px solid #1f2937;
       z-index: 20;
-      pointer-events: none; /* Чтобы не мешала кликам */
+      pointer-events: none;
       transition: left 0.3s ease;
-      /* Тень убрана */
-    }
-
-    /* ОКНО АНАЛИЗА - больше не используется, но стили оставлены для совместимости */
-    .analysis-modal {
-      display: none;
     }
 
     .photo-modal {
@@ -926,7 +919,6 @@
       100% { transform: rotate(360deg); }
     }
     
-    /* Адаптация для мобильных */
     @media (max-width: 1024px) {
       .site-name-text {
         font-size: 50px;
@@ -1227,7 +1219,6 @@
         font-size: 16px;
       }
       
-      /* Мобильная адаптация шкалы популярности - оставляем крупные размеры для touch */
       .popularity-meter {
         padding: 6px 10px;
         gap: 6px;
@@ -1237,18 +1228,16 @@
         min-width: 50px;
       }
       .popularity-bar-container {
-        height: 30px; /* Оставляем как было на мобильных */
+        height: 30px;
       }
       .popularity-min-stock-circle {
-        width: 36px; /* Оставляем как было на мобильных */
+        width: 36px;
         height: 36px;
         font-size: 16px;
         border-width: 2px;
-        box-shadow: none;
       }
     }
     
-    /* Десктопная версия - уменьшенная высота */
     @media (min-width: 1025px) {
       header {
         height: 75px;
@@ -1538,7 +1527,6 @@
         max-height: 60vh;
       }
       
-      /* Десктопная адаптация шкалы популярности - уменьшенная высота */
       .popularity-meter {
         margin-top: 8px;
         padding: 6px 10px;
@@ -1549,14 +1537,13 @@
         min-width: 45px;
       }
       .popularity-bar-container {
-        height: 20px; /* Уменьшено с 36px до 20px */
+        height: 20px;
       }
       .popularity-min-stock-circle {
-        width: 28px; /* Уменьшено с 42px до 28px */
-        height: 28px; /* Уменьшено с 42px до 28px */
-        font-size: 14px; /* Уменьшено с 18px до 14px */
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
         border-width: 2px;
-        box-shadow: none;
       }
     }
   </style>
@@ -1664,39 +1651,40 @@
 
 <script>
   // === НАСТРОЙКИ ===
-  // ВАЖНО: Укажите ваш реальный URL от Google Apps Script (для записи)
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec"; // Замените на ваш!
-
-  // Прямые параметры доступа к таблице (для чтения)
-  const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ'; // Ваша таблица
-  const SHEET_NAME = 'KH'; // Лист
-  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0'; // Ваш API ключ
-
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyB1F0bZXsnfoxqrzWWH-C4bGmuUDfaLdi_n_PqhHQNYLWHqwB_O4iGDI1yFXfnFSo4/exec";
+  const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
+  const SHEET_NAME = 'KH';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
   const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/';
 
   let currentUser = null;
-  let allEntriesForAnalysis = []; // Сохраняем все записи для поиска фото и популярности
-  let allEntries = []; // Основной массив записей (для отображения)
+  let allEntries = [];
+  let currentEntries = [];
+  let currentPage = 1;
+  let totalPages = 1;
+  const cardsPerPage = 30;
 
-  // Функция для показа/скрытия индикатора загрузки
+  const pagination = {
+    prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
+    nextPage: () => { if (currentPage < totalPages) goToPage(currentPage + 1); }
+  };
+
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
 
-  // Функция для выпадающего меню пользователя
+  // Функции для выпадающих меню
   function toggleUserDropdown() {
     const menu = document.getElementById("userDropdown");
-    menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
   }
 
-  // Функция для выпадающего списка сайтов
   function toggleSitesDropdown(event) {
     event.stopPropagation();
     const dropdown = document.getElementById("sitesDropdown");
-    dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
   }
 
-  // Закрытие выпадающих списков при клике вне их
   document.addEventListener('click', function(e) {
     const sitesDropdown = document.getElementById("sitesDropdown");
     const siteName = document.querySelector('.site-name-dropdown');
@@ -1706,18 +1694,16 @@
     if (sitesDropdown.style.display === 'block' && !siteName.contains(e.target)) {
       sitesDropdown.style.display = 'none';
     }
-    
     if (userDropdown.style.display === 'block' && !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
       userDropdown.style.display = 'none';
     }
   });
 
   // === АВТОРИЗАЦИЯ ===
-  // Загрузка Google API
   function loadSheetsAPI() {
     return new Promise((resolve, reject) => {
       gapi.load('client', {
-        callback: () => resolve(),
+        callback: resolve,
         onerror: () => reject('Ошибка загрузки Google API'),
         timeout: 10000,
         ontimeout: () => reject('Таймаут загрузки Google API')
@@ -1725,41 +1711,30 @@
     });
   }
 
-  // Парсинг JWT
   function parseJwt(token) {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
       return JSON.parse(jsonPayload);
     } catch (e) {
-      console.error('Error parsing JWT:', e);
       return {};
     }
   }
 
-  // Обработчик ответа от Google
   function handleCredentialResponse(response) {
-    console.log("Google response received");
     showLoader(true);
-    
     try {
       const payload = parseJwt(response.credential);
-      console.log("User email:", payload.email);
-      
       currentUser = {
         email: payload.email.toLowerCase().trim(),
         name: payload.name,
         picture: payload.picture
       };
-      
       updateUserAvatar(currentUser);
       initAndCheckEmail();
-      
     } catch (e) {
-      console.error("Error parsing Google response:", e);
       showLoader(false);
       alert('Ошибка аутентификации');
     }
@@ -1767,11 +1742,9 @@
 
   function updateUserAvatar(user) {
     const avatarContainer = document.getElementById('userAvatar');
-    if (user && user.picture) {
-      avatarContainer.innerHTML = `<img src="${user.picture}" alt="Avatar">`;
-    } else {
-      avatarContainer.innerHTML = '<i class="fas fa-user"></i>';
-    }
+    avatarContainer.innerHTML = user?.picture 
+      ? `<img src="${user.picture}" alt="Avatar">` 
+      : '<i class="fas fa-user"></i>';
   }
 
   async function initAndCheckEmail() {
@@ -1783,7 +1756,6 @@
       });
       await checkEmailInSheet(currentUser.email);
     } catch (error) {
-      console.error('API initialization error:', error);
       showLoader(false);
       alert('Ошибка инициализации Google API: ' + error);
     }
@@ -1791,40 +1763,25 @@
 
   async function checkEmailInSheet(email) {
     try {
-      // Используем ту же таблицу для проверки доступа (лист 1)
       const response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4', // Таблица с доступом
+        spreadsheetId: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4',
         range: '1!A:Z',
       });
       
-      const rows = response.result.values;
-      if (!rows || rows.length === 0) {
-        showLoader(false);
-        alert('Таблица пуста');
-        return;
-      }
-      
+      const rows = response.result.values || [];
       let hasAccess = false;
-      let userRow = null;
       
       for (let i = 0; i < rows.length; i++) {
-        if (!rows[i][0]) continue;
-        const rowEmail = rows[i][0].toLowerCase().trim();
-        if (rowEmail === email) {
-          userRow = rows[i];
-          break;
-        }
-      }
-      
-      if (userRow) {
-        for (let j = 1; j < userRow.length; j++) {
-          const cellValue = userRow[j];
-          if (!cellValue || cellValue.trim() === '') continue;
-          const siteUrl = cellValue.trim().split('?')[0].split('#')[0];
-          if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
-            hasAccess = true;
-            break;
+        if (!rows[i]?.[0]) continue;
+        if (rows[i][0].toLowerCase().trim() === email) {
+          for (let j = 1; j < rows[i].length; j++) {
+            const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+            if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
+              hasAccess = true;
+              break;
+            }
           }
+          break;
         }
       }
       
@@ -1832,23 +1789,15 @@
         loginUser(currentUser);
       } else {
         showLoader(false);
-        alert('Доступ запрещен: Ваш email не имеет доступа к этому сайту');
+        alert('Доступ запрещен');
       }
-      
     } catch (error) {
-      console.error('Sheets API error:', error);
       showLoader(false);
-      let errorMessage = 'Ошибка доступа к таблице';
-      if (error.result && error.result.error && error.result.error.message) {
-        errorMessage += ': ' + error.result.error.message;
-      }
-      alert(errorMessage);
+      alert('Ошибка доступа к таблице');
     }
   }
 
   function loginUser(payload) {
-    console.log("Logging in user:", payload.email);
-    
     document.getElementById('login').style.display = 'none';
     document.getElementById('content').style.display = 'block';
     
@@ -1858,25 +1807,20 @@
     localStorage.setItem('userPic', payload.picture);
     
     showLoader(false);
-    initApp(); // Запускаем приложение после авторизации
+    initApp();
   }
 
   function signOut() {
-    console.log("Signing out");
     localStorage.clear();
     sessionStorage.clear();
     location.reload();
   }
 
   window.addEventListener('load', function() {
-    console.log("Page loaded, checking localStorage...");
-    
     const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
     const email = localStorage.getItem('userEmail');
     
     if (isLoggedIn && email) {
-      console.log("Found stored session for:", email);
-      
       document.getElementById('login').style.display = 'none';
       document.getElementById('content').style.display = 'block';
       
@@ -1896,164 +1840,55 @@
         }))
         .then(() => checkEmailInSheet(email))
         .catch(error => {
-          console.error('Session restore error:', error);
           showLoader(false);
           alert('Ошибка восстановления сессии');
           signOut();
         });
-      
     } else {
-      console.log("No stored session, showing login button");
       document.getElementById('login').style.display = 'block';
     }
   });
 
-  // Глобальный объект для пагинации
-  const pagination = {
-    prevPage: function() {},
-    nextPage: function() {}
-  };
-
-  function toggleDesktopLayout(enable) {
-    const cardsContainer = document.getElementById('cardsContainer');
-    const cards = document.querySelectorAll('.card');
-    const topControls = document.querySelector('.top-controls');
-    
-    if (!cardsContainer || cards.length === 0) return;
-    
-    if (enable) {
-      cardsContainer.classList.add('desktop-layout');
-      cards.forEach(card => {
-        card.classList.add('desktop-layout');
-      });
-      cardsContainer.style.maxWidth = '1300px';
-      cardsContainer.style.margin = '0 auto';
-      cardsContainer.style.padding = '0';
-      cardsContainer.style.boxSizing = 'border-box';
-      
-      if (topControls) {
-        topControls.style.maxWidth = '1300px';
-        topControls.style.margin = '0 auto 12px';
-      }
-    } else {
-      cardsContainer.classList.remove('desktop-layout');
-      cards.forEach(card => {
-        card.classList.remove('desktop-layout');
-      });
-      cardsContainer.style.maxWidth = 'none';
-      cardsContainer.style.margin = '0';
-      cardsContainer.style.padding = '0';
-      
-      if (topControls) {
-        topControls.style.maxWidth = 'none';
-        topControls.style.margin = '0 auto 20px';
-      }
-    }
-  }
-
-  // Функция для показа фото на белой подложке с кнопкой внизу
-  function showPartPhoto(partNumber) {
-    // Ищем запись с таким номером детали
-    const entry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
-    
-    const photoContainer = document.getElementById('photoContainer');
-    
-    if (entry && entry.fileUrl) {
-      // Если есть фото
-      photoContainer.innerHTML = `<img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">`;
-    } else {
-      // Если нет фото
-      photoContainer.innerHTML = `<img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">`;
-    }
-    
-    document.getElementById('photoModal').style.display = 'flex';
-  }
-
-  // === НОВАЯ ФУНКЦИЯ: Получение данных популярности и минимального остатка для конкретной детали ===
-  async function getPartPopularityAndMinStock(partNumber) {
+  // === ОПТИМИЗИРОВАННАЯ ЗАГРУЗКА ДАННЫХ ===
+  async function loadAllData() {
     try {
-      // Читаем столбцы A (номер), G (добавлено), H (взято), I (мин. остаток)
-      // Сначала найдем строку с этим номером
+      // Читаем все нужные колонки одним запросом (A-I)
       const response = await gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'KH!A:A', // Только колонка A с номерами
-      });
-      
-      const rows = response.result.values || [];
-      let rowIndex = -1;
-      
-      // Ищем номер детали (пропускаем заголовок, начинаем с i=1)
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i] && rows[i][0] && rows[i][0].trim() === partNumber) {
-          rowIndex = i + 1; // +1 потому что в Sheets строки начинаются с 1
-          break;
-        }
-      }
-      
-      if (rowIndex === -1) return { added: 0, taken: 0, minStock: 0, percent: 0 };
-      
-      // Получаем значения G, H, I для этой строки
-      const responseGHI = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `KH!G${rowIndex}:I${rowIndex}`,
-      });
-      
-      const ghiRow = responseGHI.result.values?.[0] || [];
-      const added = parseInt(ghiRow[0]) || 0;
-      const taken = parseInt(ghiRow[1]) || 0;
-      const minStock = parseInt(ghiRow[2]) || 0;
-      const percent = added > 0 ? Math.min(100, Math.round((taken / added) * 100)) : 0;
-      
-      return { added, taken, minStock, percent };
-    } catch (error) {
-      console.error('Error getting popularity for', partNumber, error);
-      return { added: 0, taken: 0, minStock: 0, percent: 0 };
-    }
-  }
-
-  // === ОСНОВНЫЕ ФУНКЦИИ РАБОТЫ С ДАННЫМИ ===
-  // Чтение данных через Sheets API (прямой доступ)
-  async function getEntriesDirect() {
-    showLoader(true);
-    try {
-      // Запрашиваем колонки A (номер), B (количество), D (фото)
-      const response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'KH!A:D', // A, B, C, D (берем A, B, D)
+        range: 'KH!A:I',
       });
       
       const rows = response.result.values || [];
       const entries = [];
       
-      // Начинаем с индекса 1, чтобы пропустить заголовок (если он есть)
-      // Предполагаем, что первая строка - заголовки
+      // Парсим все строки (пропускаем заголовок)
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || row.length < 1 || !row[0] || row[0].trim() === '') continue;
+        if (!row || !row[0] || row[0].trim() === '') continue;
         
         const partNumber = row[0].trim();
-        const quantity = row[1] ? parseInt(row[1]) || 0 : 0;
-        const fileUrl = row[3] ? row[3].trim() : ''; // Колонка D (индекс 3)
+        const quantity = parseInt(row[1]) || 0;
+        const fileUrl = row[3] || '';
+        const added = parseInt(row[6]) || 0;
+        const taken = parseInt(row[7]) || 0;
+        const minStock = parseInt(row[8]) || 0;
         
         entries.push({
-          rowIndex: i + 1, // +1 потому что в Sheets строки начинаются с 1, а массив с 0, и +1 из-за заголовка
+          rowIndex: i + 1,
           partNumber: partNumber,
           quantity: quantity,
           fileUrl: fileUrl,
-          partName: partNumber, // Используем номер как название по умолчанию
-          added: 0, // Временное значение, обновим позже
-          taken: 0,  // Временное значение, обновим позже
-          minStock: 0 // Временное значение, обновим позже
+          partName: partNumber,
+          added: added,
+          taken: taken,
+          minStock: minStock
         });
       }
       
       return entries;
     } catch (error) {
-      console.error('Error reading sheet directly:', error);
-      alert('Ошибка чтения данных из таблицы: ' + error.message);
-      return [];
-    } finally {
-      showLoader(false);
+      console.error('Error loading data:', error);
+      throw error;
     }
   }
 
@@ -2062,7 +1897,15 @@
     showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
-      return await res.json();
+      const data = await res.json();
+      if (data.status === 'success') {
+        // После успешного обновления перезагружаем все данные
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      }
+      return data;
     } finally {
       showLoader(false);
     }
@@ -2072,7 +1915,15 @@
     showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
-      return await res.json();
+      const data = await res.json();
+      if (data.status === 'success') {
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        if (currentPage > totalPages) currentPage = totalPages;
+        renderPage(currentPage);
+      }
+      return data;
     } finally {
       showLoader(false);
     }
@@ -2112,32 +1963,53 @@
     showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
-      return await res.json();
+      const data = await res.json();
+      if (data.status === 'success') {
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        renderPage(currentPage);
+      }
+      return data;
     } finally {
       showLoader(false);
     }
   }
 
-  // === РЕНДЕРИНГ КАРТОЧЕК (с меткой минимального остатка в виде кружка) ===
+  function showPartPhoto(partNumber) {
+    const entry = allEntries.find(e => e.partNumber === partNumber);
+    const photoContainer = document.getElementById('photoContainer');
+    
+    if (entry?.fileUrl) {
+      photoContainer.innerHTML = `<img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">`;
+    } else {
+      photoContainer.innerHTML = `<img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">`;
+    }
+    
+    document.getElementById('photoModal').style.display = 'flex';
+  }
+
   function createCard(entry) {
     const div = document.createElement('div');
     div.className = 'card';
     div.dataset.row = entry.rowIndex;
     div.dataset.partNumber = entry.partNumber.toLowerCase();
 
+    // Медиа-блок
     const media = document.createElement('div');
     media.className = 'media-block';
 
-    if (entry.fileUrl && entry.fileUrl.includes('/preview')) {
-      const iframe = document.createElement('iframe');
-      iframe.src = entry.fileUrl;
-      media.appendChild(iframe);
-    } else if (entry.fileUrl) {
-      const img = document.createElement('img');
-      img.src = entry.fileUrl;
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      media.appendChild(img);
+    if (entry.fileUrl) {
+      if (entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        media.appendChild(img);
+      }
     }
 
     const overlay = document.createElement('div');
@@ -2148,26 +2020,26 @@
     rem.className = 'icon remove';
     rem.textContent = 'Х';
     media.append(rem);
-
     div.append(media);
 
+    // Название детали
     const partNameContainer = document.createElement('div');
     partNameContainer.className = 'part-name-container';
     partNameContainer.dataset.partNumber = entry.partNumber;
     
     const partNameText = document.createElement('div');
     partNameText.className = 'part-name-text';
-    partNameText.textContent = entry.partName || 'Название детали';
+    partNameText.textContent = entry.partName || entry.partNumber;
     
     const editButton = document.createElement('button');
     editButton.className = 'part-name-edit-btn';
     editButton.innerHTML = '<i class="fas fa-edit"></i>';
-    editButton.title = 'Редактировать название';
     
     partNameContainer.appendChild(partNameText);
     partNameContainer.appendChild(editButton);
     div.append(partNameContainer);
 
+    // Кнопки управления
     const controls = document.createElement('div');
     controls.className = 'controls';
 
@@ -2195,7 +2067,7 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // === НОВЫЙ БЛОК: Шкала популярности с минимальным остатком в виде кружка ===
+    // Шкала популярности
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
@@ -2206,28 +2078,22 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    // Рассчитываем процент для шкалы
-    const percent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
+    const percent = entry.added > 0 ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
     
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
     barFill.style.width = `${percent}%`;
     
-    // Кружок минимального остатка - только если minStock > 0
-    let minStockCircle = null;
     if (entry.minStock > 0) {
-      minStockCircle = document.createElement('div');
-      minStockCircle.className = 'popularity-min-stock-circle';
-      
-      // Рассчитываем позицию кружка: (добавлено - минимальный остаток) / добавлено * 100%
-      // Так чтобы при значении 1 кружок был справа, а при увеличении двигался влево
-      let circlePosition = 100; // По умолчанию справа
-      if (entry.added > 0 && entry.minStock > 0) {
-        // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее чтобы не наезжать на цифру добавлено
+      const circle = document.createElement('div');
+      circle.className = 'popularity-min-stock-circle';
+      let circlePosition = 100;
+      if (entry.added > 0) {
         circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
       }
-      minStockCircle.style.left = `${circlePosition}%`;
-      minStockCircle.textContent = entry.minStock;
+      circle.style.left = `${circlePosition}%`;
+      circle.textContent = entry.minStock;
+      barContainer.appendChild(circle);
     }
     
     const addedSpan = document.createElement('span');
@@ -2235,15 +2101,13 @@
     addedSpan.textContent = entry.added || 0;
     
     barContainer.appendChild(barFill);
-    if (minStockCircle) {
-      barContainer.appendChild(minStockCircle); // Кружок внутри шкалы (только если >0)
-    }
-    popularityMeter.appendChild(takenSpan);      // Взято слева
-    popularityMeter.appendChild(barContainer);   // Шкала с кружком
-    popularityMeter.appendChild(addedSpan);      // Добавлено справа
+    popularityMeter.appendChild(takenSpan);
+    popularityMeter.appendChild(barContainer);
+    popularityMeter.appendChild(addedSpan);
     
     div.appendChild(popularityMeter);
 
+    // Обработчики событий
     editButton.addEventListener('click', function() {
       const partNumber = partNameContainer.dataset.partNumber;
       const currentName = partNameText.textContent;
@@ -2258,12 +2122,10 @@
       const saveButton = document.createElement('button');
       saveButton.className = 'part-name-save-btn';
       saveButton.innerHTML = '<i class="fas fa-check"></i>';
-      saveButton.title = 'Сохранить';
       
       const cancelButton = document.createElement('button');
       cancelButton.className = 'part-name-cancel-btn';
       cancelButton.innerHTML = '<i class="fas fa-times"></i>';
-      cancelButton.title = 'Отменить';
       
       partNameText.style.display = 'none';
       editButton.style.display = 'none';
@@ -2287,43 +2149,21 @@
         editButton.style.display = '';
         
         if (save && newName && newName !== currentName) {
-          const res = await updatePartName(partNumber, newName);
-          if (res.status === 'success') {
-            partNameText.textContent = newName;
-            const updatedEntry = allEntries.find(e => e.partNumber === partNumber);
-            if (updatedEntry) updatedEntry.partName = newName;
-            
-            // Обновляем также в allEntriesForAnalysis
-            const analysisEntry = allEntriesForAnalysis.find(e => e.partNumber === partNumber);
-            if (analysisEntry) analysisEntry.partName = newName;
-          } else {
-            alert(res.message || 'Ошибка при обновлении названия');
-          }
+          await updatePartName(partNumber, newName);
         }
       };
       
       saveButton.addEventListener('click', () => finishEdit(true));
       cancelButton.addEventListener('click', () => finishEdit(false));
       
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          finishEdit(true);
-        }
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') finishEdit(true);
       });
     });
 
     rem.onclick = async () => {
       if (confirm('Удалить эту запись?')) {
-        const res = await deleteEntry(entry.rowIndex);
-        if (res.status === 'success') {
-          allEntries = allEntries.filter(e => e.rowIndex !== entry.rowIndex);
-          currentEntries = currentEntries.filter(e => e.rowIndex !== entry.rowIndex);
-          updateTotalPages();
-          if (currentPage > totalPages) currentPage = totalPages;
-          renderPage(currentPage);
-        } else {
-          alert(res.message || 'Ошибка при удалении');
-        }
+        await deleteEntry(entry.rowIndex);
       }
     };
 
@@ -2331,46 +2171,7 @@
       const deltaStr = prompt('Введите число для добавления:');
       const delta = Number(deltaStr);
       if (deltaStr !== null && !isNaN(delta)) {
-        const res = await updateQuantity(entry.partNumber, delta);
-        if (res.status === 'success') {
-          qtyInput.value = res.quantity;
-          entry.quantity = res.quantity;
-          
-          // Обновляем данные популярности и мин. остатка
-          const data = await getPartPopularityAndMinStock(entry.partNumber);
-          entry.added = data.added;
-          entry.taken = data.taken;
-          entry.minStock = data.minStock;
-          
-          // Обновляем отображение
-          takenSpan.textContent = entry.taken;
-          addedSpan.textContent = entry.added;
-          
-          // Обновляем или создаем кружок минимального остатка
-          let circle = barContainer.querySelector('.popularity-min-stock-circle');
-          if (entry.minStock > 0) {
-            if (!circle) {
-              circle = document.createElement('div');
-              circle.className = 'popularity-min-stock-circle';
-              barContainer.appendChild(circle);
-            }
-            // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее
-            let circlePosition = 100;
-            if (entry.added > 0) {
-              circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
-            }
-            circle.style.left = `${circlePosition}%`;
-            circle.textContent = entry.minStock;
-          } else if (circle) {
-            // Если мин. остаток стал 0, удаляем кружок
-            circle.remove();
-          }
-          
-          const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
-          barFill.style.width = `${newPercent}%`;
-        } else {
-          alert(res.message);
-        }
+        await updateQuantity(entry.partNumber, delta);
       }
     };
 
@@ -2378,46 +2179,7 @@
       const deltaStr = prompt('Введите число для вычитания:');
       const delta = Number(deltaStr);
       if (deltaStr !== null && !isNaN(delta)) {
-        const res = await updateQuantity(entry.partNumber, -delta);
-        if (res.status === 'success') {
-          qtyInput.value = res.quantity;
-          entry.quantity = res.quantity;
-          
-          // Обновляем данные популярности и мин. остатка
-          const data = await getPartPopularityAndMinStock(entry.partNumber);
-          entry.added = data.added;
-          entry.taken = data.taken;
-          entry.minStock = data.minStock;
-          
-          // Обновляем отображение
-          takenSpan.textContent = entry.taken;
-          addedSpan.textContent = entry.added;
-          
-          // Обновляем или создаем кружок минимального остатка
-          let circle = barContainer.querySelector('.popularity-min-stock-circle');
-          if (entry.minStock > 0) {
-            if (!circle) {
-              circle = document.createElement('div');
-              circle.className = 'popularity-min-stock-circle';
-              barContainer.appendChild(circle);
-            }
-            // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее
-            let circlePosition = 100;
-            if (entry.added > 0) {
-              circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
-            }
-            circle.style.left = `${circlePosition}%`;
-            circle.textContent = entry.minStock;
-          } else if (circle) {
-            // Если мин. остаток стал 0, удаляем кружок
-            circle.remove();
-          }
-          
-          const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
-          barFill.style.width = `${newPercent}%`;
-        } else {
-          alert(res.message);
-        }
+        await updateQuantity(entry.partNumber, -delta);
       }
     };
 
@@ -2429,12 +2191,6 @@
 
     return div;
   }
-
-  // Переменные для пагинации
-  let currentEntries = [];
-  let currentPage = 1;
-  let totalPages = 1;
-  const cardsPerPage = 30;
 
   function updateTotalPages() {
     totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
@@ -2456,15 +2212,17 @@
     }
 
     pageData.forEach(entry => {
-      const card = createCard(entry);
-      container.appendChild(card);
+      container.appendChild(createCard(entry));
     });
 
     renderPageNumbers();
     updatePaginationControls();
     window.scrollTo(0, 0);
     
-    if (window.innerWidth > 1024) toggleDesktopLayout(true);
+    if (window.innerWidth > 1024) {
+      container.classList.add('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
+    }
   }
 
   function renderPageNumbers() {
@@ -2509,16 +2267,7 @@
     if (page < 1 || page > totalPages) return;
     currentPage = page;
     renderPage(currentPage);
-    updatePaginationControls();
   }
-
-  pagination.nextPage = function() {
-    if (currentPage < totalPages) goToPage(currentPage + 1);
-  };
-
-  pagination.prevPage = function() {
-    if (currentPage > 1) goToPage(currentPage - 1);
-  };
 
   function updatePaginationControls() {
     const prevBtn = document.getElementById('prevBtn');
@@ -2527,25 +2276,24 @@
     if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   }
 
-  // === ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ (обновлена для загрузки популярности и мин. остатка) ===
+  function toggleDesktopLayout(enable) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+    
+    if (enable) {
+      cardsContainer.classList.add('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
+    } else {
+      cardsContainer.classList.remove('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.remove('desktop-layout'));
+    }
+  }
+
   async function initApp() {
     showLoader(true);
     try {
-      // Читаем данные напрямую из таблицы
-      allEntries = await getEntriesDirect();
-      
-      // Загружаем популярность и минимальный остаток для каждой детали
-      const popularityPromises = allEntries.map(async (entry) => {
-        const data = await getPartPopularityAndMinStock(entry.partNumber);
-        entry.added = data.added;
-        entry.taken = data.taken;
-        entry.minStock = data.minStock;
-        return entry;
-      });
-      
-      await Promise.all(popularityPromises);
-      
-      allEntriesForAnalysis = JSON.parse(JSON.stringify(allEntries));
+      // Загружаем все данные одним запросом
+      allEntries = await loadAllData();
       currentEntries = [...allEntries];
       
       updateTotalPages();
@@ -2558,7 +2306,7 @@
       showLoader(false);
     }
 
-    // Назначаем обработчики событий
+    // Обработчики событий
     document.getElementById('btnSearch')?.addEventListener('click', () => {
       const term = prompt('Введите номер детали:');
       if (term !== null) {
@@ -2581,22 +2329,21 @@
       document.getElementById('sortSelect').value = 'all';
     });
 
-    // Кнопка анализа теперь просто открывает ссылку, обработчик не нужен, но оставим для совместимости
-    // document.getElementById('btnAnalysis')?.addEventListener('click', ...) - удалено
-
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
       showLoader(true);
       try {
         if (this.value === 'all') {
           currentEntries = [...allEntries];
         } else if (this.value === 'popular') {
-          currentEntries = await getPopularEntries();
-          if (currentEntries && currentEntries[0]?.lastChangeDate) {
-            currentEntries.sort((a, b) => new Date(b.lastChangeDate) - new Date(a.lastChangeDate));
+          const popular = await getPopularEntries();
+          if (popular?.length) {
+            currentEntries = popular;
           }
         } else if (this.value === 'mostPopular') {
-          currentEntries = await getMostPopularEntries();
-          if (!currentEntries?.length) {
+          const mostPopular = await getMostPopularEntries();
+          if (mostPopular?.length) {
+            currentEntries = mostPopular;
+          } else {
             alert('Нет данных');
             return;
           }
@@ -2634,8 +2381,6 @@
   }
 
   window.addEventListener('resize', function() {
-    const cardsContainer = document.getElementById('cardsContainer');
-    if (!cardsContainer) return;
     toggleDesktopLayout(window.innerWidth > 1024);
   });
 </script>
