@@ -627,7 +627,7 @@
     
     .popularity-bar-container {
       flex: 1;
-      height: 28px;
+      height: 32px; /* Увеличено для лучшей видимости кружка */
       background: #e9ecef;
       border-radius: 30px;
       overflow: visible; /* Чтобы кружок не обрезался */
@@ -645,26 +645,26 @@
       z-index: 1;
     }
     
-    /* Кружок минимального остатка */
+    /* Кружок минимального остатка - только если minStock > 0 */
     .popularity-min-stock-circle {
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 36px;
-      height: 36px;
+      width: 42px; /* Увеличено */
+      height: 42px; /* Увеличено */
       background: white;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 16px;
+      font-size: 18px; /* Увеличено */
       color: #1f2937;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       border: 2px solid #1f2937;
       z-index: 20;
       pointer-events: none; /* Чтобы не мешала кликам */
       transition: left 0.3s ease;
+      /* Тень убрана */
     }
 
     /* ОКНО АНАЛИЗА - больше не используется, но стили оставлены для совместимости */
@@ -1237,12 +1237,14 @@
         min-width: 50px;
       }
       .popularity-bar-container {
-        height: 30px;
+        height: 36px; /* Увеличено */
       }
       .popularity-min-stock-circle {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 38px; /* Увеличено */
+        height: 38px; /* Увеличено */
+        font-size: 16px; /* Увеличено */
+        border-width: 2px;
+        box-shadow: none; /* Тень убрана */
       }
     }
     
@@ -1547,12 +1549,14 @@
         min-width: 45px;
       }
       .popularity-bar-container {
-        height: 28px;
+        height: 36px; /* Увеличено */
       }
       .popularity-min-stock-circle {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 42px; /* Увеличено */
+        height: 42px; /* Увеличено */
+        font-size: 18px; /* Увеличено */
+        border-width: 2px;
+        box-shadow: none; /* Тень убрана */
       }
     }
   </style>
@@ -2209,25 +2213,31 @@
     barFill.className = 'popularity-bar-fill';
     barFill.style.width = `${percent}%`;
     
-    // Кружок минимального остатка
-    const minStockCircle = document.createElement('div');
-    minStockCircle.className = 'popularity-min-stock-circle';
-    
-    // Рассчитываем позицию кружка (процент от добавленного количества)
-    let circlePosition = 0;
-    if (entry.added > 0 && entry.minStock > 0) {
-      // Позиция кружка = (минимальный остаток / добавлено) * 100%
-      circlePosition = Math.min(100, Math.round((entry.minStock / entry.added) * 100));
+    // Кружок минимального остатка - только если minStock > 0
+    let minStockCircle = null;
+    if (entry.minStock > 0) {
+      minStockCircle = document.createElement('div');
+      minStockCircle.className = 'popularity-min-stock-circle';
+      
+      // Рассчитываем позицию кружка: (добавлено - минимальный остаток) / добавлено * 100%
+      // Так чтобы при значении 1 кружок был справа, а при увеличении двигался влево
+      let circlePosition = 100; // По умолчанию справа
+      if (entry.added > 0 && entry.minStock > 0) {
+        // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее чтобы не наезжать на цифру добавлено
+        circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
+      }
+      minStockCircle.style.left = `${circlePosition}%`;
+      minStockCircle.textContent = entry.minStock;
     }
-    minStockCircle.style.left = `${circlePosition}%`;
-    minStockCircle.textContent = entry.minStock;
     
     const addedSpan = document.createElement('span');
     addedSpan.className = 'popularity-added';
     addedSpan.textContent = entry.added || 0;
     
     barContainer.appendChild(barFill);
-    barContainer.appendChild(minStockCircle); // Кружок внутри шкалы
+    if (minStockCircle) {
+      barContainer.appendChild(minStockCircle); // Кружок внутри шкалы (только если >0)
+    }
     popularityMeter.appendChild(takenSpan);      // Взято слева
     popularityMeter.appendChild(barContainer);   // Шкала с кружком
     popularityMeter.appendChild(addedSpan);      // Добавлено справа
@@ -2336,13 +2346,25 @@
           takenSpan.textContent = entry.taken;
           addedSpan.textContent = entry.added;
           
-          // Обновляем кружок минимального остатка
-          let circlePosition = 0;
-          if (entry.added > 0 && entry.minStock > 0) {
-            circlePosition = Math.min(100, Math.round((entry.minStock / entry.added) * 100));
+          // Обновляем или создаем кружок минимального остатка
+          let circle = barContainer.querySelector('.popularity-min-stock-circle');
+          if (entry.minStock > 0) {
+            if (!circle) {
+              circle = document.createElement('div');
+              circle.className = 'popularity-min-stock-circle';
+              barContainer.appendChild(circle);
+            }
+            // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее
+            let circlePosition = 100;
+            if (entry.added > 0) {
+              circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
+            }
+            circle.style.left = `${circlePosition}%`;
+            circle.textContent = entry.minStock;
+          } else if (circle) {
+            // Если мин. остаток стал 0, удаляем кружок
+            circle.remove();
           }
-          minStockCircle.style.left = `${circlePosition}%`;
-          minStockCircle.textContent = entry.minStock;
           
           const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
           barFill.style.width = `${newPercent}%`;
@@ -2371,13 +2393,25 @@
           takenSpan.textContent = entry.taken;
           addedSpan.textContent = entry.added;
           
-          // Обновляем кружок минимального остатка
-          let circlePosition = 0;
-          if (entry.added > 0 && entry.minStock > 0) {
-            circlePosition = Math.min(100, Math.round((entry.minStock / entry.added) * 100));
+          // Обновляем или создаем кружок минимального остатка
+          let circle = barContainer.querySelector('.popularity-min-stock-circle');
+          if (entry.minStock > 0) {
+            if (!circle) {
+              circle = document.createElement('div');
+              circle.className = 'popularity-min-stock-circle';
+              barContainer.appendChild(circle);
+            }
+            // Позиция = (1 - minStock/added) * 100%, но сдвигаем чуть левее
+            let circlePosition = 100;
+            if (entry.added > 0) {
+              circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
+            }
+            circle.style.left = `${circlePosition}%`;
+            circle.textContent = entry.minStock;
+          } else if (circle) {
+            // Если мин. остаток стал 0, удаляем кружок
+            circle.remove();
           }
-          minStockCircle.style.left = `${circlePosition}%`;
-          minStockCircle.textContent = entry.minStock;
           
           const newPercent = (entry.added > 0) ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
           barFill.style.width = `${newPercent}%`;
