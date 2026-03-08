@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -2104,7 +2104,7 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // Шкала популярности с кружком минимального остатка (СПРАВА)
+    // Шкала популярности с кружком минимального остатка
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
@@ -2115,42 +2115,24 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    // ИСПРАВЛЕНИЕ: Заливка показывает процент взятых деталей
-    // Но останавливается на кружке с минимальным остатком (который справа)
-    let fillPercent = 0;
-    if (entry.added > 0) {
-        // Процент взятых деталей от общего количества
-        fillPercent = (entry.taken / entry.added) * 100;
-        
-        // Если есть минимальный остаток, ограничиваем заливку
-        if (entry.minStock > 0) {
-            // Максимальная заливка не должна заходить за кружок с минимальным остатком
-            // Кружок справа на позиции (100 - (minStock/added * 100))
-            // Значит заливка может идти максимум до этой позиции
-            const maxFillPercent = 100 - ((entry.minStock / entry.added) * 100);
-            fillPercent = Math.min(fillPercent, maxFillPercent);
-        }
-    }
+    const percent = entry.added > 0 ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
     
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
-    barFill.style.width = `${fillPercent}%`;
+    barFill.style.width = `${percent}%`;
     barContainer.appendChild(barFill);
     
-    // Кружок минимального остатка (СПРАВА)
-    if (entry.minStock > 0 && entry.minStock <= entry.added) {
+    // Кружок минимального остатка - только если minStock > 0 И minStock < added
+    // (не показываем, если minStock равен added, чтобы не накладывался на цифру добавлено)
+    if (entry.minStock > 0 && entry.minStock < entry.added) {
       const circle = document.createElement('div');
       circle.className = 'popularity-min-stock-circle';
-      
-      // Кружок справа: позиция = 100 - (minStock/added * 100)
+      // Позиция кружка: (1 - minStock/added) * 100% - движется справа налево
+      // При minStock = 1 будет почти справа (100%), при увеличении minStock движется влево
       let circlePosition = 100;
       if (entry.added > 0) {
-        circlePosition = 100 - ((entry.minStock / entry.added) * 100);
+        circlePosition = Math.max(0, Math.min(95, 100 - ((entry.minStock / entry.added) * 100)));
       }
-      
-      // Ограничиваем позицию, чтобы кружок был виден
-      circlePosition = Math.max(2, Math.min(98, circlePosition));
-      
       circle.style.left = `${circlePosition}%`;
       circle.textContent = entry.minStock;
       barContainer.appendChild(circle);
