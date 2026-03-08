@@ -609,7 +609,7 @@
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
-    /* Шкала популярности под карточкой */
+    /* НОВЫЙ СТИЛЬ: шкала популярности под карточкой (с минимальным остатком в виде кружка) */
     .popularity-meter {
       margin-top: 12px;
       padding: 8px 12px;
@@ -619,24 +619,24 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 100%;
-      box-sizing: border-box;
     }
     
     .popularity-taken {
       font-size: 16px;
       font-weight: 700;
-      color: #dc143c;
+      color: #dc143c; /* красный для взято */
       min-width: 45px;
       text-align: center;
+      order: 1; /* Слева */
     }
     
     .popularity-added {
       font-size: 16px;
       font-weight: 700;
-      color: #059669;
+      color: #059669; /* зеленый для добавлено */
       min-width: 45px;
       text-align: center;
+      order: 3; /* Справа */
     }
     
     .popularity-bar-container {
@@ -647,7 +647,7 @@
       overflow: visible;
       position: relative;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-      margin: 0 5px;
+      order: 2;
     }
     
     .popularity-bar-fill {
@@ -2104,7 +2104,7 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // ИСПРАВЛЕННАЯ Шкала популярности с кружком минимального остатка
+    // Шкала популярности с кружком минимального остатка (СПРАВА)
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
@@ -2115,30 +2115,42 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    // ИСПРАВЛЕНО: процент берем от ВЗЯТО / ДОБАВЛЕНО (общее количество поступлений)
-    // Это показывает, какая часть от всех поступлений уже использована
-    const totalReceived = entry.added || 0; // общее количество поступлений
-    const percent = totalReceived > 0 
-      ? Math.min(100, Math.round((entry.taken / totalReceived) * 100)) 
-      : 0;
+    // ИСПРАВЛЕНИЕ: Заливка показывает процент взятых деталей
+    // Но останавливается на кружке с минимальным остатком (который справа)
+    let fillPercent = 0;
+    if (entry.added > 0) {
+        // Процент взятых деталей от общего количества
+        fillPercent = (entry.taken / entry.added) * 100;
+        
+        // Если есть минимальный остаток, ограничиваем заливку
+        if (entry.minStock > 0) {
+            // Максимальная заливка не должна заходить за кружок с минимальным остатком
+            // Кружок справа на позиции (100 - (minStock/added * 100))
+            // Значит заливка может идти максимум до этой позиции
+            const maxFillPercent = 100 - ((entry.minStock / entry.added) * 100);
+            fillPercent = Math.min(fillPercent, maxFillPercent);
+        }
+    }
     
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
-    barFill.style.width = `${percent}%`;
+    barFill.style.width = `${fillPercent}%`;
     barContainer.appendChild(barFill);
     
-    // Кружок минимального остатка - только если minStock > 0 И minStock < added
-    if (entry.minStock > 0 && entry.minStock < entry.added) {
+    // Кружок минимального остатка (СПРАВА)
+    if (entry.minStock > 0 && entry.minStock <= entry.added) {
       const circle = document.createElement('div');
       circle.className = 'popularity-min-stock-circle';
-      // Позиция кружка: отображает уровень минимального остатка относительно общего количества
+      
+      // Кружок справа: позиция = 100 - (minStock/added * 100)
       let circlePosition = 100;
       if (entry.added > 0) {
-        // Кружок показывает, сколько осталось до минимального остатка
-        // Приблизительная формула: (1 - (entry.quantity / entry.added)) * 100
-        // Но проще использовать соотношение minStock к added
-        circlePosition = Math.max(0, Math.min(95, 100 - ((entry.minStock / entry.added) * 100)));
+        circlePosition = 100 - ((entry.minStock / entry.added) * 100);
       }
+      
+      // Ограничиваем позицию, чтобы кружок был виден
+      circlePosition = Math.max(2, Math.min(98, circlePosition));
+      
       circle.style.left = `${circlePosition}%`;
       circle.textContent = entry.minStock;
       barContainer.appendChild(circle);
@@ -2222,7 +2234,7 @@
       }
     };
 
-    // Обработчик для кнопки "ВЗЯТЬ" с проверкой наличия
+    // ИЗМЕНЕННЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ПРОВЕРКОЙ НАЛИЧИЯ
     btnTake.onclick = async () => {
       const deltaStr = prompt('Введите число для вычитания:');
       
