@@ -615,7 +615,7 @@
     .chart-container {
       margin-top: 12px;
       width: 100%;
-      height: 50px;
+      height: 60px;
       background: transparent;
     }
     
@@ -921,7 +921,7 @@
       }
       
       .chart-container {
-        height: 40px;
+        height: 50px;
       }
     }
     
@@ -1215,7 +1215,7 @@
       }
       
       .chart-container {
-        height: 30px;
+        height: 40px;
       }
     }
   </style>
@@ -1678,12 +1678,12 @@
     });
   }
 
-  // Функция для создания ApexCharts
+  // Функция для создания ApexCharts с правильно внедрённым кружком
   function createStockChart(containerId, entry) {
     const options = {
       chart: {
         type: 'rangeBar',
-        height: 50,
+        height: '100%',
         sparkline: {
           enabled: true
         },
@@ -1691,18 +1691,75 @@
           enabled: true,
           easing: 'easeinout',
           speed: 800
+        },
+        events: {
+          mounted: function(chartContext, config) {
+            // Добавляем кастомный кружок после рендера
+            setTimeout(() => {
+              const container = document.querySelector(containerId);
+              if (!container) return;
+              
+              // Удаляем старый кружок если есть
+              const oldCircle = container.querySelector('.custom-stock-circle');
+              if (oldCircle) oldCircle.remove();
+              
+              // Создаём новый кружок
+              if (entry.minStock > 0 && entry.minStock < entry.added) {
+                const circle = document.createElement('div');
+                circle.className = 'custom-stock-circle';
+                
+                // Рассчитываем позицию
+                let position = (1 - entry.minStock / entry.added) * 100;
+                position = Math.max(5, Math.min(95, position));
+                
+                circle.style.cssText = `
+                  position: absolute;
+                  top: 50%;
+                  left: ${position}%;
+                  transform: translate(-50%, -50%);
+                  width: 28px;
+                  height: 28px;
+                  background: white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 800;
+                  font-size: 14px;
+                  color: #1f2937;
+                  border: 2px solid #1f2937;
+                  z-index: 1000;
+                  pointer-events: none;
+                  transition: left 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                `;
+                
+                circle.textContent = entry.minStock;
+                
+                // Если остаток меньше критического - делаем кружок красным
+                if (entry.quantity < entry.minStock) {
+                  circle.style.background = '#dc143c';
+                  circle.style.color = 'white';
+                  circle.style.borderColor = '#8b0000';
+                  circle.style.animation = 'pulseCircle 1s infinite';
+                }
+                
+                container.appendChild(circle);
+              }
+            }, 100);
+          }
         }
       },
       plotOptions: {
         bar: {
           horizontal: true,
-          barHeight: '100%',
+          barHeight: '70%',
           rangeBarGroupRows: true,
           colors: {
             ranges: [{
               from: 0,
               to: entry.taken,
-              color: '#dc143c'
+              color: entry.quantity < entry.minStock && entry.minStock > 0 ? '#ff0000' : '#dc143c'
             }]
           }
         }
@@ -1723,49 +1780,24 @@
       tooltip: {
         enabled: false
       },
-      annotations: entry.minStock > 0 && entry.minStock < entry.added ? {
-        points: [{
-          x: entry.added - entry.minStock,
-          y: 0,
-          marker: {
-            size: 8,
-            fillColor: '#FFFFFF',
-            strokeColor: '#1f2937',
-            radius: 2,
-            cssClass: 'stock-marker'
-          },
-          label: {
-            text: entry.minStock.toString(),
-            borderColor: '#1f2937',
-            borderWidth: 2,
-            borderRadius: 20,
-            textAnchor: 'middle',
-            offsetX: 0,
-            offsetY: -15,
-            style: {
-              background: '#FFFFFF',
-              color: '#1f2937',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              padding: {
-                left: 5,
-                right: 5,
-                top: 2,
-                bottom: 2
-              }
-            }
-          }
-        }]
-      } : {}
+      fill: {
+        type: 'gradient',
+        gradient: {
+          gradientToColors: ['#ff4d6d'],
+          stops: [0, 100]
+        }
+      }
     };
+
+    // Создаём контейнер для графика с относительным позиционированием
+    const container = document.querySelector(containerId);
+    if (container) {
+      container.style.position = 'relative';
+      container.style.overflow = 'visible';
+    }
 
     const chart = new ApexCharts(document.querySelector(containerId), options);
     chart.render();
-    
-    // Добавляем класс danger если остаток меньше критического
-    if (entry.quantity < entry.minStock) {
-      document.querySelector(`${containerId} .apexcharts-bar-area`).classList.add('danger-chart');
-    }
     
     return chart;
   }
@@ -1858,6 +1890,29 @@
     const chartId = `chart-${entry.partNumber.replace(/[^a-zA-Z0-9]/g, '-')}`;
     chartContainer.id = chartId;
     div.appendChild(chartContainer);
+
+    // Добавляем цифры "Взято" и "Добавлено" под графиком
+    const statsDiv = document.createElement('div');
+    statsDiv.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+    `;
+    
+    const takenStat = document.createElement('span');
+    takenStat.style.color = '#dc143c';
+    takenStat.textContent = `Взято: ${entry.taken}`;
+    
+    const addedStat = document.createElement('span');
+    addedStat.style.color = '#059669';
+    addedStat.textContent = `Добавлено: ${entry.added}`;
+    
+    statsDiv.appendChild(takenStat);
+    statsDiv.appendChild(addedStat);
+    div.appendChild(statsDiv);
 
     // Обработчики событий
     editButton.addEventListener('click', function() {
@@ -2163,25 +2218,20 @@
 </script>
 
 <style>
-  /* Дополнительные стили для ApexCharts */
-  .stock-marker {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-  }
-  
-  .stock-marker:hover {
-    transform: scale(1.2);
-  }
-  
-  .danger-chart .apexcharts-bar-area {
-    filter: drop-shadow(0 0 8px rgba(220, 20, 60, 0.8));
-    animation: pulse 1s infinite;
-  }
-  
-  @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
+  /* Дополнительные стили для анимации кружка */
+  @keyframes pulseCircle {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.7);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 0 10px rgba(220, 20, 60, 0);
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      box-shadow: 0 0 0 0 rgba(220, 20, 60, 0);
+    }
   }
   
   /* Скрываем лишние элементы ApexCharts */
@@ -2195,6 +2245,10 @@
   
   .apexcharts-grid {
     display: none !important;
+  }
+  
+  .apexcharts-series {
+    cursor: default !important;
   }
 </style>
 </body>
