@@ -659,6 +659,12 @@
       z-index: 1;
     }
     
+    /* Стили для режима достижения критического остатка */
+    .popularity-bar-fill.at-threshold {
+      background: linear-gradient(90deg, #ff0000, #dc143c);
+      box-shadow: 0 0 10px rgba(220, 20, 60, 0.9);
+    }
+    
     /* Стили для аварийного режима (остаток меньше критического) */
     .popularity-bar-fill.danger {
       background: linear-gradient(90deg, #ff0000, #dc143c);
@@ -672,12 +678,11 @@
       100% { opacity: 1; }
     }
     
-    /* ИСПРАВЛЕННЫЙ КРУЖОК - всегда на правой границе */
+    /* ДИНАМИЧЕСКИЙ КРУЖОК - двигается по шкале */
     .popularity-min-stock-circle {
       position: absolute;
       top: 50%;
-      left: 100%;                  /* Ставим в самый правый край */
-      transform: translate(-50%, -50%);  /* Сдвигаем влево на половину, чтобы центр был на границе */
+      transform: translate(-50%, -50%);
       width: 28px;
       height: 28px;
       background: white;
@@ -691,9 +696,8 @@
       border: 2px solid #1f2937;
       z-index: 20;
       pointer-events: none;
-      transition: all 0.3s ease;
+      transition: left 0.3s ease;
       box-sizing: border-box;
-      margin-left: -2px;            /* Небольшая корректировка для идеального выравнивания */
     }
     
     /* Красный кружок при аварии */
@@ -1275,12 +1279,11 @@
       .popularity-bar-container {
         height: 30px;
       }
-      /* ИСПРАВЛЕННЫЙ КРУЖОК для мобильных */
+      /* ДИНАМИЧЕСКИЙ КРУЖОК для мобильных */
       .popularity-min-stock-circle {
         width: 36px;
         height: 36px;
         font-size: 16px;
-        margin-left: -3px;
       }
     }
     
@@ -1589,7 +1592,6 @@
         width: 28px;
         height: 28px;
         font-size: 14px;
-        margin-left: -2px;
       }
     }
   </style>
@@ -2174,14 +2176,32 @@
     barFill.style.width = `${fillPercent}%`;
     barContainer.appendChild(barFill);
     
-    // Кружок минимального остатка - всегда справа (позиция из CSS)
+    // ДИНАМИЧЕСКИЙ КРУЖОК - двигается по шкале, но не наезжает на цифры
     let circle = null;
     if (entry.minStock > 0 && entry.minStock < entry.added) {
         circle = document.createElement('div');
         circle.className = 'popularity-min-stock-circle';
-        // Убираем inline-стиль left, полагаемся на CSS
+        
+        // Рассчитываем позицию: (1 - minStock/added) * 100%
+        let circlePosition = 100;
+        if (entry.added > 0) {
+            // Базовая формула
+            circlePosition = 100 - ((entry.minStock / entry.added) * 100);
+            
+            // ОГРАНИЧЕНИЯ, чтобы кружок не наезжал на цифры
+            // Минимум 5% (не прижимаем влево к цифре "взято")
+            // Максимум 95% (не прижимаем вправо к цифре "добавлено")
+            circlePosition = Math.max(5, Math.min(95, circlePosition));
+        }
+        
+        circle.style.left = `${circlePosition}%`;
         circle.textContent = entry.minStock;
         barContainer.appendChild(circle);
+        
+        // Если красная полоса достигла кружка - подсвечиваем
+        if (fillPercent >= circlePosition) {
+            barFill.classList.add('at-threshold');
+        }
     }
     
     // Проверяем, не упал ли остаток ниже критического
