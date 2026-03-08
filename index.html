@@ -512,6 +512,20 @@
       text-overflow: ellipsis;
       white-space: nowrap;
       max-width: 120px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .pill:hover {
+      background: #f0f0f0;
+      transform: scale(1.02);
+    }
+
+    .pill.copied {
+      background: #28a745;
+      color: white;
+      transition: all 0.2s ease;
     }
 
     .controls input {
@@ -1869,7 +1883,8 @@
         const partNumber = row[0].trim();
         const quantity = parseInt(row[1]) || 0;
         const fileUrl = row[3] || '';
-        const partName = row[4] || partNumber; // Столбец E - название детали
+        // Исправление: если названия нет (пустая строка или undefined), оставляем пустую строку
+        const partName = (row[4] && row[4].trim() !== '') ? row[4].trim() : '';
         const added = parseInt(row[6]) || 0;
         const taken = parseInt(row[7]) || 0;
         const minStock = parseInt(row[8]) || 0;
@@ -1989,6 +2004,22 @@
     document.getElementById('photoModal').style.display = 'flex';
   }
 
+  // Функция для копирования текста в буфер обмена
+  function copyToClipboard(text, element) {
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = element.textContent;
+      element.textContent = 'СКОПИРОВАНО!';
+      element.classList.add('copied');
+      
+      setTimeout(() => {
+        element.textContent = originalText;
+        element.classList.remove('copied');
+      }, 1000);
+    }).catch(err => {
+      console.error('Ошибка копирования:', err);
+    });
+  }
+
   function createCard(entry) {
     const div = document.createElement('div');
     div.className = 'card';
@@ -2030,7 +2061,8 @@
     
     const partNameText = document.createElement('div');
     partNameText.className = 'part-name-text';
-    partNameText.textContent = entry.partName || entry.partNumber;
+    // Исправление: если названия нет, оставляем пустую строку
+    partNameText.textContent = entry.partName;
     
     const editButton = document.createElement('button');
     editButton.className = 'part-name-edit-btn';
@@ -2047,6 +2079,10 @@
     const pill = document.createElement('div');
     pill.className = 'pill';
     pill.textContent = entry.partNumber;
+    // Добавляем обработчик клика для копирования номера детали
+    pill.addEventListener('click', function() {
+      copyToClipboard(entry.partNumber, this);
+    });
 
     const qtyInput = document.createElement('input');
     qtyInput.type = 'text';
@@ -2153,7 +2189,7 @@
         partNameText.style.display = '';
         editButton.style.display = '';
         
-        if (save && newName && newName !== currentName) {
+        if (save && newName !== currentName) {
           await updatePartName(partNumber, newName);
         }
       };
