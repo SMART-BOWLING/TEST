@@ -1869,6 +1869,7 @@
         const partNumber = row[0].trim();
         const quantity = parseInt(row[1]) || 0;
         const fileUrl = row[3] || '';
+        const partName = row[4] || partNumber; // Столбец E - название детали
         const added = parseInt(row[6]) || 0;
         const taken = parseInt(row[7]) || 0;
         const minStock = parseInt(row[8]) || 0;
@@ -1878,7 +1879,7 @@
           partNumber: partNumber,
           quantity: quantity,
           fileUrl: fileUrl,
-          partName: partNumber,
+          partName: partName,
           added: added,
           taken: taken,
           minStock: minStock
@@ -2022,7 +2023,7 @@
     media.append(rem);
     div.append(media);
 
-    // Название детали
+    // Название детали (из столбца E)
     const partNameContainer = document.createElement('div');
     partNameContainer.className = 'part-name-container';
     partNameContainer.dataset.partNumber = entry.partNumber;
@@ -2067,7 +2068,7 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // Шкала популярности
+    // Шкала популярности с кружком минимального остатка
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
@@ -2083,13 +2084,18 @@
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
     barFill.style.width = `${percent}%`;
+    barContainer.appendChild(barFill);
     
-    if (entry.minStock > 0) {
+    // Кружок минимального остатка - только если minStock > 0 И minStock < added
+    // (не показываем, если minStock равен added, чтобы не накладывался на цифру добавлено)
+    if (entry.minStock > 0 && entry.minStock < entry.added) {
       const circle = document.createElement('div');
       circle.className = 'popularity-min-stock-circle';
+      // Позиция кружка: (1 - minStock/added) * 100% - движется справа налево
+      // При minStock = 1 будет почти справа (100%), при увеличении minStock движется влево
       let circlePosition = 100;
       if (entry.added > 0) {
-        circlePosition = Math.max(0, Math.min(95, 100 - (entry.minStock / entry.added) * 100));
+        circlePosition = Math.max(0, Math.min(95, 100 - ((entry.minStock / entry.added) * 100)));
       }
       circle.style.left = `${circlePosition}%`;
       circle.textContent = entry.minStock;
@@ -2100,7 +2106,6 @@
     addedSpan.className = 'popularity-added';
     addedSpan.textContent = entry.added || 0;
     
-    barContainer.appendChild(barFill);
     popularityMeter.appendChild(takenSpan);
     popularityMeter.appendChild(barContainer);
     popularityMeter.appendChild(addedSpan);
