@@ -672,11 +672,12 @@
       100% { opacity: 1; }
     }
     
+    /* ИСПРАВЛЕННЫЙ КРУЖОК - всегда на правой границе */
     .popularity-min-stock-circle {
       position: absolute;
       top: 50%;
-      right: 0;
-      transform: translate(50%, -50%);
+      left: 100%;                  /* Ставим в самый правый край */
+      transform: translate(-50%, -50%);  /* Сдвигаем влево на половину, чтобы центр был на границе */
       width: 28px;
       height: 28px;
       background: white;
@@ -691,6 +692,8 @@
       z-index: 20;
       pointer-events: none;
       transition: all 0.3s ease;
+      box-sizing: border-box;
+      margin-left: -2px;            /* Небольшая корректировка для идеального выравнивания */
     }
     
     /* Красный кружок при аварии */
@@ -702,9 +705,9 @@
     }
     
     @keyframes pulse-circle {
-      0% { transform: translate(50%, -50%) scale(1); }
-      50% { transform: translate(50%, -50%) scale(1.1); }
-      100% { transform: translate(50%, -50%) scale(1); }
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
     }
 
     .photo-modal {
@@ -1272,11 +1275,12 @@
       .popularity-bar-container {
         height: 30px;
       }
+      /* ИСПРАВЛЕННЫЙ КРУЖОК для мобильных */
       .popularity-min-stock-circle {
         width: 36px;
         height: 36px;
         font-size: 16px;
-        border-width: 2px;
+        margin-left: -3px;
       }
     }
     
@@ -1585,7 +1589,7 @@
         width: 28px;
         height: 28px;
         font-size: 14px;
-        border-width: 2px;
+        margin-left: -2px;
       }
     }
   </style>
@@ -2170,13 +2174,12 @@
     barFill.style.width = `${fillPercent}%`;
     barContainer.appendChild(barFill);
     
-    // Кружок минимального остатка - всегда справа
+    // Кружок минимального остатка - всегда справа (позиция из CSS)
     let circle = null;
     if (entry.minStock > 0 && entry.minStock < entry.added) {
         circle = document.createElement('div');
         circle.className = 'popularity-min-stock-circle';
-        // Кружок всегда в конце шкалы
-        circle.style.left = '100%';
+        // Убираем inline-стиль left, полагаемся на CSS
         circle.textContent = entry.minStock;
         barContainer.appendChild(circle);
     }
