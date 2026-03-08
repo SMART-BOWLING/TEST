@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -609,7 +609,7 @@
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
-    /* НОВЫЙ СТИЛЬ: шкала популярности под карточкой (с минимальным остатком в виде кружка) */
+    /* ИСПРАВЛЕННАЯ шкала популярности */
     .popularity-meter {
       margin-top: 12px;
       padding: 8px 12px;
@@ -624,19 +624,19 @@
     .popularity-taken {
       font-size: 16px;
       font-weight: 700;
-      color: #dc143c; /* красный для взято */
+      color: #dc143c;
       min-width: 45px;
       text-align: center;
-      order: 1; /* Слева */
+      order: 1;
     }
     
     .popularity-added {
       font-size: 16px;
       font-weight: 700;
-      color: #059669; /* зеленый для добавлено */
+      color: #059669;
       min-width: 45px;
       text-align: center;
-      order: 3; /* Справа */
+      order: 3;
     }
     
     .popularity-bar-container {
@@ -659,10 +659,24 @@
       z-index: 1;
     }
     
+    /* Стили для аварийного режима (остаток меньше критического) */
+    .popularity-bar-fill.danger {
+      background: linear-gradient(90deg, #ff0000, #dc143c);
+      box-shadow: 0 0 8px rgba(220, 20, 60, 0.8);
+      animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
     .popularity-min-stock-circle {
       position: absolute;
       top: 50%;
-      transform: translate(-50%, -50%);
+      right: 0;
+      transform: translate(50%, -50%);
       width: 28px;
       height: 28px;
       background: white;
@@ -676,7 +690,21 @@
       border: 2px solid #1f2937;
       z-index: 20;
       pointer-events: none;
-      transition: left 0.3s ease;
+      transition: all 0.3s ease;
+    }
+    
+    /* Красный кружок при аварии */
+    .popularity-min-stock-circle.danger {
+      background: #dc143c;
+      color: white;
+      border-color: #8b0000;
+      animation: pulse-circle 1s infinite;
+    }
+    
+    @keyframes pulse-circle {
+      0% { transform: translate(50%, -50%) scale(1); }
+      50% { transform: translate(50%, -50%) scale(1.1); }
+      100% { transform: translate(50%, -50%) scale(1); }
     }
 
     .photo-modal {
@@ -2104,7 +2132,7 @@
     controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
     div.append(controls);
 
-    // Шкала популярности с кружком минимального остатка
+    // ========== ИСПРАВЛЕННАЯ ШКАЛА ПОПУЛЯРНОСТИ ==========
     const popularityMeter = document.createElement('div');
     popularityMeter.className = 'popularity-meter';
     
@@ -2115,27 +2143,49 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    const percent = entry.added > 0 ? Math.min(100, Math.round((entry.taken / entry.added) * 100)) : 0;
+    // НОВАЯ ЛОГИКА: считаем процент использования до критического остатка
+    let fillPercent = 0;
+    
+    if (entry.added > 0 && entry.minStock > 0) {
+        // Сколько деталей можно использовать до достижения критического остатка
+        const usableQuantity = entry.added - entry.minStock;
+        
+        // Сколько уже использовано (взято)
+        const usedQuantity = entry.taken;
+        
+        if (usableQuantity > 0) {
+            // Процент использования от доступного объёма (не трогая критический запас)
+            fillPercent = Math.min(100, Math.round((usedQuantity / usableQuantity) * 100));
+        } else {
+            // Если usableQuantity <= 0, значит критический запас больше или равен добавленному
+            fillPercent = usedQuantity > 0 ? 100 : 0;
+        }
+    } else if (entry.added > 0) {
+        // Если minStock не задан, используем старую логику (просто взято/добавлено)
+        fillPercent = Math.min(100, Math.round((entry.taken / entry.added) * 100));
+    }
     
     const barFill = document.createElement('div');
     barFill.className = 'popularity-bar-fill';
-    barFill.style.width = `${percent}%`;
+    barFill.style.width = `${fillPercent}%`;
     barContainer.appendChild(barFill);
     
-    // Кружок минимального остатка - только если minStock > 0 И minStock < added
-    // (не показываем, если minStock равен added, чтобы не накладывался на цифру добавлено)
+    // Кружок минимального остатка - всегда справа
+    let circle = null;
     if (entry.minStock > 0 && entry.minStock < entry.added) {
-      const circle = document.createElement('div');
-      circle.className = 'popularity-min-stock-circle';
-      // Позиция кружка: (1 - minStock/added) * 100% - движется справа налево
-      // При minStock = 1 будет почти справа (100%), при увеличении minStock движется влево
-      let circlePosition = 100;
-      if (entry.added > 0) {
-        circlePosition = Math.max(0, Math.min(95, 100 - ((entry.minStock / entry.added) * 100)));
-      }
-      circle.style.left = `${circlePosition}%`;
-      circle.textContent = entry.minStock;
-      barContainer.appendChild(circle);
+        circle = document.createElement('div');
+        circle.className = 'popularity-min-stock-circle';
+        // Кружок всегда в конце шкалы
+        circle.style.left = '100%';
+        circle.textContent = entry.minStock;
+        barContainer.appendChild(circle);
+    }
+    
+    // Проверяем, не упал ли остаток ниже критического
+    const currentQuantity = entry.quantity; // текущий остаток на складе
+    if (currentQuantity < entry.minStock && entry.minStock > 0) {
+        barFill.classList.add('danger');
+        if (circle) circle.classList.add('danger');
     }
     
     const addedSpan = document.createElement('span');
