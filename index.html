@@ -659,7 +659,7 @@
       z-index: 1;
     }
     
-    /* Стили для режима достижения критического остатка */
+    /* Стиль для достижения критического остатка */
     .popularity-bar-fill.at-threshold {
       background: linear-gradient(90deg, #ff0000, #dc143c);
       box-shadow: 0 0 10px rgba(220, 20, 60, 0.9);
@@ -1279,7 +1279,6 @@
       .popularity-bar-container {
         height: 30px;
       }
-      /* ДИНАМИЧЕСКИЙ КРУЖОК для мобильных */
       .popularity-min-stock-circle {
         width: 36px;
         height: 36px;
@@ -2149,26 +2148,20 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    // НОВАЯ ЛОГИКА: считаем процент использования до критического остатка
+    // НОВАЯ ЛОГИКА: процент использования от общего количества добавленных
     let fillPercent = 0;
+    let minStockPosition = 100; // По умолчанию кружок справа
+    const usagePercent = entry.added > 0 ? (entry.taken / entry.added) * 100 : 0;
     
-    if (entry.added > 0 && entry.minStock > 0) {
-        // Сколько деталей можно использовать до достижения критического остатка
-        const usableQuantity = entry.added - entry.minStock;
+    if (entry.added > 0 && entry.minStock > 0 && entry.minStock < entry.added) {
+        // Позиция критического остатка в процентах
+        minStockPosition = 100 - ((entry.minStock / entry.added) * 100);
         
-        // Сколько уже использовано (взято)
-        const usedQuantity = entry.taken;
-        
-        if (usableQuantity > 0) {
-            // Процент использования от доступного объёма (не трогая критический запас)
-            fillPercent = Math.min(100, Math.round((usedQuantity / usableQuantity) * 100));
-        } else {
-            // Если usableQuantity <= 0, значит критический запас больше или равен добавленному
-            fillPercent = usedQuantity > 0 ? 100 : 0;
-        }
+        // Красная полоса заполняется до usagePercent, но не дальше minStockPosition
+        fillPercent = Math.min(usagePercent, minStockPosition);
     } else if (entry.added > 0) {
-        // Если minStock не задан, используем старую логику (просто взято/добавлено)
-        fillPercent = Math.min(100, Math.round((entry.taken / entry.added) * 100));
+        // Если minStock не задан, используем обычный процент
+        fillPercent = usagePercent;
     }
     
     const barFill = document.createElement('div');
@@ -2176,30 +2169,24 @@
     barFill.style.width = `${fillPercent}%`;
     barContainer.appendChild(barFill);
     
-    // ДИНАМИЧЕСКИЙ КРУЖОК - двигается по шкале, но не наезжает на цифры
+    // ДИНАМИЧЕСКИЙ КРУЖОК
     let circle = null;
     if (entry.minStock > 0 && entry.minStock < entry.added) {
         circle = document.createElement('div');
         circle.className = 'popularity-min-stock-circle';
         
-        // Рассчитываем позицию: (1 - minStock/added) * 100%
-        let circlePosition = 100;
-        if (entry.added > 0) {
-            // Базовая формула
-            circlePosition = 100 - ((entry.minStock / entry.added) * 100);
-            
-            // ОГРАНИЧЕНИЯ, чтобы кружок не наезжал на цифры
-            // Минимум 5% (не прижимаем влево к цифре "взято")
-            // Максимум 95% (не прижимаем вправо к цифре "добавлено")
-            circlePosition = Math.max(5, Math.min(95, circlePosition));
-        }
+        // Позиция кружка: (1 - minStock/added) * 100%
+        let circlePosition = 100 - ((entry.minStock / entry.added) * 100);
+        
+        // ОГРАНИЧЕНИЯ для визуального комфорта (чтобы не наезжал на цифры)
+        circlePosition = Math.max(5, Math.min(95, circlePosition));
         
         circle.style.left = `${circlePosition}%`;
         circle.textContent = entry.minStock;
         barContainer.appendChild(circle);
         
-        // Если красная полоса достигла кружка - подсвечиваем
-        if (fillPercent >= circlePosition) {
+        // Если использовано больше или равно позиции кружка - подсвечиваем
+        if (usagePercent >= circlePosition) {
             barFill.classList.add('at-threshold');
         }
     }
