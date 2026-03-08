@@ -2148,20 +2148,33 @@
     const barContainer = document.createElement('div');
     barContainer.className = 'popularity-bar-container';
     
-    // НОВАЯ ЛОГИКА: процент использования от общего количества добавленных
+    // НОВАЯ ЛОГИКА: синхронизированные расчёты
     let fillPercent = 0;
-    let minStockPosition = 100; // По умолчанию кружок справа
-    const usagePercent = entry.added > 0 ? (entry.taken / entry.added) * 100 : 0;
+    let circlePosition = 100; // По умолчанию кружок справа
     
-    if (entry.added > 0 && entry.minStock > 0 && entry.minStock < entry.added) {
-        // Позиция критического остатка в процентах
-        minStockPosition = 100 - ((entry.minStock / entry.added) * 100);
+    if (entry.added > 0) {
+        // Процент использованных деталей от общего количества добавленных
+        const usagePercent = (entry.taken / entry.added) * 100;
         
-        // Красная полоса заполняется до usagePercent, но не дальше minStockPosition
-        fillPercent = Math.min(usagePercent, minStockPosition);
-    } else if (entry.added > 0) {
-        // Если minStock не задан, используем обычный процент
-        fillPercent = usagePercent;
+        if (entry.minStock > 0 && entry.minStock < entry.added) {
+            // ПОЗИЦИЯ КРУЖКА: (1 - minStock/added) * 100%
+            circlePosition = 100 - ((entry.minStock / entry.added) * 100);
+            
+            // ОГРАНИЧЕНИЯ для визуального комфорта (5-95%)
+            circlePosition = Math.max(5, Math.min(95, circlePosition));
+            
+            // КРАСНАЯ ПОЛОСА: заполняется до usagePercent, но с отступом 1% от кружка
+            // Чтобы гарантированно не перелезать
+            fillPercent = Math.min(usagePercent, circlePosition - 1);
+            
+            // Но если usagePercent очень маленький, не уходим в минус
+            fillPercent = Math.max(0, fillPercent);
+        } else {
+            // Если minStock не задан, используем обычный процент
+            fillPercent = usagePercent;
+            // Ограничиваем 95% для визуального комфорта
+            fillPercent = Math.min(95, fillPercent);
+        }
     }
     
     const barFill = document.createElement('div');
@@ -2175,18 +2188,13 @@
         circle = document.createElement('div');
         circle.className = 'popularity-min-stock-circle';
         
-        // Позиция кружка: (1 - minStock/added) * 100%
-        let circlePosition = 100 - ((entry.minStock / entry.added) * 100);
-        
-        // ОГРАНИЧЕНИЯ для визуального комфорта (чтобы не наезжал на цифры)
-        circlePosition = Math.max(5, Math.min(95, circlePosition));
-        
         circle.style.left = `${circlePosition}%`;
         circle.textContent = entry.minStock;
         barContainer.appendChild(circle);
         
-        // Если использовано больше или равно позиции кружка - подсвечиваем
-        if (usagePercent >= circlePosition) {
+        // Если использовано больше или равно позиции кружка (с учётом погрешности)
+        const usagePercent = (entry.taken / entry.added) * 100;
+        if (usagePercent >= circlePosition - 0.5) {
             barFill.classList.add('at-threshold');
         }
     }
