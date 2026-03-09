@@ -857,8 +857,8 @@
 
     .logo-wrapper {
       position: relative;
-      width: 400px;
-      height: 400px;
+      width: 400px;  /* Увеличено с 160px до 400px (в 2.5 раза) */
+      height: 400px; /* Увеличено с 160px до 400px (в 2.5 раза) */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -866,51 +866,50 @@
 
     .glow-ring {
       position: absolute;
-      width: 200px;
-      height: 200px;
+      width: 200px;  /* Увеличено с 80px до 200px (в 2.5 раза) */
+      height: 200px; /* Увеличено с 80px до 200px (в 2.5 раза) */
       border-radius: 100%;
       background: conic-gradient(#dc143c, transparent 100%);
       animation: spin 5s linear infinite;
-      filter: blur(50px);
+      filter: blur(50px); /* Увеличено с 20px до 50px (в 2.5 раза) */
     }
 
     .loading-screen img {
-      width: 300px;
+      width: 300px; /* Увеличено с 120px до 300px (в 2.5 раза) */
       z-index: 2;
     }
 
     @keyframes spin {
       to { transform: rotate(365deg); }
     }
-
-    /* ===== АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ ===== */
-    .operation-loading-screen {
+    
+    /* ===== НОВЫЙ ИНДИКАТОР ЗАГРУЗКИ ДЛЯ ФОНОВЫХ ОПЕРАЦИЙ ===== */
+    .loader-overlay {
       position: fixed;
-      inset: 0;
-      background: #1f2937;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
       display: none;
       justify-content: center;
       align-items: center;
       z-index: 100000;
+      backdrop-filter: blur(3px);
     }
-
-    .operation-loading-screen.active {
+    
+    .loader-overlay.active {
       display: flex;
     }
-
-    .operation-loading-screen .logo-wrapper {
-      width: 300px;
-      height: 300px;
-    }
-
-    .operation-loading-screen .glow-ring {
-      width: 150px;
-      height: 150px;
-      filter: blur(40px);
-    }
-
-    .operation-loading-screen img {
-      width: 220px;
+    
+    .mini-loader {
+      width: 80px;
+      height: 80px;
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
     }
     
     @media (max-width: 1024px) {
@@ -1502,17 +1501,9 @@
   </div>
 </div>
 
-<!-- АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ С ДЕТАЛЯМИ (такая же как основная) -->
-<div class="operation-loading-screen" id="operationLoadingScreen">
-  <div class="logo-wrapper">
-    <div class="glow-ring"></div>
-    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
-  </div>
-</div>
-
-<!-- Индикатор загрузки (оставляем для фоновых операций) -->
-<div class="loader-container" id="loader">
-  <div class="loader"></div>
+<!-- НОВЫЙ ИНДИКАТОР ЗАГРУЗКИ ДЛЯ ФОНОВЫХ ОПЕРАЦИЙ -->
+<div class="loader-overlay" id="loaderOverlay">
+  <div class="mini-loader"></div>
 </div>
 
 <!-- Шапка (выпадающий список KH удален) -->
@@ -1619,7 +1610,7 @@
   const cardsPerPage = 30;
 
   const loadingScreen = document.getElementById('loadingScreen');
-  const operationLoadingScreen = document.getElementById('operationLoadingScreen');
+  const loaderOverlay = document.getElementById('loaderOverlay');
 
   const pagination = {
     prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
@@ -1627,16 +1618,7 @@
   };
 
   function showLoader(show) {
-    document.getElementById('loader').style.display = show ? 'flex' : 'none';
-  }
-
-  // Функции для управления анимацией операций
-  function showOperationLoader() {
-    operationLoadingScreen.classList.add('active');
-  }
-
-  function hideOperationLoader() {
-    operationLoadingScreen.classList.remove('active');
+    loaderOverlay.classList.toggle('active', show);
   }
 
   // Функции для выпадающих меню (только пользовательское)
@@ -1863,7 +1845,7 @@
 
   // Функции для записи (через Apps Script)
   async function updateQuantity(partNumber, delta) {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
       const data = await res.json();
@@ -1876,12 +1858,12 @@
       }
       return data;
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
   async function deleteEntry(rowIndex) {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
       const data = await res.json();
@@ -1894,42 +1876,42 @@
       }
       return data;
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
   async function getHistory(partNumber) {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
       return await res.text();
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
   async function getPopularEntries() {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getPopularEntries`);
       return await res.json();
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
   async function getMostPopularEntries() {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getMostPopularEntries`);
       return await res.json();
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
   async function updatePartName(partNumber, newName) {
-    showOperationLoader();
+    showLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
       const data = await res.json();
@@ -1940,7 +1922,7 @@
       }
       return data;
     } finally {
-      hideOperationLoader();
+      showLoader(false);
     }
   }
 
@@ -2307,7 +2289,7 @@
     });
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
-      showOperationLoader();
+      showLoader(true);
       try {
         if (this.value === 'all') {
           currentEntries = [...allEntries];
@@ -2331,7 +2313,7 @@
         currentPage = 1;
         renderPage(currentPage);
       } finally {
-        hideOperationLoader();
+        showLoader(false);
       }
     });
 
