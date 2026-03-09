@@ -883,6 +883,55 @@
       to { transform: rotate(365deg); }
     }
     
+    /* ===== АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ ===== */
+    .loading-screen.small {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      border-radius: 20px;
+      background: rgba(31, 41, 55, 0.95);
+      backdrop-filter: blur(5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 100000;
+    }
+    
+    .loading-screen.small .logo-wrapper {
+      width: 150px;
+      height: 150px;
+    }
+    
+    .loading-screen.small .glow-ring {
+      width: 80px;
+      height: 80px;
+      filter: blur(20px);
+    }
+    
+    .loading-screen.small img {
+      width: 100px;
+    }
+    
+    .loading-screen.hidden {
+      display: none;
+    }
+    
+    /* Блокировка кликов во время загрузки */
+    body.loading {
+      pointer-events: none;
+      user-select: none;
+    }
+    
+    body.loading .loading-screen.small {
+      pointer-events: none;
+    }
+    
+    /* Индикатор загрузки (оставляем для совместимости, но скрываем) */
+    .loader-container {
+      display: none !important;
+    }
+    
     @media (max-width: 1024px) {
       .site-name-text {
         font-size: 50px;
@@ -1472,6 +1521,14 @@
   </div>
 </div>
 
+<!-- АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ -->
+<div class="loading-screen small hidden" id="operationLoading">
+  <div class="logo-wrapper">
+    <div class="glow-ring"></div>
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Operation Loading">
+  </div>
+</div>
+
 <!-- Индикатор загрузки (оставляем для фоновых операций) -->
 <div class="loader-container" id="loader">
   <div class="loader"></div>
@@ -1581,14 +1638,27 @@
   const cardsPerPage = 30;
 
   const loadingScreen = document.getElementById('loadingScreen');
+  const operationLoading = document.getElementById('operationLoading');
 
   const pagination = {
     prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
     nextPage: () => { if (currentPage < totalPages) goToPage(currentPage + 1); }
   };
 
+  // Функции для управления анимацией загрузки операций
+  function showOperationLoader(show) {
+    if (show) {
+      operationLoading.classList.remove('hidden');
+      document.body.classList.add('loading');
+    } else {
+      operationLoading.classList.add('hidden');
+      document.body.classList.remove('loading');
+    }
+  }
+
   function showLoader(show) {
-    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    // Заменяем старый индикатор на новый
+    showOperationLoader(show);
   }
 
   // Функции для выпадающих меню (только пользовательское)
@@ -2072,12 +2142,14 @@
     btnAdd.onclick = async () => {
       const deltaStr = prompt('Введите число для добавления:');
       const delta = Number(deltaStr);
-      if (deltaStr !== null && !isNaN(delta)) {
+      if (deltaStr !== null && !isNaN(delta) && delta > 0) {
         await updateQuantity(entry.partNumber, delta);
+      } else if (deltaStr !== null) {
+        alert('Пожалуйста, введите положительное число');
       }
     };
 
-    // ИЗМЕНЕННЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ПРОВЕРКОЙ НАЛИЧИЯ
+    // ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С АНИМАЦИЕЙ ЗАГРУЗКИ
     btnTake.onclick = async () => {
       const deltaStr = prompt('Введите число для вычитания:');
       
@@ -2108,7 +2180,7 @@
         return;
       }
       
-      // Если проверка пройдена, выполняем операцию
+      // Если проверка пройдена, выполняем операцию с анимацией загрузки
       await updateQuantity(entry.partNumber, -delta);
     };
 
