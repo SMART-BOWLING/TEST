@@ -882,54 +882,53 @@
     @keyframes spin {
       to { transform: rotate(365deg); }
     }
-    
-    /* ===== АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ ===== */
-    .loading-screen.small {
+
+    /* ===== НОВАЯ АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ С ДЕТАЛЯМИ ===== */
+    .operation-loader {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px;
-      height: 200px;
-      border-radius: 20px;
-      background: rgba(31, 41, 55, 0.95);
-      backdrop-filter: blur(5px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      z-index: 100000;
-    }
-    
-    .loading-screen.small .logo-wrapper {
-      width: 150px;
-      height: 150px;
-    }
-    
-    .loading-screen.small .glow-ring {
-      width: 80px;
-      height: 80px;
-      filter: blur(20px);
-    }
-    
-    .loading-screen.small img {
-      width: 100px;
-    }
-    
-    .loading-screen.hidden {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(31, 41, 55, 0.9);
       display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      backdrop-filter: blur(5px);
     }
-    
-    /* Блокировка кликов во время загрузки */
-    body.loading {
-      pointer-events: none;
-      user-select: none;
+
+    .operation-loader.active {
+      display: flex;
     }
-    
-    body.loading .loading-screen.small {
-      pointer-events: none;
+
+    .operation-loader .loader-content {
+      text-align: center;
+      color: white;
     }
-    
-    /* Индикатор загрузки (оставляем для совместимости, но скрываем) */
-    .loader-container {
-      display: none !important;
+
+    .operation-loader .loader-spinner {
+      width: 120px;
+      height: 120px;
+      border: 8px solid rgba(220, 20, 60, 0.3);
+      border-top: 8px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+    }
+
+    .operation-loader .loader-text {
+      font-size: 24px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
     
     @media (max-width: 1024px) {
@@ -1521,17 +1520,17 @@
   </div>
 </div>
 
-<!-- АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ -->
-<div class="loading-screen small hidden" id="operationLoading">
-  <div class="logo-wrapper">
-    <div class="glow-ring"></div>
-    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Operation Loading">
-  </div>
-</div>
-
 <!-- Индикатор загрузки (оставляем для фоновых операций) -->
 <div class="loader-container" id="loader">
   <div class="loader"></div>
+</div>
+
+<!-- НОВАЯ АНИМАЦИЯ ЗАГРУЗКИ ДЛЯ ОПЕРАЦИЙ С ДЕТАЛЯМИ -->
+<div class="operation-loader" id="operationLoader">
+  <div class="loader-content">
+    <div class="loader-spinner"></div>
+    <div class="loader-text" id="operationLoaderText">ОБРАБОТКА...</div>
+  </div>
 </div>
 
 <!-- Шапка (выпадающий список KH удален) -->
@@ -1638,27 +1637,27 @@
   const cardsPerPage = 30;
 
   const loadingScreen = document.getElementById('loadingScreen');
-  const operationLoading = document.getElementById('operationLoading');
 
   const pagination = {
     prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
     nextPage: () => { if (currentPage < totalPages) goToPage(currentPage + 1); }
   };
 
-  // Функции для управления анимацией загрузки операций
-  function showOperationLoader(show) {
-    if (show) {
-      operationLoading.classList.remove('hidden');
-      document.body.classList.add('loading');
-    } else {
-      operationLoading.classList.add('hidden');
-      document.body.classList.remove('loading');
-    }
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
   }
 
-  function showLoader(show) {
-    // Заменяем старый индикатор на новый
-    showOperationLoader(show);
+  // Функции для управления анимацией операций
+  function showOperationLoader(text = 'ОБРАБОТКА...') {
+    const loader = document.getElementById('operationLoader');
+    const loaderText = document.getElementById('operationLoaderText');
+    loaderText.textContent = text;
+    loader.classList.add('active');
+  }
+
+  function hideOperationLoader() {
+    const loader = document.getElementById('operationLoader');
+    loader.classList.remove('active');
   }
 
   // Функции для выпадающих меню (только пользовательское)
@@ -1885,7 +1884,7 @@
 
   // Функции для записи (через Apps Script)
   async function updateQuantity(partNumber, delta) {
-    showLoader(true);
+    showOperationLoader(delta > 0 ? 'ДОБАВЛЕНИЕ...' : 'СПИСАНИЕ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
       const data = await res.json();
@@ -1898,12 +1897,12 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
   async function deleteEntry(rowIndex) {
-    showLoader(true);
+    showOperationLoader('УДАЛЕНИЕ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
       const data = await res.json();
@@ -1916,42 +1915,42 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
   async function getHistory(partNumber) {
-    showLoader(true);
+    showOperationLoader('ЗАГРУЗКА ИСТОРИИ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
       return await res.text();
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
   async function getPopularEntries() {
-    showLoader(true);
+    showOperationLoader('ЗАГРУЗКА ДАННЫХ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getPopularEntries`);
       return await res.json();
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
   async function getMostPopularEntries() {
-    showLoader(true);
+    showOperationLoader('ЗАГРУЗКА ДАННЫХ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getMostPopularEntries`);
       return await res.json();
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
   async function updatePartName(partNumber, newName) {
-    showLoader(true);
+    showOperationLoader('СОХРАНЕНИЕ...');
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
       const data = await res.json();
@@ -1962,7 +1961,7 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      hideOperationLoader();
     }
   }
 
@@ -2142,14 +2141,12 @@
     btnAdd.onclick = async () => {
       const deltaStr = prompt('Введите число для добавления:');
       const delta = Number(deltaStr);
-      if (deltaStr !== null && !isNaN(delta) && delta > 0) {
+      if (deltaStr !== null && !isNaN(delta)) {
         await updateQuantity(entry.partNumber, delta);
-      } else if (deltaStr !== null) {
-        alert('Пожалуйста, введите положительное число');
       }
     };
 
-    // ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С АНИМАЦИЕЙ ЗАГРУЗКИ
+    // ИЗМЕНЕННЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ПРОВЕРКОЙ НАЛИЧИЯ
     btnTake.onclick = async () => {
       const deltaStr = prompt('Введите число для вычитания:');
       
@@ -2180,7 +2177,7 @@
         return;
       }
       
-      // Если проверка пройдена, выполняем операцию с анимацией загрузки
+      // Если проверка пройдена, выполняем операцию
       await updateQuantity(entry.partNumber, -delta);
     };
 
@@ -2331,7 +2328,7 @@
     });
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
-      showLoader(true);
+      showOperationLoader('ЗАГРУЗКА ДАННЫХ...');
       try {
         if (this.value === 'all') {
           currentEntries = [...allEntries];
@@ -2355,7 +2352,7 @@
         currentPage = 1;
         renderPage(currentPage);
       } finally {
-        showLoader(false);
+        hideOperationLoader();
       }
     });
 
