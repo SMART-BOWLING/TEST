@@ -283,7 +283,6 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       box-sizing: border-box;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
     }
 
     .card:hover {
@@ -854,14 +853,14 @@
       to { transform: rotate(365deg); }
     }
     
-    /* ===== НОВЫЕ ВЫПАДАЮЩИЕ СПИСКИ ПОД КАРТОЧКОЙ ===== */
+    /* ===== ВЫПАДАЮЩИЕ СПИСКИ ПОД КАРТОЧКОЙ ===== */
     .take-quick-panel {
       display: none;
       margin-top: 15px;
-      padding: 15px;
+      padding: 20px;
       background: #ffffff;
       border-radius: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       animation: slideDown 0.2s ease-out;
     }
 
@@ -876,14 +875,27 @@
 
     .take-row {
       display: flex;
-      gap: 12px;
-      align-items: center;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .take-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .take-field label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-left: 5px;
     }
 
     .take-select {
-      flex: 1;
+      width: 100%;
       height: 60px;
-      padding: 0 15px;
+      padding: 0 20px;
       border: 2px solid #dc143c;
       border-radius: 16px;
       font-size: 20px;
@@ -895,7 +907,7 @@
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc143c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 15px center;
-      background-size: 20px;
+      background-size: 24px;
     }
 
     .take-select.qty-select {
@@ -909,56 +921,96 @@
     }
 
     .take-confirm-btn {
-      width: 60px;
+      width: 100%;
       height: 60px;
       background: #dc143c;
       border: none;
       border-radius: 16px;
       color: white;
-      font-size: 28px;
+      font-size: 24px;
+      font-weight: bold;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 10px;
       transition: all 0.2s ease;
       box-shadow: 0 4px 8px rgba(220,20,60,0.3);
-      flex-shrink: 0;
+      margin-top: 10px;
     }
 
     .take-confirm-btn:hover {
       background: #b01030;
-      transform: scale(1.05);
+      transform: scale(1.02);
     }
 
     .take-confirm-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.98);
     }
 
     .take-confirm-btn i {
-      font-size: 28px;
+      font-size: 24px;
+    }
+
+    /* Поле для "Другое" */
+    .other-machine-input {
+      width: 100%;
+      padding: 15px 18px;
+      border: 2px solid #dc143c;
+      border-radius: 16px;
+      font-size: 18px;
+      margin-top: 10px;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .other-machine-input:focus {
+      border-color: #b01030;
     }
 
     /* Адаптация для телефона */
     @media (max-width: 1024px) {
-      .take-row {
-        gap: 10px;
+      .take-field label {
+        font-size: 20px;
       }
       
       .take-select {
         height: 70px;
         font-size: 22px;
-        border-width: 3px;
-        background-size: 24px;
+        background-size: 28px;
       }
       
       .take-confirm-btn {
-        width: 70px;
         height: 70px;
-        font-size: 32px;
+        font-size: 26px;
       }
       
       .take-confirm-btn i {
-        font-size: 32px;
+        font-size: 26px;
+      }
+      
+      .other-machine-input {
+        height: 70px;
+        font-size: 22px;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .take-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      
+      .take-field {
+        flex: 1;
+        min-width: 200px;
+      }
+      
+      .take-confirm-btn {
+        width: auto;
+        min-width: 120px;
+        margin-top: 0;
       }
     }
 
@@ -2008,7 +2060,11 @@
     const row = document.createElement('div');
     row.className = 'take-row';
     
-    // Выпадающий список для количества (1-10)
+    // Поле для количества
+    const qtyField = document.createElement('div');
+    qtyField.className = 'take-field';
+    const qtyLabel = document.createElement('label');
+    qtyLabel.textContent = 'Количество:';
     const qtySelect = document.createElement('select');
     qtySelect.className = 'take-select qty-select';
     for (let i = 1; i <= 10; i++) {
@@ -2017,8 +2073,14 @@
       option.textContent = i;
       qtySelect.appendChild(option);
     }
+    qtyField.appendChild(qtyLabel);
+    qtyField.appendChild(qtySelect);
     
-    // Выпадающий список для машины
+    // Поле для машины
+    const machineField = document.createElement('div');
+    machineField.className = 'take-field';
+    const machineLabel = document.createElement('label');
+    machineLabel.textContent = 'Номер машины:';
     const machineSelect = document.createElement('select');
     machineSelect.className = 'take-select machine-select';
     const machines = ['P.S-1', 'P.S-2', 'P.S-3', 'P.S-4', 'P.S-5', 'Другое'];
@@ -2028,27 +2090,23 @@
       option.textContent = m;
       machineSelect.appendChild(option);
     });
+    machineField.appendChild(machineLabel);
+    machineField.appendChild(machineSelect);
     
     // Кнопка подтверждения
     const confirmBtn = document.createElement('button');
     confirmBtn.className = 'take-confirm-btn';
-    confirmBtn.innerHTML = '<i class="fas fa-check"></i>';
+    confirmBtn.innerHTML = '<i class="fas fa-check"></i> ВЗЯТЬ';
     
-    // Поле для "Другое" (изначально скрыто)
+    // Поле для "Другое"
     const otherInput = document.createElement('input');
     otherInput.type = 'text';
     otherInput.placeholder = 'Введите номер машины';
+    otherInput.className = 'other-machine-input';
     otherInput.style.display = 'none';
-    otherInput.style.marginTop = '10px';
-    otherInput.style.width = '100%';
-    otherInput.style.padding = '12px';
-    otherInput.style.border = '2px solid #dc143c';
-    otherInput.style.borderRadius = '12px';
-    otherInput.style.fontSize = '18px';
-    otherInput.style.boxSizing = 'border-box';
     
-    row.appendChild(qtySelect);
-    row.appendChild(machineSelect);
+    row.appendChild(qtyField);
+    row.appendChild(machineField);
     row.appendChild(confirmBtn);
     
     panel.appendChild(row);
@@ -2060,7 +2118,8 @@
     });
     
     // Обработчик подтверждения
-    confirmBtn.addEventListener('click', async function() {
+    confirmBtn.addEventListener('click', async function(e) {
+      e.stopPropagation();
       const qty = parseInt(qtySelect.value);
       let machine = machineSelect.value;
       
@@ -2258,14 +2317,6 @@
       document.getElementById('modalContent').textContent = hist;
       document.getElementById('modalOverlay').style.display = 'flex';
     };
-
-    // При клике на карточку (не на кнопки) - закрываем все панели
-    div.addEventListener('click', function(e) {
-      // Если клик не по кнопке "ВЗЯТЬ" и не по элементам внутри панели
-      if (!e.target.closest('.btn-take') && !e.target.closest('.take-quick-panel')) {
-        document.querySelectorAll('.take-quick-panel.active').forEach(p => p.classList.remove('active'));
-      }
-    });
 
     return div;
   }
