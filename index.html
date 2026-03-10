@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -1713,14 +1713,12 @@
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
     
-    showLoader(false);
-    
-    // Скрываем анимацию загрузки при успешной авторизации
+    // Показываем анимацию загрузки при входе
     if (loadingScreen) {
-      setTimeout(() => {
-        loadingScreen.classList.add('fade-out');
-      }, 500);
+      loadingScreen.classList.remove('fade-out');
     }
+    
+    showLoader(false);
     
     initApp();
   }
@@ -1746,6 +1744,12 @@
       };
       
       updateUserAvatar(currentUser);
+      
+      // Показываем анимацию загрузки при восстановлении сессии
+      if (loadingScreen) {
+        loadingScreen.classList.remove('fade-out');
+      }
+      
       showLoader(true);
       
       loadSheetsAPI()
@@ -1761,9 +1765,11 @@
         });
     } else {
       document.getElementById('login').style.display = 'block';
-      // Если не авторизован, скрываем анимацию загрузки
+      // Если не авторизован, скрываем анимацию загрузки через 0.5 сек
       if (loadingScreen) {
-        loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
       }
     }
   });
@@ -2151,6 +2157,13 @@
     if (window.innerWidth > 1024) {
       container.classList.add('desktop-layout');
       document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
+    }
+
+    // Скрываем анимацию загрузки после первого рендера
+    if (loadingScreen && !loadingScreen.classList.contains('fade-out')) {
+      setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+      }, 500);
     }
   }
 
