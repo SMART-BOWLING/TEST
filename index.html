@@ -1634,8 +1634,8 @@
 </div>
 
 <!-- Индикатор загрузки (оставляем для фоновых операций) -->
-<div class="loader-container" id="loader">
-  <div class="loader"></div>
+<div class="loader-container" id="loader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20000; align-items: center; justify-content: center;">
+  <div class="loader" style="border: 8px solid #f3f3f3; border-top: 8px solid #dc143c; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
 </div>
 
 <!-- Шапка (выпадающий список KH удален) -->
@@ -1768,7 +1768,7 @@
 
 <script>
   // === НАСТРОЙКИ ===
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXw4Mj40_cAi5NQ6o3NFIhkMudHV4gnSp62gjuGjCpNvHXcwPRgKlHWHZBZq138VwI/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxa-nC3OEHWcGnplouY3G2DMtGtot5wdyuug7L5WGUNfQ9TaQi5FLd2t-lhyzJuJZlU/exec";
   const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
   const SHEET_NAME = 'KH';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -2029,16 +2029,28 @@
         url += `&machine=${encodeURIComponent(machine)}`;
       }
       
+      console.log('Отправка запроса:', url);
+      
       const res = await fetch(url);
       const data = await res.json();
+      
+      console.log('Ответ от сервера:', data);
+      
       if (data.status === 'success') {
         // После успешного обновления перезагружаем все данные
         allEntries = await loadAllData();
         currentEntries = [...allEntries];
         updateTotalPages();
         renderPage(currentPage);
+        return data;
+      } else {
+        alert(data.message || 'Ошибка при обновлении количества');
+        return data;
       }
-      return data;
+    } catch (error) {
+      console.error('Ошибка в updateQuantity:', error);
+      alert('Произошла ошибка при выполнении операции');
+      throw error;
     } finally {
       showLoader(false);
     }
@@ -2164,10 +2176,18 @@
   }
   
   async function saveTake() {
-    if (!currentTakePartNumber) return;
+    if (!currentTakePartNumber) {
+      alert('Ошибка: не выбран номер детали');
+      return;
+    }
     
     const machine = document.getElementById('machineSelect').value;
     const qty = parseInt(document.getElementById('takeQty').value);
+    
+    if (isNaN(qty) || qty < 1) {
+      alert('Введите корректное количество');
+      return;
+    }
     
     if (qty > currentTakeQuantity) {
       alert('Недостаточно в наличии!');
@@ -2175,10 +2195,21 @@
     }
     
     console.log(`Взятие: ${currentTakePartNumber}, Машина: ${machine}, Количество: ${qty}`);
+    
+    // Закрываем модальное окно
     closeTakeModal();
     
-    // Передаем delta отрицательное значение (взятие) и номер машины
-    await updateQuantity(currentTakePartNumber, -qty, machine);
+    try {
+      // Передаем delta отрицательное значение (взятие) и номер машины
+      const result = await updateQuantity(currentTakePartNumber, -qty, machine);
+      
+      if (result && result.status === 'error') {
+        alert(result.message || 'Ошибка при взятии детали');
+      }
+    } catch (error) {
+      console.error('Ошибка в saveTake:', error);
+      alert('Произошла ошибка при выполнении операции');
+    }
   }
 
   function createCard(entry) {
@@ -2329,7 +2360,7 @@
       const deltaStr = prompt('Введите число для добавления:');
       const delta = Number(deltaStr);
       if (deltaStr !== null && !isNaN(delta)) {
-        await updateQuantity(entry.partNumber, delta);
+        await updateQuantity(entry.partNumber, delta, '');
       }
     };
 
