@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ДЕТАЛИ KH (с указанием машины)</title>
+  <title>ДЕТАЛИ KH (выбор машины 1-14)</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Identity Script -->
@@ -587,7 +587,7 @@
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
-    /* Модальное окно для указания машины */
+    /* Модальное окно для выбора машины */
     .machine-modal {
       position: fixed;
       top: 0;
@@ -634,7 +634,7 @@
       padding-bottom: 15px;
     }
 
-    .machine-modal-content input {
+    .machine-select {
       width: 100%;
       padding: 18px 20px;
       font-size: 24px;
@@ -645,10 +645,16 @@
       text-align: center;
       font-weight: 600;
       outline: none;
-      transition: border 0.2s;
+      background: white;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 20px center;
+      background-size: 24px;
     }
 
-    .machine-modal-content input:focus {
+    .machine-select:focus {
       border-color: #dc143c;
     }
 
@@ -1263,7 +1269,7 @@
       .machine-modal-content h3 {
         font-size: 32px;
       }
-      .machine-modal-content input {
+      .machine-select {
         font-size: 28px;
         padding: 20px;
       }
@@ -1559,11 +1565,13 @@
         margin-bottom: 15px;
         padding-bottom: 8px;
       }
-      .machine-modal-content input {
+      .machine-select {
         padding: 10px;
         font-size: 16px;
         border-radius: 8px;
         margin-bottom: 15px;
+        background-size: 16px;
+        background-position: right 10px center;
       }
       .machine-modal-buttons button {
         padding: 10px;
@@ -1673,11 +1681,26 @@
     </div>
   </div>
 
-  <!-- Модальное окно для ввода номера машины при взятии -->
+  <!-- Модальное окно для выбора машины (P.S-1 - P.S-14) -->
   <div id="machineModal" class="machine-modal" style="display: none;">
     <div class="machine-modal-content">
-      <h3>Укажите машину</h3>
-      <input type="text" id="machineInput" placeholder="Например: P.S-1" autocomplete="off">
+      <h3>Выберите машину</h3>
+      <select id="machineSelect" class="machine-select">
+        <option value="P.S-1">P.S-1</option>
+        <option value="P.S-2">P.S-2</option>
+        <option value="P.S-3">P.S-3</option>
+        <option value="P.S-4">P.S-4</option>
+        <option value="P.S-5">P.S-5</option>
+        <option value="P.S-6">P.S-6</option>
+        <option value="P.S-7">P.S-7</option>
+        <option value="P.S-8">P.S-8</option>
+        <option value="P.S-9">P.S-9</option>
+        <option value="P.S-10">P.S-10</option>
+        <option value="P.S-11">P.S-11</option>
+        <option value="P.S-12">P.S-12</option>
+        <option value="P.S-13">P.S-13</option>
+        <option value="P.S-14">P.S-14</option>
+      </select>
       <div class="machine-modal-buttons">
         <button class="confirm-btn" id="machineConfirm">OK</button>
         <button class="cancel-btn" id="machineCancel">Отмена</button>
@@ -2047,15 +2070,15 @@
     });
   }
 
-  // === ОБРАБОТКА МОДАЛЬНОГО ОКНА ДЛЯ МАШИНЫ ===
+  // === ОБРАБОТКА МОДАЛЬНОГО ОКНА ДЛЯ ВЫБОРА МАШИНЫ ===
   function showMachineModal(partNumber, delta) {
     pendingTakePartNumber = partNumber;
     pendingTakeDelta = delta;
     const modal = document.getElementById('machineModal');
-    const input = document.getElementById('machineInput');
-    input.value = ''; // Очищаем поле
+    const select = document.getElementById('machineSelect');
+    select.value = 'P.S-1'; // Устанавливаем значение по умолчанию
     modal.style.display = 'flex';
-    input.focus();
+    select.focus();
   }
 
   function closeMachineModal() {
@@ -2065,9 +2088,9 @@
   }
 
   document.getElementById('machineConfirm').addEventListener('click', async () => {
-    const machine = document.getElementById('machineInput').value.trim();
+    const machine = document.getElementById('machineSelect').value;
     if (pendingTakePartNumber && pendingTakeDelta) {
-      await updateQuantity(pendingTakePartNumber, pendingTakeDelta, machine || 'P.S-1');
+      await updateQuantity(pendingTakePartNumber, pendingTakeDelta, machine);
     }
     closeMachineModal();
   });
@@ -2083,8 +2106,8 @@
     }
   });
 
-  // Enter в поле ввода
-  document.getElementById('machineInput').addEventListener('keypress', (e) => {
+  // Enter в селекте (выбор по Enter)
+  document.getElementById('machineSelect').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       document.getElementById('machineConfirm').click();
     }
@@ -2242,7 +2265,7 @@
       }
     };
 
-    // ИЗМЕНЕННЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ОКНОМ ДЛЯ МАШИНЫ
+    // ОБРАБОТЧИК ДЛЯ КНОПКИ "ВЗЯТЬ" С ВЫБОРОМ МАШИНЫ
     btnTake.onclick = async () => {
       const deltaStr = prompt('Введите число для вычитания:');
       
@@ -2268,7 +2291,7 @@
         return;
       }
       
-      // Показываем модальное окно для ввода машины
+      // Показываем модальное окно для выбора машины
       showMachineModal(entry.partNumber, -delta);
     };
 
