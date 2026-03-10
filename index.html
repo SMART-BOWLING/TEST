@@ -1768,7 +1768,7 @@
 
 <script>
   // === НАСТРОЙКИ ===
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_hCnjk2P6RrW6nPyVgUFWTvmBD8cEIW7t_IR8Ukqu62zptrVNt92dMWNIkDZUKIGE/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXw4Mj40_cAi5NQ6o3NFIhkMudHV4gnSp62gjuGjCpNvHXcwPRgKlHWHZBZq138VwI/exec";
   const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
   const SHEET_NAME = 'KH';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -2019,10 +2019,17 @@
   }
 
   // Функции для записи (через Apps Script)
-  async function updateQuantity(partNumber, delta) {
+  async function updateQuantity(partNumber, delta, machine) {
     showLoader(true);
     try {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`);
+      // Добавляем параметр machine в URL, если это взятие (delta < 0)
+      let url = `${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`;
+      
+      if (delta < 0 && machine) {
+        url += `&machine=${encodeURIComponent(machine)}`;
+      }
+      
+      const res = await fetch(url);
       const data = await res.json();
       if (data.status === 'success') {
         // После успешного обновления перезагружаем все данные
@@ -2169,7 +2176,9 @@
     
     console.log(`Взятие: ${currentTakePartNumber}, Машина: ${machine}, Количество: ${qty}`);
     closeTakeModal();
-    await updateQuantity(currentTakePartNumber, -qty);
+    
+    // Передаем delta отрицательное значение (взятие) и номер машины
+    await updateQuantity(currentTakePartNumber, -qty, machine);
   }
 
   function createCard(entry) {
