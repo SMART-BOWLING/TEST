@@ -1768,7 +1768,7 @@
 
 <script>
   // === НАСТРОЙКИ ===
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxa-nC3OEHWcGnplouY3G2DMtGtot5wdyuug7L5WGUNfQ9TaQi5FLd2t-lhyzJuJZlU/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxZCBvcLl1wlviAsVO1uTpyj1fVCNrZun4KYQ0rjx7zSc0X1DkiB9DciOYAQ88cE80/exec";
   const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
   const SHEET_NAME = 'KH';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -2022,14 +2022,18 @@
   async function updateQuantity(partNumber, delta, machine) {
     showLoader(true);
     try {
+      // Очищаем номер детали от пробелов
+      const cleanPartNumber = partNumber.toString().trim();
+      
       // Добавляем параметр machine в URL, если это взятие (delta < 0)
-      let url = `${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}`;
+      let url = `${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(cleanPartNumber)}&delta=${delta}`;
       
       if (delta < 0 && machine) {
         url += `&machine=${encodeURIComponent(machine)}`;
       }
       
       console.log('Отправка запроса:', url);
+      console.log('Номер детали (очищенный):', cleanPartNumber);
       
       const res = await fetch(url);
       const data = await res.json();
@@ -2049,7 +2053,7 @@
       }
     } catch (error) {
       console.error('Ошибка в updateQuantity:', error);
-      alert('Произошла ошибка при выполнении операции');
+      alert('Произошла ошибка при выполнении операции: ' + error.message);
       throw error;
     } finally {
       showLoader(false);
@@ -2190,25 +2194,33 @@
     }
     
     if (qty > currentTakeQuantity) {
-      alert('Недостаточно в наличии!');
+      alert('Недостаточно в наличии! Доступно: ' + currentTakeQuantity + ' шт.');
       return;
     }
     
     console.log(`Взятие: ${currentTakePartNumber}, Машина: ${machine}, Количество: ${qty}`);
+    console.log(`Текущее количество: ${currentTakeQuantity}`);
+    
+    // Сохраняем номер детали во временную переменную
+    const partNumber = currentTakePartNumber;
     
     // Закрываем модальное окно
     closeTakeModal();
     
     try {
       // Передаем delta отрицательное значение (взятие) и номер машины
-      const result = await updateQuantity(currentTakePartNumber, -qty, machine);
+      const result = await updateQuantity(partNumber, -qty, machine);
       
       if (result && result.status === 'error') {
         alert(result.message || 'Ошибка при взятии детали');
+        // Если ошибка, перезагружаем данные чтобы показать актуальное состояние
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        renderPage(currentPage);
       }
     } catch (error) {
       console.error('Ошибка в saveTake:', error);
-      alert('Произошла ошибка при выполнении операции');
+      alert('Произошла ошибка при выполнении операции: ' + error.message);
     }
   }
 
