@@ -578,15 +578,23 @@
       min-width: 120px;
       transition: all 0.2s ease;
       position: relative;
+      /* Убираем изменение цвета и обводку при любых состояниях */
     }
 
     .btn-take:hover {
       background: linear-gradient(to bottom, #e51c47, #c01238);
     }
 
-    .btn-take.active {
-      background: linear-gradient(to bottom, #2a3648, #0d1520);
-      box-shadow: 0 0 0 3px rgba(220,20,60,0.5);
+    /* Убираем все изменения цвета и обводки для кнопки ВЗЯТЬ */
+    .btn-take:focus,
+    .btn-take:active,
+    .btn-take.active,
+    .btn-take:focus-visible,
+    .btn-take:focus-within {
+      background: linear-gradient(to bottom, #dc143c, #b01030) !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+      outline: none !important;
+      border: none !important;
     }
 
     .photo-modal {
@@ -928,7 +936,8 @@
     }
 
     /* Поле для "Другое" */
-    .other-machine-input {
+    .other-machine-input,
+    .other-qty-input {
       width: 100%;
       padding: 15px 18px;
       border: 2px solid #dc143c;
@@ -939,7 +948,8 @@
       outline: none;
     }
 
-    .other-machine-input:focus {
+    .other-machine-input:focus,
+    .other-qty-input:focus {
       border-color: #b01030;
     }
 
@@ -955,7 +965,8 @@
         background-size: 28px;
       }
       
-      .other-machine-input {
+      .other-machine-input,
+      .other-qty-input {
         height: 70px;
         font-size: 22px;
       }
@@ -987,7 +998,8 @@
         background-size: 18px;
       }
       
-      .other-machine-input {
+      .other-machine-input,
+      .other-qty-input {
         height: 45px;
         font-size: 15px;
         padding: 0 12px;
@@ -2042,7 +2054,7 @@
     const row = document.createElement('div');
     row.className = 'take-row';
     
-    // Поле для количества
+    // Поле для количества с опцией "Другое"
     const qtyField = document.createElement('div');
     qtyField.className = 'take-field';
     const qtyLabel = document.createElement('label');
@@ -2055,10 +2067,25 @@
       option.textContent = i;
       qtySelect.appendChild(option);
     }
+    // Добавляем опцию "Другое" для количества
+    const otherQtyOption = document.createElement('option');
+    otherQtyOption.value = 'other';
+    otherQtyOption.textContent = 'Другое';
+    qtySelect.appendChild(otherQtyOption);
+    
     qtyField.appendChild(qtyLabel);
     qtyField.appendChild(qtySelect);
     
-    // Поле для машины - добавлены номера с P.S-1 по P.S-14
+    // Поле для ручного ввода количества (изначально скрыто)
+    const otherQtyInput = document.createElement('input');
+    otherQtyInput.type = 'number';
+    otherQtyInput.placeholder = 'Введите количество';
+    otherQtyInput.className = 'other-qty-input';
+    otherQtyInput.style.display = 'none';
+    otherQtyInput.min = '1';
+    otherQtyInput.value = '1';
+    
+    // Поле для машины
     const machineField = document.createElement('div');
     machineField.className = 'take-field';
     const machineLabel = document.createElement('label');
@@ -2071,7 +2098,7 @@
     for (let i = 1; i <= 14; i++) {
       machines.push(`P.S-${i}`);
     }
-    machines.push('Другое'); // Добавляем опцию "Другое" в конец
+    machines.push('Другое');
     
     machines.forEach(m => {
       const option = document.createElement('option');
@@ -2083,29 +2110,36 @@
     machineField.appendChild(machineLabel);
     machineField.appendChild(machineSelect);
     
-    // Поле для "Другое"
-    const otherInput = document.createElement('input');
-    otherInput.type = 'text';
-    otherInput.placeholder = 'Введите номер машины';
-    otherInput.className = 'other-machine-input';
-    otherInput.style.display = 'none';
+    // Поле для ручного ввода машины
+    const otherMachineInput = document.createElement('input');
+    otherMachineInput.type = 'text';
+    otherMachineInput.placeholder = 'Введите номер машины';
+    otherMachineInput.className = 'other-machine-input';
+    otherMachineInput.style.display = 'none';
     
     row.appendChild(qtyField);
     row.appendChild(machineField);
     panel.appendChild(row);
-    panel.appendChild(otherInput);
+    panel.appendChild(otherQtyInput);
+    panel.appendChild(otherMachineInput);
+    
+    // Обработчик изменения выбора количества
+    qtySelect.addEventListener('change', function() {
+      otherQtyInput.style.display = this.value === 'other' ? 'block' : 'none';
+    });
     
     // Обработчик изменения выбора машины
     machineSelect.addEventListener('change', function() {
-      otherInput.style.display = this.value === 'Другое' ? 'block' : 'none';
+      otherMachineInput.style.display = this.value === 'Другое' ? 'block' : 'none';
     });
     
     // Сохраняем ссылки на элементы в данных кнопки
     takeButton.panelData = {
       panel: panel,
       qtySelect: qtySelect,
+      otherQtyInput: otherQtyInput,
       machineSelect: machineSelect,
-      otherInput: otherInput,
+      otherMachineInput: otherMachineInput,
       partNumber: partNumber,
       availableQty: availableQty
     };
@@ -2202,7 +2236,7 @@
     // Переменная для отслеживания состояния панели
     let isPanelActive = false;
 
-    // Обработчик кнопки "ВЗЯТЬ"
+    // Обработчик кнопки "ВЗЯТЬ" - убираем изменение цвета
     btnTake.onclick = async (e) => {
       e.stopPropagation();
       
@@ -2210,20 +2244,30 @@
         // Первый клик - показываем панель
         // Закрываем все другие открытые панели
         document.querySelectorAll('.take-quick-panel.active').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.btn-take.active').forEach(btn => btn.classList.remove('active'));
         
-        // Открываем текущую панель
+        // Открываем текущую панель - НЕ меняем цвет кнопки
         takePanel.classList.add('active');
-        btnTake.classList.add('active');
         isPanelActive = true;
       } else {
         // Второй клик - выполняем взятие
         const data = btnTake.panelData;
-        const qty = parseInt(data.qtySelect.value);
-        let machine = data.machineSelect.value;
         
+        // Определяем количество
+        let qty;
+        if (data.qtySelect.value === 'other') {
+          qty = parseInt(data.otherQtyInput.value);
+          if (isNaN(qty) || qty <= 0) {
+            alert('Введите корректное количество');
+            return;
+          }
+        } else {
+          qty = parseInt(data.qtySelect.value);
+        }
+        
+        // Определяем машину
+        let machine = data.machineSelect.value;
         if (machine === 'Другое') {
-          const other = data.otherInput.value.trim();
+          const other = data.otherMachineInput.value.trim();
           if (!other) {
             alert('Укажите номер машины');
             return;
@@ -2238,9 +2282,8 @@
         
         await updateQuantity(data.partNumber, -qty, machine);
         
-        // Закрываем панель после успешного взятия
+        // Закрываем панель после успешного взятия - НЕ меняем цвет кнопки
         takePanel.classList.remove('active');
-        btnTake.classList.remove('active');
         isPanelActive = false;
       }
     };
@@ -2327,7 +2370,6 @@
     document.addEventListener('click', function(e) {
       if (!div.contains(e.target)) {
         takePanel.classList.remove('active');
-        btnTake.classList.remove('active');
         isPanelActive = false;
       }
     });
