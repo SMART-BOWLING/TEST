@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -905,8 +905,7 @@
       margin-left: 5px;
     }
 
-    .take-select,
-    .take-input {
+    .take-select {
       width: 100%;
       height: 60px;
       padding: 0 20px;
@@ -918,26 +917,10 @@
       cursor: pointer;
       outline: none;
       appearance: none;
-      font-family: inherit;
-      box-sizing: border-box;
-    }
-
-    .take-select {
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc143c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 15px center;
       background-size: 24px;
-    }
-
-    .take-input {
-      appearance: textfield;
-      cursor: text;
-    }
-
-    .take-input::-webkit-inner-spin-button,
-    .take-input::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
     }
 
     .take-select.qty-select {
@@ -956,13 +939,13 @@
         font-size: 20px;
       }
       
-      .take-select,
-      .take-input {
+      .take-select {
         height: 70px;
         font-size: 22px;
         background-size: 28px;
       }
       
+      /* ЭТО ВАЖНО - переопределяем column на row для телефонов */
       .take-row {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -992,8 +975,7 @@
         margin-bottom: 4px;
       }
       
-      .take-select,
-      .take-input {
+      .take-select {
         height: 45px;
         font-size: 15px;
         padding: 0 12px;
@@ -1003,6 +985,7 @@
       }
     }
 
+    /* Остальные медиа-запросы */
     @media (max-width: 1024px) {
       .site-name-text {
         font-size: 50px;
@@ -1603,8 +1586,7 @@
         margin-bottom: 2px;
       }
       
-      .take-select,
-      .take-input {
+      .take-select {
         height: 36px !important;
         font-size: 12px !important;
         padding: 0 16px 0 4px !important;
@@ -2061,7 +2043,7 @@
     });
   }
 
-  // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ createTakePanel - теперь можно вводить любой текст в поле машины =====
+  // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ createTakePanel =====
   function createTakePanel(partNumber, availableQty, takeButton) {
     const panel = document.createElement('div');
     panel.className = 'take-quick-panel';
@@ -2070,7 +2052,6 @@
     const row = document.createElement('div');
     row.className = 'take-row';
     
-    // Поле для количества (оставляем как select)
     const qtyField = document.createElement('div');
     qtyField.className = 'take-field';
     const qtyLabel = document.createElement('label');
@@ -2091,25 +2072,36 @@
     qtyField.appendChild(qtyLabel);
     qtyField.appendChild(qtySelect);
     
-    // Поле для машины - теперь это input, можно вводить любой текст
     const machineField = document.createElement('div');
     machineField.className = 'take-field';
     const machineLabel = document.createElement('label');
     machineLabel.textContent = 'Номер машины:';
-    const machineInput = document.createElement('input');
-    machineInput.type = 'text';
-    machineInput.className = 'take-input machine-select';
-    machineInput.placeholder = 'Введите номер машины';
+    const machineSelect = document.createElement('select');
+    machineSelect.className = 'take-select machine-select';
+    
+    const machines = [];
+    for (let i = 1; i <= 14; i++) {
+      machines.push(`P.S-${i}`);
+    }
+    machines.push('Другое');
+    
+    machines.forEach(m => {
+      const option = document.createElement('option');
+      option.value = m;
+      option.textContent = m;
+      machineSelect.appendChild(option);
+    });
     
     machineField.appendChild(machineLabel);
-    machineField.appendChild(machineInput);
+    machineField.appendChild(machineSelect);
     
     row.appendChild(qtyField);
     row.appendChild(machineField);
     panel.appendChild(row);
     
-    // Храним выбранные значения
+    // Храним выбранные значения из prompt
     let customQty = null;
+    let customMachine = null;
     
     // Обработчик для выбора количества
     qtySelect.addEventListener('change', function() {
@@ -2139,11 +2131,35 @@
       }
     });
     
+    // Обработчик для выбора машины
+    machineSelect.addEventListener('change', function() {
+      if (this.value === 'Другое') {
+        const machine = prompt('Введите номер машины:', '');
+        if (machine !== null && machine.trim() !== '') {
+          customMachine = machine.trim();
+          
+          // Создаем временную опцию с введенным значением
+          const existingCustom = Array.from(machineSelect.options).find(opt => opt.value === 'custom');
+          if (existingCustom) machineSelect.remove(existingCustom.index);
+          
+          const customOption = document.createElement('option');
+          customOption.value = 'custom';
+          customOption.textContent = `Другое (${machine})`;
+          machineSelect.add(customOption, machineSelect.options.length - 1);
+          machineSelect.value = 'custom';
+        } else {
+          alert('Номер машины не может быть пустым');
+          this.value = machines[0];
+        }
+      }
+    });
+    
     takeButton.panelData = {
       panel: panel,
       qtySelect: qtySelect,
-      machineInput: machineInput, // теперь это input, а не select
+      machineSelect: machineSelect,
       customQty: customQty,
+      customMachine: customMachine,
       partNumber: partNumber,
       availableQty: availableQty
     };
@@ -2256,15 +2272,23 @@
           qty = parseInt(data.qtySelect.value);
         }
         
-        // Получаем номер машины из input (теперь можно ввести любой текст)
-        const machine = data.machineInput.value.trim();
+        // Получаем номер машины
+        let machine;
+        if (data.machineSelect.value === 'custom') {
+          machine = data.customMachine;
+        } else if (data.machineSelect.value === 'Другое') {
+          alert('Сначала введите номер машины в поле "Другое"');
+          return;
+        } else {
+          machine = data.machineSelect.value;
+        }
         
         if (!qty || qty <= 0) {
           alert('Укажите корректное количество');
           return;
         }
         
-        if (!machine) {
+        if (!machine || machine.trim() === '') {
           alert('Укажите номер машины');
           return;
         }
@@ -2278,9 +2302,6 @@
         
         takePanel.classList.remove('active');
         isPanelActive = false;
-        
-        // Очищаем поле машины после успешного взятия
-        data.machineInput.value = '';
       }
     };
 
