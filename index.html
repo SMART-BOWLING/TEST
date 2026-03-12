@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -2099,9 +2099,16 @@
     row.appendChild(machineField);
     panel.appendChild(row);
     
-    // Храним выбранные значения из prompt
-    let customQty = null;
-    let customMachine = null;
+    // Создаем объект для хранения данных панели
+    const panelData = {
+      panel: panel,
+      qtySelect: qtySelect,
+      machineSelect: machineSelect,
+      customQty: null,
+      customMachine: null,
+      partNumber: partNumber,
+      availableQty: availableQty
+    };
     
     // Обработчик для выбора количества
     qtySelect.addEventListener('change', function() {
@@ -2110,7 +2117,7 @@
         if (qtyStr !== null && qtyStr.trim() !== '') {
           const qty = parseInt(qtyStr);
           if (!isNaN(qty) && qty > 0) {
-            customQty = qty;
+            panelData.customQty = qty;
             
             // Создаем временную опцию с введенным значением
             const existingCustom = Array.from(qtySelect.options).find(opt => opt.value === 'custom');
@@ -2136,7 +2143,7 @@
       if (this.value === 'Другое') {
         const machine = prompt('Введите номер машины:', '');
         if (machine !== null && machine.trim() !== '') {
-          customMachine = machine.trim();
+          panelData.customMachine = machine.trim();
           
           // Создаем временную опцию с введенным значением
           const existingCustom = Array.from(machineSelect.options).find(opt => opt.value === 'custom');
@@ -2154,15 +2161,8 @@
       }
     });
     
-    takeButton.panelData = {
-      panel: panel,
-      qtySelect: qtySelect,
-      machineSelect: machineSelect,
-      customQty: customQty,
-      customMachine: customMachine,
-      partNumber: partNumber,
-      availableQty: availableQty
-    };
+    // Сохраняем panelData в кнопке
+    takeButton.panelData = panelData;
     
     return panel;
   }
@@ -2259,12 +2259,12 @@
         takePanel.classList.add('active');
         isPanelActive = true;
       } else {
-        const data = btnTake.panelData;
+        const data = btnTake.panelData; // Получаем актуальные данные из panelData
         
         // Получаем количество
         let qty;
         if (data.qtySelect.value === 'custom') {
-          qty = data.customQty;
+          qty = data.customQty; // Берем из panelData
         } else if (data.qtySelect.value === 'other') {
           alert('Сначала выберите количество в поле "Другое"');
           return;
@@ -2275,7 +2275,7 @@
         // Получаем номер машины
         let machine;
         if (data.machineSelect.value === 'custom') {
-          machine = data.customMachine;
+          machine = data.customMachine; // Берем из panelData
         } else if (data.machineSelect.value === 'Другое') {
           alert('Сначала введите номер машины в поле "Другое"');
           return;
