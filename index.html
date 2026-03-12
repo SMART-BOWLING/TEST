@@ -1610,6 +1610,14 @@
   </div>
 </div>
 
+<!-- Анимация загрузки для операций -->
+<div class="loading-screen" id="operationLoader" style="display: none; opacity: 1;">
+  <div class="logo-wrapper">
+    <div class="glow-ring"></div>
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+  </div>
+</div>
+
 <div class="loader-container" id="loader">
   <div class="loader"></div>
 </div>
@@ -1709,6 +1717,7 @@
   const cardsPerPage = 30;
 
   const loadingScreen = document.getElementById('loadingScreen');
+  const operationLoader = document.getElementById('operationLoader');
 
   const pagination = {
     prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
@@ -1717,6 +1726,19 @@
 
   function showLoader(show) {
     document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
+
+  function showOperationLoader(show) {
+    if (show) {
+      operationLoader.style.display = 'flex';
+      operationLoader.classList.remove('fade-out');
+    } else {
+      operationLoader.classList.add('fade-out');
+      setTimeout(() => {
+        operationLoader.style.display = 'none';
+        operationLoader.classList.remove('fade-out');
+      }, 500);
+    }
   }
 
   function toggleUserDropdown() {
@@ -1757,7 +1779,7 @@
   }
 
   function handleCredentialResponse(response) {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const payload = parseJwt(response.credential);
       currentUser = {
@@ -1768,7 +1790,7 @@
       updateUserAvatar(currentUser);
       initAndCheckEmail();
     } catch (e) {
-      showLoader(false);
+      showOperationLoader(false);
       alert('Ошибка аутентификации');
     }
   }
@@ -1789,7 +1811,7 @@
       });
       await checkEmailInSheet(currentUser.email);
     } catch (error) {
-      showLoader(false);
+      showOperationLoader(false);
       alert('Ошибка инициализации Google API: ' + error);
     }
   }
@@ -1821,11 +1843,11 @@
       if (hasAccess) {
         loginUser(currentUser);
       } else {
-        showLoader(false);
+        showOperationLoader(false);
         alert('Доступ запрещен');
       }
     } catch (error) {
-      showLoader(false);
+      showOperationLoader(false);
       alert('Ошибка доступа к таблице');
     }
   }
@@ -1839,7 +1861,7 @@
     localStorage.setItem('userName', payload.name);
     localStorage.setItem('userPic', payload.picture);
     
-    showLoader(false);
+    showOperationLoader(false);
     
     if (loadingScreen) {
       setTimeout(() => {
@@ -1871,7 +1893,7 @@
       };
       
       updateUserAvatar(currentUser);
-      showLoader(true);
+      showOperationLoader(true);
       
       loadSheetsAPI()
         .then(() => gapi.client.init({
@@ -1880,7 +1902,7 @@
         }))
         .then(() => checkEmailInSheet(email))
         .catch(error => {
-          showLoader(false);
+          showOperationLoader(false);
           alert('Ошибка восстановления сессии');
           signOut();
         });
@@ -1934,7 +1956,7 @@
   }
 
   async function updateQuantity(partNumber, delta, machine) {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const url = `${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}&machine=${encodeURIComponent(machine || '')}`;
       const res = await fetch(url);
@@ -1947,12 +1969,12 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
   async function deleteEntry(rowIndex) {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
       const data = await res.json();
@@ -1965,42 +1987,42 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
   async function getHistory(partNumber) {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
       return await res.text();
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
   async function getPopularEntries() {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getPopularEntries`);
       return await res.json();
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
   async function getMostPopularEntries() {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=getMostPopularEntries`);
       return await res.json();
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
   async function updatePartName(partNumber, newName) {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       const res = await fetch(`${APPS_SCRIPT_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
       const data = await res.json();
@@ -2011,7 +2033,7 @@
       }
       return data;
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
   }
 
@@ -2490,7 +2512,7 @@
   }
 
   async function initApp() {
-    showLoader(true);
+    showOperationLoader(true);
     try {
       allEntries = await loadAllData();
       currentEntries = [...allEntries];
@@ -2502,7 +2524,7 @@
       console.error('Init error:', error);
       alert('Ошибка загрузки данных: ' + error.message);
     } finally {
-      showLoader(false);
+      showOperationLoader(false);
     }
 
     document.getElementById('btnSearch')?.addEventListener('click', () => {
@@ -2528,7 +2550,7 @@
     });
 
     document.getElementById('sortSelect')?.addEventListener('change', async function() {
-      showLoader(true);
+      showOperationLoader(true);
       try {
         if (this.value === 'all') {
           currentEntries = [...allEntries];
@@ -2552,7 +2574,7 @@
         currentPage = 1;
         renderPage(currentPage);
       } finally {
-        showLoader(false);
+        showOperationLoader(false);
       }
     });
 
