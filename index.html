@@ -905,7 +905,8 @@
       margin-left: 5px;
     }
 
-    .take-select {
+    .take-select,
+    .take-input {
       width: 100%;
       height: 60px;
       padding: 0 20px;
@@ -916,21 +917,37 @@
       background: white;
       cursor: pointer;
       outline: none;
+      appearance: none;
+      font-family: inherit;
+      box-sizing: border-box;
     }
 
-    /* Стили для select (количество) */
-    .take-select.qty-select {
-      appearance: none;
+    .take-select {
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc143c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 15px center;
       background-size: 24px;
     }
 
-    /* Стили для input (номер машины) */
-    .take-select.machine-select {
+    .take-input {
       appearance: textfield;
-      -webkit-appearance: textfield;
+      cursor: text;
+    }
+
+    .take-input::-webkit-inner-spin-button,
+    .take-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .take-select.qty-select {
+      background-color: #fff;
+      color: #333;
+    }
+
+    .take-select.machine-select {
+      background-color: #fff;
+      color: #333;
     }
 
     /* ===== МОБИЛЬНЫЕ ТЕЛЕФОНЫ (ВЕРТИКАЛЬНО) ===== */
@@ -939,12 +956,10 @@
         font-size: 20px;
       }
       
-      .take-select {
+      .take-select,
+      .take-input {
         height: 70px;
         font-size: 22px;
-      }
-      
-      .take-select.qty-select {
         background-size: 28px;
       }
       
@@ -977,59 +992,17 @@
         margin-bottom: 4px;
       }
       
-      .take-select {
+      .take-select,
+      .take-input {
         height: 45px;
         font-size: 15px;
         padding: 0 12px;
         border-radius: 8px;
-      }
-      
-      .take-select.qty-select {
         background-position: right 10px center;
         background-size: 18px;
       }
     }
 
-    /* ===== ТЕЛЕФОНЫ (ДО 768px) - УТОЧНЯЮЩИЕ СТИЛИ ===== */
-    @media (max-width: 768px) {
-      .take-row {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 4px;
-      }
-      
-      .take-field {
-        flex: 1 1 0 !important;
-        min-width: 0 !important;
-      }
-      
-      .take-field label {
-        font-size: 11px !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 2px;
-      }
-      
-      .take-select {
-        height: 36px !important;
-        font-size: 12px !important;
-        padding: 0 16px 0 4px !important;
-        border-width: 1px;
-        border-radius: 4px;
-      }
-      
-      .take-select.qty-select {
-        background-size: 10px;
-        background-position: right 3px center;
-      }
-      
-      .take-quick-panel {
-        padding: 8px;
-      }
-    }
-
-    /* Остальные медиа-запросы */
     @media (max-width: 1024px) {
       .site-name-text {
         font-size: 50px;
@@ -1608,6 +1581,43 @@
         max-height: 60vh;
       }
     }
+
+    /* ===== ТЕЛЕФОНЫ (ДО 768px) - УТОЧНЯЮЩИЕ СТИЛИ ===== */
+    @media (max-width: 768px) {
+      .take-row {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 4px;
+      }
+      
+      .take-field {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+      }
+      
+      .take-field label {
+        font-size: 11px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+      }
+      
+      .take-select,
+      .take-input {
+        height: 36px !important;
+        font-size: 12px !important;
+        padding: 0 16px 0 4px !important;
+        border-width: 1px;
+        border-radius: 4px;
+        background-size: 10px;
+        background-position: right 3px center;
+      }
+      
+      .take-quick-panel {
+        padding: 8px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2051,7 +2061,7 @@
     });
   }
 
-  // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ createTakePanel =====
+  // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ createTakePanel - теперь можно вводить любой текст в поле машины =====
   function createTakePanel(partNumber, availableQty, takeButton) {
     const panel = document.createElement('div');
     panel.className = 'take-quick-panel';
@@ -2060,7 +2070,7 @@
     const row = document.createElement('div');
     row.className = 'take-row';
     
-    // Поле для количества (выпадающий список)
+    // Поле для количества (оставляем как select)
     const qtyField = document.createElement('div');
     qtyField.className = 'take-field';
     const qtyLabel = document.createElement('label');
@@ -2081,16 +2091,15 @@
     qtyField.appendChild(qtyLabel);
     qtyField.appendChild(qtySelect);
     
-    // Поле для номера машины (ТЕПЕРЬ ТЕКСТОВОЕ ПОЛЕ)
+    // Поле для машины - теперь это input, можно вводить любой текст
     const machineField = document.createElement('div');
     machineField.className = 'take-field';
     const machineLabel = document.createElement('label');
     machineLabel.textContent = 'Номер машины:';
     const machineInput = document.createElement('input');
     machineInput.type = 'text';
-    machineInput.className = 'take-select machine-select';
-    machineInput.placeholder = 'Введите номер или текст';
-    machineInput.value = '';
+    machineInput.className = 'take-input machine-select';
+    machineInput.placeholder = 'Введите номер машины';
     
     machineField.appendChild(machineLabel);
     machineField.appendChild(machineInput);
@@ -2099,7 +2108,7 @@
     row.appendChild(machineField);
     panel.appendChild(row);
     
-    // Храним выбранные значения из prompt
+    // Храним выбранные значения
     let customQty = null;
     
     // Обработчик для выбора количества
@@ -2111,6 +2120,7 @@
           if (!isNaN(qty) && qty > 0) {
             customQty = qty;
             
+            // Создаем временную опцию с введенным значением
             const existingCustom = Array.from(qtySelect.options).find(opt => opt.value === 'custom');
             if (existingCustom) qtySelect.remove(existingCustom.index);
             
@@ -2132,7 +2142,7 @@
     takeButton.panelData = {
       panel: panel,
       qtySelect: qtySelect,
-      machineInput: machineInput,
+      machineInput: machineInput, // теперь это input, а не select
       customQty: customQty,
       partNumber: partNumber,
       availableQty: availableQty
@@ -2246,7 +2256,7 @@
           qty = parseInt(data.qtySelect.value);
         }
         
-        // Получаем номер машины из текстового поля
+        // Получаем номер машины из input (теперь можно ввести любой текст)
         const machine = data.machineInput.value.trim();
         
         if (!qty || qty <= 0) {
@@ -2254,8 +2264,8 @@
           return;
         }
         
-        if (machine === '') {
-          alert('Укажите номер машины или любые другие символы');
+        if (!machine) {
+          alert('Укажите номер машины');
           return;
         }
         
@@ -2268,6 +2278,9 @@
         
         takePanel.classList.remove('active');
         isPanelActive = false;
+        
+        // Очищаем поле машины после успешного взятия
+        data.machineInput.value = '';
       }
     };
 
