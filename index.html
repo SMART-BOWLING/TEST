@@ -933,27 +933,6 @@
       color: #333;
     }
 
-    /* ===== ИСПРАВЛЕНИЕ: СТАНДАРТНЫЕ БРАУЗЕРНЫЕ ПОЛЯ ===== */
-    .other-machine-input,
-    .other-qty-input {
-      /* Убираем все стили, чтобы получить стандартное браузерное поле */
-      all: initial;
-      display: block;
-      width: 100%;
-      margin-top: 10px;
-      padding: 4px 6px;
-      font-family: inherit;
-      font-size: 16px;
-      border: 1px solid #ccc; /* Тонкая рамка как у стандартных полей */
-      background: white;
-      box-sizing: border-box;
-    }
-
-    .other-machine-input:focus,
-    .other-qty-input:focus {
-      outline: auto; /* Стандартное браузерное свечение при фокусе */
-    }
-
     /* ===== МОБИЛЬНЫЕ ТЕЛЕФОНЫ (ВЕРТИКАЛЬНО) ===== */
     @media (max-width: 1024px) {
       .take-field label {
@@ -964,13 +943,6 @@
         height: 70px;
         font-size: 22px;
         background-size: 28px;
-      }
-      
-      .other-machine-input,
-      .other-qty-input {
-        height: 40px;
-        font-size: 18px;
-        padding: 4px 8px;
       }
       
       /* ЭТО ВАЖНО - переопределяем column на row для телефонов */
@@ -1010,14 +982,6 @@
         border-radius: 8px;
         background-position: right 10px center;
         background-size: 18px;
-      }
-      
-      .other-machine-input,
-      .other-qty-input {
-        height: 36px;
-        font-size: 14px;
-        padding: 4px 8px;
-        margin-top: 8px;
       }
     }
 
@@ -1632,14 +1596,6 @@
         background-position: right 3px center;
       }
       
-      .other-machine-input,
-      .other-qty-input {
-        height: 36px !important;
-        font-size: 12px !important;
-        padding: 4px 6px !important;
-        border: 1px solid #ccc !important;
-      }
-      
       .take-quick-panel {
         padding: 8px;
       }
@@ -1647,7 +1603,983 @@
   </style>
 </head>
 <body>
-  <!-- (весь остальной HTML и JS код без изменений) -->
-  <!-- ... -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="logo-wrapper">
+    <div class="glow-ring"></div>
+    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+  </div>
+</div>
+
+<div class="loader-container" id="loader">
+  <div class="loader"></div>
+</div>
+
+<header>
+  <div class="logo">
+    <a href="https://smart-bowling.github.io/SMB/">
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+    </a>
+  </div>
+  <div class="site-name">
+    <span class="site-name-text">LUCKY STRIKE KH</span>
+  </div>
+  <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+  </div>
+  <div class="user-dropdown" id="userDropdown">
+    <a href="#" onclick="signOut()">
+      <i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ
+    </a>
+  </div>
+</header>
+
+<div id="login">
+  <div id="g_id_onload"
+       data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
+
+<div id="content" style="display:none">
+  <div class="top-controls">
+    <div class="select-wrapper">
+      <select id="sortSelect" title="Фильтр">
+        <option value="all">Все детали</option>
+        <option value="popular">Пос. взят. за 30 дней</option>
+        <option value="mostPopular">Популярные</option>
+        <option value="sortByQty">Остатки</option>
+      </select>
+    </div>
+    
+    <button id="btnSearch" class="btn-top">
+      <i class="fas fa-search"></i> Поиск
+    </button>
+
+    <button id="btnReset" class="btn-top">
+      <i class="fas fa-sync-alt"></i> Сбросить
+    </button>
+
+    <button id="btnAnalysis" class="btn-top" onclick="window.open('https://smart-bowling.github.io/ANALYSIS_PARTS/', '_blank')">
+      <i class="fas fa-chart-pie"></i> Анализ
+    </button>
+    
+    <button onclick="window.open('https://smart-bowling.github.io/ADD-PARTS-KH/', '_blank')" class="btn-top">
+      <i class="fas fa-plus-circle"></i> Добавить
+    </button>
+  </div>
+
+  <div class="cards" id="cardsContainer"></div>
+
+  <div class="pagination">
+    <button onclick="pagination.prevPage()" id="prevBtn" disabled><i class="fas fa-arrow-left"></i> Назад</button>
+    <div class="page-numbers" id="pageNumbers"></div>
+    <button onclick="pagination.nextPage()" id="nextBtn">Вперёд <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div id="modalClose" class="modal-close">×</div>
+      <h3>История изменений</h3>
+      <pre id="modalContent"></pre>
+    </div>
+  </div>
+
+  <div id="photoModal" class="photo-modal">
+    <div class="photo-modal-content">
+      <div class="photo-image-container" id="photoContainer">
+      </div>
+      <button id="photoCloseBtn" class="photo-close-btn">ЗАКРЫТЬ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxZCBvcLl1wlviAsVO1uTpyj1fVCNrZun4KYQ0rjx7zSc0X1DkiB9DciOYAQ88cE80/exec";
+  const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
+  const SHEET_NAME = 'KH';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+  const CURRENT_SITE = 'https://smart-bowling.github.io/PARTS-KH/';
+
+  let currentUser = null;
+  let allEntries = [];
+  let currentEntries = [];
+  let currentPage = 1;
+  let totalPages = 1;
+  const cardsPerPage = 30;
+
+  const loadingScreen = document.getElementById('loadingScreen');
+
+  const pagination = {
+    prevPage: () => { if (currentPage > 1) goToPage(currentPage - 1); },
+    nextPage: () => { if (currentPage < totalPages) goToPage(currentPage + 1); }
+  };
+
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'flex' : 'none';
+  }
+
+  function toggleUserDropdown() {
+    const menu = document.getElementById("userDropdown");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+  }
+
+  document.addEventListener('click', function(e) {
+    const userDropdown = document.getElementById("userDropdown");
+    const userAvatar = document.getElementById("userAvatar");
+    
+    if (userDropdown.style.display === 'block' && !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+      userDropdown.style.display = 'none';
+    }
+  });
+
+  function loadSheetsAPI() {
+    return new Promise((resolve, reject) => {
+      gapi.load('client', {
+        callback: resolve,
+        onerror: () => reject('Ошибка загрузки Google API'),
+        timeout: 10000,
+        ontimeout: () => reject('Таймаут загрузки Google API')
+      });
+    });
+  }
+
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function handleCredentialResponse(response) {
+    showLoader(true);
+    try {
+      const payload = parseJwt(response.credential);
+      currentUser = {
+        email: payload.email.toLowerCase().trim(),
+        name: payload.name,
+        picture: payload.picture
+      };
+      updateUserAvatar(currentUser);
+      initAndCheckEmail();
+    } catch (e) {
+      showLoader(false);
+      alert('Ошибка аутентификации');
+    }
+  }
+
+  function updateUserAvatar(user) {
+    const avatarContainer = document.getElementById('userAvatar');
+    avatarContainer.innerHTML = user?.picture 
+      ? `<img src="${user.picture}" alt="Avatar">` 
+      : '<i class="fas fa-user"></i>';
+  }
+
+  async function initAndCheckEmail() {
+    try {
+      await loadSheetsAPI();
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      await checkEmailInSheet(currentUser.email);
+    } catch (error) {
+      showLoader(false);
+      alert('Ошибка инициализации Google API: ' + error);
+    }
+  }
+
+  async function checkEmailInSheet(email) {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4',
+        range: '1!A:Z',
+      });
+      
+      const rows = response.result.values || [];
+      let hasAccess = false;
+      
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i]?.[0]) continue;
+        if (rows[i][0].toLowerCase().trim() === email) {
+          for (let j = 1; j < rows[i].length; j++) {
+            const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+            if (siteUrl === CURRENT_SITE || siteUrl.includes('PARTS-KH')) {
+              hasAccess = true;
+              break;
+            }
+          }
+          break;
+        }
+      }
+      
+      if (hasAccess) {
+        loginUser(currentUser);
+      } else {
+        showLoader(false);
+        alert('Доступ запрещен');
+      }
+    } catch (error) {
+      showLoader(false);
+      alert('Ошибка доступа к таблице');
+    }
+  }
+
+  function loginUser(payload) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    
+    localStorage.setItem('userLoggedIn', 'true');
+    localStorage.setItem('userEmail', payload.email.toLowerCase());
+    localStorage.setItem('userName', payload.name);
+    localStorage.setItem('userPic', payload.picture);
+    
+    showLoader(false);
+    
+    if (loadingScreen) {
+      setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+      }, 500);
+    }
+    
+    initApp();
+  }
+
+  function signOut() {
+    localStorage.clear();
+    sessionStorage.clear();
+    location.reload();
+  }
+
+  window.addEventListener('load', function() {
+    const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    const email = localStorage.getItem('userEmail');
+    
+    if (isLoggedIn && email) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      
+      currentUser = {
+        email: email,
+        name: localStorage.getItem('userName'),
+        picture: localStorage.getItem('userPic')
+      };
+      
+      updateUserAvatar(currentUser);
+      showLoader(true);
+      
+      loadSheetsAPI()
+        .then(() => gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        }))
+        .then(() => checkEmailInSheet(email))
+        .catch(error => {
+          showLoader(false);
+          alert('Ошибка восстановления сессии');
+          signOut();
+        });
+    } else {
+      document.getElementById('login').style.display = 'block';
+      if (loadingScreen) {
+        loadingScreen.classList.add('fade-out');
+      }
+    }
+  });
+
+  async function loadAllData() {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'KH!A:I',
+      });
+      
+      const rows = response.result.values || [];
+      const entries = [];
+      
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0] || row[0].trim() === '') continue;
+        
+        const partNumber = row[0].trim();
+        const quantity = parseInt(row[1]) || 0;
+        const fileUrl = row[3] || '';
+        const partName = (row[4] && row[4].trim() !== '') ? row[4].trim() : '';
+        const added = parseInt(row[6]) || 0;
+        const taken = parseInt(row[7]) || 0;
+        const minStock = parseInt(row[8]) || 0;
+        
+        entries.push({
+          rowIndex: i + 1,
+          partNumber: partNumber,
+          quantity: quantity,
+          fileUrl: fileUrl,
+          partName: partName,
+          added: added,
+          taken: taken,
+          minStock: minStock
+        });
+      }
+      
+      return entries;
+    } catch (error) {
+      console.error('Error loading data:', error);
+      throw error;
+    }
+  }
+
+  async function updateQuantity(partNumber, delta, machine) {
+    showLoader(true);
+    try {
+      const url = `${APPS_SCRIPT_URL}?action=updateQuantity&partNumber=${encodeURIComponent(partNumber)}&delta=${delta}&machine=${encodeURIComponent(machine || '')}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === 'success') {
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        renderPage(currentPage);
+      }
+      return data;
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function deleteEntry(rowIndex) {
+    showLoader(true);
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=deleteEntry&rowIndex=${rowIndex}`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        updateTotalPages();
+        if (currentPage > totalPages) currentPage = totalPages;
+        renderPage(currentPage);
+      }
+      return data;
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getHistory(partNumber) {
+    showLoader(true);
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getHistory&partNumber=${encodeURIComponent(partNumber)}`);
+      return await res.text();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getPopularEntries() {
+    showLoader(true);
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getPopularEntries`);
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function getMostPopularEntries() {
+    showLoader(true);
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getMostPopularEntries`);
+      return await res.json();
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  async function updatePartName(partNumber, newName) {
+    showLoader(true);
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=updatePartName&partNumber=${encodeURIComponent(partNumber)}&newName=${encodeURIComponent(newName)}`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        allEntries = await loadAllData();
+        currentEntries = [...allEntries];
+        renderPage(currentPage);
+      }
+      return data;
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  function showPartPhoto(partNumber) {
+    const entry = allEntries.find(e => e.partNumber === partNumber);
+    const photoContainer = document.getElementById('photoContainer');
+    
+    if (entry?.fileUrl) {
+      photoContainer.innerHTML = `<img src="${entry.fileUrl}" alt="${partNumber}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=No+Image'">`;
+    } else {
+      photoContainer.innerHTML = `<img src="https://via.placeholder.com/400x300?text=No+Image" alt="Нет фото">`;
+    }
+    
+    document.getElementById('photoModal').style.display = 'flex';
+  }
+
+  function copyToClipboard(text, element) {
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = element.textContent;
+      element.textContent = '✓';
+      element.classList.add('copied');
+      
+      setTimeout(() => {
+        element.textContent = originalText;
+        element.classList.remove('copied');
+      }, 1000);
+    }).catch(err => {
+      console.error('Ошибка копирования:', err);
+    });
+  }
+
+  // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ createTakePanel =====
+  function createTakePanel(partNumber, availableQty, takeButton) {
+    const panel = document.createElement('div');
+    panel.className = 'take-quick-panel';
+    panel.id = `take-panel-${partNumber.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    
+    const row = document.createElement('div');
+    row.className = 'take-row';
+    
+    const qtyField = document.createElement('div');
+    qtyField.className = 'take-field';
+    const qtyLabel = document.createElement('label');
+    qtyLabel.textContent = 'Количество:';
+    const qtySelect = document.createElement('select');
+    qtySelect.className = 'take-select qty-select';
+    for (let i = 1; i <= 10; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.textContent = i;
+      qtySelect.appendChild(option);
+    }
+    const otherQtyOption = document.createElement('option');
+    otherQtyOption.value = 'other';
+    otherQtyOption.textContent = 'Другое';
+    qtySelect.appendChild(otherQtyOption);
+    
+    qtyField.appendChild(qtyLabel);
+    qtyField.appendChild(qtySelect);
+    
+    const machineField = document.createElement('div');
+    machineField.className = 'take-field';
+    const machineLabel = document.createElement('label');
+    machineLabel.textContent = 'Номер машины:';
+    const machineSelect = document.createElement('select');
+    machineSelect.className = 'take-select machine-select';
+    
+    const machines = [];
+    for (let i = 1; i <= 14; i++) {
+      machines.push(`P.S-${i}`);
+    }
+    machines.push('Другое');
+    
+    machines.forEach(m => {
+      const option = document.createElement('option');
+      option.value = m;
+      option.textContent = m;
+      machineSelect.appendChild(option);
+    });
+    
+    machineField.appendChild(machineLabel);
+    machineField.appendChild(machineSelect);
+    
+    row.appendChild(qtyField);
+    row.appendChild(machineField);
+    panel.appendChild(row);
+    
+    // Храним выбранные значения из prompt
+    let customQty = null;
+    let customMachine = null;
+    
+    // Обработчик для выбора количества
+    qtySelect.addEventListener('change', function() {
+      if (this.value === 'other') {
+        const qtyStr = prompt('Введите количество:', '1');
+        if (qtyStr !== null && qtyStr.trim() !== '') {
+          const qty = parseInt(qtyStr);
+          if (!isNaN(qty) && qty > 0) {
+            customQty = qty;
+            
+            // Создаем временную опцию с введенным значением
+            const existingCustom = Array.from(qtySelect.options).find(opt => opt.value === 'custom');
+            if (existingCustom) qtySelect.remove(existingCustom.index);
+            
+            const customOption = document.createElement('option');
+            customOption.value = 'custom';
+            customOption.textContent = `Другое (${qty})`;
+            qtySelect.add(customOption, qtySelect.options.length - 1);
+            qtySelect.value = 'custom';
+          } else {
+            alert('Пожалуйста, введите положительное число');
+            this.value = '1';
+          }
+        } else {
+          this.value = '1';
+        }
+      }
+    });
+    
+    // Обработчик для выбора машины
+    machineSelect.addEventListener('change', function() {
+      if (this.value === 'Другое') {
+        const machine = prompt('Введите номер машины:', '');
+        if (machine !== null && machine.trim() !== '') {
+          customMachine = machine.trim();
+          
+          // Создаем временную опцию с введенным значением
+          const existingCustom = Array.from(machineSelect.options).find(opt => opt.value === 'custom');
+          if (existingCustom) machineSelect.remove(existingCustom.index);
+          
+          const customOption = document.createElement('option');
+          customOption.value = 'custom';
+          customOption.textContent = `Другое (${machine})`;
+          machineSelect.add(customOption, machineSelect.options.length - 1);
+          machineSelect.value = 'custom';
+        } else {
+          alert('Номер машины не может быть пустым');
+          this.value = machines[0];
+        }
+      }
+    });
+    
+    takeButton.panelData = {
+      panel: panel,
+      qtySelect: qtySelect,
+      machineSelect: machineSelect,
+      customQty: customQty,
+      customMachine: customMachine,
+      partNumber: partNumber,
+      availableQty: availableQty
+    };
+    
+    return panel;
+  }
+
+  function createCard(entry) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.dataset.row = entry.rowIndex;
+    div.dataset.partNumber = entry.partNumber.toLowerCase();
+
+    const media = document.createElement('div');
+    media.className = 'media-block';
+
+    if (entry.fileUrl) {
+      if (entry.fileUrl.includes('/preview')) {
+        const iframe = document.createElement('iframe');
+        iframe.src = entry.fileUrl;
+        media.appendChild(iframe);
+      } else {
+        const img = document.createElement('img');
+        img.src = entry.fileUrl;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        media.appendChild(img);
+      }
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'img-overlay';
+    media.appendChild(overlay);
+
+    const rem = document.createElement('div');
+    rem.className = 'icon remove';
+    rem.textContent = 'Х';
+    media.append(rem);
+    div.append(media);
+
+    const partNameContainer = document.createElement('div');
+    partNameContainer.className = 'part-name-container';
+    partNameContainer.dataset.partNumber = entry.partNumber;
+    
+    const partNameText = document.createElement('div');
+    partNameText.className = 'part-name-text';
+    partNameText.textContent = entry.partName;
+    
+    const editButton = document.createElement('button');
+    editButton.className = 'part-name-edit-btn';
+    editButton.innerHTML = '<i class="fas fa-edit"></i>';
+    
+    partNameContainer.appendChild(partNameText);
+    partNameContainer.appendChild(editButton);
+    div.append(partNameContainer);
+
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    pill.textContent = entry.partNumber;
+    pill.addEventListener('click', function() {
+      copyToClipboard(entry.partNumber, this);
+    });
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'text';
+    qtyInput.value = entry.quantity;
+    qtyInput.readOnly = true;
+
+    const btnAdd = document.createElement('button');
+    btnAdd.className = 'btn btn-add';
+    btnAdd.innerHTML = '<i class="fas fa-plus-circle"></i> <span>ДОБАВИТЬ</span>';
+
+    const btnInfo = document.createElement('button');
+    btnInfo.className = 'btn btn-info';
+    btnInfo.innerHTML = '<i class="fas fa-history"></i> <span>ИСТОРИЯ</span>';
+
+    const btnTake = document.createElement('button');
+    btnTake.className = 'btn btn-take';
+    btnTake.innerHTML = '<i class="fas fa-shopping-cart"></i> <span>ВЗЯТЬ</span>';
+
+    controls.append(pill, qtyInput, btnAdd, btnInfo, btnTake);
+    div.append(controls);
+
+    const takePanel = createTakePanel(entry.partNumber, entry.quantity, btnTake);
+    div.appendChild(takePanel);
+
+    let isPanelActive = false;
+
+    btnTake.onclick = async (e) => {
+      e.stopPropagation();
+      
+      if (!isPanelActive) {
+        document.querySelectorAll('.take-quick-panel.active').forEach(p => p.classList.remove('active'));
+        takePanel.classList.add('active');
+        isPanelActive = true;
+      } else {
+        const data = btnTake.panelData;
+        
+        // Получаем количество
+        let qty;
+        if (data.qtySelect.value === 'custom') {
+          qty = data.customQty;
+        } else if (data.qtySelect.value === 'other') {
+          alert('Сначала выберите количество в поле "Другое"');
+          return;
+        } else {
+          qty = parseInt(data.qtySelect.value);
+        }
+        
+        // Получаем номер машины
+        let machine;
+        if (data.machineSelect.value === 'custom') {
+          machine = data.customMachine;
+        } else if (data.machineSelect.value === 'Другое') {
+          alert('Сначала введите номер машины в поле "Другое"');
+          return;
+        } else {
+          machine = data.machineSelect.value;
+        }
+        
+        if (!qty || qty <= 0) {
+          alert('Укажите корректное количество');
+          return;
+        }
+        
+        if (!machine || machine.trim() === '') {
+          alert('Укажите номер машины');
+          return;
+        }
+        
+        if (qty > data.availableQty) {
+          alert(`Недостаточно в наличии! Доступно: ${data.availableQty}`);
+          return;
+        }
+        
+        await updateQuantity(data.partNumber, -qty, machine);
+        
+        takePanel.classList.remove('active');
+        isPanelActive = false;
+      }
+    };
+
+    editButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const partNumber = partNameContainer.dataset.partNumber;
+      const currentName = partNameText.textContent;
+      
+      partNameContainer.classList.add('editing');
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'part-name-input';
+      input.value = currentName;
+      
+      const saveButton = document.createElement('button');
+      saveButton.className = 'part-name-save-btn';
+      saveButton.innerHTML = '<i class="fas fa-check"></i>';
+      
+      const cancelButton = document.createElement('button');
+      cancelButton.className = 'part-name-cancel-btn';
+      cancelButton.innerHTML = '<i class="fas fa-times"></i>';
+      
+      partNameText.style.display = 'none';
+      editButton.style.display = 'none';
+      
+      partNameContainer.appendChild(input);
+      partNameContainer.appendChild(saveButton);
+      partNameContainer.appendChild(cancelButton);
+      
+      input.focus();
+      input.select();
+      
+      const finishEdit = async (save = false) => {
+        const newName = save ? input.value.trim() : currentName;
+        
+        partNameContainer.classList.remove('editing');
+        input.remove();
+        saveButton.remove();
+        cancelButton.remove();
+        
+        partNameText.style.display = '';
+        editButton.style.display = '';
+        
+        if (save && newName !== currentName) {
+          await updatePartName(partNumber, newName);
+        }
+      };
+      
+      saveButton.addEventListener('click', () => finishEdit(true));
+      cancelButton.addEventListener('click', () => finishEdit(false));
+      
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') finishEdit(true);
+      });
+    });
+
+    rem.onclick = async (e) => {
+      e.stopPropagation();
+      if (confirm('Удалить эту запись?')) {
+        await deleteEntry(entry.rowIndex);
+      }
+    };
+
+    btnAdd.onclick = async (e) => {
+      e.stopPropagation();
+      const deltaStr = prompt('Введите число для добавления:');
+      const delta = Number(deltaStr);
+      if (deltaStr !== null && !isNaN(delta)) {
+        await updateQuantity(entry.partNumber, delta, '');
+      }
+    };
+
+    btnInfo.onclick = async (e) => {
+      e.stopPropagation();
+      const hist = await getHistory(entry.partNumber);
+      document.getElementById('modalContent').textContent = hist;
+      document.getElementById('modalOverlay').style.display = 'flex';
+    };
+
+    document.addEventListener('click', function(e) {
+      if (!div.contains(e.target)) {
+        takePanel.classList.remove('active');
+        isPanelActive = false;
+      }
+    });
+
+    return div;
+  }
+
+  function updateTotalPages() {
+    totalPages = Math.ceil(currentEntries.length / cardsPerPage) || 1;
+  }
+
+  function renderPage(page) {
+    const container = document.getElementById('cardsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+
+    const start = (page - 1) * cardsPerPage;
+    const end = start + cardsPerPage;
+    const pageData = currentEntries.slice(start, end);
+
+    if (pageData.length === 0) {
+      container.innerHTML = '<div class="no-data">Нет данных</div>';
+      return;
+    }
+
+    pageData.forEach(entry => {
+      container.appendChild(createCard(entry));
+    });
+
+    renderPageNumbers();
+    updatePaginationControls();
+    window.scrollTo(0, 0);
+    
+    if (window.innerWidth > 1024) {
+      container.classList.add('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
+    }
+  }
+
+  function renderPageNumbers() {
+    const pageContainer = document.getElementById('pageNumbers');
+    if (!pageContainer) return;
+    
+    pageContainer.innerHTML = '';
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(currentPage - 2, 1);
+    let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
+    
+    if (startPage > 1) {
+      addPageButton(1);
+      if (startPage > 2) addDots();
+    }
+    
+    for (let i = startPage; i <= endPage; i++) addPageButton(i);
+    
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) addDots();
+      addPageButton(totalPages);
+    }
+    
+    function addPageButton(page) {
+      const btn = document.createElement('button');
+      btn.textContent = page;
+      if (page === currentPage) btn.classList.add('active');
+      btn.onclick = () => goToPage(page);
+      pageContainer.appendChild(btn);
+    }
+    
+    function addDots() {
+      const dots = document.createElement('span');
+      dots.textContent = '...';
+      dots.style.padding = '0 10px';
+      pageContainer.appendChild(dots);
+    }
+  }
+
+  function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage(currentPage);
+  }
+
+  function updatePaginationControls() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+  }
+
+  function toggleDesktopLayout(enable) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+    
+    if (enable) {
+      cardsContainer.classList.add('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.add('desktop-layout'));
+    } else {
+      cardsContainer.classList.remove('desktop-layout');
+      document.querySelectorAll('.card').forEach(card => card.classList.remove('desktop-layout'));
+    }
+  }
+
+  async function initApp() {
+    showLoader(true);
+    try {
+      allEntries = await loadAllData();
+      currentEntries = [...allEntries];
+      
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+    } catch (error) {
+      console.error('Init error:', error);
+      alert('Ошибка загрузки данных: ' + error.message);
+    } finally {
+      showLoader(false);
+    }
+
+    document.getElementById('btnSearch')?.addEventListener('click', () => {
+      const term = prompt('Введите номер детали:');
+      if (term !== null) {
+        const searchTerm = term.toLowerCase().trim();
+        currentEntries = searchTerm.length === 0 
+          ? [...allEntries] 
+          : allEntries.filter(e => e.partNumber.toLowerCase().includes(searchTerm));
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+        document.getElementById('sortSelect').value = 'all';
+      }
+    });
+
+    document.getElementById('btnReset')?.addEventListener('click', () => {
+      currentEntries = [...allEntries];
+      updateTotalPages();
+      currentPage = 1;
+      renderPage(currentPage);
+      document.getElementById('sortSelect').value = 'all';
+    });
+
+    document.getElementById('sortSelect')?.addEventListener('change', async function() {
+      showLoader(true);
+      try {
+        if (this.value === 'all') {
+          currentEntries = [...allEntries];
+        } else if (this.value === 'popular') {
+          const popular = await getPopularEntries();
+          if (popular?.length) {
+            currentEntries = popular;
+          }
+        } else if (this.value === 'mostPopular') {
+          const mostPopular = await getMostPopularEntries();
+          if (mostPopular?.length) {
+            currentEntries = mostPopular;
+          } else {
+            alert('Нет данных');
+            return;
+          }
+        } else if (this.value === 'sortByQty') {
+          currentEntries = [...allEntries].sort((a, b) => a.quantity - b.quantity);
+        }
+        updateTotalPages();
+        currentPage = 1;
+        renderPage(currentPage);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    document.getElementById('modalClose')?.addEventListener('click', () => {
+      document.getElementById('modalOverlay').style.display = 'none';
+    });
+
+    document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').style.display = 'none';
+      }
+    });
+
+    document.getElementById('photoCloseBtn')?.addEventListener('click', () => {
+      document.getElementById('photoModal').style.display = 'none';
+    });
+
+    document.getElementById('photoModal')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('photoModal')) {
+        document.getElementById('photoModal').style.display = 'none';
+      }
+    });
+  }
+
+  window.addEventListener('resize', function() {
+    toggleDesktopLayout(window.innerWidth > 1024);
+  });
+</script>
 </body>
 </html>
