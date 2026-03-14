@@ -144,40 +144,7 @@
       font-size: 20px;
       font-weight: bold;
       color: white;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .site-name-dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #1f2937;
-      border: 1px solid #444;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 1001;
-      min-width: 150px;
-      margin-top: 25px;
-      width: 90%;
-    }
-
-    .site-name-dropdown a {
-      padding: 10px 15px;
-      text-decoration: none;
-      color: white;
-      transition: background 0.3s;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      white-space: nowrap;
-      justify-content: center;
-    }
-
-    .site-name-dropdown a:hover {
-      background-color: #374151;
+      /* Убираем cursor: pointer так как больше не кликабельно */
     }
 
     .menu-button {
@@ -543,7 +510,7 @@
     /* ========== ОСНОВНОЙ КОНТЕЙНЕР ========== */
     #app-content {
       width: 98%;
-      max-width: 1200px; /* Уменьшил максимальную ширину для ПК */
+      max-width: 1200px;
       margin: 20px auto 40px;
       padding: 0 10px 10px 10px;
       box-sizing: border-box;
@@ -557,12 +524,12 @@
     }
     
     thead {
-      display: none; /* Скрываем шапку таблицы */
+      display: none;
     }
     
     tbody {
       display: grid;
-      grid-template-columns: 1fr; /* По умолчанию 1 колонка на мобильных */
+      grid-template-columns: 1fr;
       gap: 20px;
       width: 100%;
     }
@@ -577,7 +544,7 @@
       height: fit-content;
     }
     
-    /* Стили для карточки (бывшая строка таблицы) */
+    /* Стили для карточки */
     tbody tr {
       display: block;
       background: white;
@@ -734,7 +701,7 @@
       background-color: #a90e2e;
     }
 
-    /* ===== ИСПРАВЛЕНИЕ БАГА С КНОПКАМИ ===== */
+    /* Стили для кнопок фильтрации под карточкой */
     .card-filter-buttons {
       display: none;
       width: 100%;
@@ -742,15 +709,9 @@
       margin-top: 10px;
       position: relative;
       z-index: 3;
-      order: 2; /* Всегда после карточки */
+      order: 2;
     }
 
-    /* Когда карточка выбрана, показываем кнопки */
-    .card-container.has-selected-card .card-filter-buttons {
-      display: flex !important;
-    }
-
-    /* Альтернативный способ через JavaScript, но оставим и CSS класс */
     .card-filter-buttons.visible {
       display: flex;
     }
@@ -779,11 +740,6 @@
     .card-filter-button:active {
       transform: translateY(0);
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    /* Убираем нижний отступ у последней ячейки, чтобы было место для кнопок */
-    tbody tr > td:last-child {
-      padding-bottom: 0;
     }
 
     /* Стиль для кнопки "Показать все задачи" */
@@ -940,37 +896,32 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* ========== МЕДИА-ЗАПРОС ДЛЯ ПК (ШИРИНА > 768px) ========== */
+    /* ========== МЕДИА-ЗАПРОС ДЛЯ ПК ========== */
     @media screen and (min-width: 768px) {
       tbody {
-        grid-template-columns: repeat(3, 1fr); /* 3 колонки на ПК */
+        grid-template-columns: repeat(3, 1fr);
       }
       
-      /* Корректируем отступы для карточек в сетке */
       .card-container {
         margin-bottom: 0;
       }
       
-      /* Убираем лишние отступы у карточек */
       tbody tr {
         margin-bottom: 0;
       }
       
-      /* Сохраняем выделение карточки */
       tbody tr.selected {
         margin-bottom: 0;
       }
 
-      /* Делаем страницу уже по бокам */
       #app-content {
-        max-width: 1000px; /* Ещё немного уменьшил ширину для более узкого вида */
+        max-width: 1000px;
       }
     }
 
-    /* Для очень больших экранов можно сделать ещё уже */
     @media screen and (min-width: 1200px) {
       #app-content {
-        max-width: 1100px; /* Оставляем достаточно узким даже на очень широких мониторах */
+        max-width: 1100px;
       }
     }
   </style>
@@ -995,11 +946,8 @@
         <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
       </a>
     </div>
-    <div class="site-name" onclick="toggleSiteNameDropdown()">
+    <div class="site-name">
       BLOCKBUSTER
-      <div class="site-name-dropdown" id="siteNameDropdown">
-        <!-- Проекты будут добавлены через JavaScript -->
-      </div>
     </div>
     <div class="menu-button" onclick="toggleDropdown()">
       <div></div><div></div><div></div>
@@ -1073,32 +1021,14 @@
   <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
   <script>
     // ===================== ИСПОЛЬЗОВАНИЕ ССЫЛОК ИЗ КОНСТАНТ =====================
-    // Обновляем ссылки на основе констант
     document.querySelector('link[rel="icon"]').href = LINKS.FAVICON;
     document.querySelector('.logo img').src = LINKS.LOGO;
-
-    // Заполняем выпадающее меню проектами
-    function populateProjectsDropdown() {
-      const siteNameDropdown = document.getElementById('siteNameDropdown');
-      siteNameDropdown.innerHTML = '';
-      
-      // Добавляем проекты
-      for (const key in LINKS.PROJECTS) {
-        const project = LINKS.PROJECTS[key];
-        const link = document.createElement('a');
-        link.href = project.URL;
-        link.className = 'dropdown-button';
-        link.innerHTML = `<span>${project.NAME}</span>`;
-        siteNameDropdown.appendChild(link);
-      }
-    }
 
     // Заполняем меню ссылками
     function populateMenuLinks() {
       const dropdownMenu = document.getElementById('dropdownMenu');
       dropdownMenu.innerHTML = '';
       
-      // Добавляем ссылки из меню
       LINKS.MENU_LINKS.forEach(link => {
         const menuItem = document.createElement('a');
         menuItem.href = link.URL;
@@ -1111,7 +1041,6 @@
 
     // ===================== ОСНОВНОЙ КОД =====================
     
-    // Принудительное использование HTTPS
     (function() {
       if (window.location.protocol === 'http:' && !window.location.hostname.includes('localhost')) {
         window.location.href = 'https:' + window.location.href.substring(5);
@@ -1139,8 +1068,6 @@
     let currentFilterDate = '';
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Заполняем меню
-      populateProjectsDropdown();
       populateMenuLinks();
       
       checkAuth();
@@ -1150,20 +1077,14 @@
       }
       
       document.addEventListener('click', function(e) {
-        const siteNameDropdown = document.getElementById('siteNameDropdown');
         const dropdownMenu = document.getElementById('dropdownMenu');
         const dateFilterContainer = document.getElementById('date-filter-container');
         const openTasksCard = document.getElementById('openTasksCard');
-        
-        if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
-          siteNameDropdown.style.display = 'none';
-        }
         
         if (!e.target.closest('.menu-button') && dropdownMenu.style.display === 'flex') {
           dropdownMenu.style.display = 'none';
         }
         
-        // Закрываем фильтр дат при клике вне его области
         if (!e.target.closest('#openTasksCard') && 
             !e.target.closest('#date-filter-container') && 
             dateFilterContainer.classList.contains('show')) {
@@ -1171,10 +1092,8 @@
         }
       });
       
-      // Инициализируем календарь
       initDatePicker();
       
-      // Обработчик для кнопки сброса фильтра
       document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
     });
 
@@ -1229,27 +1148,9 @@
       }
     }
 
-    function toggleSiteNameDropdown() {
-      const dropdown = document.getElementById("siteNameDropdown");
-      dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-      
-      const menu = document.getElementById("dropdownMenu");
-      if (menu.style.display === "flex") {
-        menu.style.display = "none";
-      }
-      
-      event.stopPropagation();
-    }
-
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
-      
-      const dropdown = document.getElementById("siteNameDropdown");
-      if (dropdown.style.display === "block") {
-        dropdown.style.display = "none";
-      }
-      
       event.stopPropagation();
     }
 
@@ -1291,7 +1192,6 @@
       } else {
         openTasksCard.classList.remove('expanded');
         dateFilterContainer.classList.remove('show');
-        // При закрытии сбрасываем фильтр
         if (isDateFilterActive) {
           clearDateFilter();
         }
@@ -1305,7 +1205,6 @@
         datePicker.destroy();
       }
       
-      // Инициализируем календарь
       datePicker = flatpickr(dateInput, {
         locale: "ru",
         dateFormat: "d.m.Y",
@@ -1320,7 +1219,6 @@
         }
       });
       
-      // Очищаем поле ввода
       dateInput.value = '';
     }
 
@@ -1330,39 +1228,30 @@
         return;
       }
       
-      // Активируем фильтр по дате
       isDateFilterActive = true;
       currentFilterDate = date;
       
-      // Считаем выполненные задачи за эту дату
       const completedTasksCount = countCompletedTasksByDate(date);
       
-      // Обновляем карточку с задачами
       updateTaskSummaryCard(date, completedTasksCount);
       
-      // Фильтруем данные: показываем только выполненные задачи за выбранную дату
       filteredData = fullData.filter(row => {
-        // row[4] - дата выполнения, row[5] - исполнитель
         return row[4] === date && row[5] && row[5].trim() !== '';
       });
       
-      // Сортируем отфильтрованные данные по дате выполнения (новые сверху)
       filteredData.sort((a, b) => {
         const dateA = parseDate(a[4]);
         const dateB = parseDate(b[4]);
         return dateB - dateA;
       });
       
-      // Устанавливаем флаг фильтрации
       isFiltered = true;
       currentFilterType = 'date';
       currentFilterValue = date;
       
-      // Показываем отфильтрованные данные
       currentPage = 1;
       renderFilteredPage(currentPage);
       
-      // Показываем кнопку "Показать все задачи"
       document.getElementById('showAllButton').style.display = 'block';
     }
 
@@ -1391,16 +1280,13 @@
       isDateFilterActive = false;
       currentFilterDate = '';
       
-      // Сбрасываем поле ввода календаря
       const dateInput = document.getElementById('date-filter-input');
       if (dateInput) {
         dateInput.value = '';
       }
       
-      // Восстанавливаем карточку с открытыми задачами
       updateOpenTaskCard(fullData);
       
-      // Сбрасываем фильтр
       showAllTasks();
     }
 
@@ -1422,7 +1308,6 @@
         if (!response.ok) throw new Error('Network response was not ok');
         fullData = await response.json();
         
-        // Сортируем данные: сначала открытые задачи, затем закрытые
         fullData.sort((a, b) => {
           const aIsOpen = !a[5];
           const bIsOpen = !b[5];
@@ -1455,7 +1340,6 @@
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
       
-      // Определяем предыдущий месяц
       let prevMonth = currentMonth - 1;
       let prevYear = currentYear;
       if (prevMonth < 0) {
@@ -1468,12 +1352,9 @@
         'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
       ];
       
-      // Статистика для текущего месяца
       const currentMonthStats = {};
-      // Статистика для предыдущего месяца
       const previousMonthStats = {};
       
-      // Обрабатываем все данные
       data.forEach(row => {
         if (row[4] && row[4].trim() !== '') {
           try {
@@ -1486,11 +1367,9 @@
               const mechanic = row[5];
               
               if (mechanic && (mechanic === 'МЕХАНИК(1)' || mechanic === 'МЕХАНИК(2)')) {
-                // Текущий месяц
                 if (month === currentMonth && year === currentYear) {
                   currentMonthStats[mechanic] = (currentMonthStats[mechanic] || 0) + 1;
                 }
-                // Предыдущий месяц
                 if (month === prevMonth && year === prevYear) {
                   previousMonthStats[mechanic] = (previousMonthStats[mechanic] || 0) + 1;
                 }
@@ -1502,7 +1381,6 @@
         }
       });
       
-      // ОБНОВЛЯЕМ РЕЙТИНГ ТЕКУЩЕГО МЕСЯЦА
       const currentMonthArray = Object.entries(currentMonthStats).map(([name, count]) => ({
         name,
         count
@@ -1537,7 +1415,6 @@
         ratingContent.innerHTML = `<div style="text-align: center; color: #666; padding: 20px;">Нет данных за ${monthNames[currentMonth]}</div>`;
       }
       
-      // ОБНОВЛЯЕМ ПОБЕДИТЕЛЯ ПРЕДЫДУЩЕГО МЕСЯЦА
       const previousMonthArray = Object.entries(previousMonthStats).map(([name, count]) => ({
         name,
         count
@@ -1576,7 +1453,6 @@
         const index = fullData.findIndex(row => row[0] === rowNumber);
         if (index !== -1) fullData[index] = updatedRow;
 
-        // После обновления снова сортируем данные
         fullData.sort((a, b) => {
           const aIsOpen = !a[5];
           const bIsOpen = !b[5];
@@ -1586,7 +1462,6 @@
           return 0;
         });
 
-        // Обновляем отфильтрованные данные, если они активны
         if (isFiltered) {
           if (currentFilterType === 'machine') {
             filteredData = fullData.filter(row => 
@@ -1635,12 +1510,10 @@
       const pageData = isFiltered ? filteredData.slice(start, end) : fullData.slice(start, end);
 
       pageData.forEach((row, index) => {
-        // Создаем контейнер для карточки
         const cardContainer = document.createElement("div");
         cardContainer.className = "card-container";
         cardContainer.id = `card-container-${row[0]}`;
         
-        // Создаем кнопки фильтрации
         const filterButtons = document.createElement("div");
         filterButtons.className = "card-filter-buttons";
         filterButtons.id = `filter-buttons-${row[0]}`;
@@ -1653,7 +1526,6 @@
           </button>
         `;
         
-        // Создаем карточку (строку таблицы)
         const tr = document.createElement("tr");
         tr.id = `card-${row[0]}`;
         const schemaLink = row[2]
@@ -1691,20 +1563,16 @@
             </div>
           </td>`;
         
-        // Собираем все вместе
         cardContainer.appendChild(tr);
         cardContainer.appendChild(filterButtons);
         
-        // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
-          // Не обрабатываем клик по кнопкам или селектам
           if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.closest('.schema-button')) {
             return;
           }
           
           const rowId = row[0];
           
-          // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
           if (selectedRowId === rowId) {
             hideCardButtons(rowId);
             selectedRowId = null;
@@ -1713,69 +1581,55 @@
             return;
           }
           
-          // Скрываем кнопки у предыдущей выбранной карточки
           if (selectedRowId) {
             hideCardButtons(selectedRowId);
             const prevCard = document.getElementById(`card-${selectedRowId}`);
             if (prevCard) prevCard.classList.remove('selected');
           }
           
-          // Сохраняем данные выбранной строки
           selectedRowData = row;
           selectedRowId = rowId;
           
-          // Показываем кнопки у текущей карточки
           showCardButtons(rowId);
           
-          // Выделяем карточку
           tr.classList.add('selected');
         });
         
-        // Добавляем обработчик клика на кнопку "Открыть"
         const openButton = tr.querySelector('.schema-button');
         if (openButton) {
           openButton.addEventListener('click', function(e) {
             const rowId = row[0];
             
-            // Если кликаем на уже выбранную карточку - скрываем кнопки и снимаем выделение
             if (selectedRowId === rowId) {
               hideCardButtons(rowId);
               selectedRowId = null;
               selectedRowData = null;
               tr.classList.remove('selected');
               
-              // Открываем ссылку в новой вкладке
               window.open(this.href, '_blank');
               e.preventDefault();
               return;
             }
             
-            // Скрываем кнопки у предыдущей выбранной карточки
             if (selectedRowId) {
               hideCardButtons(selectedRowId);
               const prevCard = document.getElementById(`card-${selectedRowId}`);
               if (prevCard) prevCard.classList.remove('selected');
             }
             
-            // Сохраняем данные выбранной строки
             selectedRowData = row;
             selectedRowId = rowId;
             
-            // Показываем кнопки у текущей карточки
             showCardButtons(rowId);
             
-            // Выделяем карточку
             tr.classList.add('selected');
             
-            // Открываем ссылку в новой вкладке
             window.open(this.href, '_blank');
             
-            // Отменяем стандартное поведение, чтобы не открывать ссылку дважды
             e.preventDefault();
           });
         }
         
-        // Добавляем карточку в таблицу
         tableBody.appendChild(cardContainer);
       });
 
@@ -1785,12 +1639,10 @@
       if (isFiltered) {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= filteredData.length;
-        // Показываем кнопку "Показать все задачи"
         document.getElementById('showAllButton').style.display = 'block';
       } else {
         document.getElementById("prevBtn").disabled = currentPage === 1;
         document.getElementById("nextBtn").disabled = currentPage * rowsPerPage >= fullData.length;
-        // Скрываем кнопку "Показать все задачи"
         document.getElementById('showAllButton').style.display = 'none';
       }
     }
@@ -1824,75 +1676,17 @@
 
     function validateAndSend(rowNumber) {
       const gSelect = document.getElementById(`g_${rowNumber}`);
-      const btn = document.getElementById(`btn_${rowNumber}`);
 
       if (!gSelect || !gSelect.value) {
         alert("Заполните все формы!");
         return;
       }
 
-      // Сохраняем текущую позицию прокрутки
       const scrollPosition = window.scrollY || document.documentElement.scrollTop;
       
       updateSheet(rowNumber, gSelect.value).then(() => {
-        // Восстанавливаем позицию прокрутки после обновления
         window.scrollTo(0, scrollPosition);
       });
-    }
-
-    function updateSingleRow(rowNumber, rowData) {
-      const rows = document.getElementById("tableBody").getElementsByTagName("tr");
-      
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const btn = row.querySelector(`button[id="btn_${rowNumber}"]`);
-        
-        if (btn) {
-          const schemaLink = rowData[2]
-            ? `<a href="${rowData[2]}" target="_blank" class="schema-button">
-                 <i class="fas fa-file-alt"></i>Открыть
-               </a>`
-            : "";
-
-          row.cells[0].innerHTML = rowData[2] ? `
-            <a href="${rowData[2]}" target="_blank" class="schema-button">
-              <i class="fas fa-file-alt"></i>Открыть
-            </a>` : "Нет схемы";
-          
-          row.cells[1].textContent = rowData[1];
-          row.cells[2].textContent = rowData[3];
-          row.cells[3].textContent = rowData[4];
-          
-          if (rowData[5]) {
-            row.cells[4].innerHTML = rowData[5];
-            row.cells[4].id = "";
-          } else {
-            row.cells[4].innerHTML = `
-              <select id="g_${rowData[0]}">
-                <option value="" selected disabled></option>
-                <option value="МЕХАНИК(1)">МЕХАНИК(1)</option>
-                <option value="МЕХАНИК(2)">МЕХАНИК(2)</option>
-              </select>`;
-            row.cells[4].id = `gText_${rowData[0]}`;
-          }
-          
-          const buttonsRow = row.cells[5].querySelector('.buttons-row');
-          buttonsRow.innerHTML = `
-            ${schemaLink}
-            ${rowData[5]
-              ? `<span class="sent-text"><i class="fas fa-check-circle"></i>Отправлено</span>`
-              : `<button id="btn_${rowData[0]}" onclick="validateAndSend(${rowData[0]});">
-                   <i class="fas fa-paper-plane"></i>Отправить
-                 </button>`}
-          `;
-          
-          break;
-        }
-      }
-      
-      applyHighlight();
-      updateOpenTaskCard(fullData);
-      updateMechanicsRating(fullData);
     }
 
     function startColumnSearch(columnIndex) {
@@ -1995,7 +1789,6 @@
       }
     }
 
-    // Функции для работы с фильтрацией из карточек
     function filterByMachineFromCard(rowNumber) {
       const row = fullData.find(r => r[0] === rowNumber);
       if (!row) return;
@@ -2004,7 +1797,6 @@
       currentFilterType = 'machine';
       currentFilterValue = machineName;
       
-      // Фильтруем только невыполненные задачи с этой машиной
       filteredData = fullData.filter(row => 
         row[1] === machineName && !row[5]
       );
@@ -2013,7 +1805,6 @@
       currentPage = 1;
       renderFilteredPage(currentPage);
       
-      // Показываем кнопку "Показать все задачи"
       document.getElementById('showAllButton').style.display = 'block';
     }
 
@@ -2025,7 +1816,6 @@
       currentFilterType = 'task';
       currentFilterValue = taskName;
       
-      // Фильтруем только невыполненные задачи с этой задачей (по всем машинам)
       filteredData = fullData.filter(row => 
         row[2] === taskName && !row[5]
       );
@@ -2034,7 +1824,6 @@
       currentPage = 1;
       renderFilteredPage(currentPage);
       
-      // Показываем кнопку "Показать все задачи"
       document.getElementById('showAllButton').style.display = 'block';
     }
 
@@ -2045,10 +1834,8 @@
       currentPage = 1;
       renderPage(currentPage);
       
-      // Скрываем кнопку "Показать все задачи"
       document.getElementById('showAllButton').style.display = 'none';
       
-      // Снимаем выделение с выбранной карточки
       if (selectedRowId) {
         hideCardButtons(selectedRowId);
         const selectedCard = document.getElementById(`card-${selectedRowId}`);
@@ -2059,7 +1846,6 @@
         selectedRowData = null;
       }
       
-      // Сбрасываем фильтр даты если он был активен
       if (isDateFilterActive) {
         clearDateFilter();
       }
