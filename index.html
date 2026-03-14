@@ -10,6 +10,10 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js"></script>
+
 <style>
 /* ===== ОТКЛЮЧЕНИЕ DOUBLE TAP ZOOM ===== */
 html, body {
@@ -513,6 +517,86 @@ header {
 @keyframes spin {
   to { transform: rotate(365deg); }
 }
+
+/* Стили для авторизации */
+#login-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 70px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+#login-container {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+}
+
+#login-container h2 {
+  color: #1f2937;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+#user-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#user-info img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #dc143c;
+}
+
+#user-info div {
+  flex: 1;
+}
+
+#user-name {
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  color: #1f2937;
+}
+
+#user-email {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+#logout-btn {
+  background: #dc143c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+#logout-btn:hover {
+  background: #b01030;
+}
+
+#main-content {
+  display: none;
+}
 </style>
 </head>
 
@@ -525,46 +609,93 @@ header {
   </div>
 </div>
 
-<!-- Модальное окно для изображения -->
-<div id="imageModal" class="image-modal" onclick="closeImageModal()">
-  <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
-  <img class="image-modal-content" id="modalImage" src="">
+<!-- Секция авторизации -->
+<div id="login-section">
+  <div id="login-container">
+    <h2>Авторизация</h2>
+    <div id="g_id_onload" 
+         data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
+         data-callback="handleCredentialResponse" 
+         data-auto_prompt="false"
+         data-auto_select="false">
+    </div>
+    <div class="g_id_signin" 
+         data-type="standard" 
+         data-shape="pill" 
+         data-theme="outline" 
+         data-text="signin_with" 
+         data-size="large" 
+         data-logo_alignment="left">
+    </div>
+  </div>
 </div>
 
-<header>
-  <div class="logo" onclick="window.location.href='https://smart-bowling.github.io/SMB/'">
-    <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+<!-- Информация о пользователе (будет показываться после входа) -->
+<div id="user-info" style="display: none;">
+  <img id="user-pic" src="" alt="Profile">
+  <div>
+    <p id="user-name"></p>
+    <p id="user-email"></p>
   </div>
-  <div class="site-name">MANUALS</div>
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="Поиск детали">
+  <button id="logout-btn" onclick="signOut()">Выйти</button>
+</div>
+
+<!-- Основной контент (будет показываться после входа) -->
+<div id="main-content">
+  <!-- Модальное окно для изображения -->
+  <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+    <img class="image-modal-content" id="modalImage" src="">
+  </div>
+
+  <header>
+    <div class="logo" onclick="window.location.href='https://smart-bowling.github.io/SMB/'">
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+    </div>
+    <div class="site-name">MANUALS</div>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Поиск детали">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+  </header>
+
+  <div id="manualContainer"></div>
+
+  <div class="search-nav-bottom" id="searchNav">
+    <button onclick="prevResult()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
+    <button id="clearSearchBtn" onclick="clearSearch()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
+    <button onclick="nextResult()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+
+  <div class="shop-fab-left" onclick="openShopSearch()">
     <i class="fa-solid fa-magnifying-glass"></i>
   </div>
-</header>
 
-<div id="manualContainer"></div>
-
-<div class="search-nav-bottom" id="searchNav">
-  <button onclick="prevResult()" title="Предыдущая деталь"><i class="fa-solid fa-chevron-left"></i></button>
-  <button id="clearSearchBtn" onclick="clearSearch()" title="Очистить поиск"><i class="fa-solid fa-times"></i></button>
-  <button onclick="nextResult()" title="Следующая деталь"><i class="fa-solid fa-chevron-right"></i></button>
-</div>
-
-<div class="shop-fab-left" onclick="openShopSearch()">
-  <i class="fa-solid fa-magnifying-glass"></i>
-</div>
-
-<div class="shop-fab-right" onclick="renderManualGroups()">
-  <i class="fa-solid fa-arrow-left"></i>
+  <div class="shop-fab-right" onclick="renderManualGroups()">
+    <i class="fa-solid fa-arrow-left"></i>
+  </div>
 </div>
 
 <script>
-// Конфигурация Google Sheets
+// Конфигурация Google Sheets для авторизации
+const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+const AUTH_SHEET_NAME = '1';
+const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+
+// Конфигурация Google Sheets для основного контента
 const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
 const SPREADSHEET_ID = '1v-R394u6sKzSdvmkh9qsbqhfkNZEi5lIXwo8BdT_lhQ';
-const MANUALS_RANGE = 'MANUALS!A:Z'; // Лист с мануалами и деталями
-const MANUAL_RANGE = 'MANUAL!A:B'; // Лист с PDF
+const MANUALS_RANGE = 'MANUALS!A:Z';
+const MANUAL_RANGE = 'MANUAL!A:B';
+const STORE_RANGE = 'STORE!A:D';
+const BB_RANGE = 'BB!A:D';
+const KH_RANGE = 'KH!A:D';
+const SKYMALL_RANGE = 'SKYMALL!A:D';
 
+// Переменные для авторизации
+let currentUser = null;
+
+// Переменные для основного контента
 let manualsData = [];
 let stockData = {};
 let searchResults = [];
@@ -576,7 +707,11 @@ const searchInput = document.getElementById("searchInput");
 const loadingScreen = document.getElementById("loadingScreen");
 const imageModal = document.getElementById("imageModal");
 const modalImage = document.getElementById("modalImage");
+const loginSection = document.getElementById("login-section");
+const mainContent = document.getElementById("main-content");
+const userInfo = document.getElementById("user-info");
 
+// Функции для работы с модальным окном изображения
 function openImageModal(imageUrl) {
   if (imageUrl && imageUrl.trim() !== '') {
     modalImage.src = imageUrl;
@@ -621,6 +756,207 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, false);
 
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+
+// Загрузка Google API
+function loadSheetsAPI() {
+  return new Promise((resolve, reject) => {
+    gapi.load('client', {
+      callback: () => resolve(),
+      onerror: () => reject('Ошибка загрузки Google API'),
+      timeout: 10000,
+      ontimeout: () => reject('Таймаут загрузки Google API')
+    });
+  });
+}
+
+// Обработка ответа Google
+function handleCredentialResponse(response) {
+  try {
+    const payload = parseJwt(response.credential);
+    
+    currentUser = {
+      email: payload.email.toLowerCase().trim(),
+      name: payload.name,
+      picture: payload.picture
+    };
+    
+    initAndCheckEmail();
+    
+  } catch (e) {
+    console.error('Ошибка аутентификации:', e);
+    alert('Ошибка аутентификации');
+  }
+}
+
+// Инициализация API и проверка email
+async function initAndCheckEmail() {
+  try {
+    await loadSheetsAPI();
+    await gapi.client.init({
+      apiKey: AUTH_API_KEY,
+      discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+    });
+    
+    await checkEmailInSheet(currentUser.email);
+    
+  } catch (error) {
+    console.error('Ошибка инициализации:', error);
+    alert('Ошибка инициализации Google API');
+  }
+}
+
+// Проверка email в Google Sheets
+async function checkEmailInSheet(email) {
+  try {
+    const response = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: AUTH_SPREADSHEET_ID,
+      range: `${AUTH_SHEET_NAME}!A:Z`,
+    });
+    
+    const rows = response.result.values;
+    if (!rows || rows.length === 0) {
+      alert('Таблица пуста');
+      return;
+    }
+    
+    // Поиск email в колонке A
+    let foundRow = null;
+    for (let i = 0; i < rows.length; i++) {
+      if (!rows[i][0]) continue;
+      
+      const rowEmail = rows[i][0].toLowerCase().trim();
+      if (rowEmail === email) {
+        foundRow = rows[i];
+        break;
+      }
+    }
+    
+    if (foundRow) {
+      console.log('Пользователь найден:', foundRow);
+      loginUser(currentUser);
+    } else {
+      alert('Доступ запрещен: Ваш email не найден в таблице');
+    }
+    
+  } catch (error) {
+    console.error('Ошибка доступа к таблице:', error);
+    alert('Ошибка доступа к таблице');
+  }
+}
+
+// Функция входа пользователя
+function loginUser(payload) {
+  // Скрываем секцию авторизации и показываем основной контент
+  loginSection.style.display = 'none';
+  mainContent.style.display = 'block';
+  userInfo.style.display = 'flex';
+  
+  document.getElementById('user-pic').src = payload.picture;
+  document.getElementById('user-name').textContent = payload.name;
+  document.getElementById('user-email').textContent = payload.email;
+  
+  // Сохранение сессии
+  localStorage.setItem('userLoggedIn', 'true');
+  localStorage.setItem('userEmail', payload.email.toLowerCase());
+  localStorage.setItem('userName', payload.name);
+  localStorage.setItem('userPic', payload.picture);
+  
+  // Загружаем основные данные
+  loadFromGoogleSheets();
+}
+
+// Парсинг JWT токена
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Ошибка парсинга JWT:', e);
+    return {};
+  }
+}
+
+// Выход из системы
+function signOut() {
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Выход из Google
+  if (google && google.accounts && google.accounts.id) {
+    google.accounts.id.disableAutoSelect();
+  }
+  
+  location.reload();
+}
+
+// Проверка сессии при загрузке
+window.addEventListener('load', function() {
+  const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+  const email = localStorage.getItem('userEmail');
+  const name = localStorage.getItem('userName');
+  const pic = localStorage.getItem('userPic');
+  
+  if (isLoggedIn && email) {
+    // Скрываем секцию авторизации и показываем основной контент
+    loginSection.style.display = 'none';
+    mainContent.style.display = 'block';
+    userInfo.style.display = 'flex';
+    
+    document.getElementById('user-name').textContent = name || 'User';
+    document.getElementById('user-email').textContent = email;
+    if (pic) document.getElementById('user-pic').src = pic;
+    
+    currentUser = {
+      email: email,
+      name: name,
+      picture: pic
+    };
+    
+    // Проверка актуальности сессии и загрузка данных
+    loadSheetsAPI()
+      .then(() => gapi.client.init({
+        apiKey: AUTH_API_KEY,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      }))
+      .then(() => checkEmailInSheet(email))
+      .catch(() => signOut());
+  } else {
+    // Показываем секцию авторизации
+    loginSection.style.display = 'flex';
+    mainContent.style.display = 'none';
+    userInfo.style.display = 'none';
+  }
+});
+
+// Инициализация Google Sign-In при загрузке
+window.onload = function() {
+  if (google && google.accounts && google.accounts.id) {
+    google.accounts.id.initialize({
+      client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
+      callback: handleCredentialResponse
+    });
+    
+    google.accounts.id.renderButton(
+      document.querySelector('.g_id_signin'),
+      { 
+        type: 'standard', 
+        shape: 'pill', 
+        theme: 'outline', 
+        text: 'signin_with', 
+        size: 'large',
+        logo_alignment: 'left'
+      }
+    );
+  }
+};
+
+// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА ==========
+
 async function loadFromGoogleSheets() {
   try {
     // Загружаем данные из листа MANUALS
@@ -632,6 +968,9 @@ async function loadFromGoogleSheets() {
     const manualUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${MANUAL_RANGE}?key=${API_KEY}`;
     const manualResponse = await fetch(manualUrl);
     const manualData_raw = await manualResponse.json();
+    
+    // Загружаем данные из листов с изображениями
+    await loadStockData();
     
     processSheetData(manualsData_raw.values, manualData_raw.values);
     
@@ -646,9 +985,110 @@ async function loadFromGoogleSheets() {
   }
 }
 
+async function loadStockData() {
+  try {
+    // Загружаем данные из листа STORE
+    const storeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${STORE_RANGE}?key=${API_KEY}`;
+    const storeResponse = await fetch(storeUrl);
+    const storeData = await storeResponse.json();
+    
+    // Загружаем данные из листа BB
+    const bbUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${BB_RANGE}?key=${API_KEY}`;
+    const bbResponse = await fetch(bbUrl);
+    const bbData = await bbResponse.json();
+    
+    // Загружаем данные из листа KH
+    const khUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${KH_RANGE}?key=${API_KEY}`;
+    const khResponse = await fetch(khUrl);
+    const khData = await khResponse.json();
+    
+    // Загружаем данные из листа SKYMALL
+    const skymallUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SKYMALL_RANGE}?key=${API_KEY}`;
+    const skymallResponse = await fetch(skymallUrl);
+    const skymallData = await skymallResponse.json();
+    
+    // Инициализируем stockData
+    stockData = {};
+    
+    // Обрабатываем данные из каждого листа
+    processStockSheet(storeData.values, 'STORE');
+    processStockSheet(bbData.values, 'BB');
+    processStockSheet(khData.values, 'KH');
+    processStockSheet(skymallData.values, 'SKYMALL');
+    
+  } catch (error) {
+    console.error('Ошибка загрузки данных складов:', error);
+    // В случае ошибки создаем демо-данные
+    generateDemoStockData();
+  }
+}
+
+function processStockSheet(rows, sheetName) {
+  if (!rows || rows.length === 0) return;
+  
+  // Первая строка - заголовки, пропускаем её
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row[0]) continue; // Пропускаем пустые строки
+    
+    const partNumber = row[0].trim(); // Номер детали (столбец A)
+    const quantity = parseInt(row[1]) || 0; // Количество (столбец B)
+    const imageUrl = row[3] || ''; // Изображение (столбец D)
+    
+    // Создаем запись для детали, если её еще нет
+    if (!stockData[partNumber]) {
+      stockData[partNumber] = {
+        BB: { quantity: 0, location: '', image: '' },
+        KH: { quantity: 0, location: '', image: '' },
+        SKYMALL: { quantity: 0, location: '', image: '' },
+        STORE: { quantity: 0, location: '', image: '' }
+      };
+    }
+    
+    // Заполняем данные для конкретного листа
+    stockData[partNumber][sheetName] = {
+      quantity: quantity,
+      location: row[2] || '', // Столбец C - локация (если есть)
+      image: imageUrl
+    };
+  }
+}
+
+function generateDemoStockData() {
+  // Собираем все уникальные номера деталей
+  const allParts = new Set();
+  manualsData.forEach(manual => {
+    manual.parts.forEach(part => {
+      // Парсим составные детали
+      if (part.includes('(') && part.includes(')')) {
+        const matches = part.match(/\(([^)]+)\)\s+([\d-]+)/g);
+        if (matches) {
+          matches.forEach(match => {
+            const number = match.split(' ').pop();
+            allParts.add(number);
+          });
+        } else {
+          allParts.add(part);
+        }
+      } else {
+        allParts.add(part);
+      }
+    });
+  });
+  
+  // Создаем демо-данные для каждого клуба
+  allParts.forEach(part => {
+    stockData[part] = {
+      BB: { quantity: Math.floor(Math.random() * 5), location: 'Склад 1', image: '' },
+      KH: { quantity: Math.floor(Math.random() * 3), location: 'Склад 2', image: '' },
+      SKYMALL: { quantity: Math.floor(Math.random() * 4), location: 'Склад 3', image: '' },
+      STORE: { quantity: Math.floor(Math.random() * 2), location: 'Магазин', image: '' }
+    };
+  });
+}
+
 function processSheetData(manualsRows, manualRows) {
   manualsData = [];
-  stockData = {};
   
   if (!manualsRows || manualsRows.length === 0) return;
   
@@ -696,43 +1136,6 @@ function processSheetData(manualsRows, manualRows) {
       }
     }
   }
-  
-  // Создаем демо-данные для stockData (так как их нет в таблице)
-  // В реальном проекте их нужно загружать из другого источника
-  generateDemoStockData();
-}
-
-function generateDemoStockData() {
-  // Собираем все уникальные номера деталей
-  const allParts = new Set();
-  manualsData.forEach(manual => {
-    manual.parts.forEach(part => {
-      // Парсим составные детали
-      if (part.includes('(') && part.includes(')')) {
-        const matches = part.match(/\(([^)]+)\)\s+([\d-]+)/g);
-        if (matches) {
-          matches.forEach(match => {
-            const number = match.split(' ').pop();
-            allParts.add(number);
-          });
-        } else {
-          allParts.add(part);
-        }
-      } else {
-        allParts.add(part);
-      }
-    });
-  });
-  
-  // Создаем демо-данные для каждого клуба
-  allParts.forEach(part => {
-    stockData[part] = {
-      BB: { quantity: Math.floor(Math.random() * 5), location: 'Склад 1', image: '' },
-      KH: { quantity: Math.floor(Math.random() * 3), location: 'Склад 2', image: '' },
-      SKYMALL: { quantity: Math.floor(Math.random() * 4), location: 'Склад 3', image: '' },
-      STORE: { quantity: Math.floor(Math.random() * 2), location: 'Магазин', image: '' }
-    };
-  });
 }
 
 function parseCompositeParts(partString) {
@@ -983,9 +1386,6 @@ function prevResult() {
   searchResults[currentIndex].classList.add("active-highlight");
   searchResults[currentIndex].scrollIntoView({behavior: "smooth", block: "center"});
 }
-
-// Загружаем данные при старте
-loadFromGoogleSheets();
 </script>
 </body>
 </html>
