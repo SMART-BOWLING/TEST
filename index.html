@@ -518,7 +518,7 @@ header {
   to { transform: rotate(365deg); }
 }
 
-/* ===== СТИЛИ АВТОРИЗАЦИИ ИЗ ВАШЕГО ПРИМЕРА ===== */
+/* ===== СТИЛИ АВТОРИЗАЦИИ ===== */
 #login-section {
   display: none;
   justify-content: center;
@@ -567,7 +567,6 @@ header {
   color: #dc143c;
 }
 
-/* ===== СТИЛИ ПОЛЬЗОВАТЕЛЯ ИЗ ПРИМЕРА ===== */
 #user-info {
   background: white;
   display: none;
@@ -609,6 +608,8 @@ header {
   font-weight: 400;
   color: #64748b;
   font-size: 12px;
+  word-break: break-all;
+  max-width: 200px;
 }
 
 #logout-btn {
@@ -635,7 +636,6 @@ header {
   display: none;
 }
 
-/* Стили для загрузки */
 .loading-spinner {
   display: inline-block;
   width: 40px;
@@ -646,12 +646,6 @@ header {
   animation: spin 1s ease-in-out infinite;
 }
 
-/* ===== ФИКС ДЛЯ КАРТОЧКИ ПОЛЬЗОВАТЕЛЯ ===== */
-#user-email {
-  word-break: break-all;
-  max-width: 200px;
-}
-
 @media screen and (min-width: 768px) {
   #user-info {
     max-width: 600px;
@@ -660,53 +654,8 @@ header {
   }
 }
 
-/* ===== ФИКС ДЛЯ КНОПОК МАНУАЛОВ НА ПК ===== */
-@media screen and (min-width: 1024px) {
-  .buttons-container {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 15px;
-  }
-  
-  .btn {
-    justify-content: center;
-    gap: 15px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 12px;
-    min-width: 200px;
-    margin: 0;
-  }
-  
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  }
-  
-  .buttons-container .btn:nth-child(odd),
-  .buttons-container .btn:nth-child(even) {
-    background: #ffffff;
-  }
-  
-  .top-image {
-    max-height: 400px;
-    object-fit: contain;
-    background: #f5f5f5;
-  }
-  
-  .pdf-top-button {
-    width: auto;
-    max-width: 300px;
-    margin: 20px auto;
-  }
-}
-
-@media screen and (min-width: 1440px) {
-  .buttons-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+/* Убираем ПК-специфичные стили для кнопок, которые меняют отображение */
+/* Оставляем только базовые стили как в оригинале */
 </style>
 </head>
 <body>
@@ -718,7 +667,7 @@ header {
   </div>
 </div>
 
-<!-- Секция авторизации в стиле вашего примера -->
+<!-- Секция авторизации -->
 <div id="login-section">
   <div id="login-container">
     <div class="login-icon">
@@ -743,7 +692,7 @@ header {
   </div>
 </div>
 
-<!-- Информация о пользователе в стиле вашего примера -->
+<!-- Информация о пользователе -->
 <div id="user-info">
   <img id="user-pic" src="" alt="Profile">
   <div class="user-details">
@@ -753,7 +702,7 @@ header {
   <button id="logout-btn" onclick="signOut()"><i class="fas fa-power-off"></i></button>
 </div>
 
-<!-- Основной контент (будет показываться после входа) -->
+<!-- Основной контент -->
 <div id="main-content">
   <!-- Модальное окно для изображения -->
   <div id="imageModal" class="image-modal" onclick="closeImageModal()">
@@ -871,9 +820,8 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, false);
 
-// ========== ФУНКЦИИ АВТОРИЗАЦИИ ИЗ ВАШЕГО ПРИМЕРА ==========
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
 
-// Загрузка Google API
 function loadSheetsAPI() {
   return new Promise((resolve, reject) => {
     gapi.load('client', {
@@ -885,7 +833,6 @@ function loadSheetsAPI() {
   });
 }
 
-// Обработка ответа Google
 function handleCredentialResponse(response) {
   try {
     const payload = parseJwt(response.credential);
@@ -906,7 +853,6 @@ function handleCredentialResponse(response) {
   }
 }
 
-// Показать/скрыть индикатор загрузки
 function showLoading(show) {
     const loginDiv = document.getElementById('login-container');
     if (show) {
@@ -935,7 +881,6 @@ function showLoading(show) {
     }
 }
 
-// Инициализация API и проверка email
 async function initAndCheckEmail() {
   try {
     await loadSheetsAPI();
@@ -953,7 +898,6 @@ async function initAndCheckEmail() {
   }
 }
 
-// Проверка email в Google Sheets
 async function checkEmailInSheet(email) {
   try {
     const response = await gapi.client.sheets.spreadsheets.values.get({
@@ -975,7 +919,6 @@ async function checkEmailInSheet(email) {
       
       const rowEmail = rows[i][0].toLowerCase().trim();
       if (rowEmail === email) {
-        // Проверяем все колонки, начиная со второй, на наличие текущего сайта
         for (let j = 1; j < rows[i].length; j++) {
           const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
           if (siteUrl === CURRENT_SITE || siteUrl.includes('MANUALS-SMART')) {
@@ -991,7 +934,7 @@ async function checkEmailInSheet(email) {
       loginUser(currentUser);
     } else {
       showLoading(false);
-      alert('Доступ запрещен');
+      alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
     }
     
   } catch (error) {
@@ -1001,9 +944,7 @@ async function checkEmailInSheet(email) {
   }
 }
 
-// Функция входа пользователя
 function loginUser(payload) {
-  // Скрываем секцию авторизации и показываем основной контент
   loginSection.style.display = 'none';
   mainContent.style.display = 'block';
   userInfo.style.display = 'flex';
@@ -1012,7 +953,6 @@ function loginUser(payload) {
   document.getElementById('user-name').textContent = payload.name;
   document.getElementById('user-email').textContent = payload.email;
   
-  // Сохранение сессии
   localStorage.setItem('userLoggedIn', 'true');
   localStorage.setItem('userEmail', payload.email.toLowerCase());
   localStorage.setItem('userName', payload.name);
@@ -1020,11 +960,9 @@ function loginUser(payload) {
   
   showLoading(false);
   
-  // Загружаем основные данные
   loadFromGoogleSheets();
 }
 
-// Парсинг JWT токена
 function parseJwt(token) {
   try {
     const base64Url = token.split('.')[1];
@@ -1039,27 +977,22 @@ function parseJwt(token) {
   }
 }
 
-// Выход из системы
 function signOut() {
   localStorage.clear();
   sessionStorage.clear();
   
-  // Выход из Google
   if (google && google.accounts && google.accounts.id) {
     google.accounts.id.disableAutoSelect();
   }
   
-  // Скрываем основной контент и показываем форму входа
   mainContent.style.display = 'none';
   userInfo.style.display = 'none';
   loginSection.style.display = 'flex';
   
-  // Восстанавливаем оригинальное содержимое формы входа (убираем спиннер)
   const loginDiv = document.getElementById('login-container');
   if (loginDiv.getAttribute('data-original')) {
     loginDiv.innerHTML = loginDiv.getAttribute('data-original');
     
-    // Перерисовываем кнопку Google
     if (window.google && google.accounts && google.accounts.id) {
       google.accounts.id.renderButton(
         document.querySelector('.g_id_signin'),
@@ -1076,7 +1009,6 @@ function signOut() {
   }
 }
 
-// Проверка сессии при загрузке
 window.addEventListener('load', function() {
   const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
   const email = localStorage.getItem('userEmail');
@@ -1084,7 +1016,6 @@ window.addEventListener('load', function() {
   const pic = localStorage.getItem('userPic');
   
   if (isLoggedIn && email) {
-    // Скрываем секцию авторизации и показываем основной контент
     loginSection.style.display = 'none';
     mainContent.style.display = 'block';
     userInfo.style.display = 'flex';
@@ -1099,10 +1030,8 @@ window.addEventListener('load', function() {
       picture: pic
     };
     
-    // Показываем спиннер ТОЛЬКО при проверке сессии
     showLoading(true);
     
-    // Проверка актуальности сессии и загрузка данных
     loadSheetsAPI()
       .then(() => gapi.client.init({
         apiKey: AUTH_API_KEY,
@@ -1110,16 +1039,13 @@ window.addEventListener('load', function() {
       }))
       .then(() => checkEmailInSheet(email))
       .catch(() => {
-        // Если ошибка - выходим
         signOut();
       });
   } else {
-    // Показываем секцию авторизации
     loginSection.style.display = 'flex';
     mainContent.style.display = 'none';
     userInfo.style.display = 'none';
     
-    // Убеждаемся, что спиннер не показывается
     const loginDiv = document.getElementById('login-container');
     if (loginDiv.getAttribute('data-original')) {
       loginDiv.innerHTML = loginDiv.getAttribute('data-original');
@@ -1131,7 +1057,6 @@ window.addEventListener('load', function() {
   }
 });
 
-// Инициализация Google Sign-In при загрузке
 window.onload = function() {
   if (google && google.accounts && google.accounts.id) {
     google.accounts.id.initialize({
@@ -1153,21 +1078,18 @@ window.onload = function() {
   }
 };
 
-// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА (ВСЕ КАК БЫЛО) ==========
+// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА (ПОЛНОСТЬЮ КАК В ОРИГИНАЛЕ) ==========
 
 async function loadFromGoogleSheets() {
   try {
-    // Загружаем данные из листа MANUALS
     const manualsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${MANUALS_RANGE}?key=${API_KEY}`;
     const manualsResponse = await fetch(manualsUrl);
     const manualsData_raw = await manualsResponse.json();
     
-    // Загружаем данные из листа MANUAL (PDF ссылки)
     const manualUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${MANUAL_RANGE}?key=${API_KEY}`;
     const manualResponse = await fetch(manualUrl);
     const manualData_raw = await manualResponse.json();
     
-    // Загружаем данные из листов с изображениями
     await loadStockData();
     
     processSheetData(manualsData_raw.values, manualData_raw.values);
@@ -1185,30 +1107,24 @@ async function loadFromGoogleSheets() {
 
 async function loadStockData() {
   try {
-    // Загружаем данные из листа STORE
     const storeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${STORE_RANGE}?key=${API_KEY}`;
     const storeResponse = await fetch(storeUrl);
     const storeData = await storeResponse.json();
     
-    // Загружаем данные из листа BB
     const bbUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${BB_RANGE}?key=${API_KEY}`;
     const bbResponse = await fetch(bbUrl);
     const bbData = await bbResponse.json();
     
-    // Загружаем данные из листа KH
     const khUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${KH_RANGE}?key=${API_KEY}`;
     const khResponse = await fetch(khUrl);
     const khData = await khResponse.json();
     
-    // Загружаем данные из листа SKYMALL
     const skymallUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SKYMALL_RANGE}?key=${API_KEY}`;
     const skymallResponse = await fetch(skymallUrl);
     const skymallData = await skymallResponse.json();
     
-    // Инициализируем stockData
     stockData = {};
     
-    // Обрабатываем данные из каждого листа
     processStockSheet(storeData.values, 'STORE');
     processStockSheet(bbData.values, 'BB');
     processStockSheet(khData.values, 'KH');
@@ -1216,7 +1132,6 @@ async function loadStockData() {
     
   } catch (error) {
     console.error('Ошибка загрузки данных складов:', error);
-    // В случае ошибки создаем демо-данные
     generateDemoStockData();
   }
 }
@@ -1224,16 +1139,14 @@ async function loadStockData() {
 function processStockSheet(rows, sheetName) {
   if (!rows || rows.length === 0) return;
   
-  // Первая строка - заголовки, пропускаем её
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row[0]) continue; // Пропускаем пустые строки
+    if (!row[0]) continue;
     
-    const partNumber = row[0].trim(); // Номер детали (столбец A)
-    const quantity = parseInt(row[1]) || 0; // Количество (столбец B)
-    const imageUrl = row[3] || ''; // Изображение (столбец D)
+    const partNumber = row[0].trim();
+    const quantity = parseInt(row[1]) || 0;
+    const imageUrl = row[3] || '';
     
-    // Создаем запись для детали, если её еще нет
     if (!stockData[partNumber]) {
       stockData[partNumber] = {
         BB: { quantity: 0, location: '', image: '' },
@@ -1243,21 +1156,18 @@ function processStockSheet(rows, sheetName) {
       };
     }
     
-    // Заполняем данные для конкретного листа
     stockData[partNumber][sheetName] = {
       quantity: quantity,
-      location: row[2] || '', // Столбец C - локация (если есть)
+      location: row[2] || '',
       image: imageUrl
     };
   }
 }
 
 function generateDemoStockData() {
-  // Собираем все уникальные номера деталей
   const allParts = new Set();
   manualsData.forEach(manual => {
     manual.parts.forEach(part => {
-      // Парсим составные детали
       if (part.includes('(') && part.includes(')')) {
         const matches = part.match(/\(([^)]+)\)\s+([\d-]+)/g);
         if (matches) {
@@ -1274,7 +1184,6 @@ function generateDemoStockData() {
     });
   });
   
-  // Создаем демо-данные для каждого клуба
   allParts.forEach(part => {
     stockData[part] = {
       BB: { quantity: Math.floor(Math.random() * 5), location: 'Склад 1', image: '' },
@@ -1290,18 +1199,15 @@ function processSheetData(manualsRows, manualRows) {
   
   if (!manualsRows || manualsRows.length === 0) return;
   
-  // Первая строка - заголовки, пропускаем её
   const headers = manualsRows[0];
   
-  // Обрабатываем каждую строку начиная со второй
   for (let i = 1; i < manualsRows.length; i++) {
     const row = manualsRows[i];
-    if (!row[0]) continue; // Пропускаем пустые строки
+    if (!row[0]) continue;
     
-    const manualName = row[0]; // Название мануала (столбец A)
-    const imageUrl = row[1] || ''; // Ссылка на картинку (столбец B)
+    const manualName = row[0];
+    const imageUrl = row[1] || '';
     
-    // Собираем все детали, начиная со столбца C (индекс 2)
     const parts = [];
     for (let j = 2; j < row.length; j++) {
       if (row[j] && row[j].trim() !== '') {
@@ -1309,7 +1215,6 @@ function processSheetData(manualsRows, manualRows) {
       }
     }
     
-    // Добавляем мануал в массив
     manualsData.push({
       name: manualName,
       image: imageUrl,
@@ -1317,17 +1222,14 @@ function processSheetData(manualsRows, manualRows) {
     });
   }
   
-  // Обрабатываем данные из листа MANUAL (PDF ссылки)
   if (manualRows && manualRows.length > 0) {
-    // Первая строка - заголовки, пропускаем её
     for (let i = 1; i < manualRows.length; i++) {
       const row = manualRows[i];
       if (!row[0]) continue;
       
-      const manualName = row[0]; // Название мануала
-      const pdfUrl = row[1] || ''; // Ссылка на PDF
+      const manualName = row[0];
+      const pdfUrl = row[1] || '';
       
-      // Находим соответствующий мануал и добавляем PDF ссылку
       const manual = manualsData.find(m => m.name === manualName);
       if (manual) {
         manual.pdf = pdfUrl;
@@ -1363,7 +1265,6 @@ function isCompositePart(partString) {
 function renderManualGroups() {
   manualContainer.innerHTML = "";
   
-  // Получаем уникальные имена мануалов
   const uniqueNames = [...new Set(manualsData.map(m => m.name))];
   
   uniqueNames.forEach(name => {
@@ -1388,10 +1289,8 @@ function renderManualGroups() {
 function renderManualsByName(name) {
   manualContainer.innerHTML = "";
   
-  // Находим текущий мануал в данных
   const currentManual = manualsData.find(m => m.name === name);
   
-  // Кнопка MANUAL PDF с иконкой PDF
   const pdfButton = document.createElement("div");
   pdfButton.className = "pdf-top-button";
   pdfButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> MANUAL PDF';
@@ -1417,12 +1316,8 @@ function renderManualsByName(name) {
     const cont = block.querySelector(".buttons-container");
     const image = block.querySelector(".clickable-image");
     
-    // На ПК показываем кнопки сразу
-    if (window.innerWidth >= 1024) {
-      cont.style.display = "grid";
-    } else {
-      image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
-    }
+    // ВАЖНО: Только такое поведение - клик по картинке показывает/скрывает кнопки
+    image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
 
     manual.parts.forEach((part, index) => {
       const singleCode = extractSingleCode(part);
@@ -1510,9 +1405,8 @@ function toggleDetail(btn) {
   setTimeout(() => info.classList.add("open"), 10);
 }
 
-// Обработчик клика по клубу
 function handleClubClick(club, part, event) {
-  event.stopPropagation(); // Предотвращаем всплытие события
+  event.stopPropagation();
   
   const partData = stockData[part];
   if (partData && partData[club] && partData[club].image) {
