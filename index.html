@@ -15,6 +15,8 @@
 <script src="https://apis.google.com/js/api.js"></script>
 
 <style>
+/* ===== СТИЛИ ПОЛНОСТЬЮ БЕЗ ИЗМЕНЕНИЙ ===== */
+/* (Оставьте ваши стили без изменений) */
 /* ===== ОТКЛЮЧЕНИЕ DOUBLE TAP ZOOM ===== */
 html, body {
   touch-action: manipulation;
@@ -709,7 +711,6 @@ header {
 }
 </style>
 </head>
-
 <body>
 
 <div class="loading-screen" id="loadingScreen">
@@ -806,8 +807,18 @@ const BB_RANGE = 'BB!A:D';
 const KH_RANGE = 'KH!A:D';
 const SKYMALL_RANGE = 'SKYMALL!A:D';
 
+// ========== НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ПО ССЫЛКАМ ==========
+// Точная карта соответствия ссылок для доступа к этому сайту
+const LINK_PATTERNS = {
+    // !!! ВАЖНО: Укажите здесь ТОЧНУЮ ссылку на ваш сайт MANUALS !!!
+    'https://smart-bowling.github.io/MANUALS-SMART/': { access: true }
+    // Вы можете добавить сюда другие ссылки, которые также должны давать доступ
+    // 'https://another-link.com/': { access: true }
+};
+
 // Переменные для авторизации
 let currentUser = null;
+let userHasAccess = false; // Флаг доступа для текущего пользователя
 
 // Переменные для основного контента
 let manualsData = [];
@@ -870,7 +881,7 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, false);
 
-// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ (ОБНОВЛЕНЫ) ==========
 
 // Загрузка Google API
 function loadSheetsAPI() {
@@ -952,12 +963,13 @@ async function initAndCheckEmail() {
   }
 }
 
-// Проверка email в Google Sheets
+// ========== НОВАЯ ФУНКЦИЯ ПРОВЕРКИ ПО ССЫЛКАМ ==========
+// Проверка email в Google Sheets и поиск активной ссылки
 async function checkEmailInSheet(email) {
   try {
     const response = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: AUTH_SPREADSHEET_ID,
-      range: `${AUTH_SHEET_NAME}!A:Z`,
+      range: `${AUTH_SHEET_NAME}!A:Z`, // Загружаем все столбцы до Z
     });
     
     const rows = response.result.values;
@@ -967,24 +979,60 @@ async function checkEmailInSheet(email) {
       return;
     }
     
-    // Поиск email в колонке A
-    let foundRow = null;
+    // 1. Ищем email в колонке A
+    let userRow = null;
+    let userRowIndex = -1;
+    
     for (let i = 0; i < rows.length; i++) {
-      if (!rows[i][0]) continue;
+      if (!rows[i][0]) continue; // Пропускаем пустые строки
       
       const rowEmail = rows[i][0].toLowerCase().trim();
       if (rowEmail === email) {
-        foundRow = rows[i];
+        userRow = rows[i];
+        userRowIndex = i;
         break;
       }
     }
     
-    if (foundRow) {
-      console.log('Пользователь найден:', foundRow);
-      loginUser(currentUser);
-    } else {
+    // Если email не найден - доступ запрещен
+    if (!userRow) {
       showLoading(false);
       alert('Доступ запрещен: Ваш email не найден в таблице');
+      return;
+    }
+    
+    // 2. Проверяем все последующие столбцы (B, C, D, E...)
+    //    Ищем ссылку, которая дает доступ к этому сайту
+    let hasValidLink = false;
+    
+    // Начинаем с индекса 1 (столбец B) и до конца массива
+    for (let j = 1; j < userRow.length; j++) {
+      const cellValue = userRow[j];
+      if (!cellValue || cellValue.trim() === '') continue;
+      
+      // Очищаем URL от параметров и якорей для точного сравнения
+      const cleanUrl = cellValue.trim().split('?')[0].split('#')[0];
+      console.log(`Scanning URL: ${cleanUrl}`);
+      
+      // Проверяем точное соответствие с нашими паттернами
+      if (LINK_PATTERNS[cleanUrl] && LINK_PATTERNS[cleanUrl].access === true) {
+        hasValidLink = true;
+        console.log(`✅ Найдена активная ссылка: ${cleanUrl}`);
+        break; // Достаточно одной ссылки
+      } else {
+        console.log(`❌ Ссылка не дает доступ: ${cleanUrl}`);
+      }
+    }
+    
+    // 3. Принимаем решение на основе наличия правильной ссылки
+    if (hasValidLink) {
+      console.log('✅ Доступ разрешен: найдена активная ссылка на сайт');
+      userHasAccess = true;
+      loginUser(currentUser);
+    } else {
+      console.log('❌ Доступ запрещен: нет активной ссылки на сайт');
+      showLoading(false);
+      alert('Доступ запрещен: Для вашего email не найдена активная ссылка на этот сайт');
     }
     
   } catch (error) {
@@ -1003,13 +1051,14 @@ function loginUser(payload) {
   
   document.getElementById('user-pic').src = payload.picture;
   document.getElementById('user-name').textContent = payload.name;
-  document.getElementById('user-email').textContent = payload.email; // Здесь отображается эмейл
+  document.getElementById('user-email').textContent = payload.email;
   
   // Сохранение сессии
   localStorage.setItem('userLoggedIn', 'true');
   localStorage.setItem('userEmail', payload.email.toLowerCase());
   localStorage.setItem('userName', payload.name);
   localStorage.setItem('userPic', payload.picture);
+  localStorage.setItem('userHasAccess', 'true'); // Сохраняем факт доступа
   
   showLoading(false);
   
@@ -1032,7 +1081,7 @@ function parseJwt(token) {
   }
 }
 
-// Выход из системы - ИСПРАВЛЕНО!
+// Выход из системы
 function signOut() {
   localStorage.clear();
   sessionStorage.clear();
@@ -1047,7 +1096,7 @@ function signOut() {
   userInfo.style.display = 'none';
   loginSection.style.display = 'flex';
   
-  // Восстанавливаем оригинальное содержимое формы входа (убираем спиннер)
+  // Восстанавливаем оригинальное содержимое формы входа
   const loginDiv = document.getElementById('login-container');
   if (loginDiv.getAttribute('data-original')) {
     loginDiv.innerHTML = loginDiv.getAttribute('data-original');
@@ -1068,25 +1117,25 @@ function signOut() {
     }
   }
   
-  // Не перезагружаем страницу!
-  // location.reload(); // Удалено
+  userHasAccess = false;
 }
 
-// Проверка сессии при загрузке - ИСПРАВЛЕНО!
+// Проверка сессии при загрузке - ОБНОВЛЕНО
 window.addEventListener('load', function() {
   const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+  const hasAccess = localStorage.getItem('userHasAccess') === 'true';
   const email = localStorage.getItem('userEmail');
   const name = localStorage.getItem('userName');
   const pic = localStorage.getItem('userPic');
   
-  if (isLoggedIn && email) {
+  if (isLoggedIn && email && hasAccess) {
     // Скрываем секцию авторизации и показываем основной контент
     loginSection.style.display = 'none';
     mainContent.style.display = 'block';
     userInfo.style.display = 'flex';
     
     document.getElementById('user-name').textContent = name || 'User';
-    document.getElementById('user-email').textContent = email; // Отображаем эмейл
+    document.getElementById('user-email').textContent = email;
     if (pic) document.getElementById('user-pic').src = pic;
     
     currentUser = {
@@ -1094,6 +1143,7 @@ window.addEventListener('load', function() {
       name: name,
       picture: pic
     };
+    userHasAccess = true;
     
     // Показываем спиннер ТОЛЬКО при проверке сессии
     showLoading(true);
@@ -1145,7 +1195,7 @@ window.onload = function() {
   }
 };
 
-// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА ==========
+// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА (БЕЗ ИЗМЕНЕНИЙ) ==========
 
 async function loadFromGoogleSheets() {
   try {
