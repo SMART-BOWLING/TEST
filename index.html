@@ -645,6 +645,68 @@ header {
   border-top-color: #dc143c;
   animation: spin 1s ease-in-out infinite;
 }
+
+/* ===== ФИКС ДЛЯ КАРТОЧКИ ПОЛЬЗОВАТЕЛЯ ===== */
+#user-email {
+  word-break: break-all; /* Чтобы длинный email не ломал карточку */
+  max-width: 200px; /* Ограничиваем ширину для ПК */
+}
+
+@media screen and (min-width: 768px) {
+  #user-info {
+    max-width: 600px; /* Фиксированная ширина на ПК */
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ===== ФИКС ДЛЯ КНОПОК МАНУАЛОВ НА ПК ===== */
+@media screen and (min-width: 1024px) {
+  .buttons-container {
+    display: grid !important; /* Принудительно показываем на ПК */
+    grid-template-columns: repeat(2, 1fr); /* Две колонки */
+    gap: 10px;
+    padding: 15px;
+  }
+  
+  .btn {
+    justify-content: center;
+    gap: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 200px;
+    margin: 0;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .buttons-container .btn:nth-child(odd),
+  .buttons-container .btn:nth-child(even) {
+    background: #ffffff; /* Убираем полосатость */
+  }
+  
+  .top-image {
+    max-height: 400px;
+    object-fit: contain;
+    background: #f5f5f5;
+  }
+  
+  .pdf-top-button {
+    width: auto;
+    max-width: 300px;
+    margin: 20px auto;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .buttons-container {
+    grid-template-columns: repeat(3, 1fr); /* Три колонки на больших экранах */
+  }
+}
 </style>
 </head>
 
@@ -682,12 +744,12 @@ header {
   </div>
 </div>
 
-<!-- Информация о пользователе в стиле премиум дашборда -->
+<!-- Информация о пользователе в стиле премиум дашборда с эмейлом -->
 <div id="user-info">
   <img id="user-pic" src="" alt="Profile">
   <div class="user-details">
     <p id="user-name"></p>
-    <p id="user-email"></p>
+    <p id="user-email"></p> <!-- Здесь отображается эмейл -->
   </div>
   <button id="logout-btn" onclick="signOut()"><i class="fas fa-power-off"></i></button>
 </div>
@@ -941,7 +1003,7 @@ function loginUser(payload) {
   
   document.getElementById('user-pic').src = payload.picture;
   document.getElementById('user-name').textContent = payload.name;
-  document.getElementById('user-email').textContent = payload.email;
+  document.getElementById('user-email').textContent = payload.email; // Здесь отображается эмейл
   
   // Сохранение сессии
   localStorage.setItem('userLoggedIn', 'true');
@@ -1024,7 +1086,7 @@ window.addEventListener('load', function() {
     userInfo.style.display = 'flex';
     
     document.getElementById('user-name').textContent = name || 'User';
-    document.getElementById('user-email').textContent = email;
+    document.getElementById('user-email').textContent = email; // Отображаем эмейл
     if (pic) document.getElementById('user-pic').src = pic;
     
     currentUser = {
@@ -1346,7 +1408,13 @@ function renderManualsByName(name) {
     `;
     const cont = block.querySelector(".buttons-container");
     const image = block.querySelector(".clickable-image");
-    image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
+    
+    // На ПК показываем кнопки сразу
+    if (window.innerWidth >= 1024) {
+      cont.style.display = "grid";
+    } else {
+      image.onclick = () => cont.style.display = cont.style.display === "flex" ? "none" : "flex";
+    }
 
     manual.parts.forEach((part, index) => {
       const singleCode = extractSingleCode(part);
