@@ -970,7 +970,7 @@ function parseJwt(token) {
   }
 }
 
-// Выход из системы
+// Выход из системы - ИСПРАВЛЕНО!
 function signOut() {
   localStorage.clear();
   sessionStorage.clear();
@@ -980,10 +980,37 @@ function signOut() {
     google.accounts.id.disableAutoSelect();
   }
   
-  location.reload();
+  // Скрываем основной контент и показываем форму входа
+  mainContent.style.display = 'none';
+  userInfo.style.display = 'none';
+  loginSection.style.display = 'flex';
+  
+  // Восстанавливаем оригинальное содержимое формы входа (убираем спиннер)
+  const loginDiv = document.getElementById('login-container');
+  if (loginDiv.getAttribute('data-original')) {
+    loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+    
+    // Перерисовываем кнопку Google
+    if (window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.renderButton(
+        document.querySelector('.g_id_signin'),
+        { 
+          type: 'standard', 
+          shape: 'pill', 
+          theme: 'outline', 
+          text: 'signin_with', 
+          size: 'large', 
+          logo_alignment: 'left' 
+        }
+      );
+    }
+  }
+  
+  // Не перезагружаем страницу!
+  // location.reload(); // Удалено
 }
 
-// Проверка сессии при загрузке
+// Проверка сессии при загрузке - ИСПРАВЛЕНО!
 window.addEventListener('load', function() {
   const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
   const email = localStorage.getItem('userEmail');
@@ -1006,6 +1033,7 @@ window.addEventListener('load', function() {
       picture: pic
     };
     
+    // Показываем спиннер ТОЛЬКО при проверке сессии
     showLoading(true);
     
     // Проверка актуальности сессии и загрузка данных
@@ -1015,12 +1043,21 @@ window.addEventListener('load', function() {
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       }))
       .then(() => checkEmailInSheet(email))
-      .catch(() => signOut());
+      .catch(() => {
+        // Если ошибка - выходим
+        signOut();
+      });
   } else {
     // Показываем секцию авторизации
     loginSection.style.display = 'flex';
     mainContent.style.display = 'none';
     userInfo.style.display = 'none';
+    
+    // Убеждаемся, что спиннер не показывается
+    const loginDiv = document.getElementById('login-container');
+    if (loginDiv.getAttribute('data-original')) {
+      loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+    }
   }
 });
 
