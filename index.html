@@ -15,8 +15,6 @@
 <script src="https://apis.google.com/js/api.js"></script>
 
 <style>
-/* ===== СТИЛИ ПОЛНОСТЬЮ БЕЗ ИЗМЕНЕНИЙ ===== */
-/* (Оставьте ваши стили без изменений) */
 /* ===== ОТКЛЮЧЕНИЕ DOUBLE TAP ZOOM ===== */
 html, body {
   touch-action: manipulation;
@@ -807,18 +805,16 @@ const BB_RANGE = 'BB!A:D';
 const KH_RANGE = 'KH!A:D';
 const SKYMALL_RANGE = 'SKYMALL!A:D';
 
-// ========== НОВАЯ СИСТЕМА АВТОРИЗАЦИИ ПО ССЫЛКАМ ==========
-// Точная карта соответствия ссылок для доступа к этому сайту
+// ========== ССЫЛКИ ДЛЯ ДОСТУПА ==========
+// ВАЖНО: Укажите ТОЧНУЮ ссылку на ваш сайт MANUALS
 const LINK_PATTERNS = {
-    // !!! ВАЖНО: Укажите здесь ТОЧНУЮ ссылку на ваш сайт MANUALS !!!
     'https://smart-bowling.github.io/MANUALS-SMART/': { access: true }
-    // Вы можете добавить сюда другие ссылки, которые также должны давать доступ
-    // 'https://another-link.com/': { access: true }
+    // Добавьте другие ссылки если нужно
 };
 
 // Переменные для авторизации
 let currentUser = null;
-let userHasAccess = false; // Флаг доступа для текущего пользователя
+let userHasAccess = false;
 
 // Переменные для основного контента
 let manualsData = [];
@@ -881,24 +877,37 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, false);
 
-// ========== ФУНКЦИИ АВТОРИЗАЦИИ (ОБНОВЛЕНЫ) ==========
+// ========== ФУНКЦИИ АВТОРИЗАЦИИ ==========
 
 // Загрузка Google API
 function loadSheetsAPI() {
   return new Promise((resolve, reject) => {
     gapi.load('client', {
-      callback: () => resolve(),
-      onerror: () => reject('Ошибка загрузки Google API'),
+      callback: () => {
+        console.log("Google API загружен успешно");
+        resolve();
+      },
+      onerror: () => {
+        console.error("Ошибка загрузки Google API");
+        reject('Ошибка загрузки Google API');
+      },
       timeout: 10000,
-      ontimeout: () => reject('Таймаут загрузки Google API')
+      ontimeout: () => {
+        console.error("Таймаут загрузки Google API");
+        reject('Таймаут загрузки Google API');
+      }
     });
   });
 }
 
 // Обработка ответа Google
 function handleCredentialResponse(response) {
+  console.log("Google response received");
+  
   try {
     const payload = parseJwt(response.credential);
+    console.log("User email из Google:", payload.email);
+    console.log("User name:", payload.name);
     
     currentUser = {
       email: payload.email.toLowerCase().trim(),
@@ -948,103 +957,133 @@ function showLoading(show) {
 // Инициализация API и проверка email
 async function initAndCheckEmail() {
   try {
+    console.log("Инициализация Google API...");
     await loadSheetsAPI();
+    
+    console.log("Инициализация клиента...");
     await gapi.client.init({
       apiKey: AUTH_API_KEY,
       discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
     });
     
+    console.log("Начинаем проверку email в таблице...");
     await checkEmailInSheet(currentUser.email);
     
   } catch (error) {
     console.error('Ошибка инициализации:', error);
     showLoading(false);
-    alert('Ошибка инициализации Google API');
+    alert('Ошибка инициализации Google API: ' + error);
   }
 }
 
-// ========== НОВАЯ ФУНКЦИЯ ПРОВЕРКИ ПО ССЫЛКАМ ==========
-// Проверка email в Google Sheets и поиск активной ссылки
+// ========== ОСНОВНАЯ ФУНКЦИЯ ПРОВЕРКИ ==========
 async function checkEmailInSheet(email) {
   try {
+    console.log("Начинаем проверку для email:", email);
+    
     const response = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: AUTH_SPREADSHEET_ID,
-      range: `${AUTH_SHEET_NAME}!A:Z`, // Загружаем все столбцы до Z
+      range: `${AUTH_SHEET_NAME}!A:Z`,
     });
+    
+    console.log("Ответ от таблицы получен");
     
     const rows = response.result.values;
     if (!rows || rows.length === 0) {
+      console.log("Таблица пуста");
       showLoading(false);
       alert('Таблица пуста');
       return;
     }
     
-    // 1. Ищем email в колонке A
+    console.log("Всего строк в таблице:", rows.length);
+    
+    // Ищем email в колонке A
     let userRow = null;
     let userRowIndex = -1;
     
     for (let i = 0; i < rows.length; i++) {
-      if (!rows[i][0]) continue; // Пропускаем пустые строки
+      if (!rows[i][0]) continue;
       
       const rowEmail = rows[i][0].toLowerCase().trim();
+      console.log(`Строка ${i+1}, email в таблице: "${rowEmail}"`);
+      
       if (rowEmail === email) {
         userRow = rows[i];
         userRowIndex = i;
+        console.log(`✅ Email найден в строке ${i+1}`);
         break;
       }
     }
     
-    // Если email не найден - доступ запрещен
     if (!userRow) {
+      console.log("❌ Email не найден в таблице");
       showLoading(false);
       alert('Доступ запрещен: Ваш email не найден в таблице');
       return;
     }
     
-    // 2. Проверяем все последующие столбцы (B, C, D, E...)
-    //    Ищем ссылку, которая дает доступ к этому сайту
+    console.log("Строка пользователя полностью:", userRow);
+    console.log("Количество ячеек в строке:", userRow.length);
+    
+    // Проверяем все последующие столбцы (начиная с B)
     let hasValidLink = false;
     
-    // Начинаем с индекса 1 (столбец B) и до конца массива
     for (let j = 1; j < userRow.length; j++) {
       const cellValue = userRow[j];
-      if (!cellValue || cellValue.trim() === '') continue;
+      const columnLetter = String.fromCharCode(65 + j); // 65 = 'A', 66 = 'B' и т.д.
+      console.log(`Столбец ${columnLetter}:`, cellValue);
       
-      // Очищаем URL от параметров и якорей для точного сравнения
+      if (!cellValue || cellValue.trim() === '') {
+        console.log(`  → пусто`);
+        continue;
+      }
+      
       const cleanUrl = cellValue.trim().split('?')[0].split('#')[0];
-      console.log(`Scanning URL: ${cleanUrl}`);
+      console.log(`  → очищенный URL: "${cleanUrl}"`);
       
-      // Проверяем точное соответствие с нашими паттернами
-      if (LINK_PATTERNS[cleanUrl] && LINK_PATTERNS[cleanUrl].access === true) {
+      // Проверяем каждый паттерн
+      let matched = false;
+      for (const [pattern, value] of Object.entries(LINK_PATTERNS)) {
+        console.log(`    сравниваем с паттерном: "${pattern}"`);
+        if (cleanUrl === pattern) {
+          console.log(`    ✅ СОВПАДЕНИЕ!`);
+          matched = true;
+          break;
+        }
+      }
+      
+      if (matched) {
         hasValidLink = true;
-        console.log(`✅ Найдена активная ссылка: ${cleanUrl}`);
-        break; // Достаточно одной ссылки
+        console.log(`🎉 Найдена активная ссылка в столбце ${columnLetter}`);
+        break;
       } else {
-        console.log(`❌ Ссылка не дает доступ: ${cleanUrl}`);
+        console.log(`  → ссылка не подходит ни под один паттерн`);
       }
     }
     
-    // 3. Принимаем решение на основе наличия правильной ссылки
     if (hasValidLink) {
-      console.log('✅ Доступ разрешен: найдена активная ссылка на сайт');
+      console.log('✅ ДОСТУП РАЗРЕШЕН');
       userHasAccess = true;
       loginUser(currentUser);
     } else {
-      console.log('❌ Доступ запрещен: нет активной ссылки на сайт');
+      console.log('❌ ДОСТУП ЗАПРЕЩЕН: нет активной ссылки');
       showLoading(false);
       alert('Доступ запрещен: Для вашего email не найдена активная ссылка на этот сайт');
     }
     
   } catch (error) {
-    console.error('Ошибка доступа к таблице:', error);
+    console.error('❌ ОШИБКА доступа к таблице:', error);
+    console.error('Детали ошибки:', error.result?.error || error);
     showLoading(false);
-    alert('Ошибка доступа к таблице');
+    alert('Ошибка доступа к таблице. Проверьте консоль (F12) для деталей.');
   }
 }
 
 // Функция входа пользователя
 function loginUser(payload) {
-  // Скрываем секцию авторизации и показываем основной контент
+  console.log("Вход пользователя:", payload.email);
+  
   loginSection.style.display = 'none';
   mainContent.style.display = 'block';
   userInfo.style.display = 'flex';
@@ -1053,16 +1092,14 @@ function loginUser(payload) {
   document.getElementById('user-name').textContent = payload.name;
   document.getElementById('user-email').textContent = payload.email;
   
-  // Сохранение сессии
   localStorage.setItem('userLoggedIn', 'true');
   localStorage.setItem('userEmail', payload.email.toLowerCase());
   localStorage.setItem('userName', payload.name);
   localStorage.setItem('userPic', payload.picture);
-  localStorage.setItem('userHasAccess', 'true'); // Сохраняем факт доступа
+  localStorage.setItem('userHasAccess', 'true');
   
   showLoading(false);
   
-  // Загружаем основные данные
   loadFromGoogleSheets();
 }
 
@@ -1083,25 +1120,22 @@ function parseJwt(token) {
 
 // Выход из системы
 function signOut() {
+  console.log("Выход из системы");
   localStorage.clear();
   sessionStorage.clear();
   
-  // Выход из Google
   if (google && google.accounts && google.accounts.id) {
     google.accounts.id.disableAutoSelect();
   }
   
-  // Скрываем основной контент и показываем форму входа
   mainContent.style.display = 'none';
   userInfo.style.display = 'none';
   loginSection.style.display = 'flex';
   
-  // Восстанавливаем оригинальное содержимое формы входа
   const loginDiv = document.getElementById('login-container');
   if (loginDiv.getAttribute('data-original')) {
     loginDiv.innerHTML = loginDiv.getAttribute('data-original');
     
-    // Перерисовываем кнопку Google
     if (window.google && google.accounts && google.accounts.id) {
       google.accounts.id.renderButton(
         document.querySelector('.g_id_signin'),
@@ -1120,16 +1154,21 @@ function signOut() {
   userHasAccess = false;
 }
 
-// Проверка сессии при загрузке - ОБНОВЛЕНО
+// Проверка сессии при загрузке
 window.addEventListener('load', function() {
+  console.log("Страница загружена, проверка localStorage...");
+  
   const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
   const hasAccess = localStorage.getItem('userHasAccess') === 'true';
   const email = localStorage.getItem('userEmail');
   const name = localStorage.getItem('userName');
   const pic = localStorage.getItem('userPic');
   
+  console.log("Сохраненная сессия:", { isLoggedIn, hasAccess, email });
+  
   if (isLoggedIn && email && hasAccess) {
-    // Скрываем секцию авторизации и показываем основной контент
+    console.log("Найдена сохраненная сессия для:", email);
+    
     loginSection.style.display = 'none';
     mainContent.style.display = 'block';
     userInfo.style.display = 'flex';
@@ -1145,27 +1184,26 @@ window.addEventListener('load', function() {
     };
     userHasAccess = true;
     
-    // Показываем спиннер ТОЛЬКО при проверке сессии
     showLoading(true);
     
-    // Проверка актуальности сессии и загрузка данных
     loadSheetsAPI()
       .then(() => gapi.client.init({
         apiKey: AUTH_API_KEY,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       }))
       .then(() => checkEmailInSheet(email))
-      .catch(() => {
-        // Если ошибка - выходим
+      .catch(error => {
+        console.error('Ошибка восстановления сессии:', error);
+        showLoading(false);
         signOut();
       });
+    
   } else {
-    // Показываем секцию авторизации
+    console.log("Нет сохраненной сессии, показываем кнопку входа");
     loginSection.style.display = 'flex';
     mainContent.style.display = 'none';
     userInfo.style.display = 'none';
     
-    // Убеждаемся, что спиннер не показывается
     const loginDiv = document.getElementById('login-container');
     if (loginDiv.getAttribute('data-original')) {
       loginDiv.innerHTML = loginDiv.getAttribute('data-original');
@@ -1173,7 +1211,7 @@ window.addEventListener('load', function() {
   }
 });
 
-// Инициализация Google Sign-In при загрузке
+// Инициализация Google Sign-In
 window.onload = function() {
   if (google && google.accounts && google.accounts.id) {
     google.accounts.id.initialize({
@@ -1195,21 +1233,20 @@ window.onload = function() {
   }
 };
 
-// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА (БЕЗ ИЗМЕНЕНИЙ) ==========
+// ========== ФУНКЦИИ ОСНОВНОГО КОНТЕНТА ==========
 
 async function loadFromGoogleSheets() {
   try {
-    // Загружаем данные из листа MANUALS
+    console.log("Загрузка основных данных...");
+    
     const manualsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${MANUALS_RANGE}?key=${API_KEY}`;
     const manualsResponse = await fetch(manualsUrl);
     const manualsData_raw = await manualsResponse.json();
     
-    // Загружаем данные из листа MANUAL (PDF ссылки)
     const manualUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${MANUAL_RANGE}?key=${API_KEY}`;
     const manualResponse = await fetch(manualUrl);
     const manualData_raw = await manualResponse.json();
     
-    // Загружаем данные из листов с изображениями
     await loadStockData();
     
     processSheetData(manualsData_raw.values, manualData_raw.values);
@@ -1227,30 +1264,24 @@ async function loadFromGoogleSheets() {
 
 async function loadStockData() {
   try {
-    // Загружаем данные из листа STORE
     const storeUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${STORE_RANGE}?key=${API_KEY}`;
     const storeResponse = await fetch(storeUrl);
     const storeData = await storeResponse.json();
     
-    // Загружаем данные из листа BB
     const bbUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${BB_RANGE}?key=${API_KEY}`;
     const bbResponse = await fetch(bbUrl);
     const bbData = await bbResponse.json();
     
-    // Загружаем данные из листа KH
     const khUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${KH_RANGE}?key=${API_KEY}`;
     const khResponse = await fetch(khUrl);
     const khData = await khResponse.json();
     
-    // Загружаем данные из листа SKYMALL
     const skymallUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SKYMALL_RANGE}?key=${API_KEY}`;
     const skymallResponse = await fetch(skymallUrl);
     const skymallData = await skymallResponse.json();
     
-    // Инициализируем stockData
     stockData = {};
     
-    // Обрабатываем данные из каждого листа
     processStockSheet(storeData.values, 'STORE');
     processStockSheet(bbData.values, 'BB');
     processStockSheet(khData.values, 'KH');
@@ -1258,7 +1289,6 @@ async function loadStockData() {
     
   } catch (error) {
     console.error('Ошибка загрузки данных складов:', error);
-    // В случае ошибки создаем демо-данные
     generateDemoStockData();
   }
 }
@@ -1266,16 +1296,14 @@ async function loadStockData() {
 function processStockSheet(rows, sheetName) {
   if (!rows || rows.length === 0) return;
   
-  // Первая строка - заголовки, пропускаем её
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row[0]) continue; // Пропускаем пустые строки
+    if (!row[0]) continue;
     
-    const partNumber = row[0].trim(); // Номер детали (столбец A)
-    const quantity = parseInt(row[1]) || 0; // Количество (столбец B)
-    const imageUrl = row[3] || ''; // Изображение (столбец D)
+    const partNumber = row[0].trim();
+    const quantity = parseInt(row[1]) || 0;
+    const imageUrl = row[3] || '';
     
-    // Создаем запись для детали, если её еще нет
     if (!stockData[partNumber]) {
       stockData[partNumber] = {
         BB: { quantity: 0, location: '', image: '' },
@@ -1285,21 +1313,18 @@ function processStockSheet(rows, sheetName) {
       };
     }
     
-    // Заполняем данные для конкретного листа
     stockData[partNumber][sheetName] = {
       quantity: quantity,
-      location: row[2] || '', // Столбец C - локация (если есть)
+      location: row[2] || '',
       image: imageUrl
     };
   }
 }
 
 function generateDemoStockData() {
-  // Собираем все уникальные номера деталей
   const allParts = new Set();
   manualsData.forEach(manual => {
     manual.parts.forEach(part => {
-      // Парсим составные детали
       if (part.includes('(') && part.includes(')')) {
         const matches = part.match(/\(([^)]+)\)\s+([\d-]+)/g);
         if (matches) {
@@ -1316,7 +1341,6 @@ function generateDemoStockData() {
     });
   });
   
-  // Создаем демо-данные для каждого клуба
   allParts.forEach(part => {
     stockData[part] = {
       BB: { quantity: Math.floor(Math.random() * 5), location: 'Склад 1', image: '' },
@@ -1332,18 +1356,13 @@ function processSheetData(manualsRows, manualRows) {
   
   if (!manualsRows || manualsRows.length === 0) return;
   
-  // Первая строка - заголовки, пропускаем её
-  const headers = manualsRows[0];
-  
-  // Обрабатываем каждую строку начиная со второй
   for (let i = 1; i < manualsRows.length; i++) {
     const row = manualsRows[i];
-    if (!row[0]) continue; // Пропускаем пустые строки
+    if (!row[0]) continue;
     
-    const manualName = row[0]; // Название мануала (столбец A)
-    const imageUrl = row[1] || ''; // Ссылка на картинку (столбец B)
+    const manualName = row[0];
+    const imageUrl = row[1] || '';
     
-    // Собираем все детали, начиная со столбца C (индекс 2)
     const parts = [];
     for (let j = 2; j < row.length; j++) {
       if (row[j] && row[j].trim() !== '') {
@@ -1351,7 +1370,6 @@ function processSheetData(manualsRows, manualRows) {
       }
     }
     
-    // Добавляем мануал в массив
     manualsData.push({
       name: manualName,
       image: imageUrl,
@@ -1359,17 +1377,14 @@ function processSheetData(manualsRows, manualRows) {
     });
   }
   
-  // Обрабатываем данные из листа MANUAL (PDF ссылки)
   if (manualRows && manualRows.length > 0) {
-    // Первая строка - заголовки, пропускаем её
     for (let i = 1; i < manualRows.length; i++) {
       const row = manualRows[i];
       if (!row[0]) continue;
       
-      const manualName = row[0]; // Название мануала
-      const pdfUrl = row[1] || ''; // Ссылка на PDF
+      const manualName = row[0];
+      const pdfUrl = row[1] || '';
       
-      // Находим соответствующий мануал и добавляем PDF ссылку
       const manual = manualsData.find(m => m.name === manualName);
       if (manual) {
         manual.pdf = pdfUrl;
@@ -1405,7 +1420,6 @@ function isCompositePart(partString) {
 function renderManualGroups() {
   manualContainer.innerHTML = "";
   
-  // Получаем уникальные имена мануалов
   const uniqueNames = [...new Set(manualsData.map(m => m.name))];
   
   uniqueNames.forEach(name => {
@@ -1430,10 +1444,8 @@ function renderManualGroups() {
 function renderManualsByName(name) {
   manualContainer.innerHTML = "";
   
-  // Находим текущий мануал в данных
   const currentManual = manualsData.find(m => m.name === name);
   
-  // Кнопка MANUAL PDF с иконкой PDF
   const pdfButton = document.createElement("div");
   pdfButton.className = "pdf-top-button";
   pdfButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> MANUAL PDF';
@@ -1459,7 +1471,6 @@ function renderManualsByName(name) {
     const cont = block.querySelector(".buttons-container");
     const image = block.querySelector(".clickable-image");
     
-    // На ПК показываем кнопки сразу
     if (window.innerWidth >= 1024) {
       cont.style.display = "grid";
     } else {
@@ -1552,9 +1563,8 @@ function toggleDetail(btn) {
   setTimeout(() => info.classList.add("open"), 10);
 }
 
-// Обработчик клика по клубу
 function handleClubClick(club, part, event) {
-  event.stopPropagation(); // Предотвращаем всплытие события
+  event.stopPropagation();
   
   const partData = stockData[part];
   if (partData && partData[club] && partData[club].image) {
