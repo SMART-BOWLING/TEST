@@ -570,8 +570,11 @@
     /* Контейнер карточки */
     .card-container {
       position: relative;
-      margin-bottom: 0; /* Убираем нижний отступ, так как gap в сетке */
+      margin-bottom: 0;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      height: fit-content;
     }
     
     /* Стили для карточки (бывшая строка таблицы) */
@@ -588,7 +591,7 @@
       position: relative;
       overflow: hidden;
       width: 100%;
-      height: 100%; /* Чтобы карточки в сетке были одинаковой высоты */
+      margin: 0;
     }
 
     tbody tr::before {
@@ -607,7 +610,7 @@
     tbody tr.selected {
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
-      margin-bottom: 0; /* Убираем, так как место для кнопок будет в card-container */
+      margin-bottom: 0;
     }
 
     tbody tr.selected::before {
@@ -731,16 +734,25 @@
       background-color: #a90e2e;
     }
 
-    /* Стили для кнопок фильтрации под карточкой */
+    /* ===== ИСПРАВЛЕНИЕ БАГА С КНОПКАМИ ===== */
     .card-filter-buttons {
       display: none;
       width: 100%;
       gap: 10px;
       margin-top: 10px;
-      position: relative; /* Изменено с absolute на relative */
-      left: auto;
-      top: auto;
-      z-index: 2;
+      position: relative;
+      z-index: 3;
+      order: 2; /* Всегда после карточки */
+    }
+
+    /* Когда карточка выбрана, показываем кнопки */
+    .card-container.has-selected-card .card-filter-buttons {
+      display: flex !important;
+    }
+
+    /* Альтернативный способ через JavaScript, но оставим и CSS класс */
+    .card-filter-buttons.visible {
+      display: flex;
     }
 
     .card-filter-button {
@@ -1686,7 +1698,7 @@
         // Добавляем обработчик клика на карточку
         tr.addEventListener('click', function(e) {
           // Не обрабатываем клик по кнопкам или селектам
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button')) {
+          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.closest('button') || e.target.closest('.schema-button')) {
             return;
           }
           
@@ -1787,6 +1799,7 @@
       const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
       if (filterButtons) {
         filterButtons.style.display = 'flex';
+        filterButtons.classList.add('visible');
       }
     }
 
@@ -1794,6 +1807,7 @@
       const filterButtons = document.getElementById(`filter-buttons-${rowId}`);
       if (filterButtons) {
         filterButtons.style.display = 'none';
+        filterButtons.classList.remove('visible');
       }
     }
 
