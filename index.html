@@ -19,19 +19,6 @@
       FONT_AWESOME: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
       GOOGLE_FONT: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap",
       
-      // ============== ССЫЛКИ НА ПРОЕКТЫ В ВЫПАДАЮЩЕМ МЕНЮ ==============
-      PROJECTS: {
-        // Проекты в основном выпадающем меню (Site Name Dropdown)
-        SKYMALL: {
-          NAME: "SKYMALL",
-          URL: "https://smart-bowling.github.io/SMB-SKYMALL/"
-        },
-        LUCKY_STRIKE_KH: {
-          NAME: "LUCKY STRIKE KH",
-          URL: "https://smart-bowling.github.io/SMB-LS-KH/"
-        }
-      },
-      
       // ============== ССЫЛКИ В МЕНЮ (Dropdown Menu) ==============
       MENU_LINKS: [
         {
@@ -50,19 +37,19 @@
       GAS_URL: "https://script.google.com/macros/s/AKfycbxXwr54yuVZpdPTEugmTHedgrRlUWNT1E7Iz_LJ4jqidJZTQFe5v2XH8LCMCILwr47s/exec",
       GOOGLE_CLIENT_ID: "328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com",
       
-      // ============== РАЗРЕШЕННЫЕ EMAIL ==============
-      ALLOWED_EMAILS: [
-        "vadiksss900@gmail.com",
-        "sasha380sheyd@gmail.com",
-        "bowlingblock.b@gmail.com",
-        "glusenkoaleksandr2907@gmail.com"
-      ]
+      // ============== НОВЫЕ ПАРАМЕТРЫ ДЛЯ АВТОРИЗАЦИИ ==============
+      API_KEY: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
+      SPREADSHEET_ID: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4',
+      CURRENT_SITE: 'https://smart-bowling.github.io/SMB-BB/'
     };
   </script>
   <!-- ===================== КОНЕЦ ССЫЛОК ===================== -->
   
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Identity Script -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -72,36 +59,36 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255, 255, 255, 0.95);
+      background: #ffffff;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 10000;
       padding: 20px;
-      gap: 20px;
+      font-family: 'Arial', sans-serif;
     }
-
-    .google-btn {
-      background: #4285F4;
-      color: white;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+    
+    #login h2 {
+      display: none;
+    }
+    
+    .g_id_signin {
       display: flex;
+      justify-content: center;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
+      margin: 0 auto;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+      transition: none;
+      animation: none;
     }
-
-    .google-btn:hover {
-      background: #3367D6;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    
+    .g_id_signin:hover {
+      transform: none;
+      box-shadow: none;
     }
 
     body, html {
@@ -112,6 +99,7 @@
       color: #1a2f40;
       font-size: clamp(10px, 3vw, 14px);
       font-weight: 700;
+      touch-action: manipulation;
     }
 
     header {
@@ -128,6 +116,14 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       user-select: none;
       z-index: 1000;
+      height: 60px;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        height: 70px;
+        padding: 8px 15px;
+      }
     }
 
     .logo img {
@@ -135,7 +131,13 @@
       height: 40px;
       object-fit: cover;
       border-radius: 0;
-      transform: translateY(4px);
+    }
+
+    @media (max-width: 768px) {
+      .logo img {
+        width: 50px;
+        height: 50px;
+      }
     }
 
     .site-name {
@@ -144,7 +146,103 @@
       font-size: 20px;
       font-weight: bold;
       color: white;
-      /* Убираем cursor: pointer так как больше не кликабельно */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .site-name {
+        font-size: 24px;
+      }
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid white;
+      background-color: #4a5568;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-avatar i {
+      font-size: 24px;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .user-avatar {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .user-avatar i {
+        font-size: 28px;
+      }
+    }
+
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      background-color: #1f2937;
+      border: 1px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 9999;
+      min-width: 150px;
+    }
+
+    @media (max-width: 768px) {
+      .user-dropdown {
+        top: 80px;
+        right: 15px;
+        min-width: 200px;
+      }
+      
+      .user-dropdown a {
+        padding: 15px 20px;
+        font-size: 18px;
+      }
+    }
+
+    .user-dropdown a {
+      padding: 10px 15px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .user-dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .icon-space {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
     }
 
     .menu-button {
@@ -154,6 +252,7 @@
       flex-direction: column;
       justify-content: space-between;
       height: 20px;
+      margin-left: 10px;
     }
 
     .menu-button div {
@@ -174,6 +273,18 @@
       overflow: hidden;
       z-index: 9999;
       min-width: 150px;
+    }
+
+    @media (max-width: 768px) {
+      .dropdown {
+        top: 80px;
+        min-width: 200px;
+      }
+      
+      .dropdown a {
+        padding: 15px 20px;
+        font-size: 18px;
+      }
     }
 
     .dropdown a {
@@ -511,10 +622,16 @@
     #app-content {
       width: 98%;
       max-width: 1200px;
-      margin: 20px auto 40px;
+      margin: 80px auto 40px;
       padding: 0 10px 10px 10px;
       box-sizing: border-box;
       background: transparent;
+    }
+
+    @media (max-width: 768px) {
+      #app-content {
+        margin-top: 90px;
+      }
     }
 
     /* Стили для таблицы - превращаем её в сетку */
@@ -869,6 +986,66 @@
       margin-right: 6px;
     }
 
+    /* Анимация загрузки */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      transition: opacity 0.5s ease;
+    }
+
+    .loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .logo-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .glow-ring {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border-radius: 100%;
+      background: conic-gradient(#dc143c, transparent 100%);
+      animation: spin 5s linear infinite;
+      filter: blur(30px);
+    }
+
+    .loading-screen img {
+      width: 120px;
+      z-index: 2;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(365deg); }
+    }
+
+    @media (min-width: 1025px) {
+      .logo-wrapper {
+        width: 160px;
+        height: 160px;
+      }
+      .glow-ring {
+        width: 100px;
+        height: 100px;
+        filter: blur(20px);
+      }
+      .loading-screen img {
+        width: 100px;
+      }
+    }
+
     .loader-container {
       position: fixed;
       top: 0;
@@ -876,7 +1053,7 @@
       width: 100%;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.2);
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       z-index: 9999;
@@ -889,11 +1066,6 @@
       border-top: 3px solid #dc143c;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
 
     /* ========== МЕДИА-ЗАПРОС ДЛЯ ПК ========== */
@@ -929,14 +1101,23 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
-  <div id="login">
-    <h2>Вход на сайт</h2>
-    <button class="google-btn" onclick="googleAuth()">
-      <i class="fab fa-google"></i> Войти через Google
-    </button>
+  <!-- Анимация загрузки -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="logo-wrapper">
+      <div class="glow-ring"></div>
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+    </div>
   </div>
 
-  <div id="loader" class="loader-container" style="display: none;">
+  <!-- Лоадер для операций -->
+  <div class="loading-screen" id="operationLoader" style="display: none; opacity: 1;">
+    <div class="logo-wrapper">
+      <div class="glow-ring"></div>
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+    </div>
+  </div>
+
+  <div id="loader" class="loader-container">
     <div class="loader"></div>
   </div>
 
@@ -949,53 +1130,71 @@
     <div class="site-name">
       BLOCKBUSTER
     </div>
-    <div class="menu-button" onclick="toggleDropdown()">
-      <div></div><div></div><div></div>
+    <div style="display: flex; align-items: center;">
+      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+      </div>
+      <div class="menu-button" onclick="toggleDropdown()">
+        <div></div><div></div><div></div>
+      </div>
+    </div>
+    <div class="user-dropdown" id="userDropdown">
+      <a href="#" onclick="signOut()">
+        <i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ
+      </a>
     </div>
     <div class="dropdown" id="dropdownMenu">
       <!-- Меню будет добавлено через JavaScript -->
     </div>
   </header>
 
-  <!-- Кнопка РЕЙТИНГ -->
-  <div class="rating-button" id="ratingButton" onclick="toggleRating()" style="display: none;">
-    <div>РЕЙТИНГ</div>
-    <div><i class="fas fa-chevron-down"></i></div>
-  </div>
-
-  <!-- Карточка с задачами - теперь кликабельная -->
-  <div class="task-summary-card" id="openTasksCard" onclick="toggleDateFilter()" style="display: none;">
-    <div id="task-summary-label">Открытых задач</div>
-    <div class="task-count" id="openTaskCount">0</div>
-  </div>
-
-  <!-- Контейнер для фильтрации по дате -->
-  <div class="date-filter-container" id="date-filter-container">
-    <div class="date-filter-label">Просмотр выполненных задач по дате</div>
-    <div class="date-input-wrapper">
-      <i class="fas fa-calendar-alt calendar-icon"></i>
-      <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
+  <div id="login">
+    <div id="g_id_onload"
+         data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
     </div>
-    <button class="clear-filter-btn" id="clear-filter-btn">Сбросить фильтр</button>
+    <div class="g_id_signin" data-type="standard"></div>
   </div>
-
-  <!-- КАРТОЧКИ С ОДИНАКОВОЙ ШИРИНОЙ -->
-  <div class="mechanics-rating" id="mechanicsRating">
-    <h3><i class="fas fa-trophy"></i> Рейтинг механиков за текущий месяц</h3>
-    <div id="ratingContent"></div>
-  </div>
-
-  <div class="winner-section" id="winnerSection">
-    <h3><i class="fas fa-crown"></i> Победитель прошлого месяца</h3>
-    <div id="winnerContent"></div>
-  </div>
-
-  <!-- Кнопка "Показать все задачи" -->
-  <button class="show-all-button" id="showAllButton" onclick="showAllTasks()" style="display: none;">
-    Показать все задачи
-  </button>
 
   <div id="app-content" style="display:none;">
+    <!-- Кнопка РЕЙТИНГ -->
+    <div class="rating-button" id="ratingButton" onclick="toggleRating()">
+      <div>РЕЙТИНГ</div>
+      <div><i class="fas fa-chevron-down"></i></div>
+    </div>
+
+    <!-- Карточка с задачами - теперь кликабельная -->
+    <div class="task-summary-card" id="openTasksCard" onclick="toggleDateFilter()">
+      <div id="task-summary-label">Открытых задач</div>
+      <div class="task-count" id="openTaskCount">0</div>
+    </div>
+
+    <!-- Контейнер для фильтрации по дате -->
+    <div class="date-filter-container" id="date-filter-container">
+      <div class="date-filter-label">Просмотр выполненных задач по дате</div>
+      <div class="date-input-wrapper">
+        <i class="fas fa-calendar-alt calendar-icon"></i>
+        <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
+      </div>
+      <button class="clear-filter-btn" id="clear-filter-btn">Сбросить фильтр</button>
+    </div>
+
+    <!-- КАРТОЧКИ С ОДИНАКОВОЙ ШИРИНОЙ -->
+    <div class="mechanics-rating" id="mechanicsRating">
+      <h3><i class="fas fa-trophy"></i> Рейтинг механиков за текущий месяц</h3>
+      <div id="ratingContent"></div>
+    </div>
+
+    <div class="winner-section" id="winnerSection">
+      <h3><i class="fas fa-crown"></i> Победитель прошлого месяца</h3>
+      <div id="winnerContent"></div>
+    </div>
+
+    <!-- Кнопка "Показать все задачи" -->
+    <button class="show-all-button" id="showAllButton" onclick="showAllTasks()">
+      Показать все задачи
+    </button>
+
     <table>
       <thead>
         <tr>
@@ -1039,17 +1238,174 @@
       });
     }
 
-    // ===================== ОСНОВНОЙ КОД =====================
+    // ===================== НОВАЯ СИСТЕМА АВТОРИЗАЦИИ =====================
     
-    (function() {
-      if (window.location.protocol === 'http:' && !window.location.hostname.includes('localhost')) {
-        window.location.href = 'https:' + window.location.href.substring(5);
+    const API_KEY = LINKS.API_KEY;
+    const SPREADSHEET_ID = LINKS.SPREADSHEET_ID;
+    const CURRENT_SITE = LINKS.CURRENT_SITE;
+    
+    let currentUser = null;
+    
+    const loadingScreen = document.getElementById('loadingScreen');
+    const operationLoader = document.getElementById('operationLoader');
+
+    function showLoader(show) {
+      document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    }
+
+    function showOperationLoader(show) {
+      if (show) {
+        operationLoader.style.display = 'flex';
+        operationLoader.classList.remove('fade-out');
+      } else {
+        operationLoader.classList.add('fade-out');
+        setTimeout(() => {
+          operationLoader.style.display = 'none';
+          operationLoader.classList.remove('fade-out');
+        }, 500);
       }
-    })();
+    }
 
+    function toggleUserDropdown() {
+      const menu = document.getElementById("userDropdown");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    function loadSheetsAPI() {
+      return new Promise((resolve, reject) => {
+        gapi.load('client', {
+          callback: resolve,
+          onerror: () => reject('Ошибка загрузки Google API'),
+          timeout: 10000,
+          ontimeout: () => reject('Таймаут загрузки Google API')
+        });
+      });
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function handleCredentialResponse(response) {
+      showOperationLoader(true);
+      try {
+        const payload = parseJwt(response.credential);
+        currentUser = {
+          email: payload.email.toLowerCase().trim(),
+          name: payload.name,
+          picture: payload.picture
+        };
+        updateUserAvatar(currentUser);
+        initAndCheckEmail();
+      } catch (e) {
+        showOperationLoader(false);
+        alert('Ошибка аутентификации');
+      }
+    }
+
+    function updateUserAvatar(user) {
+      const avatarContainer = document.getElementById('userAvatar');
+      avatarContainer.innerHTML = user?.picture 
+        ? `<img src="${user.picture}" alt="Avatar">` 
+        : '<i class="fas fa-user"></i>';
+    }
+
+    async function initAndCheckEmail() {
+      try {
+        await loadSheetsAPI();
+        await gapi.client.init({
+          apiKey: API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        });
+        await checkEmailInSheet(currentUser.email);
+      } catch (error) {
+        showOperationLoader(false);
+        alert('Ошибка инициализации Google API: ' + error);
+      }
+    }
+
+    async function checkEmailInSheet(email) {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: '1!A:Z',
+        });
+        
+        const rows = response.result.values || [];
+        let hasAccess = false;
+        
+        for (let i = 0; i < rows.length; i++) {
+          if (!rows[i]?.[0]) continue;
+          if (rows[i][0].toLowerCase().trim() === email) {
+            for (let j = 1; j < rows[i].length; j++) {
+              const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+              if (siteUrl === CURRENT_SITE || siteUrl.includes('SMB-BB')) {
+                hasAccess = true;
+                break;
+              }
+            }
+            break;
+          }
+        }
+        
+        if (hasAccess) {
+          loginUser(currentUser);
+        } else {
+          showOperationLoader(false);
+          alert('Доступ запрещен');
+        }
+      } catch (error) {
+        showOperationLoader(false);
+        alert('Ошибка доступа к таблице');
+      }
+    }
+
+    function loginUser(payload) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      
+      localStorage.setItem('userLoggedIn', 'true');
+      localStorage.setItem('userEmail', payload.email.toLowerCase());
+      localStorage.setItem('userName', payload.name);
+      localStorage.setItem('userPic', payload.picture);
+      
+      showOperationLoader(false);
+      
+      if (loadingScreen) {
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
+      }
+      
+      loadSheetData();
+    }
+
+    function signOut() {
+      localStorage.clear();
+      sessionStorage.clear();
+      location.reload();
+    }
+
+    document.addEventListener('click', function(e) {
+      const userDropdown = document.getElementById("userDropdown");
+      const userAvatar = document.getElementById("userAvatar");
+      
+      if (userDropdown.style.display === 'block' && !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+        userDropdown.style.display = 'none';
+      }
+    });
+
+    // ===================== ОСТАЛЬНОЙ КОД (без изменений) =====================
+    
     const GAS_URL = LINKS.GAS_URL;
-    const allowedEmails = LINKS.ALLOWED_EMAILS;
-
     let fullData = [];
     let filteredData = [];
     let isFiltered = false;
@@ -1070,10 +1426,38 @@
     document.addEventListener('DOMContentLoaded', function() {
       populateMenuLinks();
       
-      checkAuth();
+      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+      const email = localStorage.getItem('userEmail');
       
-      if (window.location.hash) {
-        processAuthResponse();
+      if (isLoggedIn && email) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app-content').style.display = 'block';
+        
+        currentUser = {
+          email: email,
+          name: localStorage.getItem('userName'),
+          picture: localStorage.getItem('userPic')
+        };
+        
+        updateUserAvatar(currentUser);
+        showOperationLoader(true);
+        
+        loadSheetsAPI()
+          .then(() => gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          }))
+          .then(() => checkEmailInSheet(email))
+          .catch(error => {
+            showOperationLoader(false);
+            alert('Ошибка восстановления сессии');
+            signOut();
+          });
+      } else {
+        document.getElementById('login').style.display = 'block';
+        if (loadingScreen) {
+          loadingScreen.classList.add('fade-out');
+        }
       }
       
       document.addEventListener('click', function(e) {
@@ -1097,69 +1481,10 @@
       document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
     });
 
-    function checkAuth() {
-      const userEmail = localStorage.getItem('userEmail');
-      if (userEmail && allowedEmails.includes(userEmail)) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('app-content').style.display = 'block';
-        document.getElementById('ratingButton').style.display = 'flex';
-        document.getElementById('openTasksCard').style.display = 'flex';
-        loadSheetData();
-      } else {
-        document.getElementById('login').style.display = 'flex';
-      }
-    }
-
-    function googleAuth() {
-      const clientId = LINKS.GOOGLE_CLIENT_ID;
-      const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-      const scope = encodeURIComponent('email profile');
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-      
-      window.open(authUrl, 'GoogleAuth', 'width=500,height=600');
-    }
-
-    function processAuthResponse() {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      
-      if (accessToken) {
-        showLoader();
-        
-        fetch('https://www.googleapis.com/oauth2/v1/userinfo?access_token=' + accessToken)
-          .then(response => response.json())
-          .then(data => {
-            if (data.email && allowedEmails.includes(data.email)) {
-              localStorage.setItem('userEmail', data.email);
-              window.location.href = window.location.origin + window.location.pathname;
-            } else {
-              alert('Доступ запрещен для: ' + data.email);
-              localStorage.removeItem('userEmail');
-            }
-          })
-          .catch(error => {
-            console.error('Ошибка получения данных:', error);
-            alert('Ошибка авторизации');
-          })
-          .finally(() => {
-            hideLoader();
-          });
-      }
-    }
-
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
       event.stopPropagation();
-    }
-
-    function showLoader() {
-      document.getElementById("loader").style.display = "flex";
-    }
-
-    function hideLoader() {
-      document.getElementById("loader").style.display = "none";
     }
 
     function toggleRating() {
@@ -1302,7 +1627,7 @@
     }
 
     async function loadSheetData() {
-      showLoader();
+      showLoader(true);
       try {
         const response = await fetch(`${GAS_URL}?action=getData`);
         if (!response.ok) throw new Error('Network response was not ok');
@@ -1328,7 +1653,7 @@
         document.getElementById("tableBody").innerHTML = "<tr><td colspan='6'>Ошибка загрузки данных</td></tr>";
         console.error(e);
       } finally {
-        hideLoader();
+        showLoader(false);
       }
     }
 
@@ -1439,7 +1764,7 @@
     }
 
     async function updateSheet(rowNumber, doneByValue) {
-      showLoader();
+      showLoader(true);
       try {
         const params = new URLSearchParams({
           action: 'update',
@@ -1493,7 +1818,7 @@
         console.error(e);
         return Promise.reject(e);
       } finally {
-        hideLoader();
+        showLoader(false);
       }
     }
 
