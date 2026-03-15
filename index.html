@@ -870,7 +870,7 @@
       margin-right: 6px;
     }
 
-    /* ===== ЕДИНАЯ АНИМАЦИЯ ЗАГРУЗКИ ===== */
+    /* ===== ОБНОВЛЕННАЯ АНИМАЦИЯ ЗАГРУЗКИ (как в MANUALS) ===== */
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -879,7 +879,7 @@
       justify-content: center;
       align-items: center;
       z-index: 99999;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.5s ease;
     }
 
     .loading-screen.fade-out {
@@ -889,8 +889,8 @@
 
     .logo-wrapper {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: 160px;
+      height: 160px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -898,12 +898,12 @@
 
     .glow-ring {
       position: absolute;
-      width: 85px; /* Уменьшено с 100px до 85px */
-      height: 85px; /* Уменьшено с 100px до 85px */
+      width: 80px;
+      height: 80px;
       border-radius: 100%;
       background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 7s linear infinite; /* Увеличено время с 5s до 7s для более медленного вращения */
-      filter: blur(12px); /* Уменьшено размытие с 15px до 12px */
+      animation: spin 5s linear infinite;
+      filter: blur(20px);
     }
 
     .loading-screen img {
@@ -915,18 +915,52 @@
       to { transform: rotate(365deg); }
     }
 
+    /* Стили для лоадера при отправке */
+    .global-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(31, 41, 55, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      backdrop-filter: blur(5px);
+    }
+
+    .global-loader.active {
+      display: flex;
+    }
+
+    .global-loader .logo-wrapper {
+      width: 120px;
+      height: 120px;
+    }
+
+    .global-loader .glow-ring {
+      width: 60px;
+      height: 60px;
+      filter: blur(15px);
+    }
+
+    .global-loader img {
+      width: 90px;
+    }
+
     @media (min-width: 1025px) {
       .logo-wrapper {
         width: 160px;
         height: 160px;
       }
       .glow-ring {
-        width: 65px; /* Уменьшено с 75px до 65px */
-        height: 65px; /* Уменьшено с 75px до 65px */
-        filter: blur(10px); /* Уменьшено размытие с 12px до 10px */
+        width: 80px;
+        height: 80px;
+        filter: blur(20px);
       }
       .loading-screen img {
-        width: 100px;
+        width: 120px;
       }
     }
 
@@ -963,11 +997,19 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
-  <!-- ЕДИНСТВЕННАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
+  <!-- ОБНОВЛЕННАЯ АНИМАЦИЯ ЗАГРУЗКИ (как в MANUALS) -->
   <div class="loading-screen" id="loadingScreen">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
       <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
+    </div>
+  </div>
+
+  <!-- Дополнительный лоадер для операций отправки -->
+  <div class="global-loader" id="globalLoader">
+    <div class="logo-wrapper">
+      <div class="glow-ring"></div>
+      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading">
     </div>
   </div>
 
@@ -1074,9 +1116,18 @@
     let currentUser = null;
     
     const loadingScreen = document.getElementById('loadingScreen');
+    const globalLoader = document.getElementById('globalLoader');
 
     function showLoader(show) {
       loadingScreen.style.display = show ? 'flex' : 'none';
+    }
+
+    function showGlobalLoader(show) {
+      if (show) {
+        globalLoader.classList.add('active');
+      } else {
+        globalLoader.classList.remove('active');
+      }
     }
 
     function toggleUserDropdown() {
@@ -1191,8 +1242,9 @@
       localStorage.setItem('userPic', payload.picture);
       
       loadSheetData().finally(() => {
-        showLoader(false);
-        loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
       });
     }
 
@@ -1261,8 +1313,9 @@
           });
       } else {
         document.getElementById('login').style.display = 'block';
-        showLoader(false);
-        loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
       }
       
       document.addEventListener('click', function(e) {
@@ -1555,8 +1608,8 @@
     }
 
     async function updateSheet(rowNumber, doneByValue) {
-      // Показываем лоадер перед отправкой
-      showLoader(true);
+      // Показываем глобальный лоадер перед отправкой
+      showGlobalLoader(true);
       try {
         const params = new URLSearchParams({
           action: 'update',
@@ -1610,8 +1663,8 @@
         console.error(e);
         return Promise.reject(e);
       } finally {
-        // Скрываем лоадер после завершения
-        showLoader(false);
+        // Скрываем глобальный лоадер после завершения
+        showGlobalLoader(false);
       }
     }
 
