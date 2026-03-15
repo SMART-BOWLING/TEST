@@ -39,6 +39,32 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
+    /* Стили для сообщения об ошибке доступа */
+    .access-denied-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(31, 41, 55, 0.95);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 20px 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      z-index: 100000;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border: 2px solid #dc143c;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 4px 20px rgba(220, 20, 60, 0.3); }
+      50% { box-shadow: 0 4px 30px rgba(220, 20, 60, 0.6); }
+      100% { box-shadow: 0 4px 20px rgba(220, 20, 60, 0.3); }
+    }
+
     #login {
       position: fixed;
       top: 0;
@@ -1228,13 +1254,27 @@
         if (hasAccess) {
           loginUser(currentUser);
         } else {
-          showLoader(false);
-          alert('Доступ запрещен');
+          // Показываем сообщение об ошибке поверх анимации загрузки
+          showAccessDeniedMessage();
         }
       } catch (error) {
         showLoader(false);
         alert('Ошибка доступа к таблице');
       }
+    }
+
+    function showAccessDeniedMessage() {
+      // Создаем элемент с сообщением
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'access-denied-message';
+      messageDiv.id = 'accessDeniedMessage';
+      messageDiv.textContent = 'ДОСТУП ЗАПРЕЩЕН';
+      
+      // Добавляем сообщение на страницу (поверх анимации загрузки)
+      document.body.appendChild(messageDiv);
+      
+      // Анимация загрузки остается (не скрываем)
+      // Не вызываем showLoader(false)
     }
 
     function loginUser(payload) {
