@@ -870,7 +870,7 @@
       margin-right: 6px;
     }
 
-    /* Анимация загрузки - ЕДИНЫЙ СТИЛЬ ДЛЯ ВСЕХ ЛОАДЕРОВ */
+    /* ===== ЕДИНАЯ АНИМАЦИЯ ЗАГРУЗКИ ===== */
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -879,18 +879,12 @@
       justify-content: center;
       align-items: center;
       z-index: 99999;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.3s ease;
     }
 
     .loading-screen.fade-out {
       opacity: 0;
       pointer-events: none;
-    }
-
-    /* Для лоадера задач используем те же стили, но с полупрозрачным фоном */
-    .loading-screen.task-loading {
-      background: rgba(31, 41, 55, 0.8);
-      backdrop-filter: blur(5px);
     }
 
     .logo-wrapper {
@@ -908,7 +902,7 @@
       height: 150px;
       border-radius: 100%;
       background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 5s linear infinite;
+      animation: spin 1.5s linear infinite;
       filter: blur(30px);
     }
 
@@ -934,28 +928,6 @@
       .loading-screen img {
         width: 100px;
       }
-    }
-
-    .loader-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.2);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .loader {
-      width: 25px;
-      height: 25px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #dc143c;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
     }
 
     /* ========== МЕДИА-ЗАПРОС ДЛЯ ПК ========== */
@@ -991,24 +963,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body>
-  <!-- Анимация загрузки при входе -->
+  <!-- ЕДИНСТВЕННАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
   <div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
-    </div>
-  </div>
-
-  <!-- Лоадер для операций (используем тот же класс, но с дополнительным классом task-loading для полупрозрачности) -->
-  <div class="loading-screen task-loading" id="operationLoader" style="display: none;">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
-    </div>
-  </div>
-
-  <!-- Лоадер для задач (используем тот же класс) -->
-  <div class="loading-screen task-loading" id="taskLoader" style="display: none;">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
       <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo">
@@ -1109,7 +1065,7 @@
     document.querySelector('link[rel="icon"]').href = LINKS.FAVICON;
     document.querySelector('.logo img').src = LINKS.LOGO;
 
-    // ===================== НОВАЯ СИСТЕМА АВТОРИЗАЦИИ =====================
+    // ===================== СИСТЕМА АВТОРИЗАЦИИ =====================
     
     const API_KEY = LINKS.API_KEY;
     const SPREADSHEET_ID = LINKS.SPREADSHEET_ID;
@@ -1118,24 +1074,10 @@
     let currentUser = null;
     
     const loadingScreen = document.getElementById('loadingScreen');
-    const operationLoader = document.getElementById('operationLoader');
-    const taskLoader = document.getElementById('taskLoader');
 
     function showLoader(show) {
-      taskLoader.style.display = show ? 'flex' : 'none';
-    }
-
-    function showOperationLoader(show) {
-      if (show) {
-        operationLoader.style.display = 'flex';
-        operationLoader.classList.remove('fade-out');
-      } else {
-        operationLoader.classList.add('fade-out');
-        setTimeout(() => {
-          operationLoader.style.display = 'none';
-          operationLoader.classList.remove('fade-out');
-        }, 500);
-      }
+      // Этот лоадер будет показываться при операциях (отправка задачи и т.д.)
+      loadingScreen.style.display = show ? 'flex' : 'none';
     }
 
     function toggleUserDropdown() {
@@ -1167,7 +1109,7 @@
     }
 
     function handleCredentialResponse(response) {
-      showOperationLoader(true);
+      showLoader(true);
       try {
         const payload = parseJwt(response.credential);
         currentUser = {
@@ -1178,7 +1120,7 @@
         updateUserAvatar(currentUser);
         initAndCheckEmail();
       } catch (e) {
-        showOperationLoader(false);
+        showLoader(false);
         alert('Ошибка аутентификации');
       }
     }
@@ -1199,7 +1141,7 @@
         });
         await checkEmailInSheet(currentUser.email);
       } catch (error) {
-        showOperationLoader(false);
+        showLoader(false);
         alert('Ошибка инициализации Google API: ' + error);
       }
     }
@@ -1231,11 +1173,11 @@
         if (hasAccess) {
           loginUser(currentUser);
         } else {
-          showOperationLoader(false);
+          showLoader(false);
           alert('Доступ запрещен');
         }
       } catch (error) {
-        showOperationLoader(false);
+        showLoader(false);
         alert('Ошибка доступа к таблице');
       }
     }
@@ -1249,15 +1191,11 @@
       localStorage.setItem('userName', payload.name);
       localStorage.setItem('userPic', payload.picture);
       
-      showOperationLoader(false);
-      
-      if (loadingScreen) {
-        setTimeout(() => {
-          loadingScreen.classList.add('fade-out');
-        }, 500);
-      }
-      
-      loadSheetData();
+      // Загружаем данные и только потом убираем лоадер
+      loadSheetData().finally(() => {
+        showLoader(false);
+        loadingScreen.classList.add('fade-out');
+      });
     }
 
     function signOut() {
@@ -1310,7 +1248,7 @@
         };
         
         updateUserAvatar(currentUser);
-        showOperationLoader(true);
+        showLoader(true);
         
         loadSheetsAPI()
           .then(() => gapi.client.init({
@@ -1319,15 +1257,15 @@
           }))
           .then(() => checkEmailInSheet(email))
           .catch(error => {
-            showOperationLoader(false);
+            showLoader(false);
             alert('Ошибка восстановления сессии');
             signOut();
           });
       } else {
         document.getElementById('login').style.display = 'block';
-        if (loadingScreen) {
-          loadingScreen.classList.add('fade-out');
-        }
+        // Если пользователь не залогинен, убираем лоадер
+        showLoader(false);
+        loadingScreen.classList.add('fade-out');
       }
       
       document.addEventListener('click', function(e) {
@@ -1486,7 +1424,6 @@
     }
 
     async function loadSheetData() {
-      showLoader(true);
       try {
         const response = await fetch(`${GAS_URL}?action=getData`);
         if (!response.ok) throw new Error('Network response was not ok');
@@ -1511,8 +1448,6 @@
       } catch (e) {
         document.getElementById("tableBody").innerHTML = "<tr><td colspan='6'>Ошибка загрузки данных</td></tr>";
         console.error(e);
-      } finally {
-        showLoader(false);
       }
     }
 
