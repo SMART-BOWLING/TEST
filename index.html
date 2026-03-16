@@ -821,6 +821,9 @@
   </style>
 </head>
 <body>
+  <!-- ИНДИКАТОР ИСТОЧНИКА ДАННЫХ -->
+  <div id="dataSourceIndicator" style="position: fixed; top: 60px; right: 10px; width: 12px; height: 12px; border-radius: 50%; background: gray; z-index: 10001; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: background 0.3s, transform 0.2s;" title="Источник данных: неизвестно"></div>
+
   <!-- ЭКРАН ЗАГРУЗКИ -->
   <div class="loading-screen" id="loadingScreen">
     <div class="logo-wrapper">
@@ -1348,6 +1351,7 @@
 
     async function loadDataDirectlyFromSheets(date) {
       console.log('Чтение напрямую из Sheets для даты:', date);
+      updateDataSourceIndicator('sheets', `Дата: ${date}`);
       
       try {
         const dateObj = new Date(date);
@@ -1452,6 +1456,9 @@
 
     // Резервный метод через Apps Script
     async function loadDataViaAppsScript(date) {
+      console.log('⚠️ Используется резервный метод через Apps Script для даты:', date);
+      updateDataSourceIndicator('appsscript', `Дата: ${date} (резерв)`);
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         console.log('Таймаут загрузки данных');
@@ -1471,6 +1478,63 @@
       
       return await response.json();
     }
+
+    // ===== ФУНКЦИИ ДЛЯ ИНДИКАТОРА ИСТОЧНИКА ДАННЫХ =====
+    function updateDataSourceIndicator(source, details = '') {
+      const indicator = document.getElementById('dataSourceIndicator');
+      if (!indicator) return;
+      
+      let color, tooltip;
+      
+      switch(source) {
+        case 'sheets':
+          color = '#4CAF50'; // Зеленый - прямое чтение из Sheets API
+          tooltip = '✅ Прямое чтение из Google Sheets API';
+          break;
+        case 'appsscript':
+          color = '#F44336'; // Красный - через Apps Script
+          tooltip = '⚠️ Чтение через Google Apps Script (резервный метод)';
+          break;
+        case 'cache':
+          color = '#2196F3'; // Синий - из кэша
+          tooltip = '📦 Данные из кэша браузера';
+          break;
+        case 'demo':
+          color = '#FF9800'; // Оранжевый - демо-данные
+          tooltip = '🎭 Демо-данные (нет подключения)';
+          break;
+        default:
+          color = '#9E9E9E'; // Серый - неизвестно
+          tooltip = '⚪ Источник не определен';
+      }
+      
+      indicator.style.background = color;
+      indicator.title = tooltip + (details ? `\n${details}` : '');
+      
+      // Добавляем пульсацию при изменении
+      indicator.style.transform = 'scale(1.5)';
+      setTimeout(() => {
+        indicator.style.transform = 'scale(1)';
+      }, 200);
+      
+      console.log(`📊 Индикатор: ${tooltip}`, details);
+    }
+
+    // Перехватываем функцию applyCachedData для отслеживания кэша
+    const originalApplyCached = applyCachedData;
+    applyCachedData = function(data) {
+      if (dataCache[selectedDate]) {
+        updateDataSourceIndicator('cache', `Дата: ${selectedDate}`);
+      }
+      return originalApplyCached(data);
+    };
+
+    // Перехватываем applyDefaultData для демо-режима
+    const originalApplyDefault = applyDefaultData;
+    applyDefaultData = function() {
+      updateDataSourceIndicator('demo', 'Нет подключения к серверу');
+      return originalApplyDefault();
+    };
 
     // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
     window.addEventListener('load', function() {
