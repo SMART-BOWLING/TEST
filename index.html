@@ -1126,17 +1126,25 @@
 
     // Функция для извлечения номера дня из строки
     function extractDayNumber(str) {
-      if (!str) return null;
+      if (!str && str !== 0) return null;
+      
+      // Если это уже число
+      if (typeof str === 'number') {
+        return str;
+      }
+      
+      // Преобразуем в строку, если это не строка
+      const strValue = String(str).trim();
       
       // Пробуем разные форматы:
       
       // 1. Если это просто число
-      if (/^\d+$/.test(str)) {
-        return parseInt(str, 10);
+      if (/^\d+$/.test(strValue)) {
+        return parseInt(strValue, 10);
       }
       
       // 2. Если формат "22 сент." - берем первую часть
-      const parts = str.split(' ');
+      const parts = strValue.split(' ');
       if (parts.length > 0) {
         const firstPart = parts[0];
         if (/^\d+$/.test(firstPart)) {
@@ -1145,7 +1153,7 @@
       }
       
       // 3. Если есть точка в начале (например, ".22")
-      const match = str.match(/\.?(\d+)/);
+      const match = strValue.match(/\.?(\d+)/);
       if (match) {
         return parseInt(match[1], 10);
       }
@@ -1172,6 +1180,7 @@
         );
         
         if (!sheetExists) {
+          console.log('Лист не существует:', sheetName);
           return {
             errors: Array(14).fill(0),
             chartData: { errors: Array(14).fill(0), fps: Array(14).fill(0) },
@@ -1179,6 +1188,8 @@
             tableData: []
           };
         }
+        
+        console.log('Чтение данных из листа:', sheetName);
         
         // Формируем диапазоны для чтения
         const row = SHEETS_CONFIG.START_ROW + day - 1;
@@ -1200,7 +1211,9 @@
         chartRanges.push(`${sheetName}!${SHEETS_CONFIG.TOTAL_STATS_COLUMNS.FPS}${SHEETS_CONFIG.CHART_ROWS.ERRORS}`);
         
         // 4. Читаем данные для таблицы (все дни месяца)
+        // Читаем колонки B (дни) и F, J, N, R, V, Z, AD, AH, AL, AP, AT, AX, BB, BF (ошибки)
         const tableRange = `${sheetName}!B${SHEETS_CONFIG.START_ROW}:BF34`;
+        console.log('Диапазон таблицы:', tableRange);
         
         // Объединяем все запросы в один batchGet для производительности
         const batchResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
@@ -1218,6 +1231,7 @@
           const value = valueRanges[index++]?.values?.[0]?.[0];
           errors.push(Math.ceil(Number(value)) || 0);
         }
+        console.log('Ошибки текущего дня:', errors);
         
         // Парсим данные графиков
         const chartErrors = [];
@@ -1235,61 +1249,56 @@
         
         // Парсим данные таблицы
         const tableValues = valueRanges[index]?.values || [];
+        console.log('Сырые данные таблицы (первые 5 строк):', tableValues.slice(0, 5));
+        
         const tableData = [];
         
-        // Определяем количество дней в текущем месяце
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const daysInMonth = new Date(year, month, 0).getDate();
-        
-        // Создаем массив для всех дней месяца
-        for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
-          // Ищем строку для этого дня в данных из таблицы
-          const rowIndex = dayNum - 1; // Индекс в массиве данных (0 = 1-й день)
+        // Проходим по каждой строке данных
+        for (let i = 0; i < tableValues.length; i++) {
+          const rowData = tableValues[i];
           
-          if (rowIndex < tableValues.length) {
-            const rowData = tableValues[rowIndex];
+          // Если строка существует и в ней есть данные
+          if (rowData && rowData.length > 0) {
+            // Первая колонка (B) - это день
+            let dayValue = rowData[0];
             
-            // Проверяем, что есть данные в этой строке
-            if (rowData && rowData.length > 0) {
-              const dayValue = rowData[0]; // Значение в колонке B (день)
-              
-              // Извлекаем номер дня из различных форматов
-              let dayNumber = dayNum; // По умолчанию используем номер из цикла
-              
-              if (dayValue) {
-                // Пробуем извлечь число из строки (например, "22 сент." -> 22)
-                const extractedNumber = extractDayNumber(dayValue.toString());
-                if (extractedNumber) {
-                  dayNumber = extractedNumber;
-                }
-              }
-              
-              const rowErrors = [];
-              for (let j = 4; j < 58; j += 4) { // Индексы для F, J, N, R...
-                const val = rowData[j];
-                rowErrors.push(Math.ceil(Number(val)) || 0);
-              }
-              
-              tableData.push({
-                day: dayNumber, // Используем извлеченный номер дня
-                errors: rowErrors
-              });
-            } else {
-              // Если строка пустая, добавляем пустые данные для этого дня
-              tableData.push({
-                day: dayNum,
-                errors: Array(14).fill(0)
-              });
+            // Если день пустой, пропускаем строку
+            if (dayValue === undefined || dayValue === null || dayValue === '') {
+              continue;
             }
-          } else {
-            // Если данных меньше, чем дней в месяце, добавляем пустые строки
+            
+            console.log(`Строка ${i + SHEETS_CONFIG.START_ROW}: день =`, dayValue, 'тип:', typeof dayValue);
+            
+            // Извлекаем номер дня
+            const dayNumber = extractDayNumber(dayValue);
+            
+            if (!dayNumber) {
+              console.log('Не удалось извлечь номер дня из значения:', dayValue);
+              continue;
+            }
+            
+            // Собираем ошибки для каждой машины
+            const rowErrors = [];
+            // Индексы колонок: F(5), J(9), N(13), R(17), V(21), Z(25), AD(29), AH(33), AL(37), AP(41), AT(45), AX(49), BB(53), BF(57)
+            // В массиве rowData индексы смещены на 1, потому что первая колонка B имеет индекс 0
+            const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+            
+            for (let j = 0; j < errorIndices.length; j++) {
+              const idx = errorIndices[j];
+              const val = idx < rowData.length ? rowData[idx] : 0;
+              rowErrors.push(Math.ceil(Number(val)) || 0);
+            }
+            
             tableData.push({
-              day: dayNum,
-              errors: Array(14).fill(0)
+              day: dayNumber,
+              errors: rowErrors
             });
           }
         }
+        
+        // Сортируем по дню
+        tableData.sort((a, b) => a.day - b.day);
+        console.log('Обработанные данные таблицы (первые 5 строк):', tableData.slice(0, 5));
         
         return {
           errors: errors,
@@ -1914,7 +1923,7 @@
       sortedData.forEach(row => {
         const tr = document.createElement('tr');
         const dayCell = document.createElement('td');
-        dayCell.textContent = row.day; // Теперь здесь всегда число
+        dayCell.textContent = row.day;
         dayCell.style.fontWeight = 'bold';
         tr.appendChild(dayCell);
         
