@@ -1289,25 +1289,13 @@
       return month + '.' + year;
     }
 
-    function formatDayFromValue(value) {
-      if (typeof value === 'string') {
-        const parts = value.split(' ');
-        if (parts.length > 0 && !isNaN(parts[0])) {
-          return parts[0];
-        }
-        return value;
-      } else if (value instanceof Date) {
-        return value.getDate().toString();
-      }
-      return value.toString();
-    }
-
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ТАБЛИЦЫ
     async function loadTableDataFromSheets(sheetName) {
       try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: SHEETS_CONFIG.spreadsheetId,
           range: `'${sheetName}'!B4:BF34`,
-          valueRenderOption: 'UNFORMATTED_VALUE'
+          valueRenderOption: 'FORMATTED_VALUE' // ВАЖНО: используем отформатированные значения
         });
         
         const rows = response.result.values || [];
@@ -1317,10 +1305,21 @@
         const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
         
         rows.forEach(row => {
-          if (!row[0]) return;
+          if (!row[0]) return; // Пропускаем пустые строки
+          
+          const dayValue = row[0];
+          let dayNumber;
+          
+          // Если это строка, извлекаем число из начала (например "16 марта" -> 16)
+          if (typeof dayValue === 'string') {
+            const match = dayValue.match(/^(\d+)/);
+            dayNumber = match ? parseInt(match[1]) : dayValue;
+          } else {
+            dayNumber = dayValue;
+          }
           
           const rowData = {
-            day: formatDayFromValue(row[0]),
+            day: dayNumber,
             errors: []
           };
           
@@ -1330,6 +1329,13 @@
           });
           
           tableData.push(rowData);
+        });
+        
+        // Сортируем по дню
+        tableData.sort((a, b) => {
+          const dayA = parseInt(a.day) || 0;
+          const dayB = parseInt(b.day) || 0;
+          return dayA - dayB;
         });
         
         return tableData;
@@ -1532,9 +1538,6 @@
       const grid = document.getElementById('machinesGrid');
       const dateInput = document.getElementById('date');
       
-      console.log('Grid элемент:', grid);
-      console.log('Date input:', dateInput);
-      
       if (grid && dateInput) {
         generateMachineCells();
         dateInput.value = selectedDate;
@@ -1591,8 +1594,6 @@
           countElement.classList.add('non-zero');
         }
       });
-      
-      console.log('Принудительное обновление отображения:', machineErrors);
     }
 
     function updateDisplay() {
@@ -1688,13 +1689,11 @@
       }
       
       isDataLoaded = true;
-      console.log('Данные успешно применены');
     }
 
     function applyDefaultData() {
       machineErrors = Array(14).fill(0);
       originalErrors = Array(14).fill(0);
-      console.log('Применяем данные по умолчанию');
       forceDisplayUpdate();
       isDataLoaded = true;
     }
@@ -1812,7 +1811,6 @@
       
       try {
         if (!analyticsLoaded) {
-          // Если данные таблицы еще не загружены, загружаем их
           if (!dataCache[selectedDate]?.tableData) {
             await loadTableData();
           }
@@ -1866,13 +1864,11 @@
 
     async function loadTableData() {
       try {
-        // Пробуем получить из кэша
         if (dataCache[selectedDate]?.tableData) {
           populateTable(dataCache[selectedDate].tableData);
           return;
         }
         
-        // Если Sheets API доступен, читаем напрямую
         if (window.gapi?.client?.sheets) {
           const dateObj = new Date(selectedDate);
           const sheetName = getSheetNameFromDate(dateObj);
@@ -1883,7 +1879,6 @@
           }
         }
         
-        // Резервный вариант через Apps Script
         const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -2032,7 +2027,6 @@
 
     async function loadYearlyComparisonData() {
       try {
-        // Пробуем через Apps Script (он все равно нужен для этих данных)
         const response = await fetch(`${BACKEND_URL}?yearlyComparison=true`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -2247,7 +2241,6 @@
       }
     });
 
-    // Обработка глобальных ошибок
     window.addEventListener('error', function(e) {
       console.error('Global error:', e.error);
     });
