@@ -134,27 +134,46 @@
       text-align: center;
     }
 
-    .loader-container {
+    /* ЕДИНЫЙ СТИЛЬ ЛОАДЕРА - КАК ПРИ ВХОДЕ */
+    .loader-container, .action-loader {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.2);
+      background-color: #1f2937;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+
+    .loader-container.active, .action-loader.active {
+      display: flex;
+    }
+
+    .logo-wrapper {
+      position: relative;
+      width: 160px;
+      height: 160px;
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
-      display: none;
     }
 
-    .loader {
-      width: 25px;
-      height: 25px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #dc143c;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+    .glow-ring {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 100%;
+      background: conic-gradient(#dc143c, transparent 100%);
+      animation: spin 1.5s linear infinite; /* Ускоренная анимация */
+      filter: blur(20px);
+    }
+
+    .loader-container img, .action-loader img {
+      width: 120px;
+      z-index: 2;
     }
 
     @keyframes spin {
@@ -308,15 +327,10 @@
       width: 20px;
       height: 20px;
       margin: -10px 0 0 -10px;
-      border: 2px solid transparent;
+      border: 2px solid #f3f3f3;
       border-top: 2px solid #dc143c;
       border-radius: 50%;
-      animation: buttonSpin 0.8s linear infinite;
-    }
-    
-    @keyframes buttonSpin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      animation: spin 0.8s linear infinite;
     }
     
     .analysis-btn.pulse {
@@ -614,7 +628,7 @@
       font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     }
 
-    /* СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ */
+    /* СТИЛИ АВТОРИЗАЦИИ */
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -629,68 +643,6 @@
     .loading-screen.fade-out {
       opacity: 0;
       pointer-events: none;
-    }
-
-    .logo-wrapper {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .glow-ring {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      border-radius: 100%;
-      background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 5s linear infinite;
-      filter: blur(20px);
-    }
-
-    .loading-screen img {
-      width: 120px;
-      z-index: 2;
-    }
-
-    .action-loader {
-      position: fixed;
-      inset: 0;
-      background: #1f2937;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100000;
-    }
-
-    .action-loader.active {
-      display: flex;
-    }
-
-    .action-loader .logo-wrapper {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .action-loader .glow-ring {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      border-radius: 100%;
-      background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 5s linear infinite;
-      filter: blur(20px);
-    }
-
-    .action-loader img {
-      width: 120px;
-      z-index: 2;
     }
 
     #login-section {
@@ -821,9 +773,6 @@
   </style>
 </head>
 <body>
-  <!-- ИНДИКАТОР ИСТОЧНИКА ДАННЫХ -->
-  <div id="dataSourceIndicator" style="position: fixed; top: 60px; right: 10px; width: 12px; height: 12px; border-radius: 50%; background: gray; z-index: 10001; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: background 0.3s, transform 0.2s;" title="Источник данных: неизвестно"></div>
-
   <!-- ЭКРАН ЗАГРУЗКИ -->
   <div class="loading-screen" id="loadingScreen">
     <div class="logo-wrapper">
@@ -832,11 +781,11 @@
     </div>
   </div>
 
-  <!-- АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ СОХРАНЕНИЯ -->
-  <div class="action-loader" id="actionLoader">
+  <!-- ЕДИНЫЙ ЛОАДЕР ДЛЯ ВСЕХ ОПЕРАЦИЙ -->
+  <div class="loader-container" id="globalLoader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Action Loading">
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading">
     </div>
   </div>
 
@@ -867,10 +816,6 @@
 
   <!-- ОСНОВНОЙ КОНТЕНТ -->
   <div id="main-content">
-    <div id="loader" class="loader-container">
-      <div class="loader"></div>
-    </div>
-
     <header>
       <div class="logo">
         <a href="https://smart-bowling.github.io/SMB/">
@@ -1017,7 +962,7 @@
 
     // Получаем элементы
     const loadingScreen = document.getElementById("loadingScreen");
-    const actionLoader = document.getElementById("actionLoader");
+    const globalLoader = document.getElementById("globalLoader");
     const loginSection = document.getElementById("login-section");
     const mainContent = document.getElementById("main-content");
 
@@ -1045,21 +990,13 @@
       }
     });
 
-    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА =====
-    function showActionLoader(show) {
+    // ===== ЕДИНАЯ ФУНКЦИЯ УПРАВЛЕНИЯ ЛОАДЕРОМ =====
+    function showGlobalLoader(show) {
       if (show) {
-        actionLoader.classList.add('active');
+        globalLoader.classList.add('active');
       } else {
-        actionLoader.classList.remove('active');
+        globalLoader.classList.remove('active');
       }
-    }
-
-    function showLoader() {
-      document.getElementById("loader").style.display = "flex";
-    }
-
-    function hideLoader() {
-      document.getElementById("loader").style.display = "none";
     }
 
     // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
@@ -1292,28 +1229,25 @@
       return month + '.' + year;
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ТАБЛИЦЫ
+    // ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ - ПАРАЛЛЕЛЬНЫЕ ЗАПРОСЫ
     async function loadTableDataFromSheets(sheetName) {
       try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: SHEETS_CONFIG.spreadsheetId,
           range: `'${sheetName}'!B4:BF34`,
-          valueRenderOption: 'FORMATTED_VALUE' // ВАЖНО: используем отформатированные значения
+          valueRenderOption: 'FORMATTED_VALUE'
         });
         
         const rows = response.result.values || [];
         const tableData = [];
-        
-        // Индексы колонок с ошибками (F=4, J=8, N=12, R=16, V=20, Z=24, AD=28, AH=32, AL=36, AP=40, AT=44, AX=48, BB=52, BF=56)
         const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
         
         rows.forEach(row => {
-          if (!row[0]) return; // Пропускаем пустые строки
+          if (!row[0]) return;
           
           const dayValue = row[0];
           let dayNumber;
           
-          // Если это строка, извлекаем число из начала (например "16 марта" -> 16)
           if (typeof dayValue === 'string') {
             const match = dayValue.match(/^(\d+)/);
             dayNumber = match ? parseInt(match[1]) : dayValue;
@@ -1334,7 +1268,6 @@
           tableData.push(rowData);
         });
         
-        // Сортируем по дню
         tableData.sort((a, b) => {
           const dayA = parseInt(a.day) || 0;
           const dayB = parseInt(b.day) || 0;
@@ -1349,9 +1282,9 @@
       }
     }
 
+    // ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ - ВСЕ ЗАПРОСЫ ВЫПОЛНЯЮТСЯ ПАРАЛЛЕЛЬНО
     async function loadDataDirectlyFromSheets(date) {
       console.log('Чтение напрямую из Sheets для даты:', date);
-      updateDataSourceIndicator('sheets', `Дата: ${date}`);
       
       try {
         const dateObj = new Date(date);
@@ -1361,38 +1294,58 @@
         
         await ensureSheetsAPI();
         
-        // 1. Читаем данные для всех машин за один запрос
-        const ranges = [];
-        for (let i = 1; i <= 14; i++) {
-          ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
-        }
+        // Выполняем все запросы параллельно для максимальной скорости
+        const [errorsResponse, chartResponse, statsResponse, tableData] = await Promise.all([
+          // 1. Запрос для ошибок машин
+          (async () => {
+            const ranges = [];
+            for (let i = 1; i <= 14; i++) {
+              ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
+            }
+            
+            return gapi.client.sheets.spreadsheets.values.batchGet({
+              spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+              ranges: ranges,
+              valueRenderOption: 'UNFORMATTED_VALUE'
+            });
+          })(),
+          
+          // 2. Запрос для графиков
+          (async () => {
+            const chartRanges = [];
+            for (let i = 1; i <= 14; i++) {
+              chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`);
+              chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`);
+            }
+            
+            return gapi.client.sheets.spreadsheets.values.batchGet({
+              spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+              ranges: chartRanges,
+              valueRenderOption: 'UNFORMATTED_VALUE'
+            });
+          })(),
+          
+          // 3. Запрос для статистики
+          gapi.client.sheets.spreadsheets.values.batchGet({
+            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+            ranges: [
+              `'${sheetName}'!BO35`,
+              `'${sheetName}'!BP35`
+            ],
+            valueRenderOption: 'UNFORMATTED_VALUE'
+          }),
+          
+          // 4. Запрос для таблицы
+          loadTableDataFromSheets(sheetName)
+        ]);
         
-        const response = await gapi.client.sheets.spreadsheets.values.batchGet({
-          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-          ranges: ranges,
-          valueRenderOption: 'UNFORMATTED_VALUE'
-        });
-        
-        // Парсим результаты
-        const errors = response.result.valueRanges.map(range => {
+        // Парсим ошибки
+        const errors = errorsResponse.result.valueRanges.map(range => {
           const value = range.values?.[0]?.[0] || 0;
           return Math.ceil(Number(value)) || 0;
         });
         
-        // 2. Читаем данные для графиков (строки 35-36)
-        const chartRanges = [];
-        for (let i = 1; i <= 14; i++) {
-          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`); // Ошибки
-          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`); // FPS
-        }
-        
-        const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
-          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-          ranges: chartRanges,
-          valueRenderOption: 'UNFORMATTED_VALUE'
-        });
-        
-        // Парсим данные для графиков
+        // Парсим графики
         const chartErrors = [];
         const chartFPS = [];
         for (let i = 0; i < 14; i++) {
@@ -1402,21 +1355,9 @@
           chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
         }
         
-        // 3. Читаем общую статистику
-        const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
-          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-          ranges: [
-            `'${sheetName}'!BO35`, // Общие ошибки
-            `'${sheetName}'!BP35`  // Общий FPS
-          ],
-          valueRenderOption: 'UNFORMATTED_VALUE'
-        });
-        
+        // Парсим статистику
         const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
         const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
-        
-        // 4. Читаем данные для таблицы
-        const tableData = await loadTableDataFromSheets(sheetName);
         
         return {
           errors: errors,
@@ -1435,7 +1376,6 @@
       } catch (error) {
         console.error('Ошибка при чтении из Sheets:', error);
         if (error.status === 404 || error.status === 400) {
-          // Лист не существует
           return {
             errors: Array(14).fill(0),
             exists: false,
@@ -1450,15 +1390,12 @@
             tableData: []
           };
         }
-        throw error; // Пробрасываем другие ошибки
+        throw error;
       }
     }
 
     // Резервный метод через Apps Script
     async function loadDataViaAppsScript(date) {
-      console.log('⚠️ Используется резервный метод через Apps Script для даты:', date);
-      updateDataSourceIndicator('appsscript', `Дата: ${date} (резерв)`);
-      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         console.log('Таймаут загрузки данных');
@@ -1478,63 +1415,6 @@
       
       return await response.json();
     }
-
-    // ===== ФУНКЦИИ ДЛЯ ИНДИКАТОРА ИСТОЧНИКА ДАННЫХ =====
-    function updateDataSourceIndicator(source, details = '') {
-      const indicator = document.getElementById('dataSourceIndicator');
-      if (!indicator) return;
-      
-      let color, tooltip;
-      
-      switch(source) {
-        case 'sheets':
-          color = '#4CAF50'; // Зеленый - прямое чтение из Sheets API
-          tooltip = '✅ Прямое чтение из Google Sheets API';
-          break;
-        case 'appsscript':
-          color = '#F44336'; // Красный - через Apps Script
-          tooltip = '⚠️ Чтение через Google Apps Script (резервный метод)';
-          break;
-        case 'cache':
-          color = '#2196F3'; // Синий - из кэша
-          tooltip = '📦 Данные из кэша браузера';
-          break;
-        case 'demo':
-          color = '#FF9800'; // Оранжевый - демо-данные
-          tooltip = '🎭 Демо-данные (нет подключения)';
-          break;
-        default:
-          color = '#9E9E9E'; // Серый - неизвестно
-          tooltip = '⚪ Источник не определен';
-      }
-      
-      indicator.style.background = color;
-      indicator.title = tooltip + (details ? `\n${details}` : '');
-      
-      // Добавляем пульсацию при изменении
-      indicator.style.transform = 'scale(1.5)';
-      setTimeout(() => {
-        indicator.style.transform = 'scale(1)';
-      }, 200);
-      
-      console.log(`📊 Индикатор: ${tooltip}`, details);
-    }
-
-    // Перехватываем функцию applyCachedData для отслеживания кэша
-    const originalApplyCached = applyCachedData;
-    applyCachedData = function(data) {
-      if (dataCache[selectedDate]) {
-        updateDataSourceIndicator('cache', `Дата: ${selectedDate}`);
-      }
-      return originalApplyCached(data);
-    };
-
-    // Перехватываем applyDefaultData для демо-режима
-    const originalApplyDefault = applyDefaultData;
-    applyDefaultData = function() {
-      updateDataSourceIndicator('demo', 'Нет подключения к серверу');
-      return originalApplyDefault();
-    };
 
     // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
     window.addEventListener('load', function() {
@@ -1693,7 +1573,7 @@
         return;
       }
       
-      showLoader();
+      showGlobalLoader(true);
       
       try {
         let data;
@@ -1717,16 +1597,16 @@
         console.error('Ошибка загрузки данных:', error);
         
         if (retryCount < MAX_RETRIES) {
-          console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
+          console.log(`Повторная попытка через ${500 * (retryCount + 1)}мс`); // Уменьшил таймаут
           setTimeout(() => {
             loadDataForDate(date, retryCount + 1);
-          }, 1000 * (retryCount + 1));
+          }, 500 * (retryCount + 1));
         } else {
           console.log('Все попытки исчерпаны, используем данные по умолчанию');
           applyDefaultData();
         }
       } finally {
-        hideLoader();
+        showGlobalLoader(false);
       }
     }
 
@@ -1872,6 +1752,7 @@
       }
       
       updateAnalysisButtonState('loading');
+      showGlobalLoader(true);
       
       try {
         if (!analyticsLoaded) {
@@ -1891,6 +1772,8 @@
         analyticsLoaded = true;
         updateAnalysisButtonState('pulse');
         showAnalyticsElements();
+      } finally {
+        showGlobalLoader(false);
       }
     }
 
@@ -2058,7 +1941,7 @@
             y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
             x: { grid: { display: false } }
           },
-          animation: { duration: 1000, easing: 'easeOutQuart' }
+          animation: { duration: 800, easing: 'easeOutQuart' } // Уменьшил анимацию
         }
       });
       
@@ -2084,7 +1967,7 @@
             y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
             x: { grid: { display: false } }
           },
-          animation: { duration: 1000, easing: 'easeOutQuart' }
+          animation: { duration: 800, easing: 'easeOutQuart' } // Уменьшил анимацию
         }
       });
     }
@@ -2173,7 +2056,8 @@
               radius: function(context) { return context.raw === null ? 0 : 3; },
               hoverRadius: function(context) { return context.raw === null ? 0 : 5; }
             }
-          }
+          },
+          animation: { duration: 800 } // Уменьшил анимацию
         }
       });
     }
@@ -2199,7 +2083,6 @@
       }
     }
     
-    // СОХРАНЕНИЕ ДАННЫХ (всегда через Apps Script)
     async function saveData() {
       const now = Date.now();
       if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
@@ -2207,14 +2090,14 @@
       }
       lastSaveTime = now;
       
-      showLoader();
+      showGlobalLoader(true);
       
       try {
         const changes = machineErrors.map((current, index) => current - originalErrors[index]);
         const hasChanges = changes.some(change => change !== 0);
         
         if (!hasChanges) {
-          hideLoader();
+          showGlobalLoader(false);
           return;
         }
         
@@ -2260,7 +2143,7 @@
         console.error('Ошибка:', error);
         alert('Ошибка при сохранении: ' + error.message);
       } finally {
-        hideLoader();
+        showGlobalLoader(false);
       }
     }
     
