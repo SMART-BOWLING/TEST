@@ -59,12 +59,6 @@
       color: white;
     }
 
-    /* Скрываем выпадающий список */
-    .site-name-dropdown {
-      display: none !important;
-    }
-
-    /* НОВЫЙ СТИЛЬ ДЛЯ АВАТАРКИ ПОЛЬЗОВАТЕЛЯ */
     .user-avatar {
       width: 32px;
       height: 32px;
@@ -140,15 +134,6 @@
       text-align: center;
     }
 
-    /* Скрываем старое меню */
-    .menu-button {
-      display: none;
-    }
-
-    .dropdown {
-      display: none;
-    }
-
     .loader-container {
       position: fixed;
       top: 0;
@@ -187,13 +172,6 @@
       margin: 0 auto 20px;
       max-width: 400px;
       width: 100%;
-    }
-
-    .date-input-container label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #333;
     }
 
     .date-input-container input {
@@ -636,7 +614,7 @@
       font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     }
 
-    /* ===== НОВЫЕ СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ ===== */
+    /* СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ */
     .loading-screen {
       position: fixed;
       inset: 0;
@@ -677,11 +655,6 @@
       z-index: 2;
     }
 
-    @keyframes spin {
-      to { transform: rotate(365deg); }
-    }
-
-    /* Дублируем те же стили для лоадера операций */
     .action-loader {
       position: fixed;
       inset: 0;
@@ -720,7 +693,6 @@
       z-index: 2;
     }
 
-    /* ===== СТИЛИ АВТОРИЗАЦИИ ===== */
     #login-section {
       display: none;
       justify-content: center;
@@ -849,7 +821,7 @@
   </style>
 </head>
 <body>
-  <!-- НОВЫЙ ЭКРАН ЗАГРУЗКИ -->
+  <!-- ЭКРАН ЗАГРУЗКИ -->
   <div class="loading-screen" id="loadingScreen">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
@@ -857,7 +829,7 @@
     </div>
   </div>
 
-  <!-- ТОЧНО ТАКАЯ ЖЕ АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ СОХРАНЕНИЯ -->
+  <!-- АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ СОХРАНЕНИЯ -->
   <div class="action-loader" id="actionLoader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
@@ -865,7 +837,7 @@
     </div>
   </div>
 
-  <!-- НОВАЯ СЕКЦИЯ АВТОРИЗАЦИИ -->
+  <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
   <div id="login-section">
     <div id="login-container">
       <div class="login-icon">
@@ -905,7 +877,6 @@
       <div class="site-name">
         LUCKY STRIKE KH
       </div>
-      <!-- НОВАЯ АВАТАРКА ПОЛЬЗОВАТЕЛЯ ВМЕСТО КНОПКИ МЕНЮ -->
       <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
         <!-- Здесь будет аватарка или иконка пользователя -->
       </div>
@@ -990,43 +961,35 @@
     </div>
   </div>
 
-  <!-- ВСЕ СКРИПТЫ В КОНЦЕ С ДЕФЕР -->
+  <!-- ПОДКЛЮЧЕНИЕ БИБЛИОТЕК -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script>
     console.log('Скрипт начал выполняться');
     
-    // ===== НОВЫЕ КОНСТАНТЫ ДЛЯ ПРЯМОГО ЧТЕНИЯ ИЗ GOOGLE SHEETS =====
-    const SHEETS_CONFIG = {
-      SPREADSHEET_ID: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
-      API_KEY: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
-      START_ROW: 4,
-      // Маппинг колонок для машин
-      COLUMN_MAPPING: {
-        1: 'F', 2: 'J', 3: 'N', 4: 'R', 5: 'V', 6: 'Z', 7: 'AD',
-        8: 'AH', 9: 'AL', 10: 'AP', 11: 'AT', 12: 'AX', 13: 'BB', 14: 'BF'
-      },
-      // Строки для графиков
-      CHART_ROWS: {
-        ERRORS: 35,
-        FPS: 36
-      },
-      // Колонки для общей статистики
-      TOTAL_STATS_COLUMNS: {
-        ERRORS: 'BO',
-        FPS: 'BP'
-      }
-    };
-    
-    // ===== КОНСТАНТЫ ДЛЯ АВТОРИЗАЦИИ =====
+    // ===== КОНСТАНТЫ =====
     const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
     const AUTH_SHEET_NAME = '1';
     const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+    
+    // !!! ВАЖНО: ЭТА ССЫЛКА ДОЛЖНА БЫТЬ В ТАБЛИЦЕ АВТОРИЗАЦИИ !!!
     const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
     
-    // ===== URL ДЛЯ СОХРАНЕНИЯ (только для записи) =====
+    // КОНФИГУРАЦИЯ ДЛЯ ПРЯМОГО ЧТЕНИЯ ИЗ GOOGLE SHEETS
+    const SHEETS_CONFIG = {
+      apiKey: AUTH_API_KEY,
+      spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
+      columnMapping: {
+        1: 'F', 2: 'J', 3: 'N', 4: 'R', 5: 'V', 6: 'Z', 
+        7: 'AD', 8: 'AH', 9: 'AL', 10: 'AP', 11: 'AT', 
+        12: 'AX', 13: 'BB', 14: 'BF'
+      },
+      startRow: 4
+    };
+    
+    // URL для записи через Apps Script
     const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
 
-    // ===== ПЕРЕМЕННЫЕ СОСТОЯНИЯ =====
+    // Переменные состояния
     let currentUser = null;
     let machineErrors = Array(14).fill(0);
     let machineFPS = Array(14).fill(0);
@@ -1044,9 +1007,8 @@
     let isAnalysisOpen = false;
     let isDataLoaded = false;
     
-    // КЭШ ДЛЯ БЫСТРОЙ ЗАГРУЗКИ
+    // Кэш для данных
     let dataCache = {};
-    let sheetsApiInitialized = false;
     let lastSaveTime = 0;
     const SAVE_DEBOUNCE_TIME = 1000;
 
@@ -1089,27 +1051,19 @@
       }
     }
 
-    // ===== НОВЫЕ ФУНКЦИИ ДЛЯ ПРЯМОГО ЧТЕНИЯ ИЗ SHEETS =====
-    function initSheetsAPI() {
+    function showLoader() {
+      document.getElementById("loader").style.display = "flex";
+    }
+
+    function hideLoader() {
+      document.getElementById("loader").style.display = "none";
+    }
+
+    // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
+    function loadSheetsAPI() {
       return new Promise((resolve, reject) => {
-        if (sheetsApiInitialized) {
-          resolve();
-          return;
-        }
-        
         gapi.load('client', {
-          callback: async () => {
-            try {
-              await gapi.client.init({
-                apiKey: SHEETS_CONFIG.API_KEY,
-                discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-              });
-              sheetsApiInitialized = true;
-              resolve();
-            } catch (error) {
-              reject(error);
-            }
-          },
+          callback: () => resolve(),
           onerror: () => reject('Ошибка загрузки Google API'),
           timeout: 10000,
           ontimeout: () => reject('Таймаут загрузки Google API')
@@ -1117,279 +1071,6 @@
       });
     }
 
-    // Функция для получения имени листа (9.25 вместо 9.2025)
-    function getSheetName(date) {
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear().toString().slice(-2);
-      return month + '.' + year;
-    }
-
-    // Функция для извлечения номера дня из строки
-    function extractDayNumber(str) {
-      if (!str && str !== 0) return null;
-      
-      // Если это уже число
-      if (typeof str === 'number') {
-        return str;
-      }
-      
-      // Преобразуем в строку, если это не строка
-      const strValue = String(str).trim();
-      
-      // Пробуем разные форматы:
-      
-      // 1. Если это просто число
-      if (/^\d+$/.test(strValue)) {
-        return parseInt(strValue, 10);
-      }
-      
-      // 2. Если формат "22 сент." - берем первую часть
-      const parts = strValue.split(' ');
-      if (parts.length > 0) {
-        const firstPart = parts[0];
-        if (/^\d+$/.test(firstPart)) {
-          return parseInt(firstPart, 10);
-        }
-      }
-      
-      // 3. Если есть точка в начале (например, ".22")
-      const match = strValue.match(/\.?(\d+)/);
-      if (match) {
-        return parseInt(match[1], 10);
-      }
-      
-      return null;
-    }
-
-    // Прямое чтение данных из Google Sheets
-    async function readDataFromSheet(dateString) {
-      try {
-        await initSheetsAPI();
-        
-        const date = new Date(dateString);
-        const day = date.getDate();
-        const sheetName = getSheetName(date);
-        
-        // Проверяем существование листа
-        const sheets = await gapi.client.sheets.spreadsheets.get({
-          spreadsheetId: SHEETS_CONFIG.SPREADSHEET_ID
-        });
-        
-        const sheetExists = sheets.result.sheets.some(s => 
-          s.properties.title === sheetName
-        );
-        
-        if (!sheetExists) {
-          console.log('Лист не существует:', sheetName);
-          return {
-            errors: Array(14).fill(0),
-            chartData: { errors: Array(14).fill(0), fps: Array(14).fill(0) },
-            totalStats: { errors: 0, fps: 0 },
-            tableData: []
-          };
-        }
-        
-        console.log('Чтение данных из листа:', sheetName);
-        
-        // Формируем диапазоны для чтения
-        const row = SHEETS_CONFIG.START_ROW + day - 1;
-        
-        // 1. Читаем ошибки для текущего дня
-        const errorRanges = Object.values(SHEETS_CONFIG.COLUMN_MAPPING)
-          .map(col => `${sheetName}!${col}${row}`);
-        
-        // 2. Читаем данные для графиков
-        const chartRanges = [];
-        for (let i = 0; i < 14; i++) {
-          const col = Object.values(SHEETS_CONFIG.COLUMN_MAPPING)[i];
-          chartRanges.push(`${sheetName}!${col}${SHEETS_CONFIG.CHART_ROWS.ERRORS}`);
-          chartRanges.push(`${sheetName}!${col}${SHEETS_CONFIG.CHART_ROWS.FPS}`);
-        }
-        
-        // 3. Читаем общую статистику
-        chartRanges.push(`${sheetName}!${SHEETS_CONFIG.TOTAL_STATS_COLUMNS.ERRORS}${SHEETS_CONFIG.CHART_ROWS.ERRORS}`);
-        chartRanges.push(`${sheetName}!${SHEETS_CONFIG.TOTAL_STATS_COLUMNS.FPS}${SHEETS_CONFIG.CHART_ROWS.ERRORS}`);
-        
-        // 4. Читаем данные для таблицы (все дни месяца)
-        // Читаем колонки B (дни) и F, J, N, R, V, Z, AD, AH, AL, AP, AT, AX, BB, BF (ошибки)
-        const tableRange = `${sheetName}!B${SHEETS_CONFIG.START_ROW}:BF34`;
-        console.log('Диапазон таблицы:', tableRange);
-        
-        // Объединяем все запросы в один batchGet для производительности
-        const batchResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
-          spreadsheetId: SHEETS_CONFIG.SPREADSHEET_ID,
-          ranges: [...errorRanges, ...chartRanges, tableRange],
-          valueRenderOption: 'UNFORMATTED_VALUE'
-        });
-        
-        const valueRanges = batchResponse.result.valueRanges;
-        let index = 0;
-        
-        // Парсим ошибки текущего дня
-        const errors = [];
-        for (let i = 0; i < 14; i++) {
-          const value = valueRanges[index++]?.values?.[0]?.[0];
-          errors.push(Math.ceil(Number(value)) || 0);
-        }
-        console.log('Ошибки текущего дня:', errors);
-        
-        // Парсим данные графиков
-        const chartErrors = [];
-        const chartFPS = [];
-        for (let i = 0; i < 14; i++) {
-          const errorValue = valueRanges[index++]?.values?.[0]?.[0];
-          const fpsValue = valueRanges[index++]?.values?.[0]?.[0];
-          chartErrors.push(Math.ceil(Number(errorValue)) || 0);
-          chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
-        }
-        
-        // Парсим общую статистику
-        const totalErrors = Math.ceil(Number(valueRanges[index++]?.values?.[0]?.[0])) || 0;
-        const totalFPS = Math.ceil(Number(valueRanges[index++]?.values?.[0]?.[0])) || 0;
-        
-        // Парсим данные таблицы
-        const tableValues = valueRanges[index]?.values || [];
-        console.log('Сырые данные таблицы (первые 5 строк):', tableValues.slice(0, 5));
-        
-        const tableData = [];
-        
-        // Проходим по каждой строке данных
-        for (let i = 0; i < tableValues.length; i++) {
-          const rowData = tableValues[i];
-          
-          // Если строка существует и в ней есть данные
-          if (rowData && rowData.length > 0) {
-            // Первая колонка (B) - это день
-            let dayValue = rowData[0];
-            
-            // Если день пустой, пропускаем строку
-            if (dayValue === undefined || dayValue === null || dayValue === '') {
-              continue;
-            }
-            
-            console.log(`Строка ${i + SHEETS_CONFIG.START_ROW}: день =`, dayValue, 'тип:', typeof dayValue);
-            
-            // Извлекаем номер дня
-            const dayNumber = extractDayNumber(dayValue);
-            
-            if (!dayNumber) {
-              console.log('Не удалось извлечь номер дня из значения:', dayValue);
-              continue;
-            }
-            
-            // Собираем ошибки для каждой машины
-            const rowErrors = [];
-            // Индексы колонок: F(5), J(9), N(13), R(17), V(21), Z(25), AD(29), AH(33), AL(37), AP(41), AT(45), AX(49), BB(53), BF(57)
-            // В массиве rowData индексы смещены на 1, потому что первая колонка B имеет индекс 0
-            const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
-            
-            for (let j = 0; j < errorIndices.length; j++) {
-              const idx = errorIndices[j];
-              const val = idx < rowData.length ? rowData[idx] : 0;
-              rowErrors.push(Math.ceil(Number(val)) || 0);
-            }
-            
-            tableData.push({
-              day: dayNumber,
-              errors: rowErrors
-            });
-          }
-        }
-        
-        // Сортируем по дню
-        tableData.sort((a, b) => a.day - b.day);
-        console.log('Обработанные данные таблицы (первые 5 строк):', tableData.slice(0, 5));
-        
-        return {
-          errors: errors,
-          chartData: {
-            errors: chartErrors,
-            fps: chartFPS
-          },
-          totalStats: {
-            errors: totalErrors,
-            fps: totalFPS
-          },
-          tableData: tableData
-        };
-        
-      } catch (error) {
-        console.error('Ошибка при чтении из Sheets:', error);
-        // Возвращаем пустые данные при ошибке
-        return {
-          errors: Array(14).fill(0),
-          chartData: { errors: Array(14).fill(0), fps: Array(14).fill(0) },
-          totalStats: { errors: 0, fps: 0 },
-          tableData: []
-        };
-      }
-    }
-
-    // Чтение данных для сравнения по годам
-    async function readYearlyComparisonData() {
-      try {
-        await initSheetsAPI();
-        
-        const summaryRange = 'ИТОГОВАЯ!A4:H15';
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: SHEETS_CONFIG.SPREADSHEET_ID,
-          range: summaryRange,
-          valueRenderOption: 'UNFORMATTED_VALUE'
-        });
-        
-        const values = response.result.values || [];
-        
-        const result = {
-          years: [],
-          months: [],
-          data: {}
-        };
-        
-        // Получаем месяцы (первый столбец)
-        result.months = values.map(row => row[0]?.toString() || '');
-        
-        // Маппинг столбцов к годам
-        const yearColumns = [
-          { col: 1, year: 2023 }, // B
-          { col: 3, year: 2024 }, // D
-          { col: 5, year: 2025 }, // F
-          { col: 7, year: 2026 }  // H
-        ];
-        
-        yearColumns.forEach(({col, year}) => {
-          const yearData = values.map(row => {
-            const val = row[col];
-            return Math.ceil(Number(val)) || 0;
-          });
-          
-          // Проверяем, есть ли данные
-          const hasData = yearData.some(v => v > 0);
-          if (hasData) {
-            result.years.push(year);
-            result.data[year] = yearData;
-          }
-        });
-        
-        result.years.sort((a, b) => a - b);
-        
-        return result;
-        
-      } catch (error) {
-        console.error('Ошибка при чтении данных сравнения:', error);
-        // Возвращаем демо-данные
-        const currentYear = new Date().getFullYear();
-        return {
-          years: [currentYear - 1, currentYear],
-          months: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-          data: {
-            [currentYear - 1]: [120, 95, 130, 110, 105, 90, 115, 125, 100, 135, 140, 120],
-            [currentYear]: [110, 100, 125, 115, 95, 85, 105, 120, 110, 130, 145, 115]
-          }
-        };
-      }
-    }
-
-    // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
     function handleCredentialResponse(response) {
       try {
         const payload = parseJwt(response.credential);
@@ -1401,7 +1082,7 @@
         };
         
         showLoading(true);
-        checkEmailAccess();
+        initAndCheckEmail();
         
       } catch (e) {
         console.error('Ошибка аутентификации:', e);
@@ -1438,10 +1119,25 @@
       }
     }
 
-    async function checkEmailAccess() {
+    async function initAndCheckEmail() {
       try {
-        await initSheetsAPI();
+        await loadSheetsAPI();
+        await gapi.client.init({
+          apiKey: AUTH_API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        });
         
+        await checkEmailInSheet(currentUser.email);
+        
+      } catch (error) {
+        console.error('Ошибка инициализации:', error);
+        showLoading(false);
+        alert('Ошибка инициализации Google API');
+      }
+    }
+
+    async function checkEmailInSheet(email) {
+      try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: AUTH_SPREADSHEET_ID,
           range: `${AUTH_SHEET_NAME}!A:Z`,
@@ -1455,7 +1151,6 @@
         }
         
         let hasAccess = false;
-        const email = currentUser.email;
         
         for (let i = 0; i < rows.length; i++) {
           if (!rows[i]?.[0]) continue;
@@ -1500,11 +1195,19 @@
       
       showLoading(false);
       
+      // Скрываем экран загрузки
       setTimeout(() => {
         loadingScreen.classList.add('fade-out');
       }, 500);
       
-      initializeApp();
+      // ИНИЦИАЛИЗИРУЕМ SHEETS API ДЛЯ ЧТЕНИЯ
+      ensureSheetsAPI().then(() => {
+        console.log('Sheets API инициализирован для чтения');
+        initializeApp();
+      }).catch(error => {
+        console.warn('Не удалось инициализировать Sheets API, используем AppsScript:', error);
+        initializeApp();
+      });
     }
 
     function parseJwt(token) {
@@ -1552,7 +1255,218 @@
       }
     }
 
-    // ===== ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ =====
+    // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С SHEETS API (ПРЯМОЕ ЧТЕНИЕ) =====
+    let sheetsAPIPromise = null;
+
+    function ensureSheetsAPI() {
+      if (sheetsAPIPromise) return sheetsAPIPromise;
+      
+      sheetsAPIPromise = new Promise((resolve, reject) => {
+        if (window.gapi?.client?.sheets) {
+          resolve();
+          return;
+        }
+        
+        gapi.load('client', async () => {
+          try {
+            await gapi.client.init({
+              apiKey: SHEETS_CONFIG.apiKey,
+              discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+            });
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      
+      return sheetsAPIPromise;
+    }
+
+    function getSheetNameFromDate(date) {
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear().toString().slice(-2);
+      return month + '.' + year;
+    }
+
+    function formatDayFromValue(value) {
+      if (typeof value === 'string') {
+        const parts = value.split(' ');
+        if (parts.length > 0 && !isNaN(parts[0])) {
+          return parts[0];
+        }
+        return value;
+      } else if (value instanceof Date) {
+        return value.getDate().toString();
+      }
+      return value.toString();
+    }
+
+    async function loadTableDataFromSheets(sheetName) {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          range: `'${sheetName}'!B4:BF34`,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        const rows = response.result.values || [];
+        const tableData = [];
+        
+        // Индексы колонок с ошибками (F=4, J=8, N=12, R=16, V=20, Z=24, AD=28, AH=32, AL=36, AP=40, AT=44, AX=48, BB=52, BF=56)
+        const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+        
+        rows.forEach(row => {
+          if (!row[0]) return;
+          
+          const rowData = {
+            day: formatDayFromValue(row[0]),
+            errors: []
+          };
+          
+          errorIndices.forEach(index => {
+            const value = row[index] || 0;
+            rowData.errors.push(Math.ceil(Number(value)) || 0);
+          });
+          
+          tableData.push(rowData);
+        });
+        
+        return tableData;
+        
+      } catch (error) {
+        console.error('Ошибка при чтении таблицы:', error);
+        return [];
+      }
+    }
+
+    async function loadDataDirectlyFromSheets(date) {
+      console.log('Чтение напрямую из Sheets для даты:', date);
+      
+      try {
+        const dateObj = new Date(date);
+        const sheetName = getSheetNameFromDate(dateObj);
+        const day = dateObj.getDate();
+        const row = SHEETS_CONFIG.startRow + day - 1;
+        
+        await ensureSheetsAPI();
+        
+        // 1. Читаем данные для всех машин за один запрос
+        const ranges = [];
+        for (let i = 1; i <= 14; i++) {
+          ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
+        }
+        
+        const response = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: ranges,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        // Парсим результаты
+        const errors = response.result.valueRanges.map(range => {
+          const value = range.values?.[0]?.[0] || 0;
+          return Math.ceil(Number(value)) || 0;
+        });
+        
+        // 2. Читаем данные для графиков (строки 35-36)
+        const chartRanges = [];
+        for (let i = 1; i <= 14; i++) {
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`); // Ошибки
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`); // FPS
+        }
+        
+        const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: chartRanges,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        // Парсим данные для графиков
+        const chartErrors = [];
+        const chartFPS = [];
+        for (let i = 0; i < 14; i++) {
+          const errorValue = chartResponse.result.valueRanges[i*2]?.values?.[0]?.[0] || 0;
+          const fpsValue = chartResponse.result.valueRanges[i*2 + 1]?.values?.[0]?.[0] || 0;
+          chartErrors.push(Math.ceil(Number(errorValue)) || 0);
+          chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
+        }
+        
+        // 3. Читаем общую статистику
+        const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: [
+            `'${sheetName}'!BO35`, // Общие ошибки
+            `'${sheetName}'!BP35`  // Общий FPS
+          ],
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
+        const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
+        
+        // 4. Читаем данные для таблицы
+        const tableData = await loadTableDataFromSheets(sheetName);
+        
+        return {
+          errors: errors,
+          exists: true,
+          chartData: {
+            errors: chartErrors,
+            fps: chartFPS
+          },
+          totalStats: {
+            errors: totalErrors,
+            fps: totalFPS
+          },
+          tableData: tableData
+        };
+        
+      } catch (error) {
+        console.error('Ошибка при чтении из Sheets:', error);
+        if (error.status === 404 || error.status === 400) {
+          // Лист не существует
+          return {
+            errors: Array(14).fill(0),
+            exists: false,
+            chartData: {
+              errors: Array(14).fill(0),
+              fps: Array(14).fill(0)
+            },
+            totalStats: {
+              errors: 0,
+              fps: 0
+            },
+            tableData: []
+          };
+        }
+        throw error; // Пробрасываем другие ошибки
+      }
+    }
+
+    // Резервный метод через Apps Script
+    async function loadDataViaAppsScript(date) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log('Таймаут загрузки данных');
+        controller.abort();
+      }, 8000);
+      
+      const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+      
+      return await response.json();
+    }
+
+    // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
     window.addEventListener('load', function() {
       const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
       const email = localStorage.getItem('userEmail');
@@ -1572,9 +1486,15 @@
         updateUserAvatar(currentUser);
         showLoading(true);
         
-        initSheetsAPI()
-          .then(() => checkEmailAccess())
-          .catch(() => signOut());
+        loadSheetsAPI()
+          .then(() => gapi.client.init({
+            apiKey: AUTH_API_KEY,
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          }))
+          .then(() => checkEmailInSheet(email))
+          .catch(() => {
+            signOut();
+          });
       } else {
         loginSection.style.display = 'flex';
         mainContent.style.display = 'none';
@@ -1606,14 +1526,28 @@
       }
     };
 
-    // ===== ФУНКЦИИ ПРИЛОЖЕНИЯ =====
     function initializeApp() {
       console.log('Инициализация приложения после авторизации');
       
-      generateMachineCells();
-      document.getElementById('date').value = selectedDate;
-      loadDataForDate(selectedDate);
-      loadFontsAsync();
+      const grid = document.getElementById('machinesGrid');
+      const dateInput = document.getElementById('date');
+      
+      console.log('Grid элемент:', grid);
+      console.log('Date input:', dateInput);
+      
+      if (grid && dateInput) {
+        generateMachineCells();
+        dateInput.value = selectedDate;
+        loadDataForDate(selectedDate);
+        loadFontsAsync();
+      } else {
+        console.error('Элементы не найдены, повторная попытка через 100мс');
+        setTimeout(() => {
+          generateMachineCells();
+          document.getElementById('date').value = selectedDate;
+          loadDataForDate(selectedDate);
+        }, 100);
+      }
     }
 
     function loadFontsAsync() {
@@ -1624,14 +1558,6 @@
         document.documentElement.classList.add('fonts-loaded');
       };
       document.head.appendChild(link);
-    }
-
-    function showLoader() {
-      document.getElementById("loader").style.display = "flex";
-    }
-
-    function hideLoader() {
-      document.getElementById("loader").style.display = "none";
     }
 
     function generateMachineCells() {
@@ -1647,6 +1573,7 @@
         `;
       }
       grid.innerHTML = html;
+      console.log('Карточки машин сгенерированы');
     }
 
     function forceDisplayUpdate() {
@@ -1656,13 +1583,30 @@
         const errorCount = machineErrors[index];
         
         countElement.textContent = errorCount;
+        
         countElement.classList.remove('zero', 'non-zero');
-        countElement.classList.add(errorCount === 0 ? 'zero' : 'non-zero');
+        if (errorCount === 0) {
+          countElement.classList.add('zero');
+        } else {
+          countElement.classList.add('non-zero');
+        }
       });
+      
+      console.log('Принудительное обновление отображения:', machineErrors);
     }
 
     function updateDisplay() {
-      forceDisplayUpdate();
+      const cells = document.querySelectorAll('.machine-cell');
+      cells.forEach((cell, index) => {
+        const countElement = cell.querySelector('.error-count');
+        countElement.textContent = machineErrors[index];
+        
+        if (machineErrors[index] === 0) {
+          countElement.className = 'error-count zero';
+        } else {
+          countElement.className = 'error-count non-zero';
+        }
+      });
     }
 
     function incrementMachine(index) {
@@ -1674,11 +1618,12 @@
       }
     }
 
-    // Загрузка данных с прямым чтением из Sheets
     async function loadDataForDate(date, retryCount = 0) {
       const MAX_RETRIES = 3;
+      console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
       
       if (dataCache[date]) {
+        console.log('Используем кэшированные данные');
         applyCachedData(dataCache[date]);
         return;
       }
@@ -1686,7 +1631,19 @@
       showLoader();
       
       try {
-        const data = await readDataFromSheet(date);
+        let data;
+        
+        if (window.gapi?.client?.sheets) {
+          try {
+            data = await loadDataDirectlyFromSheets(date);
+            console.log('Данные получены напрямую из Sheets');
+          } catch (sheetsError) {
+            console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
+            data = await loadDataViaAppsScript(date);
+          }
+        } else {
+          data = await loadDataViaAppsScript(date);
+        }
         
         dataCache[date] = data;
         applyCachedData(data);
@@ -1695,10 +1652,12 @@
         console.error('Ошибка загрузки данных:', error);
         
         if (retryCount < MAX_RETRIES) {
+          console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
           setTimeout(() => {
             loadDataForDate(date, retryCount + 1);
           }, 1000 * (retryCount + 1));
         } else {
+          console.log('Все попытки исчерпаны, используем данные по умолчанию');
           applyDefaultData();
         }
       } finally {
@@ -1710,6 +1669,7 @@
       if (data.errors) {
         machineErrors = data.errors;
         originalErrors = [...data.errors];
+        console.log('Применяем кэшированные ошибки:', machineErrors);
         forceDisplayUpdate();
       }
       
@@ -1723,12 +1683,18 @@
         updateStats();
       }
       
+      if (data.tableData && data.tableData.length > 0) {
+        populateTable(data.tableData);
+      }
+      
       isDataLoaded = true;
+      console.log('Данные успешно применены');
     }
 
     function applyDefaultData() {
       machineErrors = Array(14).fill(0);
       originalErrors = Array(14).fill(0);
+      console.log('Применяем данные по умолчанию');
       forceDisplayUpdate();
       isDataLoaded = true;
     }
@@ -1766,9 +1732,11 @@
           analysisBtn.classList.add('pulse');
           break;
         default:
-          analysisBtn.innerHTML = isAnalysisOpen ? 
-            '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>' : 
-            '<span class="btn-text">АНАЛИЗ</span>';
+          if (isAnalysisOpen) {
+            analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
+          } else {
+            analysisBtn.innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
+          }
       }
     }
 
@@ -1817,14 +1785,20 @@
         dataTable.classList.remove('loaded');
         
         chartWrappers.forEach((wrapper, index) => {
-          setTimeout(() => wrapper.classList.add('loaded'), index * 200);
+          setTimeout(() => {
+            wrapper.classList.add('loaded');
+          }, index * 200);
         });
         
         statCards.forEach((card, index) => {
-          setTimeout(() => card.classList.add('loaded'), index * 200);
+          setTimeout(() => {
+            card.classList.add('loaded');
+          }, index * 200);
         });
         
-        setTimeout(() => dataTable.classList.add('loaded'), 400);
+        setTimeout(() => {
+          dataTable.classList.add('loaded');
+        }, 400);
       }, 50);
     }
 
@@ -1838,7 +1812,10 @@
       
       try {
         if (!analyticsLoaded) {
-          await loadTableData();
+          // Если данные таблицы еще не загружены, загружаем их
+          if (!dataCache[selectedDate]?.tableData) {
+            await loadTableData();
+          }
           await createYearlyComparisonChart();
           createCharts();
           updateStats();
@@ -1873,8 +1850,6 @@
     }
 
     function calculateMonthlyErrors() {
-      if (!analyticsLoaded) return Array(14).fill(0);
-      
       const monthlyErrors = Array(14).fill(0);
       const tableRows = document.querySelectorAll('#tableBody tr');
       
@@ -1891,9 +1866,40 @@
 
     async function loadTableData() {
       try {
-        const data = await readDataFromSheet(selectedDate);
+        // Пробуем получить из кэша
+        if (dataCache[selectedDate]?.tableData) {
+          populateTable(dataCache[selectedDate].tableData);
+          return;
+        }
         
-        if (data.tableData && data.tableData.length > 0) {
+        // Если Sheets API доступен, читаем напрямую
+        if (window.gapi?.client?.sheets) {
+          const dateObj = new Date(selectedDate);
+          const sheetName = getSheetNameFromDate(dateObj);
+          const tableData = await loadTableDataFromSheets(sheetName);
+          if (tableData.length > 0) {
+            populateTable(tableData);
+            return;
+          }
+        }
+        
+        // Резервный вариант через Apps Script
+        const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        
+        if (!response.ok) throw new Error('Ошибка сети');
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Неверный формат ответа');
+        }
+        
+        if (data.tableData) {
           populateTable(data.tableData);
         } else {
           populateDemoTable();
@@ -1917,10 +1923,9 @@
       const tableBody = document.getElementById('tableBody');
       tableBody.innerHTML = '';
       
-      // Сортируем данные по дню
-      const sortedData = [...tableData].sort((a, b) => a.day - b.day);
-      
-      sortedData.forEach(row => {
+      tableData.forEach(row => {
+        if (!row.day && row.errors.every(error => error === 0)) return;
+        
         const tr = document.createElement('tr');
         const dayCell = document.createElement('td');
         dayCell.textContent = row.day;
@@ -2025,13 +2030,42 @@
       });
     }
 
+    async function loadYearlyComparisonData() {
+      try {
+        // Пробуем через Apps Script (он все равно нужен для этих данных)
+        const response = await fetch(`${BACKEND_URL}?yearlyComparison=true`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        
+        if (!response.ok) throw new Error('Ошибка сети');
+        
+        const text = await response.text();
+        return JSON.parse(text);
+      } catch (error) {
+        console.error('Ошибка при загрузке данных сравнения:', error);
+        return getDemoYearlyData();
+      }
+    }
+    
+    function getDemoYearlyData() {
+      const currentYear = new Date().getFullYear();
+      return {
+        years: [currentYear - 1, currentYear],
+        months: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+        data: {
+          [currentYear - 1]: [120, 95, 130, 110, 105, 90, 115, 125, 100, 135, 140, 120],
+          [currentYear]: [110, 100, 125, 115, 95, 85, 105, 120, 110, 130, 145, 115]
+        }
+      };
+    }
+    
     async function createYearlyComparisonChart() {
       const yearlyComparisonCtx = document.getElementById('yearlyComparisonChart');
       yearlyComparisonCtx.style.width = '100%';
       yearlyComparisonCtx.style.height = '100%';
       
-      const yearlyData = await readYearlyComparisonData();
-      
+      const yearlyData = await loadYearlyComparisonData();
       const datasets = yearlyData.years.map((year, index) => {
         const hue = index * 60 % 360;
         const dataWithNulls = (yearlyData.data[year] || Array(12).fill(0)).map(value => 
@@ -2085,7 +2119,16 @@
         }
       });
     }
-
+    
+    function updateYearlyComparisonChart() {
+      if (yearlyComparisonChart) {
+        yearlyComparisonChart.data.datasets.forEach(dataset => {
+          dataset.data = dataset.data.map(value => value === 0 ? null : value);
+        });
+        yearlyComparisonChart.update();
+      }
+    }
+    
     function updateCharts() {
       if (errorsChart) {
         errorsChart.data.datasets[0].data = calculateMonthlyErrors();
@@ -2097,8 +2140,8 @@
         fpsChart.update();
       }
     }
-
-    // Сохранение данных через Apps Script
+    
+    // СОХРАНЕНИЕ ДАННЫХ (всегда через Apps Script)
     async function saveData() {
       const now = Date.now();
       if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
@@ -2138,8 +2181,9 @@
         if (result.success) {
           originalErrors = [...machineErrors];
           
-          // Очищаем кэш для этой даты, чтобы при следующем чтении получить свежие данные
-          delete dataCache[selectedDate];
+          if (dataCache[selectedDate]) {
+            dataCache[selectedDate].errors = [...machineErrors];
+          }
           
           forceDisplayUpdate();
           
@@ -2150,6 +2194,7 @@
           }
           
           showSaveNotification();
+          
         } else {
           throw new Error(result.error || 'Ошибка при сохранении');
         }
@@ -2160,7 +2205,7 @@
         hideLoader();
       }
     }
-
+    
     function showSaveNotification() {
       const saveBtn = document.querySelector('.save-btn');
       const originalText = saveBtn.textContent;
@@ -2173,8 +2218,7 @@
         saveBtn.style.background = '#1a2f40';
       }, 2000);
     }
-
-    // Обработчик изменения даты
+    
     document.getElementById('date').addEventListener('change', function(e) {
       const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
       
@@ -2192,8 +2236,7 @@
       hideAnalyticsElements();
       loadDataForDate(selectedDate);
     });
-
-    // Предупреждение при закрытии страницы
+    
     window.addEventListener('beforeunload', function(e) {
       const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
       
