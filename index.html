@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Убери анимацию загрузки со спинером везде поставь ту анимацию которая используется при входе, если получится , ускорь загрузку данных : <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -134,6 +134,34 @@
       text-align: center;
     }
 
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      display: none;
+    }
+
+    .loader {
+      width: 25px;
+      height: 25px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     .container {
       max-width: 100%;
       margin: 80px auto 20px;
@@ -177,6 +205,24 @@
       flex-direction: column;
       justify-content: center;
       position: relative;
+    }
+    
+    .machine-cell.loading {
+      opacity: 0.7;
+    }
+    
+    .machine-cell.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #dc143c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
     
     .machine-cell:active {
@@ -247,6 +293,30 @@
       position: relative;
       overflow: hidden;
       transition: all 0.4s ease;
+    }
+    
+    .analysis-btn.loading {
+      color: transparent;
+      pointer-events: none;
+    }
+    
+    .analysis-btn.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid #dc143c;
+      border-radius: 50%;
+      animation: buttonSpin 0.8s linear infinite;
+    }
+    
+    @keyframes buttonSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .analysis-btn.pulse {
@@ -739,9 +809,14 @@
       display: none;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(220, 20, 60, 0.2);
+      border-radius: 50%;
+      border-top-color: #dc143c;
+      animation: spin 1s ease-in-out infinite;
     }
   </style>
 </head>
@@ -754,7 +829,7 @@
     </div>
   </div>
 
-  <!-- АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ -->
+  <!-- АНИМАЦИЯ ДЛЯ ОПЕРАЦИЙ СОХРАНЕНИЯ -->
   <div class="action-loader" id="actionLoader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
@@ -789,6 +864,10 @@
 
   <!-- ОСНОВНОЙ КОНТЕНТ -->
   <div id="main-content">
+    <div id="loader" class="loader-container">
+      <div class="loader"></div>
+    </div>
+
     <header>
       <div class="logo">
         <a href="https://smart-bowling.github.io/SMB/">
@@ -972,6 +1051,14 @@
       }
     }
 
+    function showLoader() {
+      document.getElementById("loader").style.display = "flex";
+    }
+
+    function hideLoader() {
+      document.getElementById("loader").style.display = "none";
+    }
+
     // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
     function loadSheetsAPI() {
       return new Promise((resolve, reject) => {
@@ -1010,7 +1097,7 @@
         if (!loginDiv.hasAttribute('data-original')) {
           loginDiv.setAttribute('data-original', loginDiv.innerHTML);
         }
-        loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="logo-wrapper" style="width: 80px; height: 80px; margin: 0 auto;"><div class="glow-ring" style="width: 50px; height: 50px;"></div><img src="https://i.postimg.cc/dtSpKx0W/1.png" style="width: 60px;" alt="Loading"></div><br><span style="color: #64748b; margin-top: 15px; display: block;">Проверка доступа...</span></div>';
+        loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="loading-spinner"></div><br><span style="color: #64748b; margin-top: 15px; display: block;">Проверка доступа...</span></div>';
       } else {
         if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') {
           loginDiv.innerHTML = loginDiv.getAttribute('data-original');
@@ -1202,7 +1289,63 @@
       return month + '.' + year;
     }
 
-    // ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ТАБЛИЦЫ
+    async function loadTableDataFromSheets(sheetName) {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          range: `'${sheetName}'!B4:BF34`,
+          valueRenderOption: 'FORMATTED_VALUE' // ВАЖНО: используем отформатированные значения
+        });
+        
+        const rows = response.result.values || [];
+        const tableData = [];
+        
+        // Индексы колонок с ошибками (F=4, J=8, N=12, R=16, V=20, Z=24, AD=28, AH=32, AL=36, AP=40, AT=44, AX=48, BB=52, BF=56)
+        const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+        
+        rows.forEach(row => {
+          if (!row[0]) return; // Пропускаем пустые строки
+          
+          const dayValue = row[0];
+          let dayNumber;
+          
+          // Если это строка, извлекаем число из начала (например "16 марта" -> 16)
+          if (typeof dayValue === 'string') {
+            const match = dayValue.match(/^(\d+)/);
+            dayNumber = match ? parseInt(match[1]) : dayValue;
+          } else {
+            dayNumber = dayValue;
+          }
+          
+          const rowData = {
+            day: dayNumber,
+            errors: []
+          };
+          
+          errorIndices.forEach(index => {
+            const value = row[index] || 0;
+            rowData.errors.push(Math.ceil(Number(value)) || 0);
+          });
+          
+          tableData.push(rowData);
+        });
+        
+        // Сортируем по дню
+        tableData.sort((a, b) => {
+          const dayA = parseInt(a.day) || 0;
+          const dayB = parseInt(b.day) || 0;
+          return dayA - dayB;
+        });
+        
+        return tableData;
+        
+      } catch (error) {
+        console.error('Ошибка при чтении таблицы:', error);
+        return [];
+      }
+    }
+
     async function loadDataDirectlyFromSheets(date) {
       console.log('Чтение напрямую из Sheets для даты:', date);
       
@@ -1214,19 +1357,11 @@
         
         await ensureSheetsAPI();
         
-        // ОПТИМИЗАЦИЯ: загружаем все данные одним запросом (BatchGet)
-        const ranges = [
-          // Данные для текущего дня
-          ...Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}${row}`),
-          // Данные для графиков (строки 35-36)
-          ...Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}35`), // Ошибки
-          ...Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}36`), // FPS
-          // Общая статистика
-          `'${sheetName}'!BO35`,
-          `'${sheetName}'!BP35`,
-          // Данные для таблицы (ограниченный диапазон для ускорения)
-          `'${sheetName}'!B4:BF34`
-        ];
+        // 1. Читаем данные для всех машин за один запрос
+        const ranges = [];
+        for (let i = 1; i <= 14; i++) {
+          ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
+        }
         
         const response = await gapi.client.sheets.spreadsheets.values.batchGet({
           spreadsheetId: SHEETS_CONFIG.spreadsheetId,
@@ -1234,62 +1369,50 @@
           valueRenderOption: 'UNFORMATTED_VALUE'
         });
         
-        const valueRanges = response.result.valueRanges;
-        let index = 0;
-        
-        // Парсим ошибки текущего дня (первые 14 значений)
-        const errors = [];
-        for (let i = 0; i < 14; i++) {
-          const value = valueRanges[index++]?.values?.[0]?.[0] || 0;
-          errors.push(Math.ceil(Number(value)) || 0);
-        }
-        
-        // Парсим данные для графиков (следующие 28 значений: 14 ошибок + 14 FPS)
-        const chartErrors = [];
-        for (let i = 0; i < 14; i++) {
-          const value = valueRanges[index++]?.values?.[0]?.[0] || 0;
-          chartErrors.push(Math.ceil(Number(value)) || 0);
-        }
-        
-        const chartFPS = [];
-        for (let i = 0; i < 14; i++) {
-          const value = valueRanges[index++]?.values?.[0]?.[0] || 0;
-          chartFPS.push(Math.ceil(Number(value)) || 0);
-        }
-        
-        // Парсим общую статистику
-        const totalErrors = Math.ceil(Number(valueRanges[index++]?.values?.[0]?.[0])) || 0;
-        const totalFPS = Math.ceil(Number(valueRanges[index++]?.values?.[0]?.[0])) || 0;
-        
-        // Парсим данные таблицы
-        const tableData = [];
-        const tableRows = valueRanges[index]?.values || [];
-        
-        tableRows.forEach(row => {
-          if (!row[0]) return;
-          
-          const dayValue = row[0];
-          let dayNumber;
-          
-          if (typeof dayValue === 'string') {
-            const match = dayValue.match(/^(\d+)/);
-            dayNumber = match ? parseInt(match[1]) : dayValue;
-          } else {
-            dayNumber = dayValue;
-          }
-          
-          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
-          const rowData = { day: dayNumber, errors: [] };
-          
-          errorIndices.forEach(idx => {
-            const value = row[idx] || 0;
-            rowData.errors.push(Math.ceil(Number(value)) || 0);
-          });
-          
-          tableData.push(rowData);
+        // Парсим результаты
+        const errors = response.result.valueRanges.map(range => {
+          const value = range.values?.[0]?.[0] || 0;
+          return Math.ceil(Number(value)) || 0;
         });
         
-        tableData.sort((a, b) => parseInt(a.day) - parseInt(b.day));
+        // 2. Читаем данные для графиков (строки 35-36)
+        const chartRanges = [];
+        for (let i = 1; i <= 14; i++) {
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`); // Ошибки
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`); // FPS
+        }
+        
+        const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: chartRanges,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        // Парсим данные для графиков
+        const chartErrors = [];
+        const chartFPS = [];
+        for (let i = 0; i < 14; i++) {
+          const errorValue = chartResponse.result.valueRanges[i*2]?.values?.[0]?.[0] || 0;
+          const fpsValue = chartResponse.result.valueRanges[i*2 + 1]?.values?.[0]?.[0] || 0;
+          chartErrors.push(Math.ceil(Number(errorValue)) || 0);
+          chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
+        }
+        
+        // 3. Читаем общую статистику
+        const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: [
+            `'${sheetName}'!BO35`, // Общие ошибки
+            `'${sheetName}'!BP35`  // Общий FPS
+          ],
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
+        const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
+        
+        // 4. Читаем данные для таблицы
+        const tableData = await loadTableDataFromSheets(sheetName);
         
         return {
           errors: errors,
@@ -1308,6 +1431,7 @@
       } catch (error) {
         console.error('Ошибка при чтении из Sheets:', error);
         if (error.status === 404 || error.status === 400) {
+          // Лист не существует
           return {
             errors: Array(14).fill(0),
             exists: false,
@@ -1322,68 +1446,7 @@
             tableData: []
           };
         }
-        throw error;
-      }
-    }
-
-    // ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ ЗАГРУЗКИ
-    async function loadDataForDate(date, retryCount = 0) {
-      const MAX_RETRIES = 2; // Уменьшили количество попыток
-      console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
-      
-      // Проверяем кэш
-      if (dataCache[date]) {
-        console.log('Используем кэшированные данные');
-        applyCachedData(dataCache[date]);
-        return;
-      }
-      
-      // Показываем лоадер
-      showActionLoader(true);
-      
-      try {
-        let data;
-        const startTime = Date.now();
-        
-        // Пытаемся загрузить через Sheets API
-        if (window.gapi?.client?.sheets) {
-          try {
-            data = await loadDataDirectlyFromSheets(date);
-            console.log(`Данные получены за ${Date.now() - startTime}мс`);
-          } catch (sheetsError) {
-            console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
-            // Используем Promise.race для таймаута
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Таймаут')), 5000)
-            );
-            data = await Promise.race([
-              loadDataViaAppsScript(date),
-              timeoutPromise
-            ]);
-          }
-        } else {
-          data = await loadDataViaAppsScript(date);
-        }
-        
-        // Сохраняем в кэш
-        dataCache[date] = data;
-        applyCachedData(data);
-        
-      } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        
-        if (retryCount < MAX_RETRIES) {
-          console.log(`Повторная попытка через ${500 * (retryCount + 1)}мс`);
-          setTimeout(() => {
-            loadDataForDate(date, retryCount + 1);
-          }, 500 * (retryCount + 1));
-        } else {
-          console.log('Все попытки исчерпаны, используем данные по умолчанию');
-          applyDefaultData();
-        }
-      } finally {
-        // Скрываем лоадер
-        showActionLoader(false);
+        throw error; // Пробрасываем другие ошибки
       }
     }
 
@@ -1393,57 +1456,20 @@
       const timeoutId = setTimeout(() => {
         console.log('Таймаут загрузки данных');
         controller.abort();
-      }, 5000); // Уменьшили таймаут до 5 секунд
+      }, 8000);
       
-      try {
-        const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
-          signal: controller.signal,
-          headers: { 'Accept': 'application/json' },
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`Ошибка сервера: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-    }
-
-    function applyCachedData(data) {
-      if (data.errors) {
-        machineErrors = data.errors;
-        originalErrors = [...data.errors];
-        console.log('Применяем кэшированные ошибки:', machineErrors);
-        forceDisplayUpdate();
+      const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
-      if (data.chartData) {
-        machineFPS = data.chartData.fps || Array(14).fill(0);
-      }
-      
-      if (data.totalStats) {
-        monthlyErrors = data.totalStats.errors || 0;
-        monthlyFPS = data.totalStats.fps || 0;
-        updateStats();
-      }
-      
-      if (data.tableData && data.tableData.length > 0) {
-        populateTable(data.tableData);
-      }
-      
-      isDataLoaded = true;
-    }
-
-    function applyDefaultData() {
-      machineErrors = Array(14).fill(0);
-      originalErrors = Array(14).fill(0);
-      forceDisplayUpdate();
-      isDataLoaded = true;
+      return await response.json();
     }
 
     // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
@@ -1593,6 +1619,85 @@
       }
     }
 
+    async function loadDataForDate(date, retryCount = 0) {
+      const MAX_RETRIES = 3;
+      console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
+      
+      if (dataCache[date]) {
+        console.log('Используем кэшированные данные');
+        applyCachedData(dataCache[date]);
+        return;
+      }
+      
+      showLoader();
+      
+      try {
+        let data;
+        
+        if (window.gapi?.client?.sheets) {
+          try {
+            data = await loadDataDirectlyFromSheets(date);
+            console.log('Данные получены напрямую из Sheets');
+          } catch (sheetsError) {
+            console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
+            data = await loadDataViaAppsScript(date);
+          }
+        } else {
+          data = await loadDataViaAppsScript(date);
+        }
+        
+        dataCache[date] = data;
+        applyCachedData(data);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
+          setTimeout(() => {
+            loadDataForDate(date, retryCount + 1);
+          }, 1000 * (retryCount + 1));
+        } else {
+          console.log('Все попытки исчерпаны, используем данные по умолчанию');
+          applyDefaultData();
+        }
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function applyCachedData(data) {
+      if (data.errors) {
+        machineErrors = data.errors;
+        originalErrors = [...data.errors];
+        console.log('Применяем кэшированные ошибки:', machineErrors);
+        forceDisplayUpdate();
+      }
+      
+      if (data.chartData) {
+        machineFPS = data.chartData.fps || Array(14).fill(0);
+      }
+      
+      if (data.totalStats) {
+        monthlyErrors = data.totalStats.errors || 0;
+        monthlyFPS = data.totalStats.fps || 0;
+        updateStats();
+      }
+      
+      if (data.tableData && data.tableData.length > 0) {
+        populateTable(data.tableData);
+      }
+      
+      isDataLoaded = true;
+    }
+
+    function applyDefaultData() {
+      machineErrors = Array(14).fill(0);
+      originalErrors = Array(14).fill(0);
+      forceDisplayUpdate();
+      isDataLoaded = true;
+    }
+
     function cancelChanges() {
       if (confirm('Отменить все несохраненные изменения?')) {
         machineErrors = [...originalErrors];
@@ -1703,7 +1808,6 @@
       }
       
       updateAnalysisButtonState('loading');
-      showActionLoader(true);
       
       try {
         if (!analyticsLoaded) {
@@ -1723,8 +1827,6 @@
         analyticsLoaded = true;
         updateAnalysisButtonState('pulse');
         showAnalyticsElements();
-      } finally {
-        showActionLoader(false);
       }
     }
 
@@ -1810,11 +1912,6 @@
         console.error('Ошибка при загрузке данных таблицы:', error);
         populateDemoTable();
       }
-    }
-
-    function loadTableDataFromSheets(sheetName) {
-      // Упрощенная версия для совместимости
-      return Promise.resolve([]);
     }
 
     function populateTable(tableData) {
@@ -2038,7 +2135,7 @@
       }
     }
     
-    // СОХРАНЕНИЕ ДАННЫХ
+    // СОХРАНЕНИЕ ДАННЫХ (всегда через Apps Script)
     async function saveData() {
       const now = Date.now();
       if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
@@ -2046,14 +2143,14 @@
       }
       lastSaveTime = now;
       
-      showActionLoader(true);
+      showLoader();
       
       try {
         const changes = machineErrors.map((current, index) => current - originalErrors[index]);
         const hasChanges = changes.some(change => change !== 0);
         
         if (!hasChanges) {
-          showActionLoader(false);
+          hideLoader();
           return;
         }
         
@@ -2099,7 +2196,7 @@
         console.error('Ошибка:', error);
         alert('Ошибка при сохранении: ' + error.message);
       } finally {
-        showActionLoader(false);
+        hideLoader();
       }
     }
     
