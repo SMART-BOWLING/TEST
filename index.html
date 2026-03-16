@@ -1124,6 +1124,35 @@
       return month + '.' + year;
     }
 
+    // Функция для извлечения номера дня из строки
+    function extractDayNumber(str) {
+      if (!str) return null;
+      
+      // Пробуем разные форматы:
+      
+      // 1. Если это просто число
+      if (/^\d+$/.test(str)) {
+        return parseInt(str, 10);
+      }
+      
+      // 2. Если формат "22 сент." - берем первую часть
+      const parts = str.split(' ');
+      if (parts.length > 0) {
+        const firstPart = parts[0];
+        if (/^\d+$/.test(firstPart)) {
+          return parseInt(firstPart, 10);
+        }
+      }
+      
+      // 3. Если есть точка в начале (например, ".22")
+      const match = str.match(/\.?(\d+)/);
+      if (match) {
+        return parseInt(match[1], 10);
+      }
+      
+      return null;
+    }
+
     // Прямое чтение данных из Google Sheets
     async function readDataFromSheet(dateString) {
       try {
@@ -1208,20 +1237,58 @@
         const tableValues = valueRanges[index]?.values || [];
         const tableData = [];
         
-        for (let i = 0; i < tableValues.length; i++) {
-          const rowData = tableValues[i];
-          if (!rowData || !rowData[0]) continue;
+        // Определяем количество дней в текущем месяце
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        // Создаем массив для всех дней месяца
+        for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+          // Ищем строку для этого дня в данных из таблицы
+          const rowIndex = dayNum - 1; // Индекс в массиве данных (0 = 1-й день)
           
-          const rowErrors = [];
-          for (let j = 4; j < 58; j += 4) { // Индексы для F, J, N, R...
-            const val = rowData[j];
-            rowErrors.push(Math.ceil(Number(val)) || 0);
+          if (rowIndex < tableValues.length) {
+            const rowData = tableValues[rowIndex];
+            
+            // Проверяем, что есть данные в этой строке
+            if (rowData && rowData.length > 0) {
+              const dayValue = rowData[0]; // Значение в колонке B (день)
+              
+              // Извлекаем номер дня из различных форматов
+              let dayNumber = dayNum; // По умолчанию используем номер из цикла
+              
+              if (dayValue) {
+                // Пробуем извлечь число из строки (например, "22 сент." -> 22)
+                const extractedNumber = extractDayNumber(dayValue.toString());
+                if (extractedNumber) {
+                  dayNumber = extractedNumber;
+                }
+              }
+              
+              const rowErrors = [];
+              for (let j = 4; j < 58; j += 4) { // Индексы для F, J, N, R...
+                const val = rowData[j];
+                rowErrors.push(Math.ceil(Number(val)) || 0);
+              }
+              
+              tableData.push({
+                day: dayNumber, // Используем извлеченный номер дня
+                errors: rowErrors
+              });
+            } else {
+              // Если строка пустая, добавляем пустые данные для этого дня
+              tableData.push({
+                day: dayNum,
+                errors: Array(14).fill(0)
+              });
+            }
+          } else {
+            // Если данных меньше, чем дней в месяце, добавляем пустые строки
+            tableData.push({
+              day: dayNum,
+              errors: Array(14).fill(0)
+            });
           }
-          
-          tableData.push({
-            day: rowData[0].toString(),
-            errors: rowErrors
-          });
         }
         
         return {
@@ -1841,12 +1908,13 @@
       const tableBody = document.getElementById('tableBody');
       tableBody.innerHTML = '';
       
-      tableData.forEach(row => {
-        if (!row.day && row.errors.every(error => error === 0)) return;
-        
+      // Сортируем данные по дню
+      const sortedData = [...tableData].sort((a, b) => a.day - b.day);
+      
+      sortedData.forEach(row => {
         const tr = document.createElement('tr');
         const dayCell = document.createElement('td');
-        dayCell.textContent = row.day;
+        dayCell.textContent = row.day; // Теперь здесь всегда число
         dayCell.style.fontWeight = 'bold';
         tr.appendChild(dayCell);
         
