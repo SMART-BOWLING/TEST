@@ -6,380 +6,101 @@
   <title>Учет ошибок KH</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   
-  <!-- КРИТИЧЕСКИЕ СТИЛИ (только для первого экрана) -->
+  <!-- Оптимизация подключения ресурсов -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://accounts.google.com">
+  <link rel="preconnect" href="https://apis.google.com">
+  
+  <!-- Критические стили встроены для быстрого первого рендера -->
   <style>
-    /* БАЗОВЫЙ СБРОС */
-    * { box-sizing: border-box; }
-    body, html { 
-      margin: 0; 
-      padding: 0; 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-      background-color: #f4f6f9;
-      color: #1a2f40;
-      font-weight: 700;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ЭКРАН ЗАГРУЗКИ */
-    .loading-screen {
-      position: fixed;
-      inset: 0;
-      background: #1f2937;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      transition: opacity 0.3s ease;
-    }
-    .loading-screen.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-    .logo-wrapper {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .glow-ring {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      border-radius: 100%;
-      background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 5s linear infinite;
-      filter: blur(15px);
-    }
-    .logo-wrapper img {
-      width: 90px;
-      height: 90px;
-      z-index: 2;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* ХЕДЕР */
-    header {
-      background-color: #1f2937;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      z-index: 1000;
-    }
-    .logo img {
-      width: 36px;
-      height: 36px;
-      object-fit: cover;
-      display: block;
-    }
-    .site-name {
-      flex: 1;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      letter-spacing: 0.5px;
-    }
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid white;
-      background-color: #4a5568;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-    .user-avatar:hover {
-      transform: scale(1.05);
-    }
-    .user-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .user-avatar i {
-      font-size: 18px;
-      color: white;
-    }
-
-    /* ДРОПДАУН */
-    .user-dropdown {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 16px;
-      background-color: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      overflow: hidden;
-      z-index: 9999;
-      min-width: 150px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-    .user-dropdown a {
-      padding: 12px 16px;
-      text-decoration: none;
-      color: white;
-      display: flex;
-      align-items: center;
-      font-size: 14px;
-      transition: background 0.2s;
-      cursor: pointer;
-    }
-    .user-dropdown a:hover {
-      background-color: #374151;
-    }
-    .icon-space {
-      margin-right: 12px;
-      width: 20px;
-      text-align: center;
-    }
-
-    /* ОСНОВНОЙ КОНТЕЙНЕР */
-    .container {
-      max-width: 100%;
-      margin: 70px auto 10px;
-      padding: 12px;
-    }
-
-    /* ПОЛЕ ДАТЫ */
-    .date-input-container {
-      margin: 0 auto 16px;
-      max-width: 400px;
-      width: 100%;
-    }
-    .date-input-container input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 16px;
-      background: white;
-      -webkit-appearance: none;
-      font-weight: 500;
-    }
-    .date-input-container input:focus {
-      outline: none;
-      border-color: #dc143c;
-    }
-
-    /* СЕТКА МАШИН */
-    .machines-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .machine-cell {
-      background: white;
-      padding: 10px 4px;
-      border-radius: 14px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      touch-action: manipulation;
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
-      min-height: 65px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .machine-cell:active {
-      transform: scale(0.98);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .machine-number {
-      font-size: 13px;
-      color: #6b7280;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    .error-count {
-      font-size: 24px;
-      font-weight: 800;
-      line-height: 1.2;
-      transition: color 0.2s ease;
-    }
-    .error-count.zero {
-      color: #1f2937;
-    }
-    .error-count.non-zero {
-      color: #dc143c;
-    }
-
-    /* КНОПКИ УПРАВЛЕНИЯ */
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 8px;
-    }
-    button {
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      min-height: 48px;
-      letter-spacing: 0.5px;
-    }
-    button:active {
-      transform: scale(0.97);
-    }
-    .cancel-btn {
-      background: #dc143c;
-      color: white;
-    }
-    .cancel-btn:hover {
-      background: #b01030;
-    }
-    .save-btn {
-      background: #1a2f40;
-      color: white;
-    }
-    .save-btn:hover {
-      background: #0f1e2a;
-    }
-    .analysis-btn {
-      background: white;
-      color: #1f2937;
-      margin-top: 10px;
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      font-weight: 600;
-    }
-    .analysis-btn:hover {
-      background: #f9fafb;
-      border-color: #d1d5db;
-    }
-
-    /* ЛОАДЕР ДЛЯ ОПЕРАЦИЙ */
-    .loader-container {
-      position: fixed;
-      inset: 0;
-      background: rgba(31, 41, 55, 0.95);
-      backdrop-filter: blur(4px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100000;
-    }
-    .loader-container.active {
-      display: flex;
-    }
-    .loader-container .logo-wrapper {
-      width: 100px;
-      height: 100px;
-    }
-    .loader-container .glow-ring {
-      width: 50px;
-      height: 50px;
-      filter: blur(12px);
-    }
-    .loader-container img {
-      width: 75px;
-      height: 75px;
-    }
-
-    /* СТИЛИ АВТОРИЗАЦИИ */
-    #login-section {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-      background: #f4f6f9;
-    }
-    #login-container {
-      background: white;
-      padding: 28px 24px;
-      border-radius: 28px;
-      box-shadow: 0 15px 25px -5px rgba(0,0,0,0.2);
-      text-align: center;
-      max-width: 380px;
-      width: 100%;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .login-icon {
-      width: 56px;
-      height: 56px;
-      background: #f1f5f9;
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
-    }
-    .login-icon i {
-      font-size: 28px;
-      color: #dc143c;
-    }
-    #login-container h2 {
-      color: #1e293b;
-      margin: 16px 0 6px;
-      font-size: 22px;
-      font-weight: 800;
-    }
-    .login-subtitle {
-      color: #64748b;
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
-
-    /* АДАПТАЦИЯ ДЛЯ ПЛАНШЕТОВ */
-    @media (min-width: 768px) {
-      .machines-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-    @media (min-width: 1024px) {
-      .machines-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
+    /* КРИТИЧЕСКИЕ СТИЛИ - минимизированы для скорости */
+    body,html{margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;background-color:#f4f6f9;color:#1a2f40;font-weight:700}
+    header{background-color:#1f2937;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:fixed;top:0;left:0;right:0;box-shadow:0 2px 4px rgba(0,0,0,.2);user-select:none;z-index:1000}
+    .logo img{width:40px;height:40px;object-fit:cover;transform:translateY(4px);cursor:pointer}
+    .site-name{flex:1;text-align:center;font-size:20px;font-weight:700;color:#fff}
+    .user-avatar{width:32px;height:32px;border-radius:50%;border:2px solid #fff;background-color:#4a5568;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+    .user-avatar img{width:100%;height:100%;object-fit:cover}
+    .user-avatar i{font-size:18px;color:#fff}
+    .user-dropdown{display:none;position:absolute;top:70px;right:20px;background-color:#1f2937;border:1px solid #444;border-radius:8px;overflow:hidden;z-index:9999;min-width:150px}
+    .user-dropdown a{padding:10px 15px;text-decoration:none;color:#fff;display:flex;align-items:center;cursor:pointer}
+    .user-dropdown a:hover{background-color:#374151}
+    .icon-space{margin-right:10px;width:20px;text-align:center}
+    .loader-container{position:fixed;inset:0;background:#1f2937;display:none;justify-content:center;align-items:center;z-index:100000}
+    .loader-container.active{display:flex}
+    .logo-wrapper{position:relative;width:160px;height:160px;display:flex;justify-content:center;align-items:center}
+    .glow-ring{position:absolute;width:80px;height:80px;border-radius:100%;background:conic-gradient(#dc143c,transparent 100%);animation:spin 5s linear infinite;filter:blur(20px)}
+    .logo-wrapper img{width:120px;z-index:2}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    .container{max-width:100%;margin:80px auto 20px;padding:15px}
+    .date-input-container{margin:0 auto 20px;max-width:400px}
+    .date-input-container input{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:16px;box-sizing:border-box;min-height:44px;background:#fff}
+    .machines-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .machine-cell{background:#fff;padding:10px 5px;border-radius:15px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1);touch-action:manipulation;min-height:60px;display:flex;flex-direction:column;justify-content:center}
+    .machine-number{font-size:14px;color:#666;margin-bottom:8px}
+    .error-count{font-size:24px;font-weight:700;transition:opacity .3s}
+    .error-count.zero{color:#000}
+    .error-count.non-zero{color:#dc143c}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+    button{padding:16px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px}
+    .cancel-btn{background:#dc143c;color:#fff}
+    .save-btn{background:#1a2f40;color:#fff}
+    .analysis-btn{background:#fff;color:#000;margin-top:10px;width:100%;border:1px solid #ddd}
+    @media (min-width:768px){.machines-grid{grid-template-columns:repeat(3,1fr)}}
+    @media (min-width:1024px){.machines-grid{grid-template-columns:repeat(4,1fr)}}
+    .loading-screen{position:fixed;inset:0;background:#1f2937;display:flex;justify-content:center;align-items:center;z-index:10000;transition:opacity .5s}
+    .loading-screen.fade-out{opacity:0;pointer-events:none}
+    #login-section{display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px;background-color:#f4f6f9}
+    #login-container{background:#fff;padding:30px 25px;border-radius:24px;box-shadow:0 10px 15px -3px rgba(0,0,0,.3);text-align:center;max-width:420px;width:100%}
   </style>
-
-  <!-- АСИНХРОННАЯ ЗАГРУЗКА FONTAWESOME -->
+  
+  <!-- Некритические стили загружаем асинхронно -->
   <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-
-  <!-- GOOGLE IDENTITY (АСИНХРОННО) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- Google Identity Services - асинхронно с оптимизацией -->
+  <script>
+    // Оптимизированная загрузка Google API
+    window.gapiLoaded = false;
+    window.gsiLoaded = false;
+    
+    // Загружаем GSI асинхронно
+    (function() {
+      var script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = function() { window.gsiLoaded = true; };
+      document.head.appendChild(script);
+    })();
+    
+    // Загружаем Google API асинхронно
+    (function() {
+      var script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = function() { window.gapiLoaded = true; };
+      document.head.appendChild(script);
+    })();
+  </script>
 </head>
 <body>
-  <!-- ЭКРАН ЗАГРУЗКИ -->
+  <!-- Быстрый начальный рендер -->
   <div class="loading-screen" id="loadingScreen">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading Logo" width="90" height="90">
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading Logo">
     </div>
   </div>
 
-  <!-- ЛОАДЕР ДЛЯ ОПЕРАЦИЙ -->
   <div class="loader-container" id="loader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading" width="75" height="75">
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading">
     </div>
   </div>
 
-  <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
   <div id="login-section">
     <div id="login-container">
       <div class="login-icon">
@@ -404,12 +125,11 @@
     </div>
   </div>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
-  <div id="main-content" style="display:none;">
+  <div id="main-content">
     <header>
       <div class="logo">
         <a href="https://smart-bowling.github.io/SMB/">
-          <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" width="36" height="36">
+          <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
         </a>
       </div>
       <div class="site-name">LUCKY STRIKE KH</div>
@@ -433,440 +153,1232 @@
         <button class="save-btn" onclick="saveData()">Сохранить</button>
       </div>
       
-      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">АНАЛИЗ</button>
+      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">
+        <span class="btn-text">АНАЛИЗ</span>
+      </button>
       
-      <!-- АНАЛИТИЧЕСКИЕ ЭЛЕМЕНТЫ (будут показаны позже) -->
-      <div class="charts-container" id="chartsContainer" style="display:none;">
-        <div class="chart-wrapper"><canvas id="errorsChart"></canvas></div>
-        <div class="chart-wrapper"><canvas id="fpsChart"></canvas></div>
-      </div>
-      <div class="stats-container" id="statsContainer" style="display:none;">
-        <div class="stat-card"><div id="totalErrors">0</div></div>
-        <div class="stat-card"><div id="totalFPS">0</div></div>
-      </div>
-      <div class="table-container" id="tableContainer" style="display:none;">
-        <table class="data-table" id="dataTable"></table>
-      </div>
-      <div class="yearly-comparison-container" id="yearlyComparisonContainer" style="display:none;">
-        <canvas id="yearlyComparisonChart"></canvas>
+      <!-- Ленивый контент будет показан после загрузки -->
+      <div style="display:none" id="lazy-content">
+        <div class="charts-container" id="chartsContainer">
+          <div class="chart-wrapper" id="errorsChartWrapper">
+            <div class="chart-title">ОБЩЕЕ КОЛИЧЕСТВО ОШИБОК ЗА МЕСЯЦ</div>
+            <canvas id="errorsChart"></canvas>
+          </div>
+          <div class="chart-wrapper" id="fpsChartWrapper">
+            <div class="chart-title">FPS - КОЛИЧЕСТВО ФРЕЙМОВ НА ОДНУ ОШИБКУ</div>
+            <canvas id="fpsChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="stats-container" id="statsContainer">
+          <div class="stat-card" id="errorsStatCard">
+            <div class="stat-title">Общее количество ошибок за месяц</div>
+            <div class="stat-value errors-stat" id="totalErrors">0</div>
+          </div>
+          <div class="stat-card" id="fpsStatCard">
+            <div class="stat-title">Общее число FPS за месяц</div>
+            <div class="stat-value fps-stat" id="totalFPS">0</div>
+          </div>
+        </div>
+        
+        <div class="table-container" id="tableContainer">
+          <table class="data-table" id="dataTable">
+            <thead>
+              <tr>
+                <th>День</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        
+        <div class="yearly-comparison-container" id="yearlyComparisonContainer">
+          <div class="chart-title">СРАВНЕНИЕ FPS ПО ГОДАМ</div>
+          <canvas id="yearlyComparisonChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- МИКРО-JS ДЛЯ ПЕРВОГО ЭКРАНА -->
+  <!-- Основной скрипт с полной функциональностью -->
   <script>
     (function() {
-      'use strict';
-      
-      // КЭШИРОВАНИЕ DOM ЭЛЕМЕНТОВ
+      // ===== КОНСТАНТЫ =====
+      const CONFIG = {
+        AUTH_SPREADSHEET_ID: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4',
+        AUTH_SHEET_NAME: '1',
+        AUTH_API_KEY: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
+        CURRENT_SITE: 'https://smart-bowling.github.io/PS-STOP-KH/',
+        SHEETS_CONFIG: {
+          apiKey: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
+          spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
+          columnMapping: {1:'F',2:'J',3:'N',4:'R',5:'V',6:'Z',7:'AD',8:'AH',9:'AL',10:'AP',11:'AT',12:'AX',13:'BB',14:'BF'},
+          startRow: 4
+        },
+        BACKEND_URL: 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec'
+      };
+
+      // ===== СОСТОЯНИЕ ПРИЛОЖЕНИЯ =====
+      let currentUser = null;
+      let machineErrors = Array(14).fill(0);
+      let machineFPS = Array(14).fill(0);
+      let selectedDate = new Date().toISOString().split('T')[0];
+      let originalErrors = Array(14).fill(0);
+      let errorsChart = null;
+      let fpsChart = null;
+      let yearlyComparisonChart = null;
+      let monthlyErrors = 0;
+      let monthlyFPS = 0;
+      let analyticsLoaded = false;
+      let isAnalysisOpen = false;
+      let dataCache = {};
+      let lastSaveTime = 0;
+      const SAVE_DEBOUNCE_TIME = 1000;
+      let sheetsAPIPromise = null;
+
+      // ===== DOM ЭЛЕМЕНТЫ =====
       const loadingScreen = document.getElementById('loadingScreen');
       const loginSection = document.getElementById('login-section');
       const mainContent = document.getElementById('main-content');
       const loader = document.getElementById('loader');
-      const grid = document.getElementById('machinesGrid');
-      
-      // БЫСТРАЯ ПРОВЕРКА АВТОРИЗАЦИИ
-      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-      const userEmail = localStorage.getItem('userEmail');
-      const userPic = localStorage.getItem('userPic');
-      
-      // ФУНКЦИИ ДЛЯ АВАТАРКИ
-      window.toggleUserDropdown = function() {
+      const lazyContent = document.getElementById('lazy-content');
+
+      // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+      function showLoader() { loader.classList.add('active'); }
+      function hideLoader() { loader.classList.remove('active'); }
+
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          return JSON.parse(jsonPayload);
+        } catch (e) {
+          console.error('Ошибка парсинга JWT:', e);
+          return {};
+        }
+      }
+
+      function getSheetNameFromDate(date) {
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear().toString().slice(-2);
+        return month + '.' + year;
+      }
+
+      // ===== ФУНКЦИИ ДЛЯ UI =====
+      function toggleUserDropdown() {
         const menu = document.getElementById('userDropdown');
         menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-      };
-      
-      window.signOut = function() {
-        localStorage.clear();
-        sessionStorage.clear();
-        if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
-        mainContent.style.display = 'none';
-        loginSection.style.display = 'flex';
-      };
-      
-      // ОБНОВЛЕНИЕ АВАТАРКИ
-      function updateUserAvatar(pic) {
-        const avatar = document.getElementById('userAvatar');
-        if (pic) {
-          avatar.innerHTML = `<img src="${pic}" alt="Avatar" width="32" height="32">`;
+      }
+
+      function updateUserAvatar(user) {
+        const avatarContainer = document.getElementById('userAvatar');
+        if (user?.picture) {
+          avatarContainer.innerHTML = `<img src="${user.picture}" alt="Avatar">`;
         } else {
-          avatar.innerHTML = '<i class="fas fa-user"></i>';
+          avatarContainer.innerHTML = '<i class="fas fa-user"></i>';
         }
       }
-      
-      // ГЕНЕРАЦИЯ КАРТОЧЕК (МАКСИМАЛЬНО БЫСТРО)
-      function generateCards() {
+
+      function generateMachineCells() {
+        const grid = document.getElementById('machinesGrid');
+        if (!grid) return;
+        
         let html = '';
         for (let i = 0; i < 14; i++) {
-          html += `<div class="machine-cell" onclick="window.incrementMachine(${i})">
-            <div class="machine-number">LANE ${i + 1}</div>
-            <div class="error-count zero">0</div>
-          </div>`;
+          html += `
+            <div class="machine-cell" onclick="incrementMachine(${i})">
+              <div class="machine-number">LANE ${i + 1}</div>
+              <div class="error-count zero">0</div>
+            </div>
+          `;
         }
         grid.innerHTML = html;
+        console.log('Карточки машин сгенерированы');
       }
-      
-      if (isLoggedIn && userEmail) {
-        // СРАЗУ ПОКАЗЫВАЕМ ОСНОВНОЙ КОНТЕНТ
+
+      function updateDisplay() {
+        const cells = document.querySelectorAll('.machine-cell .error-count');
+        for (let i = 0; i < cells.length; i++) {
+          cells[i].textContent = machineErrors[i];
+          cells[i].className = machineErrors[i] === 0 ? 'error-count zero' : 'error-count non-zero';
+        }
+      }
+
+      window.incrementMachine = function(index) {
+        machineErrors[index]++;
+        updateDisplay();
+        if (errorsChart && analyticsLoaded && isAnalysisOpen) {
+          updateCharts();
+        }
+      };
+
+      function forceDisplayUpdate() {
+        updateDisplay();
+      }
+
+      // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
+      function loadSheetsAPI() {
+        return new Promise((resolve, reject) => {
+          if (!window.gapi) {
+            reject('gapi не загружен');
+            return;
+          }
+          gapi.load('client', {
+            callback: () => resolve(),
+            onerror: () => reject('Ошибка загрузки Google API'),
+            timeout: 10000,
+            ontimeout: () => reject('Таймаут загрузки Google API')
+          });
+        });
+      }
+
+      window.handleCredentialResponse = function(response) {
+        try {
+          const payload = parseJwt(response.credential);
+          
+          currentUser = {
+            email: payload.email.toLowerCase().trim(),
+            name: payload.name,
+            picture: payload.picture
+          };
+          
+          showLoading(true);
+          initAndCheckEmail();
+        } catch (e) {
+          console.error('Ошибка аутентификации:', e);
+          showLoading(false);
+          alert('Ошибка аутентификации');
+        }
+      };
+
+      function showLoading(show) {
+        const loginDiv = document.getElementById('login-container');
+        if (show) {
+          if (!loginDiv.hasAttribute('data-original')) {
+            loginDiv.setAttribute('data-original', loginDiv.innerHTML);
+          }
+          loginDiv.innerHTML = '<div style="padding:40px;text-align:center;"><div class="loading-spinner" style="display:inline-block;width:40px;height:40px;border:4px solid rgba(220,20,60,0.2);border-radius:50%;border-top-color:#dc143c;animation:spin 1s ease-in-out infinite;"></div><br><span style="color:#64748b;margin-top:15px;display:block;">Проверка доступа...</span></div>';
+        } else {
+          if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') {
+            loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+            
+            if (window.google && google.accounts && google.accounts.id) {
+              google.accounts.id.renderButton(
+                document.querySelector('.g_id_signin'),
+                { 
+                  type: 'standard', 
+                  shape: 'pill', 
+                  theme: 'outline', 
+                  text: 'signin_with', 
+                  size: 'large', 
+                  logo_alignment: 'left' 
+                }
+              );
+            }
+          }
+        }
+      }
+
+      async function initAndCheckEmail() {
+        try {
+          await loadSheetsAPI();
+          await gapi.client.init({
+            apiKey: CONFIG.AUTH_API_KEY,
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          });
+          
+          await checkEmailInSheet(currentUser.email);
+        } catch (error) {
+          console.error('Ошибка инициализации:', error);
+          showLoading(false);
+          alert('Ошибка инициализации Google API');
+        }
+      }
+
+      async function checkEmailInSheet(email) {
+        try {
+          const response = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: CONFIG.AUTH_SPREADSHEET_ID,
+            range: `${CONFIG.AUTH_SHEET_NAME}!A:Z`,
+          });
+          
+          const rows = response.result.values;
+          if (!rows || rows.length === 0) {
+            showLoading(false);
+            alert('Таблица пуста');
+            return;
+          }
+          
+          let hasAccess = false;
+          
+          for (let i = 0; i < rows.length; i++) {
+            if (!rows[i]?.[0]) continue;
+            
+            const rowEmail = rows[i][0].toLowerCase().trim();
+            if (rowEmail === email) {
+              for (let j = 1; j < rows[i].length; j++) {
+                const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+                if (siteUrl === CONFIG.CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) {
+                  hasAccess = true;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+          
+          if (hasAccess) {
+            loginUser(currentUser);
+          } else {
+            showLoading(false);
+            alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
+          }
+        } catch (error) {
+          console.error('Ошибка доступа к таблице:', error);
+          showLoading(false);
+          alert('Ошибка доступа к таблице');
+        }
+      }
+
+      function loginUser(user) {
         loginSection.style.display = 'none';
         mainContent.style.display = 'block';
         
-        // УСТАНАВЛИВАЕМ АВАТАРКУ
-        updateUserAvatar(userPic);
+        updateUserAvatar(user);
         
-        // ГЕНЕРИРУЕМ КАРТОЧКИ
-        generateCards();
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userEmail', user.email.toLowerCase());
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('userPic', user.picture);
         
-        // УСТАНАВЛИВАЕМ ДАТУ
-        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        showLoading(false);
         
-        // СКРЫВАЕМ ЭКРАН ЗАГРУЗКИ
-        setTimeout(() => loadingScreen.classList.add('fade-out'), 100);
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
         
-        // ЗАГРУЖАЕМ ОСНОВНОЙ КОД АСИНХРОННО
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.async = true;
-        document.body.appendChild(script);
+        // Инициализация приложения
+        initializeApp();
+      }
+
+      function signOut() {
+        localStorage.clear();
+        sessionStorage.clear();
         
-        // ЗАГРУЖАЕМ CHART.JS
+        if (google && google.accounts && google.accounts.id) {
+          google.accounts.id.disableAutoSelect();
+        }
+        
+        mainContent.style.display = 'none';
+        loginSection.style.display = 'flex';
+        
+        const loginDiv = document.getElementById('login-container');
+        if (loginDiv.getAttribute('data-original')) {
+          loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+          
+          if (window.google && google.accounts && google.accounts.id) {
+            google.accounts.id.renderButton(
+              document.querySelector('.g_id_signin'),
+              { 
+                type: 'standard', 
+                shape: 'pill', 
+                theme: 'outline', 
+                text: 'signin_with', 
+                size: 'large', 
+                logo_alignment: 'left' 
+              }
+            );
+          }
+        }
+      }
+
+      // ===== ФУНКЦИИ ЗАГРУЗКИ ДАННЫХ =====
+      function ensureSheetsAPI() {
+        if (sheetsAPIPromise) return sheetsAPIPromise;
+        
+        sheetsAPIPromise = new Promise((resolve, reject) => {
+          if (window.gapi?.client?.sheets) {
+            resolve();
+            return;
+          }
+          
+          gapi.load('client', async () => {
+            try {
+              await gapi.client.init({
+                apiKey: CONFIG.SHEETS_CONFIG.apiKey,
+                discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+              });
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          });
+        });
+        
+        return sheetsAPIPromise;
+      }
+
+      async function loadTableDataFromSheets(sheetName) {
+        try {
+          const response = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: CONFIG.SHEETS_CONFIG.spreadsheetId,
+            range: `'${sheetName}'!B4:BF34`,
+            valueRenderOption: 'FORMATTED_VALUE'
+          });
+          
+          const rows = response.result.values || [];
+          const tableData = [];
+          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+          
+          rows.forEach(row => {
+            if (!row[0]) return;
+            
+            const dayValue = row[0];
+            let dayNumber;
+            
+            if (typeof dayValue === 'string') {
+              const match = dayValue.match(/^(\d+)/);
+              dayNumber = match ? parseInt(match[1]) : dayValue;
+            } else {
+              dayNumber = dayValue;
+            }
+            
+            const rowData = { day: dayNumber, errors: [] };
+            
+            errorIndices.forEach(index => {
+              const value = row[index] || 0;
+              rowData.errors.push(Math.ceil(Number(value)) || 0);
+            });
+            
+            tableData.push(rowData);
+          });
+          
+          tableData.sort((a, b) => (parseInt(a.day) || 0) - (parseInt(b.day) || 0));
+          return tableData;
+        } catch (error) {
+          console.error('Ошибка при чтении таблицы:', error);
+          return [];
+        }
+      }
+
+      async function loadDataDirectlyFromSheets(date) {
+        console.log('Чтение напрямую из Sheets для даты:', date);
+        
+        try {
+          const dateObj = new Date(date);
+          const sheetName = getSheetNameFromDate(dateObj);
+          const day = dateObj.getDate();
+          const row = CONFIG.SHEETS_CONFIG.startRow + day - 1;
+          
+          await ensureSheetsAPI();
+          
+          // Читаем данные для всех машин
+          const ranges = [];
+          for (let i = 1; i <= 14; i++) {
+            ranges.push(`'${sheetName}'!${CONFIG.SHEETS_CONFIG.columnMapping[i]}${row}`);
+          }
+          
+          const response = await gapi.client.sheets.spreadsheets.values.batchGet({
+            spreadsheetId: CONFIG.SHEETS_CONFIG.spreadsheetId,
+            ranges: ranges,
+            valueRenderOption: 'UNFORMATTED_VALUE'
+          });
+          
+          const errors = response.result.valueRanges.map(range => {
+            const value = range.values?.[0]?.[0] || 0;
+            return Math.ceil(Number(value)) || 0;
+          });
+          
+          // Читаем данные для графиков
+          const chartRanges = [];
+          for (let i = 1; i <= 14; i++) {
+            chartRanges.push(`'${sheetName}'!${CONFIG.SHEETS_CONFIG.columnMapping[i]}35`);
+            chartRanges.push(`'${sheetName}'!${CONFIG.SHEETS_CONFIG.columnMapping[i]}36`);
+          }
+          
+          const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+            spreadsheetId: CONFIG.SHEETS_CONFIG.spreadsheetId,
+            ranges: chartRanges,
+            valueRenderOption: 'UNFORMATTED_VALUE'
+          });
+          
+          const chartErrors = [];
+          const chartFPS = [];
+          for (let i = 0; i < 14; i++) {
+            const errorValue = chartResponse.result.valueRanges[i*2]?.values?.[0]?.[0] || 0;
+            const fpsValue = chartResponse.result.valueRanges[i*2 + 1]?.values?.[0]?.[0] || 0;
+            chartErrors.push(Math.ceil(Number(errorValue)) || 0);
+            chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
+          }
+          
+          // Читаем общую статистику
+          const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+            spreadsheetId: CONFIG.SHEETS_CONFIG.spreadsheetId,
+            ranges: [
+              `'${sheetName}'!BO35`,
+              `'${sheetName}'!BP35`
+            ],
+            valueRenderOption: 'UNFORMATTED_VALUE'
+          });
+          
+          const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
+          const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
+          
+          // Читаем данные для таблицы
+          const tableData = await loadTableDataFromSheets(sheetName);
+          
+          return {
+            errors: errors,
+            exists: true,
+            chartData: { errors: chartErrors, fps: chartFPS },
+            totalStats: { errors: totalErrors, fps: totalFPS },
+            tableData: tableData
+          };
+        } catch (error) {
+          console.error('Ошибка при чтении из Sheets:', error);
+          if (error.status === 404 || error.status === 400) {
+            return {
+              errors: Array(14).fill(0),
+              exists: false,
+              chartData: { errors: Array(14).fill(0), fps: Array(14).fill(0) },
+              totalStats: { errors: 0, fps: 0 },
+              tableData: []
+            };
+          }
+          throw error;
+        }
+      }
+
+      async function loadDataViaAppsScript(date) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        try {
+          const response = await fetch(`${CONFIG.BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' },
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      }
+
+      async function loadDataForDate(date, retryCount = 0) {
+        const MAX_RETRIES = 3;
+        console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
+        
+        if (dataCache[date]) {
+          console.log('Используем кэшированные данные');
+          applyCachedData(dataCache[date]);
+          return;
+        }
+        
+        showLoader();
+        
+        try {
+          let data;
+          
+          if (window.gapi?.client?.sheets) {
+            try {
+              data = await loadDataDirectlyFromSheets(date);
+              console.log('Данные получены напрямую из Sheets');
+            } catch (sheetsError) {
+              console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
+              data = await loadDataViaAppsScript(date);
+            }
+          } else {
+            data = await loadDataViaAppsScript(date);
+          }
+          
+          dataCache[date] = data;
+          applyCachedData(data);
+        } catch (error) {
+          console.error('Ошибка загрузки данных:', error);
+          
+          if (retryCount < MAX_RETRIES) {
+            console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
+            setTimeout(() => {
+              loadDataForDate(date, retryCount + 1);
+            }, 1000 * (retryCount + 1));
+          } else {
+            console.log('Все попытки исчерпаны, используем данные по умолчанию');
+            applyDefaultData();
+          }
+        } finally {
+          hideLoader();
+        }
+      }
+
+      function applyCachedData(data) {
+        if (data.errors) {
+          machineErrors = data.errors;
+          originalErrors = [...data.errors];
+          forceDisplayUpdate();
+        }
+        
+        if (data.chartData) {
+          machineFPS = data.chartData.fps || Array(14).fill(0);
+        }
+        
+        if (data.totalStats) {
+          monthlyErrors = data.totalStats.errors || 0;
+          monthlyFPS = data.totalStats.fps || 0;
+          updateStats();
+        }
+        
+        if (data.tableData && data.tableData.length > 0) {
+          populateTable(data.tableData);
+        }
+      }
+
+      function applyDefaultData() {
+        machineErrors = Array(14).fill(0);
+        originalErrors = Array(14).fill(0);
+        forceDisplayUpdate();
+      }
+
+      // ===== ФУНКЦИИ ДЛЯ ТАБЛИЦ И ГРАФИКОВ =====
+      function populateTable(tableData) {
+        const tableBody = document.getElementById('tableBody');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        
+        tableData.forEach(row => {
+          if (!row.day && row.errors.every(error => error === 0)) return;
+          
+          const tr = document.createElement('tr');
+          const dayCell = document.createElement('td');
+          dayCell.textContent = row.day;
+          dayCell.style.fontWeight = 'bold';
+          tr.appendChild(dayCell);
+          
+          row.errors.forEach(error => {
+            const errorCell = document.createElement('td');
+            if (error !== 0) {
+              errorCell.textContent = error;
+              errorCell.className = 'non-zero';
+            }
+            tr.appendChild(errorCell);
+          });
+          
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function populateDemoTable() {
+        const tableBody = document.getElementById('tableBody');
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = '';
+        
+        for (let i = 1; i <= 31; i++) {
+          const row = document.createElement('tr');
+          const dayCell = document.createElement('td');
+          dayCell.textContent = i;
+          dayCell.style.fontWeight = 'bold';
+          row.appendChild(dayCell);
+          
+          for (let j = 0; j < 14; j++) {
+            const dataCell = document.createElement('td');
+            const value = Math.floor(Math.random() * 10);
+            if (value !== 0) {
+              dataCell.textContent = value;
+              dataCell.className = 'non-zero';
+            }
+            row.appendChild(dataCell);
+          }
+          tableBody.appendChild(row);
+        }
+      }
+
+      function calculateMonthlyErrors() {
+        const monthlyErrorsArr = Array(14).fill(0);
+        const tableRows = document.querySelectorAll('#tableBody tr');
+        
+        tableRows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          for (let i = 1; i < cells.length; i++) {
+            const errorCount = parseInt(cells[i].textContent) || 0;
+            monthlyErrorsArr[i - 1] += errorCount;
+          }
+        });
+        
+        return monthlyErrorsArr;
+      }
+
+      function updateStats() {
+        const totalErrorsEl = document.getElementById('totalErrors');
+        const totalFPSEl = document.getElementById('totalFPS');
+        if (totalErrorsEl) totalErrorsEl.textContent = monthlyErrors;
+        if (totalFPSEl) totalFPSEl.textContent = Math.ceil(monthlyFPS);
+      }
+
+      function createCharts() {
+        if (!window.Chart) return;
+        
+        const machineNumbers = Array.from({length: 14}, (_, i) => `${i + 1}`);
+        
+        if (errorsChart) errorsChart.destroy();
+        if (fpsChart) fpsChart.destroy();
+        
+        const monthlyErrorsData = calculateMonthlyErrors();
+        
+        const errorsCtx = document.getElementById('errorsChart')?.getContext('2d');
+        if (errorsCtx) {
+          errorsChart = new Chart(errorsCtx, {
+            type: 'bar',
+            data: {
+              labels: machineNumbers,
+              datasets: [{
+                data: monthlyErrorsData,
+                backgroundColor: 'rgba(220, 20, 60, 0.8)',
+                borderColor: 'rgba(220, 20, 60, 1)',
+                borderWidth: 1,
+                borderRadius: 5,
+                barPercentage: 0.7,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+        
+        const fpsCtx = document.getElementById('fpsChart')?.getContext('2d');
+        if (fpsCtx) {
+          fpsChart = new Chart(fpsCtx, {
+            type: 'bar',
+            data: {
+              labels: machineNumbers,
+              datasets: [{
+                data: machineFPS,
+                backgroundColor: 'rgba(26, 47, 64, 0.8)',
+                borderColor: 'rgba(26, 47, 64, 1)',
+                borderWidth: 1,
+                borderRadius: 5,
+                barPercentage: 0.7,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+      }
+
+      function updateCharts() {
+        if (errorsChart) {
+          errorsChart.data.datasets[0].data = calculateMonthlyErrors();
+          errorsChart.update();
+        }
+        
+        if (fpsChart) {
+          fpsChart.data.datasets[0].data = machineFPS;
+          fpsChart.update();
+        }
+      }
+
+      async function createYearlyComparisonChart() {
+        if (!window.Chart) return;
+        
+        const yearlyComparisonCtx = document.getElementById('yearlyComparisonChart')?.getContext('2d');
+        if (!yearlyComparisonCtx) return;
+        
+        const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
+        yearlyComparisonCtx.canvas.style.width = '100%';
+        yearlyComparisonCtx.canvas.style.height = '100%';
+        
+        try {
+          const response = await fetch(`${CONFIG.BACKEND_URL}?yearlyComparison=true`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          });
+          
+          let yearlyData;
+          if (response.ok) {
+            const text = await response.text();
+            yearlyData = JSON.parse(text);
+          } else {
+            throw new Error('Ошибка сети');
+          }
+          
+          const datasets = yearlyData.years.map((year, index) => {
+            const hue = index * 60 % 360;
+            const dataWithNulls = (yearlyData.data[year] || Array(12).fill(0)).map(value => 
+              value === 0 ? null : value
+            );
+            
+            return {
+              label: year.toString(),
+              data: dataWithNulls,
+              borderColor: `hsl(${hue}, 70%, 50%)`,
+              backgroundColor: `hsla(${hue}, 70%, 50%, 0.2)`,
+              borderWidth: 2,
+              fill: false,
+              tension: 0.4,
+              spanGaps: false
+            };
+          });
+          
+          if (yearlyComparisonChart) yearlyComparisonChart.destroy();
+          
+          yearlyComparisonChart = new Chart(yearlyComparisonCtx, {
+            type: 'line',
+            data: { labels: yearlyData.months, datasets: datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              layout: { padding: { bottom: 30 } },
+              plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return context.raw === null ? 'Нет данных' : ` ${context.raw}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: { ticks: { padding: 10, maxRotation: 45, autoSkip: true } },
+                y: { beginAtZero: true }
+              },
+              elements: {
+                point: {
+                  radius: function(context) { return context.raw === null ? 0 : 3; },
+                  hoverRadius: function(context) { return context.raw === null ? 0 : 5; }
+                }
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Ошибка при создании графика сравнения:', error);
+        }
+      }
+
+      // ===== ФУНКЦИИ ДЛЯ АНАЛИТИКИ =====
+      function updateAnalysisButtonState(state) {
+        const analysisBtn = document.getElementById('analysisBtn');
+        if (!analysisBtn) return;
+        
+        analysisBtn.classList.remove('loading', 'success', 'pulse');
+        
+        switch(state) {
+          case 'loading':
+            analysisBtn.classList.add('loading');
+            break;
+          case 'success':
+            analysisBtn.classList.add('success');
+            setTimeout(() => {
+              if (isAnalysisOpen) {
+                analysisBtn.classList.remove('success');
+                analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
+              }
+            }, 2000);
+            break;
+          case 'pulse':
+            analysisBtn.classList.add('pulse');
+            break;
+          default:
+            if (isAnalysisOpen) {
+              analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
+            } else {
+              analysisBtn.innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
+            }
+        }
+      }
+
+      function hideAnalyticsElements() {
+        const chartsContainer = document.getElementById('chartsContainer');
+        const statsContainer = document.getElementById('statsContainer');
+        const tableContainer = document.getElementById('tableContainer');
+        const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
+        
+        if (chartsContainer) {
+          chartsContainer.classList.remove('loaded');
+          setTimeout(() => { chartsContainer.style.display = 'none'; }, 300);
+        }
+        if (statsContainer) {
+          statsContainer.classList.remove('loaded');
+          setTimeout(() => { statsContainer.style.display = 'none'; }, 300);
+        }
+        if (tableContainer) {
+          tableContainer.classList.remove('loaded');
+          setTimeout(() => { tableContainer.style.display = 'none'; }, 300);
+        }
+        if (yearlyComparisonContainer) {
+          yearlyComparisonContainer.classList.remove('loaded');
+          setTimeout(() => { yearlyComparisonContainer.style.display = 'none'; }, 300);
+        }
+      }
+
+      function showAnalyticsElements() {
+        const chartsContainer = document.getElementById('chartsContainer');
+        const statsContainer = document.getElementById('statsContainer');
+        const tableContainer = document.getElementById('tableContainer');
+        const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
+        
+        if (chartsContainer) {
+          chartsContainer.style.display = 'grid';
+          setTimeout(() => chartsContainer.classList.add('loaded'), 50);
+        }
+        if (statsContainer) {
+          statsContainer.style.display = 'grid';
+          setTimeout(() => statsContainer.classList.add('loaded'), 50);
+        }
+        if (tableContainer) {
+          tableContainer.style.display = 'block';
+          setTimeout(() => tableContainer.classList.add('loaded'), 50);
+        }
+        if (yearlyComparisonContainer) {
+          yearlyComparisonContainer.style.display = 'block';
+          setTimeout(() => yearlyComparisonContainer.classList.add('loaded'), 50);
+        }
+      }
+
+      async function loadAnalyticsData() {
+        if (analyticsLoaded && isAnalysisOpen) {
+          showAnalyticsElements();
+          return;
+        }
+        
+        updateAnalysisButtonState('loading');
+        
+        try {
+          if (!analyticsLoaded) {
+            if (!dataCache[selectedDate]?.tableData) {
+              await loadTableData();
+            }
+            await createYearlyComparisonChart();
+            createCharts();
+            updateStats();
+          }
+          
+          analyticsLoaded = true;
+          updateAnalysisButtonState('success');
+          showAnalyticsElements();
+        } catch (error) {
+          console.error('Ошибка при загрузке аналитических данных:', error);
+          analyticsLoaded = true;
+          updateAnalysisButtonState('pulse');
+          showAnalyticsElements();
+        }
+      }
+
+      async function toggleCharts() {
+        if (isAnalysisOpen) {
+          hideAnalyticsElements();
+          isAnalysisOpen = false;
+          updateAnalysisButtonState('default');
+        } else {
+          updateAnalysisButtonState('pulse');
+          isAnalysisOpen = true;
+          await loadAnalyticsData();
+        }
+      }
+
+      async function loadTableData() {
+        try {
+          if (dataCache[selectedDate]?.tableData) {
+            populateTable(dataCache[selectedDate].tableData);
+            return;
+          }
+          
+          if (window.gapi?.client?.sheets) {
+            const dateObj = new Date(selectedDate);
+            const sheetName = getSheetNameFromDate(dateObj);
+            const tableData = await loadTableDataFromSheets(sheetName);
+            if (tableData.length > 0) {
+              populateTable(tableData);
+              return;
+            }
+          }
+          
+          const response = await fetch(`${CONFIG.BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          });
+          
+          if (!response.ok) throw new Error('Ошибка сети');
+          
+          const text = await response.text();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            throw new Error('Неверный формат ответа');
+          }
+          
+          if (data.tableData) {
+            populateTable(data.tableData);
+          } else {
+            populateDemoTable();
+          }
+          
+          if (data.chartData) {
+            machineFPS = data.chartData.fps || Array(14).fill(0);
+          }
+          
+          if (data.totalStats) {
+            monthlyErrors = data.totalStats.errors || 0;
+            monthlyFPS = data.totalStats.fps || 0;
+          }
+        } catch (error) {
+          console.error('Ошибка при загрузке данных таблицы:', error);
+          populateDemoTable();
+        }
+      }
+
+      // ===== ФУНКЦИИ СОХРАНЕНИЯ =====
+      async function saveData() {
+        const now = Date.now();
+        if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) return;
+        lastSaveTime = now;
+        
+        showLoader();
+        
+        try {
+          const changes = machineErrors.map((current, index) => current - originalErrors[index]);
+          const hasChanges = changes.some(change => change !== 0);
+          
+          if (!hasChanges) {
+            hideLoader();
+            return;
+          }
+          
+          const formData = new URLSearchParams();
+          formData.append('date', selectedDate);
+          formData.append('errors', JSON.stringify(changes));
+          
+          const response = await fetch(CONFIG.BACKEND_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+          });
+          
+          const text = await response.text();
+          let result;
+          try {
+            result = JSON.parse(text);
+          } catch (e) {
+            throw new Error('Неверный формат ответа');
+          }
+          
+          if (result.success) {
+            originalErrors = [...machineErrors];
+            
+            if (dataCache[selectedDate]) {
+              dataCache[selectedDate].errors = [...machineErrors];
+            }
+            
+            forceDisplayUpdate();
+            
+            if (analyticsLoaded && isAnalysisOpen) {
+              if (errorsChart && fpsChart) updateCharts();
+              await loadTableData();
+              updateStats();
+            }
+            
+            showSaveNotification();
+          } else {
+            throw new Error(result.error || 'Ошибка при сохранении');
+          }
+        } catch (error) {
+          console.error('Ошибка:', error);
+          alert('Ошибка при сохранении: ' + error.message);
+        } finally {
+          hideLoader();
+        }
+      }
+
+      function showSaveNotification() {
+        const saveBtn = document.querySelector('.save-btn');
+        if (!saveBtn) return;
+        
+        const originalText = saveBtn.textContent;
+        
+        saveBtn.textContent = '✓ СОХРАНЕНО';
+        saveBtn.style.background = '#28a745';
+        
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.style.background = '#1a2f40';
+        }, 2000);
+      }
+
+      // ===== ОСНОВНЫЕ ФУНКЦИИ =====
+      function cancelChanges() {
+        if (confirm('Отменить все несохраненные изменения?')) {
+          machineErrors = [...originalErrors];
+          forceDisplayUpdate();
+          
+          if (analyticsLoaded && isAnalysisOpen) {
+            if (errorsChart && fpsChart) updateCharts();
+            updateStats();
+          }
+        }
+      }
+
+      function initializeApp() {
+        console.log('Инициализация приложения после авторизации');
+        
+        generateMachineCells();
+        
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+          dateInput.value = selectedDate;
+        }
+        
+        // Показываем ленивый контент
+        if (lazyContent) {
+          lazyContent.style.display = 'block';
+        }
+        
+        // Загружаем Chart.js асинхронно
         const chartScript = document.createElement('script');
         chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
         chartScript.async = true;
+        chartScript.defer = true;
+        chartScript.onload = function() {
+          console.log('Chart.js загружен');
+        };
         document.body.appendChild(chartScript);
         
-        // ЗДЕСЬ БУДЕТ ЗАГРУЗКА ОСНОВНОГО КОДА
-        setTimeout(() => {
-          const mainScript = document.createElement('script');
-          mainScript.textContent = `
-            // ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ
-            const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-            const AUTH_SHEET_NAME = '1';
-            const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-            const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
-            
-            const SHEETS_CONFIG = {
-              apiKey: AUTH_API_KEY,
-              spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
-              columnMapping: {1:'F',2:'J',3:'N',4:'R',5:'V',6:'Z',7:'AD',8:'AH',9:'AL',10:'AP',11:'AT',12:'AX',13:'BB',14:'BF'},
-              startRow: 4
-            };
-            
-            const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
-            
-            // ПЕРЕМЕННЫЕ СОСТОЯНИЯ
-            let currentUser = {
-              email: localStorage.getItem('userEmail'),
-              name: localStorage.getItem('userName'),
-              picture: localStorage.getItem('userPic')
-            };
-            let machineErrors = Array(14).fill(0);
-            let originalErrors = Array(14).fill(0);
-            let selectedDate = document.getElementById('date').value;
-            let machineFPS = Array(14).fill(0);
-            let monthlyErrors = 0;
-            let monthlyFPS = 0;
-            let analyticsLoaded = false;
-            let isAnalysisOpen = false;
-            let dataCache = {};
-            
-            let errorsChart, fpsChart, yearlyComparisonChart;
-            
-            // ФУНКЦИИ УПРАВЛЕНИЯ ЛОАДЕРОМ
-            window.showLoader = () => loader.classList.add('active');
-            window.hideLoader = () => loader.classList.remove('active');
-            
-            // ИНКРЕМЕНТ
-            window.incrementMachine = function(index) {
-              machineErrors[index]++;
-              const cells = document.querySelectorAll('.machine-cell');
-              const countElement = cells[index].querySelector('.error-count');
-              countElement.textContent = machineErrors[index];
-              countElement.className = machineErrors[index] === 0 ? 'error-count zero' : 'error-count non-zero';
-              
-              if (errorsChart && analyticsLoaded && isAnalysisOpen) updateCharts();
-            };
-            
-            // ОТМЕНА
-            window.cancelChanges = function() {
-              if (confirm('Отменить все несохраненные изменения?')) {
-                machineErrors = [...originalErrors];
-                const cells = document.querySelectorAll('.machine-cell');
-                cells.forEach((cell, i) => {
-                  const el = cell.querySelector('.error-count');
-                  el.textContent = machineErrors[i];
-                  el.className = machineErrors[i] === 0 ? 'error-count zero' : 'error-count non-zero';
-                });
-              }
-            };
-            
-            // СОХРАНЕНИЕ
-            window.saveData = async function() {
-              const changes = machineErrors.map((c, i) => c - originalErrors[i]);
-              if (!changes.some(c => c !== 0)) return;
-              
-              showLoader();
-              try {
-                const formData = new URLSearchParams();
-                formData.append('date', selectedDate);
-                formData.append('errors', JSON.stringify(changes));
-                
-                const response = await fetch(BACKEND_URL, {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                  body: formData
-                });
-                
-                const result = await response.json();
-                if (result.success) {
-                  originalErrors = [...machineErrors];
-                  const btn = document.querySelector('.save-btn');
-                  const originalText = btn.textContent;
-                  btn.textContent = '✓ СОХРАНЕНО';
-                  btn.style.background = '#28a745';
-                  setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = '#1a2f40';
-                  }, 1500);
-                }
-              } catch (error) {
-                alert('Ошибка сохранения: ' + error.message);
-              } finally {
-                hideLoader();
-              }
-            };
-            
-            // ЗАГРУЗКА ДАННЫХ
-            async function loadDataForDate(date) {
-              showLoader();
-              try {
-                const response = await fetch(BACKEND_URL + '?date=' + encodeURIComponent(date) + '&simple=true');
-                const data = await response.json();
-                
-                if (data.errors) {
-                  machineErrors = data.errors;
-                  originalErrors = [...data.errors];
-                  
-                  const cells = document.querySelectorAll('.machine-cell');
-                  cells.forEach((cell, i) => {
-                    const el = cell.querySelector('.error-count');
-                    el.textContent = machineErrors[i];
-                    el.className = machineErrors[i] === 0 ? 'error-count zero' : 'error-count non-zero';
-                  });
-                }
-                
-                if (data.chartData) machineFPS = data.chartData.fps || Array(14).fill(0);
-                if (data.totalStats) {
-                  monthlyErrors = data.totalStats.errors || 0;
-                  monthlyFPS = data.totalStats.fps || 0;
-                  document.getElementById('totalErrors').textContent = monthlyErrors;
-                  document.getElementById('totalFPS').textContent = Math.ceil(monthlyFPS);
-                }
-                
-                dataCache[date] = data;
-              } catch (error) {
-                console.error('Ошибка загрузки:', error);
-              } finally {
-                hideLoader();
-              }
-            }
-            
-            // ОБРАБОТЧИК СМЕНЫ ДАТЫ
-            document.getElementById('date').addEventListener('change', function(e) {
-              const hasChanges = machineErrors.some((c, i) => c !== originalErrors[i]);
-              if (hasChanges && !confirm('Несохраненные изменения. Перейти?')) {
-                this.value = selectedDate;
-                return;
-              }
-              selectedDate = e.target.value;
-              loadDataForDate(selectedDate);
-            });
-            
-            // TOGGLE CHARTS
-            window.toggleCharts = async function() {
-              const btn = document.getElementById('analysisBtn');
-              if (isAnalysisOpen) {
-                document.getElementById('chartsContainer').style.display = 'none';
-                document.getElementById('statsContainer').style.display = 'none';
-                document.getElementById('tableContainer').style.display = 'none';
-                document.getElementById('yearlyComparisonContainer').style.display = 'none';
-                isAnalysisOpen = false;
-                btn.textContent = 'АНАЛИЗ';
-              } else {
-                btn.textContent = 'ЗАГРУЗКА...';
-                if (!analyticsLoaded) {
-                  await loadTableData();
-                  createCharts();
-                  await createYearlyComparisonChart();
-                  analyticsLoaded = true;
-                }
-                document.getElementById('chartsContainer').style.display = 'grid';
-                document.getElementById('statsContainer').style.display = 'grid';
-                document.getElementById('tableContainer').style.display = 'block';
-                document.getElementById('yearlyComparisonContainer').style.display = 'block';
-                isAnalysisOpen = true;
-                btn.textContent = 'СКРЫТЬ АНАЛИЗ';
-              }
-            };
-            
-            // ЗАГРУЗКА ТАБЛИЦЫ
-            async function loadTableData() {
-              try {
-                const response = await fetch(BACKEND_URL + '?date=' + encodeURIComponent(selectedDate) + '&table=true');
-                const data = await response.json();
-                if (data.tableData) populateTable(data.tableData);
-              } catch (error) {
-                console.error('Ошибка таблицы:', error);
-              }
-            }
-            
-            function populateTable(data) {
-              const tbody = document.getElementById('tableBody');
-              if (!tbody) return;
-              
-              let html = '';
-              data.forEach(row => {
-                html += '<tr><td style="font-weight:bold;">' + row.day + '</td>';
-                row.errors.forEach(err => {
-                  html += '<td' + (err !== 0 ? ' class="non-zero"' : '') + '>' + (err || '') + '</td>';
-                });
-                html += '</tr>';
-              });
-              tbody.innerHTML = html;
-            }
-            
-            function createCharts() {
-              if (!window.Chart) return;
-              
-              if (errorsChart) errorsChart.destroy();
-              if (fpsChart) fpsChart.destroy();
-              
-              const months = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
-              
-              const ctx1 = document.getElementById('errorsChart')?.getContext('2d');
-              if (ctx1) {
-                errorsChart = new Chart(ctx1, {
-                  type: 'bar',
-                  data: {
-                    labels: Array.from({length:14}, (_,i)=>i+1),
-                    datasets: [{
-                      data: Array(14).fill(5).map(()=>Math.floor(Math.random()*20)),
-                      backgroundColor: '#dc143c'
-                    }]
-                  },
-                  options: { responsive: true, maintainAspectRatio: false }
-                });
-              }
-              
-              const ctx2 = document.getElementById('fpsChart')?.getContext('2d');
-              if (ctx2) {
-                fpsChart = new Chart(ctx2, {
-                  type: 'bar',
-                  data: {
-                    labels: Array.from({length:14}, (_,i)=>i+1),
-                    datasets: [{
-                      data: machineFPS,
-                      backgroundColor: '#1a2f40'
-                    }]
-                  },
-                  options: { responsive: true, maintainAspectRatio: false }
-                });
-              }
-            }
-            
-            async function createYearlyComparisonChart() {
-              if (!window.Chart) return;
-              
-              const ctx = document.getElementById('yearlyComparisonChart')?.getContext('2d');
-              if (!ctx) return;
-              
-              const year = new Date().getFullYear();
-              if (yearlyComparisonChart) yearlyComparisonChart.destroy();
-              
-              yearlyComparisonChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],
-                  datasets: [
-                    { label: year-1, data: Array(12).fill(0).map(()=>Math.floor(Math.random()*100+50)), borderColor: '#dc143c' },
-                    { label: year, data: Array(12).fill(0).map(()=>Math.floor(Math.random()*100+50)), borderColor: '#1a2f40' }
-                  ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-              });
-            }
-            
-            function updateCharts() {
-              if (errorsChart) errorsChart.update();
-              if (fpsChart) fpsChart.update();
-            }
-            
-            // ИНИЦИАЛИЗАЦИЯ
-            loadDataForDate(selectedDate);
-            
-            // СОЗДАНИЕ ТАБЛИЦЫ
-            const table = document.getElementById('dataTable');
-            if (table && !table.querySelector('thead')) {
-              let thead = '<thead><tr><th>День</th>';
-              for (let i = 1; i <= 14; i++) thead += '<th>' + i + '</th>';
-              thead += '</tr></thead><tbody id="tableBody"></tbody>';
-              table.innerHTML = thead;
-            }
-          `;
-          document.body.appendChild(mainScript);
-        }, 200);
-        
-      } else {
-        // ПОКАЗЫВАЕМ ЭКРАН ВХОДА
-        loginSection.style.display = 'flex';
-        setTimeout(() => loadingScreen.classList.add('fade-out'), 300);
+        // Загружаем данные
+        loadDataForDate(selectedDate);
       }
-      
-      // ЗАКРЫТИЕ ДРОПДАУНА
+
+      // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
       document.addEventListener('click', function(e) {
-        const menu = document.getElementById('userDropdown');
-        const avatar = document.getElementById('userAvatar');
-        if (menu?.style.display === 'block' && !avatar?.contains(e.target) && !menu?.contains(e.target)) {
-          menu.style.display = 'none';
+        const userDropdown = document.getElementById('userDropdown');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        if (userDropdown && userAvatar && userDropdown.style.display === 'block' && 
+            !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+          userDropdown.style.display = 'none';
         }
       });
+
+      document.getElementById('date')?.addEventListener('change', function(e) {
+        const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
+        
+        if (hasUnsavedChanges) {
+          if (!confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
+            this.value = selectedDate;
+            return;
+          }
+        }
+        
+        selectedDate = e.target.value;
+        analyticsLoaded = false;
+        isAnalysisOpen = false;
+        updateAnalysisButtonState('default');
+        hideAnalyticsElements();
+        loadDataForDate(selectedDate);
+      });
+
+      window.addEventListener('beforeunload', function(e) {
+        const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
+        
+        if (hasUnsavedChanges) {
+          e.preventDefault();
+          e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите уйти?';
+          return e.returnValue;
+        }
+      });
+
+      // ===== ЭКСПОРТ ФУНКЦИЙ В ГЛОБАЛЬНУЮ ОБЛАСТЬ =====
+      window.toggleUserDropdown = toggleUserDropdown;
+      window.signOut = signOut;
+      window.cancelChanges = cancelChanges;
+      window.saveData = saveData;
+      window.toggleCharts = toggleCharts;
+
+      // ===== ПРОВЕРКА СОХРАНЕННОЙ СЕССИИ =====
+      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+      const email = localStorage.getItem('userEmail');
+      const name = localStorage.getItem('userName');
+      const pic = localStorage.getItem('userPic');
       
+      if (isLoggedIn && email) {
+        loginSection.style.display = 'none';
+        mainContent.style.display = 'block';
+        
+        currentUser = { email: email, name: name, picture: pic };
+        
+        updateUserAvatar(currentUser);
+        
+        // Показываем ленивый контент
+        if (lazyContent) {
+          lazyContent.style.display = 'block';
+        }
+        
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
+        
+        generateMachineCells();
+        document.getElementById('date').value = selectedDate;
+        
+        // Загружаем Chart.js асинхронно
+        const chartScript = document.createElement('script');
+        chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        chartScript.async = true;
+        chartScript.defer = true;
+        document.body.appendChild(chartScript);
+        
+        // Загружаем данные
+        loadDataForDate(selectedDate);
+      } else {
+        loginSection.style.display = 'flex';
+        
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
+      }
+
+      // Инициализация Google Sign-In при загрузке
+      window.onload = function() {
+        if (window.google && google.accounts && google.accounts.id) {
+          google.accounts.id.initialize({
+            client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
+            callback: handleCredentialResponse
+          });
+          
+          google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            { 
+              type: 'standard', 
+              shape: 'pill', 
+              theme: 'outline', 
+              text: 'signin_with', 
+              size: 'large',
+              logo_alignment: 'left'
+            }
+          );
+        }
+      };
     })();
-  </script>
-  
-  <!-- ДОБАВЛЯЕМ НЕДОСТАЮЩИЕ ЭЛЕМЕНТЫ -->
-  <script>
-    // СОЗДАЕМ ТЕЛО ТАБЛИЦЫ, ЕСЛИ ЕГО НЕТ
-    if (!document.getElementById('tableBody')) {
-      const table = document.getElementById('dataTable');
-      if (table) {
-        table.innerHTML = '<thead><tr><th>День</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th></tr></thead><tbody id="tableBody"></tbody>';
-      }
-    }
-  </script>
-  
-  <!-- АСИНХРОННАЯ ЗАГРУЗКА ШРИФТОВ -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
-  
-  <!-- ДОБАВЛЯЕМ ОБРАБОТЧИК GOOGLE AUTH -->
-  <script>
-    window.handleCredentialResponse = function(response) {
-      try {
-        const payload = JSON.parse(atob(response.credential.split('.')[1]));
-        const email = payload.email.toLowerCase().trim();
-        
-        // СОХРАНЯЕМ В ЛОКАЛСТОРАДЖ
-        localStorage.setItem('userLoggedIn', 'true');
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('userName', payload.name);
-        localStorage.setItem('userPic', payload.picture);
-        
-        // ПЕРЕЗАГРУЖАЕМ СТРАНИЦУ ДЛЯ ПРИМЕНЕНИЯ
-        window.location.reload();
-      } catch (e) {
-        alert('Ошибка авторизации');
-      }
-    };
   </script>
 </body>
 </html>
