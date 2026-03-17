@@ -6,119 +6,887 @@
   <title>Учет ошибок KH</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   
-  <!-- Минимум предзагрузок - только самое важное -->
-  <link rel="preconnect" href="https://accounts.google.com">
-  <link rel="preconnect" href="https://apis.google.com">
-  
-  <!-- КРИТИЧЕСКИЕ СТИЛИ (минимизированы и оптимизированы) -->
-  <style>
-    /* !!! ВАЖНО: эти стили увидят 100% пользователей сразу !!! */
-    *{box-sizing:border-box;margin:0;padding:0}
-    body,html{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f9;color:#1a2f40;font-weight:700}
-    header{background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:fixed;top:0;left:0;right:0;box-shadow:0 2px 4px rgba(0,0,0,.2);z-index:1000}
-    .logo img{width:40px;height:40px;object-fit:cover;transform:translateY(4px);cursor:pointer}
-    .site-name{flex:1;text-align:center;font-size:20px;font-weight:700;color:#fff}
-    .user-avatar{width:32px;height:32px;border-radius:50%;border:2px solid #fff;background:#4a5568;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
-    .user-avatar img{width:100%;height:100%;object-fit:cover}
-    .user-avatar i{font-size:18px;color:#fff}
-    .user-dropdown{display:none;position:absolute;top:70px;right:20px;background:#1f2937;border:1px solid #444;border-radius:8px;z-index:9999;min-width:150px}
-    .user-dropdown a{padding:10px 15px;text-decoration:none;color:#fff;display:flex;align-items:center;cursor:pointer}
-    .user-dropdown a:hover{background:#374151}
-    .icon-space{margin-right:10px;width:20px;text-align:center}
-    
-    /* Единый легкий лоадер */
-    .loader-container{position:fixed;inset:0;background:#1f2937;display:none;justify-content:center;align-items:center;z-index:100000}
-    .loader-container.active{display:flex}
-    .spin{width:48px;height:48px;border:4px solid #dc143c20;border-top-color:#dc143c;border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    
-    /* Основной контент */
-    #main-content{display:none}
-    .container{max-width:100%;margin:80px auto 20px;padding:15px}
-    .date-input-container{margin:0 auto 20px;max-width:400px}
-    .date-input-container input{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:16px;background:#fff;min-height:44px}
-    .machines-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
-    .machine-cell{background:#fff;padding:10px 5px;border-radius:15px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1);min-height:60px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .machine-cell:active{transform:scale(.98)}
-    .machine-number{font-size:14px;color:#666;margin-bottom:8px}
-    .error-count{font-size:24px;font-weight:700;transition:.2s}
-    .error-count.zero{color:#000}
-    .error-count.non-zero{color:#dc143c}
-    .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
-    button{padding:16px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px}
-    .cancel-btn{background:#dc143c;color:#fff}
-    .save-btn{background:#1a2f40;color:#fff}
-    .analysis-btn{background:#fff;color:#000;margin-top:10px;width:100%;border:1px solid #ddd}
-    
-    /* Стили для аналитики (загрузятся позже) */
-    .charts-container,.stats-container,.table-container,.yearly-comparison-container{display:none}
-    @media (min-width:768px){.machines-grid{grid-template-columns:repeat(3,1fr)}}
-    @media (min-width:1024px){.machines-grid{grid-template-columns:repeat(4,1fr)}}
-    
-    /* Экран входа */
-    #login-section{display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px;background:#f4f6f9}
-    #login-container{background:#fff;padding:30px 25px;border-radius:24px;box-shadow:0 10px 15px -3px rgba(0,0,0,.3);text-align:center;max-width:420px;width:100%}
-    .login-icon{width:50px;height:50px;background:#f1f5f9;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:0 auto}
-    .login-icon i{font-size:24px;color:#dc143c}
-    #login-container h2{color:#1e293b;margin:15px 0 5px;font-size:20px;font-weight:800}
-    .login-subtitle{color:#64748b;font-size:13px;margin-bottom:25px}
-  </style>
-  
-  <!-- Google Identity (загружается быстро) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
-  <!-- Некритичные стили загружаем асинхронно -->
+  <!-- Preload и асинхронная загрузка -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  
+  <!-- ВАШИ ОРИГИНАЛЬНЫЕ СТИЛИ (ПОЛНОСТЬЮ СОХРАНЕНЫ) -->
+  <style>
+    /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК */
+    body, html { 
+      margin: 0; 
+      padding: 0; 
+      font-family: system-ui, -apple-system, sans-serif; 
+      background-color: #f4f6f9;
+      color: #1a2f40;
+      font-weight: 700;
+    }
+
+    header {
+      background-color: #1f2937;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      user-select: none;
+      z-index: 1000;
+    }
+
+    .logo img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 0;
+      transform: translateY(4px);
+      cursor: pointer;
+    }
+
+    .site-name {
+      flex: 1;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid white;
+      background-color: #4a5568;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-avatar i {
+      font-size: 18px;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .user-avatar {
+        width: 36px;
+        height: 36px;
+      }
+      
+      .user-avatar i {
+        font-size: 20px;
+      }
+    }
+
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      background-color: #1f2937;
+      border: 1px solid #444;
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 9999;
+      min-width: 150px;
+    }
+
+    .user-dropdown a {
+      padding: 10px 15px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .user-dropdown a:hover {
+      background-color: #374151;
+    }
+
+    .icon-space {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Единый стиль загрузки (как на экране входа) */
+    .loader-container, .action-loader {
+      position: fixed;
+      inset: 0;
+      background: #1f2937;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+    }
+
+    .loader-container.active, .action-loader.active {
+      display: flex;
+    }
+
+    .logo-wrapper {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .glow-ring {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 100%;
+      background: conic-gradient(#dc143c, transparent 100%);
+      animation: spin 5s linear infinite;
+      filter: blur(20px);
+    }
+
+    .logo-wrapper img {
+      width: 120px;
+      z-index: 2;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 80px auto 20px;
+      padding: 15px;
+    }
+    
+    .date-input-container {
+      margin: 0 auto 20px;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .date-input-container input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+      min-height: 44px;
+      background: white;
+    }
+    
+    .machines-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .machine-cell {
+      background: white;
+      padding: 10px 5px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      touch-action: manipulation;
+      transition: transform 0.2s, box-shadow 0.2s;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    
+    .machine-cell:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    
+    .machine-number {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .error-count {
+      font-size: 24px;
+      font-weight: bold;
+      transition: opacity 0.3s ease;
+    }
+    
+    .error-count.zero {
+      color: #000;
+    }
+    
+    .error-count.non-zero {
+      color: #dc143c;
+    }
+    
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    button {
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 44px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+    
+    .cancel-btn {
+      background: #dc143c;
+      color: white;
+    }
+    
+    .save-btn {
+      background: #1a2f40;
+      color: white;
+    }
+    
+    .analysis-btn {
+      background: white;
+      color: black;
+      margin-top: 10px;
+      width: 100%;
+      border: 1px solid #ddd;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+    
+    .analysis-btn.loading {
+      color: transparent;
+      pointer-events: none;
+    }
+    
+    .analysis-btn.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid #dc143c;
+      border-radius: 50%;
+      animation: buttonSpin 0.8s linear infinite;
+    }
+    
+    @keyframes buttonSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .analysis-btn.pulse {
+      animation: pulse 0.5s ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .charts-container {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-top: 30px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .charts-container.loaded {
+      opacity: 1;
+    }
+    
+    .chart-wrapper {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+    
+    .chart-wrapper.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .chart-title {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #1a2f40;
+    }
+    
+    .stats-container {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 15px;
+      margin-top: 20px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .stats-container.loaded {
+      opacity: 1;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+    
+    .stat-card.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .stat-title {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    
+    .errors-stat {
+      color: #dc143c;
+    }
+    
+    .fps-stat {
+      color: #1a2f40;
+    }
+    
+    .table-container {
+      display: none;
+      margin-top: 20px;
+      width: 100%;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .table-container.loaded {
+      opacity: 1;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 11px;
+      table-layout: fixed;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+    
+    .data-table.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .data-table th, .data-table td {
+      padding: 4px;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+      width: 5.5%;
+    }
+    
+    .data-table th:first-child,
+    .data-table td:first-child {
+      width: 8%;
+      font-weight: bold;
+      background-color: #1a2f40;
+      color: white;
+    }
+    
+    .data-table th {
+      background-color: #1a2f40;
+      color: white;
+      font-weight: 600;
+      padding: 6px 4px;
+      font-size: 10px;
+    }
+    
+    .data-table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
+    .data-table tr:hover {
+      background-color: #e9ecef;
+    }
+    
+    .non-zero {
+      color: #dc143c;
+      font-weight: bold;
+    }
+    
+    .yearly-comparison-container {
+      display: none;
+      margin-top: 30px;
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+      height: 500px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    
+    .yearly-comparison-container.loaded {
+      opacity: 1;
+    }
+    
+    @media (min-width: 768px) {
+      .machines-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .charts-container {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .stats-container {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .data-table {
+        font-size: 12px;
+      }
+      
+      .data-table th, .data-table td {
+        padding: 5px;
+      }
+      
+      .yearly-comparison-container {
+        height: 350px;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .machines-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .data-table {
+        font-size: 13px;
+      }
+      
+      .data-table th, .data-table td {
+        padding: 6px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 10px;
+      }
+      
+      .date-input-container {
+        margin: 0 0 20px 0;
+        max-width: none;
+      }
+      
+      .date-input-container input {
+        border-radius: 8px;
+        font-size: 16px;
+      }
+      
+      input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      
+      .data-table {
+        font-size: 10px;
+      }
+      
+      .data-table th, .data-table td {
+        padding: 3px;
+      }
+      
+      .yearly-comparison-container {
+        height: 300px;
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .machines-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .data-table {
+        font-size: 9px;
+      }
+      
+      .data-table th, .data-table td {
+        padding: 2px;
+      }
+      
+      .yearly-comparison-container {
+        height: 320px;
+      }
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      input[type="date"] {
+        min-height: 44px;
+        font-size: 16px;
+        padding: 12px;
+      }
+    }
+
+    /* Асинхронная загрузка шрифта */
+    @font-face {
+      font-family: 'Poppins';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJnecnFHGPezSQ.woff2) format('woff2');
+    }
+    
+    /* Применить шрифт когда загрузится */
+    .fonts-loaded body {
+      font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    }
+
+    /* СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #1f2937;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      transition: opacity 0.5s ease;
+    }
+
+    .loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #login-section {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      background-color: #f4f6f9;
+    }
+
+    #login-container {
+      background: white;
+      padding: 30px 25px;
+      border-radius: 24px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 420px;
+      width: 100%;
+      border: none;
+    }
+
+    #login-container h2 {
+      color: #1e293b;
+      margin: 15px 0 5px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .login-subtitle {
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 25px;
+    }
+
+    .login-icon {
+      width: 50px;
+      height: 50px;
+      background: #f1f5f9;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    .login-icon i {
+      font-size: 24px;
+      color: #dc143c;
+    }
+
+    #user-info {
+      background: white;
+      display: none;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      padding: 12px 15px;
+      max-width: 600px;
+      margin: 10px auto;
+      border-radius: 16px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 999;
+    }
+
+    #user-pic {
+      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border: none;
+    }
+
+    .user-details {
+      flex-grow: 1;
+    }
+
+    #user-name {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    #user-email {
+      margin: 0;
+      font-weight: 400;
+      color: #64748b;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    #logout-btn {
+      background: #f1f5f9;
+      color: #64748b;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #logout-btn:hover { 
+      background: #dc143c; 
+      color: white; 
+      transform: scale(1.05);
+    }
+
+    #main-content {
+      display: none;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(220, 20, 60, 0.2);
+      border-radius: 50%;
+      border-top-color: #dc143c;
+      animation: spin 1s ease-in-out infinite;
+    }
+  </style>
 </head>
 <body>
-  <!-- Лоадер (почти невесомый) -->
-  <div class="loader-container" id="loader"><div class="spin"></div></div>
+  <!-- ЭКРАН ЗАГРУЗКИ -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="logo-wrapper">
+      <div class="glow-ring"></div>
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading Logo">
+    </div>
+  </div>
+
+  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
+  <div class="loader-container" id="loader">
+    <div class="logo-wrapper">
+      <div class="glow-ring"></div>
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading">
+    </div>
+  </div>
 
   <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
   <div id="login-section">
     <div id="login-container">
-      <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="login-icon">
+        <i class="fas fa-shield-halved"></i>
+      </div>
       <h2>УЧЕТ ОШИБОК KH</h2>
       <div class="login-subtitle">Войдите для доступа</div>
-      <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
-      <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
+      <div id="g_id_onload" 
+           data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
+           data-callback="handleCredentialResponse" 
+           data-auto_prompt="false"
+           data-auto_select="false">
+      </div>
+      <div class="g_id_signin" 
+           data-type="standard" 
+           data-shape="pill" 
+           data-theme="outline" 
+           data-text="signin_with" 
+           data-size="large" 
+           data-logo_alignment="left">
+      </div>
     </div>
   </div>
 
   <!-- ОСНОВНОЙ КОНТЕНТ -->
   <div id="main-content">
     <header>
-      <div class="logo"><a href="https://smart-bowling.github.io/SMB/"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></a></div>
-      <div class="site-name">LUCKY STRIKE KH</div>
-      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()"></div>
-      <div class="user-dropdown" id="userDropdown"><a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ</a></div>
+      <div class="logo">
+        <a href="https://smart-bowling.github.io/SMB/">
+          <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+        </a>
+      </div>
+      <div class="site-name">
+        LUCKY STRIKE KH
+      </div>
+      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+        <!-- Здесь будет аватарка или иконка пользователя -->
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <a href="#" onclick="signOut()">
+          <i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ
+        </a>
+      </div>
     </header>
 
     <div class="container">
-      <div class="date-input-container"><input type="date" id="date" value=""></div>
-      <div class="machines-grid" id="machinesGrid"><!-- JS заполнит сразу --></div>
+      <div class="date-input-container">
+        <input type="date" id="date" value="">
+      </div>
+      
+      <div class="machines-grid" id="machinesGrid">
+        <!-- Ячейки машин будут сгенерированы мгновенно -->
+      </div>
+      
       <div class="controls">
         <button class="cancel-btn" onclick="cancelChanges()">Отмена</button>
         <button class="save-btn" onclick="saveData()">Сохранить</button>
       </div>
-      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">АНАЛИЗ</button>
       
-      <!-- Аналитика (загружается лениво) -->
+      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">
+        <span class="btn-text">АНАЛИЗ</span>
+      </button>
+      
       <div class="charts-container" id="chartsContainer">
-        <div class="chart-wrapper"><div class="chart-title">ОШИБКИ ЗА МЕСЯЦ</div><canvas id="errorsChart"></canvas></div>
-        <div class="chart-wrapper"><div class="chart-title">FPS НА ОШИБКУ</div><canvas id="fpsChart"></canvas></div>
+        <div class="chart-wrapper" id="errorsChartWrapper">
+          <div class="chart-title">ОБЩЕЕ КОЛИЧЕСТВО ОШИБОК ЗА МЕСЯЦ</div>
+          <canvas id="errorsChart"></canvas>
+        </div>
+        <div class="chart-wrapper" id="fpsChartWrapper">
+          <div class="chart-title">FPS - КОЛИЧЕСТВО ФРЕЙМОВ НА ОДНУ ОШИБКУ</div>
+          <canvas id="fpsChart"></canvas>
+        </div>
       </div>
+      
       <div class="stats-container" id="statsContainer">
-        <div class="stat-card"><div class="stat-title">Всего ошибок</div><div class="stat-value errors-stat" id="totalErrors">0</div></div>
-        <div class="stat-card"><div class="stat-title">Всего FPS</div><div class="stat-value fps-stat" id="totalFPS">0</div></div>
+        <div class="stat-card" id="errorsStatCard">
+          <div class="stat-title">Общее количество ошибок за месяц</div>
+          <div class="stat-value errors-stat" id="totalErrors">0</div>
+        </div>
+        <div class="stat-card" id="fpsStatCard">
+          <div class="stat-title">Общее число FPS за месяц</div>
+          <div class="stat-value fps-stat" id="totalFPS">0</div>
+        </div>
       </div>
+      
       <div class="table-container" id="tableContainer">
         <table class="data-table" id="dataTable">
-          <thead><tr><th>День</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th></tr></thead>
-          <tbody id="tableBody"></tbody>
+          <thead>
+            <tr>
+              <th>День</th>
+              <th>1</th>
+              <th>2</th>
+              <th>3</th>
+              <th>4</th>
+              <th>5</th>
+              <th>6</th>
+              <th>7</th>
+              <th>8</th>
+              <th>9</th>
+              <th>10</th>
+              <th>11</th>
+              <th>12</th>
+              <th>13</th>
+              <th>14</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Строки таблицы будут сгенерированы через JavaScript -->
+          </tbody>
         </table>
       </div>
+      
       <div class="yearly-comparison-container" id="yearlyComparisonContainer">
         <div class="chart-title">СРАВНЕНИЕ FPS ПО ГОДАМ</div>
         <canvas id="yearlyComparisonChart"></canvas>
@@ -126,7 +894,7 @@
     </div>
   </div>
 
-  <!-- Оптимизированный JavaScript -->
+  <!-- Оптимизированный JavaScript (только для скорости) -->
   <script>
     (function() {
       'use strict';
@@ -204,7 +972,8 @@
           currentUser.email = currentUser.email.toLowerCase();
           
           const loginDiv = document.getElementById('login-container');
-          loginDiv.innerHTML = '<div style="padding:40px"><div class="spin"></div><br><span>Проверка...</span></div>';
+          const originalContent = loginDiv.innerHTML;
+          loginDiv.innerHTML = '<div style="padding:40px; text-align:center;"><div class="loading-spinner"></div><br><span>Проверка доступа...</span></div>';
           
           await loadSheetsAPI();
           await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
@@ -214,10 +983,16 @@
             range: `${AUTH_SHEET_NAME}!A:Z`
           });
           
-          const hasAccess = (sheets.result.values || []).some(row => 
-            row[0]?.toLowerCase().trim() === currentUser.email && 
-            row.slice(1).some(cell => (cell?.trim().split('?')[0] || '').includes('PS-STOP-KH'))
-          );
+          const hasAccess = (sheets.result.values || []).some(row => {
+            if (!row[0]) return false;
+            const rowEmail = row[0].toLowerCase().trim();
+            if (rowEmail !== currentUser.email) return false;
+            for (let j = 1; j < row.length; j++) {
+              const siteUrl = (row[j] || '').trim().split('?')[0].split('#')[0];
+              if (siteUrl === CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) return true;
+            }
+            return false;
+          });
           
           if (hasAccess) {
             loginSection.style.display = 'none';
@@ -228,13 +1003,17 @@
             localStorage.setItem('userName', currentUser.name);
             localStorage.setItem('userPic', currentUser.picture);
             
-            // Мгновенно генерируем карточки и загружаем данные
+            // Скрываем экран загрузки
+            setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
+            
+            // Генерируем карточки и загружаем данные
             generateMachineCells();
             document.getElementById('date').value = selectedDate;
             loadDataForDate(selectedDate);
+            loadFontsAsync();
           } else {
-            alert('Доступ запрещен');
-            location.reload();
+            loginDiv.innerHTML = originalContent;
+            alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
           }
         } catch (e) {
           console.error('Auth error:', e);
@@ -248,7 +1027,16 @@
         if (google?.accounts?.id) google.accounts.id.disableAutoSelect();
         mainContent.style.display = 'none';
         loginSection.style.display = 'flex';
+        loadingScreen.classList.remove('fade-out');
       };
+
+      function loadFontsAsync() {
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
+        link.rel = 'stylesheet';
+        link.onload = () => document.documentElement.classList.add('fonts-loaded');
+        document.head.appendChild(link);
+      }
 
       // ===== ЗАГРУЗКА ДАННЫХ =====
       async function ensureSheetsAPI() {
@@ -294,7 +1082,7 @@
         }
       }
 
-      async function loadDataForDate(date) {
+      async function loadDataForDate(date, retryCount = 0) {
         if (dataCache[date]) {
           machineErrors = [...dataCache[date]];
           originalErrors = [...dataCache[date]];
@@ -304,14 +1092,12 @@
         
         showLoader();
         
-        // Пробуем прямое чтение
         let data = await loadDataDirectly(date);
         
-        // Если не вышло - через Apps Script
         if (!data) {
           try {
             const ctrl = new AbortController();
-            setTimeout(() => ctrl.abort(), 3000);
+            setTimeout(() => ctrl.abort(), 5000);
             const res = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, { signal: ctrl.signal });
             data = await res.json();
           } catch {
@@ -337,9 +1123,11 @@
 
       function generateMachineCells() {
         const grid = document.getElementById('machinesGrid');
-        grid.innerHTML = Array(14).fill(0).map((_, i) => 
-          `<div class="machine-cell" onclick="incrementMachine(${i})"><div class="machine-number">LANE ${i+1}</div><div class="error-count zero">0</div></div>`
-        ).join('');
+        let html = '';
+        for (let i = 0; i < 14; i++) {
+          html += `<div class="machine-cell" onclick="incrementMachine(${i})"><div class="machine-number">LANE ${i+1}</div><div class="error-count zero">0</div></div>`;
+        }
+        grid.innerHTML = html;
       }
 
       // ===== ОСНОВНЫЕ ДЕЙСТВИЯ =====
@@ -350,7 +1138,7 @@
       };
 
       window.cancelChanges = () => {
-        if (confirm('Отменить изменения?')) {
+        if (confirm('Отменить все несохраненные изменения?')) {
           machineErrors = [...originalErrors];
           forceDisplayUpdate();
           if (analyticsLoaded && isAnalysisOpen) updateCharts();
@@ -358,13 +1146,18 @@
       };
 
       window.saveData = async () => {
+        const now = Date.now();
+        if (window._lastSave && now - window._lastSave < 1000) return;
+        window._lastSave = now;
+        
         if (JSON.stringify(machineErrors) === JSON.stringify(originalErrors)) return;
         
         showLoader();
         try {
           const fd = new URLSearchParams();
           fd.append('date', selectedDate);
-          fd.append('errors', JSON.stringify(machineErrors.map((v,i) => v - originalErrors[i])));
+          const changes = machineErrors.map((v,i) => v - originalErrors[i]);
+          fd.append('errors', JSON.stringify(changes));
           
           const res = await fetch(BACKEND_URL, { method: 'POST', body: fd });
           const data = await res.json();
@@ -372,11 +1165,17 @@
           if (data.success) {
             originalErrors = [...machineErrors];
             dataCache[selectedDate] = [...machineErrors];
-            document.querySelector('.save-btn').style.background = '#28a745';
-            setTimeout(() => document.querySelector('.save-btn').style.background = '#1a2f40', 1000);
+            
+            const saveBtn = document.querySelector('.save-btn');
+            saveBtn.style.background = '#28a745';
+            saveBtn.textContent = '✓ СОХРАНЕНО';
+            setTimeout(() => {
+              saveBtn.style.background = '#1a2f40';
+              saveBtn.textContent = 'Сохранить';
+            }, 2000);
           }
         } catch (e) {
-          alert('Ошибка сохранения');
+          alert('Ошибка при сохранении');
         }
         hideLoader();
       };
@@ -384,38 +1183,99 @@
       // ===== АНАЛИТИКА =====
       window.toggleCharts = async () => {
         if (isAnalysisOpen) {
-          document.querySelectorAll('.charts-container,.stats-container,.table-container,.yearly-comparison-container')
-            .forEach(el => el.style.display = 'none');
+          document.getElementById('chartsContainer').style.display = 'none';
+          document.getElementById('statsContainer').style.display = 'none';
+          document.getElementById('tableContainer').style.display = 'none';
+          document.getElementById('yearlyComparisonContainer').style.display = 'none';
           isAnalysisOpen = false;
-          document.getElementById('analysisBtn').textContent = 'АНАЛИЗ';
+          document.getElementById('analysisBtn').innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
         } else {
-          document.getElementById('analysisBtn').textContent = 'ЗАГРУЗКА...';
+          document.getElementById('analysisBtn').classList.add('loading');
           await loadAnalytics();
-          document.querySelectorAll('.charts-container,.stats-container,.table-container,.yearly-comparison-container')
-            .forEach(el => el.style.display = 'grid');
+          document.getElementById('chartsContainer').style.display = 'grid';
+          document.getElementById('statsContainer').style.display = 'grid';
+          document.getElementById('tableContainer').style.display = 'block';
+          document.getElementById('yearlyComparisonContainer').style.display = 'block';
           isAnalysisOpen = true;
-          document.getElementById('analysisBtn').textContent = 'СКРЫТЬ АНАЛИЗ';
+          document.getElementById('analysisBtn').classList.remove('loading');
+          document.getElementById('analysisBtn').innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
         }
       };
 
       async function loadAnalytics() {
         if (analyticsLoaded) return;
         
-        // Динамически подгружаем Chart.js
         if (!window.Chart) {
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
             const s = document.createElement('script');
             s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
             s.onload = resolve;
-            s.onerror = reject;
             document.head.appendChild(s);
           });
         }
         
-        // Генерируем демо-данные для скорости
+        // Демо-данные для быстрого отображения
         createCharts();
         createYearlyChart();
+        
+        // В фоне подгружаем реальные
+        try {
+          const d = new Date(selectedDate);
+          const sheetName = (d.getMonth() + 1) + '.' + d.getFullYear().toString().slice(-2);
+          const tableData = await loadTableDataFromSheets(sheetName);
+          if (tableData.length > 0) {
+            populateTable(tableData);
+          }
+        } catch {}
+        
         analyticsLoaded = true;
+      }
+
+      async function loadTableDataFromSheets(sheetName) {
+        try {
+          await ensureSheetsAPI();
+          if (!window.gapi?.client?.sheets) return [];
+          
+          const resp = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+            range: `'${sheetName}'!B4:BF34`,
+            valueRenderOption: 'FORMATTED_VALUE'
+          });
+          
+          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+          return (resp.result.values || []).map(row => {
+            if (!row[0]) return null;
+            const dayMatch = String(row[0]).match(/^(\d+)/);
+            return {
+              day: dayMatch ? parseInt(dayMatch[1]) : row[0],
+              errors: errorIndices.map(i => Math.ceil(Number(row[i])) || 0)
+            };
+          }).filter(Boolean);
+        } catch {
+          return [];
+        }
+      }
+
+      function populateTable(tableData) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        tableData.sort((a,b) => parseInt(a.day) - parseInt(b.day)).forEach(row => {
+          const tr = document.createElement('tr');
+          const tdDay = document.createElement('td');
+          tdDay.textContent = row.day;
+          tdDay.style.fontWeight = 'bold';
+          tr.appendChild(tdDay);
+          
+          row.errors.forEach(err => {
+            const td = document.createElement('td');
+            if (err !== 0) {
+              td.textContent = err;
+              td.className = 'non-zero';
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
       }
 
       function createCharts() {
@@ -426,18 +1286,55 @@
         const fpsCtx = document.getElementById('fpsChart')?.getContext('2d');
         if (!errCtx || !fpsCtx) return;
         
-        const fakeData = Array(14).fill(0).map(() => Math.floor(Math.random() * 15));
+        const fakeErrors = Array(14).fill(0).map(() => Math.floor(Math.random() * 20));
+        const fakeFPS = Array(14).fill(0).map(() => Math.floor(Math.random() * 100));
         
         errorsChart = new Chart(errCtx, {
           type: 'bar',
-          data: { labels: Array(14).fill(0).map((_,i)=>i+1), datasets: [{ data: fakeData, backgroundColor: '#dc143c' }] },
-          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+          data: {
+            labels: Array(14).fill(0).map((_,i) => i+1),
+            datasets: [{
+              data: fakeErrors,
+              backgroundColor: 'rgba(220, 20, 60, 0.8)',
+              borderColor: 'rgba(220, 20, 60, 1)',
+              borderWidth: 1,
+              borderRadius: 5,
+              barPercentage: 0.7
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+              x: { grid: { display: false } }
+            }
+          }
         });
         
         fpsChart = new Chart(fpsCtx, {
           type: 'bar',
-          data: { labels: Array(14).fill(0).map((_,i)=>i+1), datasets: [{ data: Array(14).fill(0).map(()=>Math.floor(Math.random()*100)), backgroundColor: '#1a2f40' }] },
-          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+          data: {
+            labels: Array(14).fill(0).map((_,i) => i+1),
+            datasets: [{
+              data: fakeFPS,
+              backgroundColor: 'rgba(26, 47, 64, 0.8)',
+              borderColor: 'rgba(26, 47, 64, 1)',
+              borderWidth: 1,
+              borderRadius: 5,
+              barPercentage: 0.7
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+              x: { grid: { display: false } }
+            }
+          }
         });
       }
 
@@ -452,11 +1349,16 @@
           data: {
             labels: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],
             datasets: [
-              { label: String(year-1), data: Array(12).fill(0).map(()=>Math.floor(Math.random()*150)), borderColor: '#dc143c', fill: false },
-              { label: String(year), data: Array(12).fill(0).map(()=>Math.floor(Math.random()*150)), borderColor: '#1a2f40', fill: false }
+              { label: String(year-1), data: Array(12).fill(0).map(() => Math.floor(Math.random() * 150)), borderColor: '#dc143c', backgroundColor: 'transparent', borderWidth: 2, fill: false, tension: 0.4 },
+              { label: String(year), data: Array(12).fill(0).map(() => Math.floor(Math.random() * 150)), borderColor: '#1a2f40', backgroundColor: 'transparent', borderWidth: 2, fill: false, tension: 0.4 }
             ]
           },
-          options: { responsive: true, maintainAspectRatio: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true } }
+          }
         });
       }
 
@@ -481,8 +1383,12 @@
           generateMachineCells();
           document.getElementById('date').value = selectedDate;
           loadDataForDate(selectedDate);
+          loadFontsAsync();
+          
+          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
         } else {
           loginSection.style.display = 'flex';
+          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
         }
         
         if (google?.accounts?.id) {
@@ -491,21 +1397,30 @@
             callback: handleCredentialResponse
           });
           google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
-            type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large'
+            type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', logo_alignment: 'left'
           });
         }
       };
 
       document.getElementById('date').addEventListener('change', (e) => {
-        if (machineErrors.some((v,i) => v !== originalErrors[i]) && !confirm('Есть несохраненные изменения. Продолжить?')) {
+        const hasUnsaved = machineErrors.some((v,i) => v !== originalErrors[i]);
+        if (hasUnsaved && !confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
           e.target.value = selectedDate;
           return;
         }
         selectedDate = e.target.value;
         analyticsLoaded = false;
         isAnalysisOpen = false;
-        document.getElementById('analysisBtn').textContent = 'АНАЛИЗ';
+        document.getElementById('analysisBtn').innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
         loadDataForDate(selectedDate);
+      });
+
+      window.addEventListener('beforeunload', (e) => {
+        if (machineErrors.some((v,i) => v !== originalErrors[i])) {
+          e.preventDefault();
+          e.returnValue = 'У вас есть несохраненные изменения';
+          return e.returnValue;
+        }
       });
     })();
   </script>
