@@ -327,64 +327,6 @@
       100% { transform: scale(1); }
     }
     
-    /* Прогресс-бар для анализа */
-    .progress-container {
-      margin-top: 15px;
-      display: none;
-    }
-    
-    .progress-container.active {
-      display: block;
-    }
-    
-    .progress-bar {
-      width: 100%;
-      height: 24px;
-      background: #e0e0e0;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #dc143c, #ff4d4d, #dc143c);
-      background-size: 200% 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-      border-radius: 12px;
-      animation: progressShimmer 2s infinite;
-    }
-    
-    @keyframes progressShimmer {
-      0% { background-position: 0% 0; }
-      100% { background-position: -200% 0; }
-    }
-    
-    .progress-bar span {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      pointer-events: none;
-    }
-    
-    .progress-status {
-      text-align: center;
-      font-size: 13px;
-      color: #666;
-      margin-top: 5px;
-    }
-    
     .charts-container {
       display: none;
       grid-template-columns: 1fr;
@@ -895,15 +837,6 @@
         <span class="btn-text">АНАЛИЗ</span>
       </button>
       
-      <!-- Прогресс-бар для анализа -->
-      <div class="progress-container" id="progressContainer">
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
-          <span id="progressText">0%</span>
-        </div>
-        <div class="progress-status" id="progressStatus">Подготовка...</div>
-      </div>
-      
       <div class="charts-container" id="chartsContainer">
         <div class="chart-wrapper" id="errorsChartWrapper">
           <div class="chart-title">ОБЩЕЕ КОЛИЧЕСТВО ОШИБОК ЗА МЕСЯЦ</div>
@@ -1009,7 +942,6 @@
     // Кэш для данных
     let dataCache = {};
     let yearlyDataCache = {};
-    const YEARLY_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 часа
     let lastSaveTime = 0;
     const SAVE_DEBOUNCE_TIME = 1000;
 
@@ -1018,10 +950,6 @@
     const loginSection = document.getElementById("login-section");
     const mainContent = document.getElementById("main-content");
     const loader = document.getElementById("loader");
-    const progressContainer = document.getElementById("progressContainer");
-    const progressFill = document.getElementById("progressFill");
-    const progressText = document.getElementById("progressText");
-    const progressStatus = document.getElementById("progressStatus");
 
     // ===== ФУНКЦИИ ДЛЯ АВАТАРКИ =====
     function toggleUserDropdown() {
@@ -1047,31 +975,13 @@
       }
     });
 
-    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА И ПРОГРЕССА =====
+    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА =====
     function showLoader() {
       loader.classList.add('active');
     }
 
     function hideLoader() {
       loader.classList.remove('active');
-    }
-    
-    function showProgress(show) {
-      if (show) {
-        progressContainer.classList.add('active');
-      } else {
-        progressContainer.classList.remove('active');
-      }
-    }
-    
-    function updateProgress(percent, status) {
-      if (progressFill && progressText && progressStatus) {
-        progressFill.style.width = percent + '%';
-        progressText.textContent = percent + '%';
-        if (status) {
-          progressStatus.textContent = status;
-        }
-      }
     }
 
     // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
@@ -1302,11 +1212,6 @@
       const month = date.getMonth() + 1;
       const year = date.getFullYear().toString().slice(-2);
       return month + '.' + year;
-    }
-
-    function getYearlyCacheKey() {
-      const today = new Date().toDateString();
-      return 'yearly_' + today;
     }
 
     async function loadTableDataFromSheets(sheetName) {
@@ -1802,13 +1707,10 @@
         setTimeout(() => {
           dataTable.classList.add('loaded');
         }, 400);
-        
-        // Скрываем прогресс-бар
-        showProgress(false);
       }, 50);
     }
 
-    // ===== ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ ЗАГРУЗКИ АНАЛИЗА =====
+    // ===== БЫСТРАЯ ЗАГРУЗКА АНАЛИЗА =====
     async function loadAnalyticsData() {
       if (analyticsLoaded && isAnalysisOpen) {
         showAnalyticsElements();
@@ -1816,54 +1718,28 @@
       }
       
       updateAnalysisButtonState('loading');
-      showProgress(true);
-      updateProgress(0, 'Подготовка...');
       
       try {
-        const loadPromises = [];
-        let completedTasks = 0;
-        const totalTasks = 2; // таблица и годовые данные
+        // Запускаем ВСЕ запросы ОДНОВРЕМЕННО
+        const promises = [];
         
-        // Функция для обновления прогресса
-        const taskCompleted = (taskName) => {
-          completedTasks++;
-          const percent = Math.round((completedTasks / totalTasks) * 100);
-          updateProgress(percent, `Загрузка: ${taskName} (${percent}%)`);
-        };
-        
-        // Загружаем таблицу, если её нет в кэше
+        // Проверяем, нужно ли загружать таблицу
         if (!dataCache[selectedDate]?.tableData || dataCache[selectedDate].tableData.length === 0) {
-          const tablePromise = loadTableData().then(() => {
-            taskCompleted('данные за месяц');
-          });
-          loadPromises.push(tablePromise);
-        } else {
-          completedTasks++;
-          updateProgress(50, 'Данные за месяц из кэша');
+          promises.push(loadTableData());
         }
         
-        // Загружаем годовые данные, если их нет в кэше или кэш устарел
-        const cacheKey = getYearlyCacheKey();
+        // Проверяем, нужно ли загружать годовые данные
+        const cacheKey = 'yearly_' + new Date().getFullYear();
         if (!yearlyDataCache[cacheKey]) {
-          const yearlyPromise = loadYearlyComparisonData().then(() => {
-            taskCompleted('годовое сравнение');
-          });
-          loadPromises.push(yearlyPromise);
-        } else {
-          completedTasks++;
-          updateProgress(100, 'Годовые данные из кэша');
-          // Обновляем график из кэша
-          updateYearlyChart(yearlyDataCache[cacheKey]);
+          promises.push(loadYearlyComparisonData());
         }
         
-        // Ждем выполнения ВСЕХ запросов одновременно
-        if (loadPromises.length > 0) {
-          await Promise.all(loadPromises);
+        // Ждем ВСЕ запросы сразу, а не по очереди
+        if (promises.length > 0) {
+          await Promise.all(promises);
         }
         
-        updateProgress(100, 'Готово!');
-        
-        // Создаем графики (это быстро)
+        // Создаем графики
         createCharts();
         updateStats();
         
@@ -1872,7 +1748,7 @@
         showAnalyticsElements();
         
       } catch (error) {
-        console.error('Ошибка при загрузке аналитических данных:', error);
+        console.error('Ошибка:', error);
         analyticsLoaded = true;
         updateAnalysisButtonState('pulse');
         showAnalyticsElements();
@@ -2068,7 +1944,7 @@
 
     async function loadYearlyComparisonData() {
       try {
-        const cacheKey = getYearlyCacheKey();
+        const cacheKey = 'yearly_' + new Date().getFullYear();
         if (yearlyDataCache[cacheKey]) {
           updateYearlyChart(yearlyDataCache[cacheKey]);
           return yearlyDataCache[cacheKey];
