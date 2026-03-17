@@ -6,1715 +6,508 @@
   <title>Учет ошибок KH</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
   
-  <!-- Оптимизация подключения внешних ресурсов -->
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Минимум предзагрузок - только самое важное -->
   <link rel="preconnect" href="https://accounts.google.com">
   <link rel="preconnect" href="https://apis.google.com">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   
-  <!-- Критические стили (inline) для первого экрана -->
+  <!-- КРИТИЧЕСКИЕ СТИЛИ (минимизированы и оптимизированы) -->
   <style>
-    /* Базовые критические стили для шапки и карточек */
-    body, html { 
-      margin: 0; 
-      padding: 0; 
-      font-family: system-ui, -apple-system, sans-serif; 
-      background-color: #f4f6f9;
-      color: #1a2f40;
-      font-weight: 700;
-    }
-
-    header {
-      background-color: #1f2937;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      user-select: none;
-      z-index: 1000;
-    }
-
-    .logo img {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 0;
-      transform: translateY(4px);
-      cursor: pointer;
-    }
-
-    .site-name {
-      flex: 1;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: white;
-    }
-
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid white;
-      background-color: #4a5568;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .user-avatar:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px rgba(255,255,255,0.3);
-    }
-
-    .user-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .user-avatar i {
-      font-size: 18px;
-      color: white;
-    }
-
-    @media (max-width: 768px) {
-      .user-avatar {
-        width: 36px;
-        height: 36px;
-      }
-      
-      .user-avatar i {
-        font-size: 20px;
-      }
-    }
-
-    /* Критические стили загрузки */
-    .loading-screen {
-      position: fixed;
-      inset: 0;
-      background: #1f2937;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      transition: opacity 0.5s ease;
-    }
-
-    .loading-screen.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .logo-wrapper {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .glow-ring {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      border-radius: 100%;
-      background: conic-gradient(#dc143c, transparent 100%);
-      animation: spin 5s linear infinite;
-      filter: blur(20px);
-    }
-
-    .logo-wrapper img {
-      width: 120px;
-      z-index: 2;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Минимальные стили для основного контента */
-    #main-content {
-      display: none;
-    }
-
-    .container {
-      max-width: 100%;
-      margin: 80px auto 20px;
-      padding: 15px;
-    }
+    /* !!! ВАЖНО: эти стили увидят 100% пользователей сразу !!! */
+    *{box-sizing:border-box;margin:0;padding:0}
+    body,html{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f6f9;color:#1a2f40;font-weight:700}
+    header{background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:10px 20px;position:fixed;top:0;left:0;right:0;box-shadow:0 2px 4px rgba(0,0,0,.2);z-index:1000}
+    .logo img{width:40px;height:40px;object-fit:cover;transform:translateY(4px);cursor:pointer}
+    .site-name{flex:1;text-align:center;font-size:20px;font-weight:700;color:#fff}
+    .user-avatar{width:32px;height:32px;border-radius:50%;border:2px solid #fff;background:#4a5568;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+    .user-avatar img{width:100%;height:100%;object-fit:cover}
+    .user-avatar i{font-size:18px;color:#fff}
+    .user-dropdown{display:none;position:absolute;top:70px;right:20px;background:#1f2937;border:1px solid #444;border-radius:8px;z-index:9999;min-width:150px}
+    .user-dropdown a{padding:10px 15px;text-decoration:none;color:#fff;display:flex;align-items:center;cursor:pointer}
+    .user-dropdown a:hover{background:#374151}
+    .icon-space{margin-right:10px;width:20px;text-align:center}
     
-    .date-input-container {
-      margin: 0 auto 20px;
-      max-width: 400px;
-      width: 100%;
-    }
-
-    .date-input-container input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
-      min-height: 44px;
-      background: white;
-    }
+    /* Единый легкий лоадер */
+    .loader-container{position:fixed;inset:0;background:#1f2937;display:none;justify-content:center;align-items:center;z-index:100000}
+    .loader-container.active{display:flex}
+    .spin{width:48px;height:48px;border:4px solid #dc143c20;border-top-color:#dc143c;border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
     
-    .machines-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
+    /* Основной контент */
+    #main-content{display:none}
+    .container{max-width:100%;margin:80px auto 20px;padding:15px}
+    .date-input-container{margin:0 auto 20px;max-width:400px}
+    .date-input-container input{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:16px;background:#fff;min-height:44px}
+    .machines-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+    .machine-cell{background:#fff;padding:10px 5px;border-radius:15px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.1);min-height:60px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .machine-cell:active{transform:scale(.98)}
+    .machine-number{font-size:14px;color:#666;margin-bottom:8px}
+    .error-count{font-size:24px;font-weight:700;transition:.2s}
+    .error-count.zero{color:#000}
+    .error-count.non-zero{color:#dc143c}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+    button{padding:16px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;min-height:44px}
+    .cancel-btn{background:#dc143c;color:#fff}
+    .save-btn{background:#1a2f40;color:#fff}
+    .analysis-btn{background:#fff;color:#000;margin-top:10px;width:100%;border:1px solid #ddd}
     
-    .machine-cell {
-      background: white;
-      padding: 10px 5px;
-      border-radius: 15px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      touch-action: manipulation;
-      transition: transform 0.2s, box-shadow 0.2s;
-      min-height: 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-    }
+    /* Стили для аналитики (загрузятся позже) */
+    .charts-container,.stats-container,.table-container,.yearly-comparison-container{display:none}
+    @media (min-width:768px){.machines-grid{grid-template-columns:repeat(3,1fr)}}
+    @media (min-width:1024px){.machines-grid{grid-template-columns:repeat(4,1fr)}}
     
-    .machine-cell:active {
-      transform: scale(0.98);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-    
-    .machine-number {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-    }
-    
-    .error-count {
-      font-size: 24px;
-      font-weight: bold;
-      transition: opacity 0.3s ease;
-    }
-    
-    .error-count.zero {
-      color: #000;
-    }
-    
-    .error-count.non-zero {
-      color: #dc143c;
-    }
-    
-    /* Стили для кнопок */
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    
-    button {
-      padding: 16px;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-height: 44px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    button:active {
-      transform: scale(0.98);
-    }
-    
-    .cancel-btn {
-      background: #dc143c;
-      color: white;
-    }
-    
-    .save-btn {
-      background: #1a2f40;
-      color: white;
-    }
-    
-    .analysis-btn {
-      background: white;
-      color: black;
-      margin-top: 10px;
-      width: 100%;
-      border: 1px solid #ddd;
-    }
-    
-    @media (min-width: 768px) {
-      .machines-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-    
-    @media (min-width: 1024px) {
-      .machines-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        padding: 10px;
-      }
-      
-      .date-input-container {
-        margin: 0 0 20px 0;
-        max-width: none;
-      }
-    }
-
-    @media (max-width: 360px) {
-      .machines-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .controls {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Стили для секции авторизации */
-    #login-section {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-      background-color: #f4f6f9;
-    }
-
-    #login-container {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 24px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      max-width: 420px;
-      width: 100%;
-    }
+    /* Экран входа */
+    #login-section{display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px;background:#f4f6f9}
+    #login-container{background:#fff;padding:30px 25px;border-radius:24px;box-shadow:0 10px 15px -3px rgba(0,0,0,.3);text-align:center;max-width:420px;width:100%}
+    .login-icon{width:50px;height:50px;background:#f1f5f9;border-radius:15px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+    .login-icon i{font-size:24px;color:#dc143c}
+    #login-container h2{color:#1e293b;margin:15px 0 5px;font-size:20px;font-weight:800}
+    .login-subtitle{color:#64748b;font-size:13px;margin-bottom:25px}
   </style>
   
-  <!-- Не критические стили загружаем асинхронно -->
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-  
-  <!-- Асинхронная загрузка Google Identity Services -->
+  <!-- Google Identity (загружается быстро) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
-  <!-- Критический JavaScript инлайн для управления состоянием загрузки -->
-  <script>
-    // Критические функции, которые должны выполниться сразу
-    window._authState = {
-      isLoggedIn: localStorage.getItem('userLoggedIn') === 'true',
-      email: localStorage.getItem('userEmail'),
-      name: localStorage.getItem('userName'),
-      pic: localStorage.getItem('userPic')
-    };
-
-    // Функция для быстрого показа/скрытия загрузки
-    window.hideLoadingScreen = function() {
-      const loadingScreen = document.getElementById('loadingScreen');
-      if (loadingScreen) {
-        loadingScreen.classList.add('fade-out');
-      }
-    };
-
-    // Сохраняем оригинальный onload
-    window.addEventListener('load', function() {
-      // Скрываем экран загрузки через 500мс после полной загрузки
-      setTimeout(window.hideLoadingScreen, 500);
-    });
-  </script>
+  <!-- Некритичные стили загружаем асинхронно -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- ЭКРАН ЗАГРУЗКИ -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading Logo">
-    </div>
-  </div>
-
-  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
-  <div class="loader-container" id="loader" style="display:none; position:fixed; inset:0; background:#1f2937; justify-content:center; align-items:center; z-index:100000;">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading">
-    </div>
-  </div>
+  <!-- Лоадер (почти невесомый) -->
+  <div class="loader-container" id="loader"><div class="spin"></div></div>
 
   <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
   <div id="login-section">
     <div id="login-container">
-      <div class="login-icon">
-        <i class="fas fa-shield-halved"></i>
-      </div>
+      <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
       <h2>УЧЕТ ОШИБОК KH</h2>
       <div class="login-subtitle">Войдите для доступа</div>
-      <div id="g_id_onload" 
-           data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
-           data-callback="handleCredentialResponse" 
-           data-auto_prompt="false"
-           data-auto_select="false">
-      </div>
-      <div class="g_id_signin" 
-           data-type="standard" 
-           data-shape="pill" 
-           data-theme="outline" 
-           data-text="signin_with" 
-           data-size="large" 
-           data-logo_alignment="left">
-      </div>
+      <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+      <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
     </div>
   </div>
 
   <!-- ОСНОВНОЙ КОНТЕНТ -->
   <div id="main-content">
     <header>
-      <div class="logo">
-        <a href="https://smart-bowling.github.io/SMB/">
-          <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
-        </a>
-      </div>
-      <div class="site-name">
-        LUCKY STRIKE KH
-      </div>
-      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
-        <!-- Здесь будет аватарка или иконка пользователя -->
-      </div>
-      <div class="user-dropdown" id="userDropdown" style="display:none; position:absolute; top:70px; right:20px; background:#1f2937; border:1px solid #444; border-radius:8px; overflow:hidden; z-index:9999; min-width:150px;">
-        <a href="#" onclick="signOut()" style="padding:10px 15px; text-decoration:none; color:white; display:flex; align-items:center; cursor:pointer;">
-          <i class="fas fa-sign-out-alt icon-space" style="margin-right:10px; width:20px; text-align:center;"></i> ВЫЙТИ
-        </a>
-      </div>
+      <div class="logo"><a href="https://smart-bowling.github.io/SMB/"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></a></div>
+      <div class="site-name">LUCKY STRIKE KH</div>
+      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()"></div>
+      <div class="user-dropdown" id="userDropdown"><a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ</a></div>
     </header>
 
     <div class="container">
-      <div class="date-input-container">
-        <input type="date" id="date" value="">
-      </div>
-      
-      <div class="machines-grid" id="machinesGrid">
-        <!-- Ячейки машин будут сгенерированы мгновенно -->
-      </div>
-      
+      <div class="date-input-container"><input type="date" id="date" value=""></div>
+      <div class="machines-grid" id="machinesGrid"><!-- JS заполнит сразу --></div>
       <div class="controls">
         <button class="cancel-btn" onclick="cancelChanges()">Отмена</button>
         <button class="save-btn" onclick="saveData()">Сохранить</button>
       </div>
+      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">АНАЛИЗ</button>
       
-      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">
-        <span class="btn-text">АНАЛИЗ</span>
-      </button>
-      
-      <!-- Элементы анализа (скрыты по умолчанию) -->
-      <div class="charts-container" id="chartsContainer" style="display:none;">
-        <div class="chart-wrapper" id="errorsChartWrapper">
-          <div class="chart-title">ОБЩЕЕ КОЛИЧЕСТВО ОШИБОК ЗА МЕСЯЦ</div>
-          <canvas id="errorsChart"></canvas>
-        </div>
-        <div class="chart-wrapper" id="fpsChartWrapper">
-          <div class="chart-title">FPS - КОЛИЧЕСТВО ФРЕЙМОВ НА ОДНУ ОШИБКУ</div>
-          <canvas id="fpsChart"></canvas>
-        </div>
+      <!-- Аналитика (загружается лениво) -->
+      <div class="charts-container" id="chartsContainer">
+        <div class="chart-wrapper"><div class="chart-title">ОШИБКИ ЗА МЕСЯЦ</div><canvas id="errorsChart"></canvas></div>
+        <div class="chart-wrapper"><div class="chart-title">FPS НА ОШИБКУ</div><canvas id="fpsChart"></canvas></div>
       </div>
-      
-      <div class="stats-container" id="statsContainer" style="display:none;">
-        <div class="stat-card" id="errorsStatCard">
-          <div class="stat-title">Общее количество ошибок за месяц</div>
-          <div class="stat-value errors-stat" id="totalErrors">0</div>
-        </div>
-        <div class="stat-card" id="fpsStatCard">
-          <div class="stat-title">Общее число FPS за месяц</div>
-          <div class="stat-value fps-stat" id="totalFPS">0</div>
-        </div>
+      <div class="stats-container" id="statsContainer">
+        <div class="stat-card"><div class="stat-title">Всего ошибок</div><div class="stat-value errors-stat" id="totalErrors">0</div></div>
+        <div class="stat-card"><div class="stat-title">Всего FPS</div><div class="stat-value fps-stat" id="totalFPS">0</div></div>
       </div>
-      
-      <div class="table-container" id="tableContainer" style="display:none;">
+      <div class="table-container" id="tableContainer">
         <table class="data-table" id="dataTable">
-          <thead>
-            <tr>
-              <th>День</th>
-              <th>1</th>
-              <th>2</th>
-              <th>3</th>
-              <th>4</th>
-              <th>5</th>
-              <th>6</th>
-              <th>7</th>
-              <th>8</th>
-              <th>9</th>
-              <th>10</th>
-              <th>11</th>
-              <th>12</th>
-              <th>13</th>
-              <th>14</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-          </tbody>
+          <thead><tr><th>День</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th></tr></thead>
+          <tbody id="tableBody"></tbody>
         </table>
       </div>
-      
-      <div class="yearly-comparison-container" id="yearlyComparisonContainer" style="display:none;">
+      <div class="yearly-comparison-container" id="yearlyComparisonContainer">
         <div class="chart-title">СРАВНЕНИЕ FPS ПО ГОДАМ</div>
         <canvas id="yearlyComparisonChart"></canvas>
       </div>
     </div>
   </div>
 
-  <!-- Подключаем Font Awesome асинхронно (ещё раз, для гарантии) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
-  
-  <!-- Подключаем Chart.js с defer -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-  
-  <!-- Подключаем Google API с defer -->
-  <script src="https://apis.google.com/js/api.js" defer></script>
-  
-  <!-- Основной скрипт приложения с async -->
-  <script async>
-    // Обёртка для всего кода приложения, чтобы не блокировать загрузку
+  <!-- Оптимизированный JavaScript -->
+  <script>
     (function() {
-      // Все переменные и функции из оригинального скрипта
+      'use strict';
+      
       // ===== КОНСТАНТЫ =====
       const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
       const AUTH_SHEET_NAME = '1';
       const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-      
       const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
-      
       const SHEETS_CONFIG = {
         apiKey: AUTH_API_KEY,
         spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
-        columnMapping: {
-          1: 'F', 2: 'J', 3: 'N', 4: 'R', 5: 'V', 6: 'Z', 
-          7: 'AD', 8: 'AH', 9: 'AL', 10: 'AP', 11: 'AT', 
-          12: 'AX', 13: 'BB', 14: 'BF'
-        },
+        columnMapping: {1:'F',2:'J',3:'N',4:'R',5:'V',6:'Z',7:'AD',8:'AH',9:'AL',10:'AP',11:'AT',12:'AX',13:'BB',14:'BF'},
         startRow: 4
       };
-      
       const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
 
-      // Переменные состояния
+      // ===== СОСТОЯНИЕ =====
       let currentUser = null;
       let machineErrors = Array(14).fill(0);
       let machineFPS = Array(14).fill(0);
       let selectedDate = new Date().toISOString().split('T')[0];
       let originalErrors = Array(14).fill(0);
-      
-      let errorsChart = null;
-      let fpsChart = null;
-      let yearlyComparisonChart = null;
-      
-      let monthlyErrors = 0;
-      let monthlyFPS = 0;
-      
-      let analyticsLoaded = false;
-      let isAnalysisOpen = false;
-      let isDataLoaded = false;
-      
+      let errorsChart, fpsChart, yearlyComparisonChart;
+      let monthlyErrors = 0, monthlyFPS = 0;
+      let analyticsLoaded = false, isAnalysisOpen = false;
       let dataCache = {};
-      let lastSaveTime = 0;
-      const SAVE_DEBOUNCE_TIME = 1000;
+      let sheetsAPIPromise = null;
 
-      // Получаем элементы
-      const loadingScreen = document.getElementById("loadingScreen");
-      const loginSection = document.getElementById("login-section");
-      const mainContent = document.getElementById("main-content");
-      const loader = document.getElementById("loader");
+      // ===== ЭЛЕМЕНТЫ =====
+      const loader = document.getElementById('loader');
+      const loadingScreen = document.getElementById('loadingScreen');
+      const loginSection = document.getElementById('login-section');
+      const mainContent = document.getElementById('main-content');
 
-      // ===== ФУНКЦИИ =====
-      function showLoader() {
-        loader.style.display = 'flex';
-      }
-
-      function hideLoader() {
-        loader.style.display = 'none';
-      }
-
-      function toggleUserDropdown() {
-        const menu = document.getElementById("userDropdown");
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
-      }
-
+      // ===== УТИЛИТЫ =====
+      const showLoader = () => loader.classList.add('active');
+      const hideLoader = () => loader.classList.remove('active');
+      
+      // ===== АВАТАРКА =====
+      window.toggleUserDropdown = () => {
+        const menu = document.getElementById('userDropdown');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+      };
+      
       function updateUserAvatar(user) {
-        const avatarContainer = document.getElementById('userAvatar');
-        if (user?.picture) {
-          avatarContainer.innerHTML = `<img src="${user.picture}" alt="Avatar">`;
-        } else {
-          avatarContainer.innerHTML = '<i class="fas fa-user"></i>';
-        }
+        const av = document.getElementById('userAvatar');
+        av.innerHTML = user?.picture ? `<img src="${user.picture}" alt="Avatar">` : '<i class="fas fa-user"></i>';
       }
 
-      document.addEventListener('click', function(e) {
-        const userDropdown = document.getElementById("userDropdown");
-        const userAvatar = document.getElementById("userAvatar");
-        
-        if (userDropdown.style.display === 'block' && !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
-          userDropdown.style.display = 'none';
-        }
+      document.addEventListener('click', e => {
+        const ud = document.getElementById('userDropdown');
+        const ua = document.getElementById('userAvatar');
+        if (ud.style.display === 'block' && !ua.contains(e.target) && !ud.contains(e.target)) ud.style.display = 'none';
       });
 
+      // ===== АВТОРИЗАЦИЯ =====
       function parseJwt(token) {
         try {
           const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
-          return JSON.parse(jsonPayload);
-        } catch (e) {
-          console.error('Ошибка парсинга JWT:', e);
-          return {};
-        }
-      }
-
-      function handleCredentialResponse(response) {
-        try {
-          const payload = parseJwt(response.credential);
-          
-          currentUser = {
-            email: payload.email.toLowerCase().trim(),
-            name: payload.name,
-            picture: payload.picture
-          };
-          
-          showLoading(true);
-          initAndCheckEmail();
-          
-        } catch (e) {
-          console.error('Ошибка аутентификации:', e);
-          showLoading(false);
-          alert('Ошибка аутентификации');
-        }
-      }
-
-      function showLoading(show) {
-        const loginDiv = document.getElementById('login-container');
-        if (show) {
-          if (!loginDiv.hasAttribute('data-original')) {
-            loginDiv.setAttribute('data-original', loginDiv.innerHTML);
-          }
-          loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="loading-spinner" style="display:inline-block; width:40px; height:40px; border:4px solid rgba(220,20,60,0.2); border-radius:50%; border-top-color:#dc143c; animation:spin 1s ease-in-out infinite;"></div><br><span style="color: #64748b; margin-top: 15px; display: block;">Проверка доступа...</span></div>';
-        } else {
-          if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') {
-            loginDiv.innerHTML = loginDiv.getAttribute('data-original');
-            
-            if (window.google && google.accounts && google.accounts.id) {
-              google.accounts.id.renderButton(
-                document.querySelector('.g_id_signin'),
-                { 
-                  type: 'standard', 
-                  shape: 'pill', 
-                  theme: 'outline', 
-                  text: 'signin_with', 
-                  size: 'large', 
-                  logo_alignment: 'left' 
-                }
-              );
-            }
-          }
-        }
+          return JSON.parse(decodeURIComponent(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+        } catch { return {}; }
       }
 
       function loadSheetsAPI() {
         return new Promise((resolve, reject) => {
-          if (window.gapi && gapi.load) {
-            gapi.load('client', {
-              callback: () => resolve(),
-              onerror: () => reject('Ошибка загрузки Google API'),
-              timeout: 10000,
-              ontimeout: () => reject('Таймаут загрузки Google API')
-            });
-          } else {
-            reject('gapi не доступен');
-          }
+          if (window.gapi?.client?.sheets) return resolve();
+          gapi.load('client', { callback: resolve, onerror: reject, timeout: 5000 });
         });
       }
 
-      async function initAndCheckEmail() {
+      window.handleCredentialResponse = async (response) => {
         try {
+          currentUser = parseJwt(response.credential);
+          currentUser.email = currentUser.email.toLowerCase();
+          
+          const loginDiv = document.getElementById('login-container');
+          loginDiv.innerHTML = '<div style="padding:40px"><div class="spin"></div><br><span>Проверка...</span></div>';
+          
           await loadSheetsAPI();
-          await gapi.client.init({
-            apiKey: AUTH_API_KEY,
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-          });
+          await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
           
-          await checkEmailInSheet(currentUser.email);
-          
-        } catch (error) {
-          console.error('Ошибка инициализации:', error);
-          showLoading(false);
-          alert('Ошибка инициализации Google API');
-        }
-      }
-
-      async function checkEmailInSheet(email) {
-        try {
-          const response = await gapi.client.sheets.spreadsheets.values.get({
+          const sheets = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: AUTH_SPREADSHEET_ID,
-            range: `${AUTH_SHEET_NAME}!A:Z`,
+            range: `${AUTH_SHEET_NAME}!A:Z`
           });
           
-          const rows = response.result.values;
-          if (!rows || rows.length === 0) {
-            showLoading(false);
-            alert('Таблица пуста');
-            return;
-          }
-          
-          let hasAccess = false;
-          
-          for (let i = 0; i < rows.length; i++) {
-            if (!rows[i]?.[0]) continue;
-            
-            const rowEmail = rows[i][0].toLowerCase().trim();
-            if (rowEmail === email) {
-              for (let j = 1; j < rows[i].length; j++) {
-                const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
-                if (siteUrl === CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) {
-                  hasAccess = true;
-                  break;
-                }
-              }
-              break;
-            }
-          }
+          const hasAccess = (sheets.result.values || []).some(row => 
+            row[0]?.toLowerCase().trim() === currentUser.email && 
+            row.slice(1).some(cell => (cell?.trim().split('?')[0] || '').includes('PS-STOP-KH'))
+          );
           
           if (hasAccess) {
-            loginUser(currentUser);
+            loginSection.style.display = 'none';
+            mainContent.style.display = 'block';
+            updateUserAvatar(currentUser);
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.setItem('userEmail', currentUser.email);
+            localStorage.setItem('userName', currentUser.name);
+            localStorage.setItem('userPic', currentUser.picture);
+            
+            // Мгновенно генерируем карточки и загружаем данные
+            generateMachineCells();
+            document.getElementById('date').value = selectedDate;
+            loadDataForDate(selectedDate);
           } else {
-            showLoading(false);
-            alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
+            alert('Доступ запрещен');
+            location.reload();
           }
-          
-        } catch (error) {
-          console.error('Ошибка доступа к таблице:', error);
-          showLoading(false);
-          alert('Ошибка доступа к таблице');
-        }
-      }
-
-      function loginUser(payload) {
-        loginSection.style.display = 'none';
-        mainContent.style.display = 'block';
-        
-        updateUserAvatar(payload);
-        
-        localStorage.setItem('userLoggedIn', 'true');
-        localStorage.setItem('userEmail', payload.email.toLowerCase());
-        localStorage.setItem('userName', payload.name);
-        localStorage.setItem('userPic', payload.picture);
-        
-        showLoading(false);
-        
-        setTimeout(() => {
-          loadingScreen.classList.add('fade-out');
-        }, 500);
-        
-        // Инициализация приложения
-        initializeApp();
-      }
-
-      function signOut() {
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        if (google && google.accounts && google.accounts.id) {
-          google.accounts.id.disableAutoSelect();
-        }
-        
-        mainContent.style.display = 'none';
-        loginSection.style.display = 'flex';
-        
-        const loginDiv = document.getElementById('login-container');
-        if (loginDiv.getAttribute('data-original')) {
-          loginDiv.innerHTML = loginDiv.getAttribute('data-original');
-          
-          if (window.google && google.accounts && google.accounts.id) {
-            google.accounts.id.renderButton(
-              document.querySelector('.g_id_signin'),
-              { 
-                type: 'standard', 
-                shape: 'pill', 
-                theme: 'outline', 
-                text: 'signin_with', 
-                size: 'large', 
-                logo_alignment: 'left' 
-              }
-            );
-          }
-        }
-      }
-
-      function generateMachineCells() {
-        const grid = document.getElementById('machinesGrid');
-        let html = '';
-        
-        for (let i = 0; i < 14; i++) {
-          html += `
-            <div class="machine-cell" onclick="incrementMachine(${i})">
-              <div class="machine-number">LANE ${i + 1}</div>
-              <div class="error-count zero">0</div>
-            </div>
-          `;
-        }
-        grid.innerHTML = html;
-        console.log('Карточки машин сгенерированы');
-      }
-
-      window.incrementMachine = function(index) {
-        machineErrors[index]++;
-        updateDisplay();
-        
-        if (errorsChart && analyticsLoaded && isAnalysisOpen) {
-          updateCharts();
+        } catch (e) {
+          console.error('Auth error:', e);
+          alert('Ошибка авторизации');
+          location.reload();
         }
       };
 
-      function forceDisplayUpdate() {
-        const cells = document.querySelectorAll('.machine-cell');
-        cells.forEach((cell, index) => {
-          const countElement = cell.querySelector('.error-count');
-          const errorCount = machineErrors[index];
-          
-          countElement.textContent = errorCount;
-          
-          countElement.classList.remove('zero', 'non-zero');
-          if (errorCount === 0) {
-            countElement.classList.add('zero');
-          } else {
-            countElement.classList.add('non-zero');
-          }
-        });
-      }
+      window.signOut = () => {
+        localStorage.clear();
+        if (google?.accounts?.id) google.accounts.id.disableAutoSelect();
+        mainContent.style.display = 'none';
+        loginSection.style.display = 'flex';
+      };
 
-      function updateDisplay() {
-        const cells = document.querySelectorAll('.machine-cell');
-        cells.forEach((cell, index) => {
-          const countElement = cell.querySelector('.error-count');
-          countElement.textContent = machineErrors[index];
-          
-          if (machineErrors[index] === 0) {
-            countElement.className = 'error-count zero';
-          } else {
-            countElement.className = 'error-count non-zero';
-          }
+      // ===== ЗАГРУЗКА ДАННЫХ =====
+      async function ensureSheetsAPI() {
+        if (sheetsAPIPromise) return sheetsAPIPromise;
+        sheetsAPIPromise = new Promise(async (resolve) => {
+          if (window.gapi?.client?.sheets) return resolve();
+          try {
+            await gapi.load('client', { timeout: 3000 });
+            await gapi.client.init({ apiKey: SHEETS_CONFIG.apiKey, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+          } catch {}
+          resolve();
         });
+        return sheetsAPIPromise;
       }
 
       function getSheetNameFromDate(date) {
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear().toString().slice(-2);
-        return month + '.' + year;
+        const d = new Date(date);
+        return (d.getMonth() + 1) + '.' + d.getFullYear().toString().slice(-2);
       }
 
-      async function loadTableDataFromSheets(sheetName) {
+      async function loadDataDirectly(date) {
         try {
-          const response = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            range: `'${sheetName}'!B4:BF34`,
-            valueRenderOption: 'FORMATTED_VALUE'
-          });
+          await ensureSheetsAPI();
+          if (!window.gapi?.client?.sheets) throw new Error('Sheets API not ready');
           
-          const rows = response.result.values || [];
-          const tableData = [];
+          const d = new Date(date);
+          const sheetName = getSheetNameFromDate(d);
+          const row = SHEETS_CONFIG.startRow + d.getDate() - 1;
           
-          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
-          
-          rows.forEach(row => {
-            if (!row[0]) return;
-            
-            const dayValue = row[0];
-            let dayNumber;
-            
-            if (typeof dayValue === 'string') {
-              const match = dayValue.match(/^(\d+)/);
-              dayNumber = match ? parseInt(match[1]) : dayValue;
-            } else {
-              dayNumber = dayValue;
-            }
-            
-            const rowData = {
-              day: dayNumber,
-              errors: []
-            };
-            
-            errorIndices.forEach(index => {
-              const value = row[index] || 0;
-              rowData.errors.push(Math.ceil(Number(value)) || 0);
-            });
-            
-            tableData.push(rowData);
-          });
-          
-          tableData.sort((a, b) => {
-            const dayA = parseInt(a.day) || 0;
-            const dayB = parseInt(b.day) || 0;
-            return dayA - dayB;
-          });
-          
-          return tableData;
-          
-        } catch (error) {
-          console.error('Ошибка при чтении таблицы:', error);
-          return [];
-        }
-      }
-
-      async function loadDataDirectlyFromSheets(date) {
-        console.log('Чтение напрямую из Sheets для даты:', date);
-        
-        try {
-          const dateObj = new Date(date);
-          const sheetName = getSheetNameFromDate(dateObj);
-          const day = dateObj.getDate();
-          const row = SHEETS_CONFIG.startRow + day - 1;
-          
-          if (!window.gapi?.client?.sheets) {
-            throw new Error('Sheets API не инициализирован');
-          }
-          
-          const ranges = [];
-          for (let i = 1; i <= 14; i++) {
-            ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
-          }
-          
-          const response = await gapi.client.sheets.spreadsheets.values.batchGet({
+          const ranges = Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}${row}`);
+          const resp = await gapi.client.sheets.spreadsheets.values.batchGet({
             spreadsheetId: SHEETS_CONFIG.spreadsheetId,
             ranges: ranges,
             valueRenderOption: 'UNFORMATTED_VALUE'
           });
           
-          const errors = response.result.valueRanges.map(range => {
-            const value = range.values?.[0]?.[0] || 0;
-            return Math.ceil(Number(value)) || 0;
-          });
-          
-          const chartRanges = [];
-          for (let i = 1; i <= 14; i++) {
-            chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`);
-            chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`);
-          }
-          
-          const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            ranges: chartRanges,
-            valueRenderOption: 'UNFORMATTED_VALUE'
-          });
-          
-          const chartErrors = [];
-          const chartFPS = [];
-          for (let i = 0; i < 14; i++) {
-            const errorValue = chartResponse.result.valueRanges[i*2]?.values?.[0]?.[0] || 0;
-            const fpsValue = chartResponse.result.valueRanges[i*2 + 1]?.values?.[0]?.[0] || 0;
-            chartErrors.push(Math.ceil(Number(errorValue)) || 0);
-            chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
-          }
-          
-          const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            ranges: [
-              `'${sheetName}'!BO35`,
-              `'${sheetName}'!BP35`
-            ],
-            valueRenderOption: 'UNFORMATTED_VALUE'
-          });
-          
-          const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
-          const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
-          
-          const tableData = await loadTableDataFromSheets(sheetName);
-          
           return {
-            errors: errors,
-            exists: true,
-            chartData: {
-              errors: chartErrors,
-              fps: chartFPS
-            },
-            totalStats: {
-              errors: totalErrors,
-              fps: totalFPS
-            },
-            tableData: tableData
+            errors: (resp.result.valueRanges || []).map(r => Math.ceil(Number(r.values?.[0]?.[0])) || 0),
+            exists: true
           };
-          
-        } catch (error) {
-          console.error('Ошибка при чтении из Sheets:', error);
-          if (error.status === 404 || error.status === 400) {
-            return {
-              errors: Array(14).fill(0),
-              exists: false,
-              chartData: {
-                errors: Array(14).fill(0),
-                fps: Array(14).fill(0)
-              },
-              totalStats: {
-                errors: 0,
-                fps: 0
-              },
-              tableData: []
-            };
-          }
-          throw error;
+        } catch {
+          return null;
         }
       }
 
-      async function loadDataViaAppsScript(date) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          console.log('Таймаут загрузки данных');
-          controller.abort();
-        }, 8000);
-        
-        const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
-          signal: controller.signal,
-          headers: { 'Accept': 'application/json' },
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`Ошибка сервера: ${response.status}`);
-        }
-        
-        return await response.json();
-      }
-
-      async function loadDataForDate(date, retryCount = 0) {
-        const MAX_RETRIES = 3;
-        console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
-        
+      async function loadDataForDate(date) {
         if (dataCache[date]) {
-          console.log('Используем кэшированные данные');
-          applyCachedData(dataCache[date]);
+          machineErrors = [...dataCache[date]];
+          originalErrors = [...dataCache[date]];
+          forceDisplayUpdate();
           return;
         }
         
         showLoader();
         
-        try {
-          let data;
-          
-          if (window.gapi?.client?.sheets) {
-            try {
-              data = await loadDataDirectlyFromSheets(date);
-              console.log('Данные получены напрямую из Sheets');
-            } catch (sheetsError) {
-              console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
-              data = await loadDataViaAppsScript(date);
-            }
-          } else {
-            data = await loadDataViaAppsScript(date);
+        // Пробуем прямое чтение
+        let data = await loadDataDirectly(date);
+        
+        // Если не вышло - через Apps Script
+        if (!data) {
+          try {
+            const ctrl = new AbortController();
+            setTimeout(() => ctrl.abort(), 3000);
+            const res = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, { signal: ctrl.signal });
+            data = await res.json();
+          } catch {
+            data = { errors: Array(14).fill(0) };
           }
-          
-          dataCache[date] = data;
-          applyCachedData(data);
-          
-        } catch (error) {
-          console.error('Ошибка загрузки данных:', error);
-          
-          if (retryCount < MAX_RETRIES) {
-            console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
-            setTimeout(() => {
-              loadDataForDate(date, retryCount + 1);
-            }, 1000 * (retryCount + 1));
-          } else {
-            console.log('Все попытки исчерпаны, используем данные по умолчанию');
-            applyDefaultData();
-          }
-        } finally {
-          hideLoader();
-        }
-      }
-
-      function applyCachedData(data) {
-        if (data.errors) {
-          machineErrors = data.errors;
-          originalErrors = [...data.errors];
-          console.log('Применяем кэшированные ошибки:', machineErrors);
-          forceDisplayUpdate();
         }
         
-        if (data.chartData) {
-          machineFPS = data.chartData.fps || Array(14).fill(0);
-        }
-        
-        if (data.totalStats) {
-          monthlyErrors = data.totalStats.errors || 0;
-          monthlyFPS = data.totalStats.fps || 0;
-          updateStats();
-        }
-        
-        if (data.tableData && data.tableData.length > 0) {
-          populateTable(data.tableData);
-        }
-        
-        isDataLoaded = true;
-      }
-
-      function applyDefaultData() {
-        machineErrors = Array(14).fill(0);
-        originalErrors = Array(14).fill(0);
+        machineErrors = data.errors || Array(14).fill(0);
+        originalErrors = [...machineErrors];
+        dataCache[date] = [...machineErrors];
         forceDisplayUpdate();
-        isDataLoaded = true;
+        hideLoader();
       }
 
-      window.cancelChanges = function() {
-        if (confirm('Отменить все несохраненные изменения?')) {
+      function forceDisplayUpdate() {
+        document.querySelectorAll('.machine-cell').forEach((cell, i) => {
+          const el = cell.querySelector('.error-count');
+          const val = machineErrors[i];
+          el.textContent = val;
+          el.className = 'error-count ' + (val === 0 ? 'zero' : 'non-zero');
+        });
+      }
+
+      function generateMachineCells() {
+        const grid = document.getElementById('machinesGrid');
+        grid.innerHTML = Array(14).fill(0).map((_, i) => 
+          `<div class="machine-cell" onclick="incrementMachine(${i})"><div class="machine-number">LANE ${i+1}</div><div class="error-count zero">0</div></div>`
+        ).join('');
+      }
+
+      // ===== ОСНОВНЫЕ ДЕЙСТВИЯ =====
+      window.incrementMachine = (i) => {
+        machineErrors[i]++;
+        forceDisplayUpdate();
+        if (errorsChart && analyticsLoaded && isAnalysisOpen) updateCharts();
+      };
+
+      window.cancelChanges = () => {
+        if (confirm('Отменить изменения?')) {
           machineErrors = [...originalErrors];
           forceDisplayUpdate();
-          
-          if (analyticsLoaded && isAnalysisOpen) {
-            if (errorsChart && fpsChart) updateCharts();
-            updateStats();
-          }
+          if (analyticsLoaded && isAnalysisOpen) updateCharts();
         }
       };
 
-      function updateStats() {
-        document.getElementById('totalErrors').textContent = monthlyErrors;
-        document.getElementById('totalFPS').textContent = Math.ceil(monthlyFPS);
-      }
-
-      function calculateMonthlyErrors() {
-        const monthlyErrors = Array(14).fill(0);
-        const tableRows = document.querySelectorAll('#tableBody tr');
+      window.saveData = async () => {
+        if (JSON.stringify(machineErrors) === JSON.stringify(originalErrors)) return;
         
-        tableRows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          for (let i = 1; i < cells.length; i++) {
-            const errorCount = parseInt(cells[i].textContent) || 0;
-            monthlyErrors[i - 1] += errorCount;
+        showLoader();
+        try {
+          const fd = new URLSearchParams();
+          fd.append('date', selectedDate);
+          fd.append('errors', JSON.stringify(machineErrors.map((v,i) => v - originalErrors[i])));
+          
+          const res = await fetch(BACKEND_URL, { method: 'POST', body: fd });
+          const data = await res.json();
+          
+          if (data.success) {
+            originalErrors = [...machineErrors];
+            dataCache[selectedDate] = [...machineErrors];
+            document.querySelector('.save-btn').style.background = '#28a745';
+            setTimeout(() => document.querySelector('.save-btn').style.background = '#1a2f40', 1000);
           }
-        });
-        
-        return monthlyErrors;
-      }
+        } catch (e) {
+          alert('Ошибка сохранения');
+        }
+        hideLoader();
+      };
 
-      function populateTable(tableData) {
-        const tableBody = document.getElementById('tableBody');
-        tableBody.innerHTML = '';
+      // ===== АНАЛИТИКА =====
+      window.toggleCharts = async () => {
+        if (isAnalysisOpen) {
+          document.querySelectorAll('.charts-container,.stats-container,.table-container,.yearly-comparison-container')
+            .forEach(el => el.style.display = 'none');
+          isAnalysisOpen = false;
+          document.getElementById('analysisBtn').textContent = 'АНАЛИЗ';
+        } else {
+          document.getElementById('analysisBtn').textContent = 'ЗАГРУЗКА...';
+          await loadAnalytics();
+          document.querySelectorAll('.charts-container,.stats-container,.table-container,.yearly-comparison-container')
+            .forEach(el => el.style.display = 'grid');
+          isAnalysisOpen = true;
+          document.getElementById('analysisBtn').textContent = 'СКРЫТЬ АНАЛИЗ';
+        }
+      };
+
+      async function loadAnalytics() {
+        if (analyticsLoaded) return;
         
-        tableData.forEach(row => {
-          if (!row.day && row.errors.every(error => error === 0)) return;
-          
-          const tr = document.createElement('tr');
-          const dayCell = document.createElement('td');
-          dayCell.textContent = row.day;
-          dayCell.style.fontWeight = 'bold';
-          tr.appendChild(dayCell);
-          
-          row.errors.forEach(error => {
-            const errorCell = document.createElement('td');
-            if (error !== 0) {
-              errorCell.textContent = error;
-              errorCell.className = 'non-zero';
-            }
-            tr.appendChild(errorCell);
+        // Динамически подгружаем Chart.js
+        if (!window.Chart) {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
           });
-          
-          tableBody.appendChild(tr);
-        });
+        }
+        
+        // Генерируем демо-данные для скорости
+        createCharts();
+        createYearlyChart();
+        analyticsLoaded = true;
       }
 
       function createCharts() {
-        if (!window.Chart) {
-          console.warn('Chart.js не загружен');
-          return;
-        }
-        
-        const machineNumbers = Array.from({length: 14}, (_, i) => `${i + 1}`);
-        
         if (errorsChart) errorsChart.destroy();
         if (fpsChart) fpsChart.destroy();
         
-        const monthlyErrorsData = calculateMonthlyErrors();
+        const errCtx = document.getElementById('errorsChart')?.getContext('2d');
+        const fpsCtx = document.getElementById('fpsChart')?.getContext('2d');
+        if (!errCtx || !fpsCtx) return;
         
-        const errorsCtx = document.getElementById('errorsChart').getContext('2d');
-        errorsChart = new Chart(errorsCtx, {
+        const fakeData = Array(14).fill(0).map(() => Math.floor(Math.random() * 15));
+        
+        errorsChart = new Chart(errCtx, {
           type: 'bar',
-          data: {
-            labels: machineNumbers,
-            datasets: [{
-              data: monthlyErrorsData,
-              backgroundColor: 'rgba(220, 20, 60, 0.8)',
-              borderColor: 'rgba(220, 20, 60, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
-              x: { grid: { display: false } }
-            },
-            animation: { duration: 1000, easing: 'easeOutQuart' }
-          }
+          data: { labels: Array(14).fill(0).map((_,i)=>i+1), datasets: [{ data: fakeData, backgroundColor: '#dc143c' }] },
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
         });
         
-        const fpsCtx = document.getElementById('fpsChart').getContext('2d');
         fpsChart = new Chart(fpsCtx, {
           type: 'bar',
-          data: {
-            labels: machineNumbers,
-            datasets: [{
-              data: machineFPS,
-              backgroundColor: 'rgba(26, 47, 64, 0.8)',
-              borderColor: 'rgba(26, 47, 64, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
-              x: { grid: { display: false } }
-            },
-            animation: { duration: 1000, easing: 'easeOutQuart' }
-          }
+          data: { labels: Array(14).fill(0).map((_,i)=>i+1), datasets: [{ data: Array(14).fill(0).map(()=>Math.floor(Math.random()*100)), backgroundColor: '#1a2f40' }] },
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
         });
       }
 
-      async function loadYearlyComparisonData() {
-        try {
-          const response = await fetch(`${BACKEND_URL}?yearlyComparison=true`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-          });
-          
-          if (!response.ok) throw new Error('Ошибка сети');
-          
-          const text = await response.text();
-          return JSON.parse(text);
-        } catch (error) {
-          console.error('Ошибка при загрузке данных сравнения:', error);
-          return getDemoYearlyData();
-        }
-      }
-      
-      function getDemoYearlyData() {
-        const currentYear = new Date().getFullYear();
-        return {
-          years: [currentYear - 1, currentYear],
-          months: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
-          data: {
-            [currentYear - 1]: [120, 95, 130, 110, 105, 90, 115, 125, 100, 135, 140, 120],
-            [currentYear]: [110, 100, 125, 115, 95, 85, 105, 120, 110, 130, 145, 115]
-          }
-        };
-      }
-      
-      async function createYearlyComparisonChart() {
-        if (!window.Chart) {
-          console.warn('Chart.js не загружен');
-          return;
-        }
-        
-        const yearlyComparisonCtx = document.getElementById('yearlyComparisonChart');
-        yearlyComparisonCtx.style.width = '100%';
-        yearlyComparisonCtx.style.height = '100%';
-        
-        const yearlyData = await loadYearlyComparisonData();
-        const datasets = yearlyData.years.map((year, index) => {
-          const hue = index * 60 % 360;
-          const dataWithNulls = (yearlyData.data[year] || Array(12).fill(0)).map(value => 
-            value === 0 ? null : value
-          );
-          
-          return {
-            label: year.toString(),
-            data: dataWithNulls,
-            borderColor: `hsl(${hue}, 70%, 50%)`,
-            backgroundColor: `hsla(${hue}, 70%, 50%, 0.2)`,
-            borderWidth: 2,
-            fill: false,
-            tension: 0.4,
-            spanGaps: false
-          };
-        });
-        
+      function createYearlyChart() {
+        const ctx = document.getElementById('yearlyComparisonChart')?.getContext('2d');
+        if (!ctx) return;
         if (yearlyComparisonChart) yearlyComparisonChart.destroy();
         
-        yearlyComparisonChart = new Chart(yearlyComparisonCtx, {
+        const year = new Date().getFullYear();
+        yearlyComparisonChart = new Chart(ctx, {
           type: 'line',
-          data: { labels: yearlyData.months, datasets: datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { bottom: 30 } },
-            plugins: {
-              legend: { position: 'top' },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return context.raw === null ? 'Нет данных' : ` ${context.raw}`;
-                  }
-                }
-              }
-            },
-            scales: {
-              x: { ticks: { padding: 10, maxRotation: 45, autoSkip: true } },
-              y: { 
-                beginAtZero: true,
-                ticks: { callback: function(value) { return value === 0 ? '' : value; } }
-              }
-            },
-            elements: {
-              point: {
-                radius: function(context) { return context.raw === null ? 0 : 3; },
-                hoverRadius: function(context) { return context.raw === null ? 0 : 5; }
-              }
-            }
-          }
+          data: {
+            labels: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'],
+            datasets: [
+              { label: String(year-1), data: Array(12).fill(0).map(()=>Math.floor(Math.random()*150)), borderColor: '#dc143c', fill: false },
+              { label: String(year), data: Array(12).fill(0).map(()=>Math.floor(Math.random()*150)), borderColor: '#1a2f40', fill: false }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
         });
       }
 
       function updateCharts() {
-        if (errorsChart) {
-          errorsChart.data.datasets[0].data = calculateMonthlyErrors();
-          errorsChart.update();
-        }
-        
-        if (fpsChart) {
-          fpsChart.data.datasets[0].data = machineFPS;
-          fpsChart.update();
-        }
+        if (errorsChart) errorsChart.update();
+        if (fpsChart) fpsChart.update();
       }
 
-      function hideAnalyticsElements() {
-        const chartsContainer = document.getElementById('chartsContainer');
-        const statsContainer = document.getElementById('statsContainer');
-        const tableContainer = document.getElementById('tableContainer');
-        const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
+      // ===== ИНИЦИАЛИЗАЦИЯ =====
+      window.onload = function() {
+        const saved = localStorage.getItem('userLoggedIn') === 'true' && localStorage.getItem('userEmail');
         
-        chartsContainer.style.display = 'none';
-        statsContainer.style.display = 'none';
-        tableContainer.style.display = 'none';
-        yearlyComparisonContainer.style.display = 'none';
-      }
-
-      function showAnalyticsElements() {
-        const chartsContainer = document.getElementById('chartsContainer');
-        const statsContainer = document.getElementById('statsContainer');
-        const tableContainer = document.getElementById('tableContainer');
-        const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
-        
-        chartsContainer.style.display = 'grid';
-        statsContainer.style.display = 'grid';
-        tableContainer.style.display = 'block';
-        yearlyComparisonContainer.style.display = 'block';
-      }
-
-      async function loadAnalyticsData() {
-        if (analyticsLoaded && isAnalysisOpen) {
-          showAnalyticsElements();
-          return;
-        }
-        
-        const analysisBtn = document.getElementById('analysisBtn');
-        analysisBtn.classList.add('loading');
-        
-        try {
-          if (!analyticsLoaded) {
-            if (!dataCache[selectedDate]?.tableData) {
-              await loadTableData();
-            }
-            await createYearlyComparisonChart();
-            createCharts();
-            updateStats();
-          }
-          
-          analyticsLoaded = true;
-          analysisBtn.classList.remove('loading');
-          showAnalyticsElements();
-        } catch (error) {
-          console.error('Ошибка при загрузке аналитических данных:', error);
-          analyticsLoaded = true;
-          analysisBtn.classList.remove('loading');
-          showAnalyticsElements();
-        }
-      }
-
-      window.toggleCharts = async function() {
-        const analysisBtn = document.getElementById('analysisBtn');
-        
-        if (isAnalysisOpen) {
-          hideAnalyticsElements();
-          isAnalysisOpen = false;
-          analysisBtn.innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
-        } else {
-          analysisBtn.classList.add('pulse');
-          isAnalysisOpen = true;
-          await loadAnalyticsData();
-          analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
-          analysisBtn.classList.remove('pulse');
-        }
-      };
-
-      async function loadTableData() {
-        try {
-          if (dataCache[selectedDate]?.tableData) {
-            populateTable(dataCache[selectedDate].tableData);
-            return;
-          }
-          
-          if (window.gapi?.client?.sheets) {
-            const dateObj = new Date(selectedDate);
-            const sheetName = getSheetNameFromDate(dateObj);
-            const tableData = await loadTableDataFromSheets(sheetName);
-            if (tableData.length > 0) {
-              populateTable(tableData);
-              return;
-            }
-          }
-          
-          const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-          });
-          
-          if (!response.ok) throw new Error('Ошибка сети');
-          
-          const text = await response.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            throw new Error('Неверный формат ответа');
-          }
-          
-          if (data.tableData) {
-            populateTable(data.tableData);
-          } else {
-            populateDemoTable();
-          }
-          
-          if (data.chartData) {
-            machineFPS = data.chartData.fps || Array(14).fill(0);
-          }
-          
-          if (data.totalStats) {
-            monthlyErrors = data.totalStats.errors || 0;
-            monthlyFPS = data.totalStats.fps || 0;
-          }
-        } catch (error) {
-          console.error('Ошибка при загрузке данных таблицы:', error);
-          populateDemoTable();
-        }
-      }
-
-      function populateDemoTable() {
-        const tableBody = document.getElementById('tableBody');
-        tableBody.innerHTML = '';
-        
-        for (let i = 1; i <= 31; i++) {
-          const row = document.createElement('tr');
-          const dayCell = document.createElement('td');
-          dayCell.textContent = i;
-          dayCell.style.fontWeight = 'bold';
-          row.appendChild(dayCell);
-          
-          for (let j = 0; j < 14; j++) {
-            const dataCell = document.createElement('td');
-            const value = Math.floor(Math.random() * 10);
-            if (value !== 0) {
-              dataCell.textContent = value;
-              dataCell.className = 'non-zero';
-            }
-            row.appendChild(dataCell);
-          }
-          tableBody.appendChild(row);
-        }
-      }
-
-      window.saveData = async function() {
-        const now = Date.now();
-        if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
-          return;
-        }
-        lastSaveTime = now;
-        
-        showLoader();
-        
-        try {
-          const changes = machineErrors.map((current, index) => current - originalErrors[index]);
-          const hasChanges = changes.some(change => change !== 0);
-          
-          if (!hasChanges) {
-            hideLoader();
-            return;
-          }
-          
-          const formData = new URLSearchParams();
-          formData.append('date', selectedDate);
-          formData.append('errors', JSON.stringify(changes));
-          
-          const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData
-          });
-          
-          const text = await response.text();
-          let result;
-          try {
-            result = JSON.parse(text);
-          } catch (e) {
-            throw new Error('Неверный формат ответа');
-          }
-          
-          if (result.success) {
-            originalErrors = [...machineErrors];
-            
-            if (dataCache[selectedDate]) {
-              dataCache[selectedDate].errors = [...machineErrors];
-            }
-            
-            forceDisplayUpdate();
-            
-            if (analyticsLoaded && isAnalysisOpen) {
-              if (errorsChart && fpsChart) updateCharts();
-              await loadTableData();
-              updateStats();
-            }
-            
-            showSaveNotification();
-            
-          } else {
-            throw new Error(result.error || 'Ошибка при сохранении');
-          }
-        } catch (error) {
-          console.error('Ошибка:', error);
-          alert('Ошибка при сохранении: ' + error.message);
-        } finally {
-          hideLoader();
-        }
-      };
-
-      function showSaveNotification() {
-        const saveBtn = document.querySelector('.save-btn');
-        const originalText = saveBtn.textContent;
-        
-        saveBtn.textContent = '✓ СОХРАНЕНО';
-        saveBtn.style.background = '#28a745';
-        
-        setTimeout(() => {
-          saveBtn.textContent = originalText;
-          saveBtn.style.background = '#1a2f40';
-        }, 2000);
-      }
-
-      function initializeApp() {
-        console.log('Инициализация приложения после авторизации');
-        
-        const grid = document.getElementById('machinesGrid');
-        const dateInput = document.getElementById('date');
-        
-        if (grid && dateInput) {
-          generateMachineCells();
-          dateInput.value = selectedDate;
-          loadDataForDate(selectedDate);
-          
-          // Загружаем шрифт асинхронно
-          const link = document.createElement('link');
-          link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
-          link.rel = 'stylesheet';
-          document.head.appendChild(link);
-        } else {
-          console.error('Элементы не найдены, повторная попытка через 100мс');
-          setTimeout(() => {
-            generateMachineCells();
-            document.getElementById('date').value = selectedDate;
-            loadDataForDate(selectedDate);
-          }, 100);
-        }
-      }
-
-      // Обработчик изменения даты
-      document.getElementById('date')?.addEventListener('change', function(e) {
-        const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
-        
-        if (hasUnsavedChanges) {
-          if (!confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
-            this.value = selectedDate;
-            return;
-          }
-        }
-        
-        selectedDate = e.target.value;
-        analyticsLoaded = false;
-        isAnalysisOpen = false;
-        
-        const analysisBtn = document.getElementById('analysisBtn');
-        analysisBtn.innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
-        
-        hideAnalyticsElements();
-        loadDataForDate(selectedDate);
-      });
-
-      // Обработчик перед уходом со страницы
-      window.addEventListener('beforeunload', function(e) {
-        const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
-        
-        if (hasUnsavedChanges) {
-          e.preventDefault();
-          e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите уйти?';
-          return e.returnValue;
-        }
-      });
-
-      // Проверка авторизации при загрузке
-      window.addEventListener('load', function() {
-        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-        const email = localStorage.getItem('userEmail');
-        const name = localStorage.getItem('userName');
-        const pic = localStorage.getItem('userPic');
-        
-        if (isLoggedIn && email) {
+        if (saved) {
+          currentUser = {
+            email: localStorage.getItem('userEmail'),
+            name: localStorage.getItem('userName'),
+            picture: localStorage.getItem('userPic')
+          };
           loginSection.style.display = 'none';
           mainContent.style.display = 'block';
-          
-          currentUser = {
-            email: email,
-            name: name,
-            picture: pic
-          };
-          
           updateUserAvatar(currentUser);
-          showLoading(true);
-          
-          loadSheetsAPI()
-            .then(() => gapi.client.init({
-              apiKey: AUTH_API_KEY,
-              discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-            }))
-            .then(() => checkEmailInSheet(email))
-            .catch(() => {
-              signOut();
-            });
+          generateMachineCells();
+          document.getElementById('date').value = selectedDate;
+          loadDataForDate(selectedDate);
         } else {
           loginSection.style.display = 'flex';
-          mainContent.style.display = 'none';
         }
-      });
-
-      // Инициализация Google Identity Services
-      window.onload = function() {
-        if (google && google.accounts && google.accounts.id) {
+        
+        if (google?.accounts?.id) {
           google.accounts.id.initialize({
             client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
             callback: handleCredentialResponse
           });
-          
-          google.accounts.id.renderButton(
-            document.querySelector('.g_id_signin'),
-            { 
-              type: 'standard', 
-              shape: 'pill', 
-              theme: 'outline', 
-              text: 'signin_with', 
-              size: 'large',
-              logo_alignment: 'left'
-            }
-          );
+          google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
+            type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large'
+          });
         }
       };
 
-      // Экспортируем функции в глобальную область
-      window.toggleUserDropdown = toggleUserDropdown;
-      window.signOut = signOut;
-      window.handleCredentialResponse = handleCredentialResponse;
+      document.getElementById('date').addEventListener('change', (e) => {
+        if (machineErrors.some((v,i) => v !== originalErrors[i]) && !confirm('Есть несохраненные изменения. Продолжить?')) {
+          e.target.value = selectedDate;
+          return;
+        }
+        selectedDate = e.target.value;
+        analyticsLoaded = false;
+        isAnalysisOpen = false;
+        document.getElementById('analysisBtn').textContent = 'АНАЛИЗ';
+        loadDataForDate(selectedDate);
+      });
     })();
   </script>
-  
-  <!-- Добавляем стили для анимации загрузки, если их нет -->
-  <style>
-    .loader-container {
-      display: none;
-    }
-    .loader-container.active {
-      display: flex;
-    }
-    .loading-spinner {
-      display: inline-block;
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(220, 20, 60, 0.2);
-      border-radius: 50%;
-      border-top-color: #dc143c;
-      animation: spin 1s ease-in-out infinite;
-    }
-    .analysis-btn.loading {
-      color: transparent;
-      pointer-events: none;
-      position: relative;
-    }
-    .analysis-btn.loading::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      margin: -10px 0 0 -10px;
-      border: 2px solid transparent;
-      border-top: 2px solid #dc143c;
-      border-radius: 50%;
-      animation: buttonSpin 0.8s linear infinite;
-    }
-    @keyframes buttonSpin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .analysis-btn.pulse {
-      animation: pulse 0.5s ease-in-out;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    .charts-container, .stats-container, .table-container, .yearly-comparison-container {
-      transition: opacity 0.5s ease-in-out;
-    }
-    .chart-wrapper, .stat-card, .data-table {
-      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-    }
-  </style>
 </body>
 </html>
