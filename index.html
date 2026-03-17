@@ -2,877 +2,401 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Учет ошибок KH</title>
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/dtSpKx0W/1.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <title>LUCKY STRIKE KH | Учет</title>
   
-  <!-- Preload и асинхронная загрузка -->
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js"></script>
-  
-  <!-- ВАШИ ОРИГИНАЛЬНЫЕ СТИЛИ (ПОЛНОСТЬЮ СОХРАНЕНЫ) -->
   <style>
-    /* ... ваши полные стили ... */
-    /* (вставьте сюда все ваши стили из оригинального кода) */
+    :root {
+      --primary-bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --header-bg: rgba(255, 255, 255, 0.8);
+      --accent-red: #ff3b30;
+      --accent-blue: #007aff;
+      --text-main: #1d1d1f;
+      --text-secondary: #86868b;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --blur: saturate(180%) blur(20px);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--primary-bg);
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    /* --- Header (Apple Style) --- */
+    header {
+      position: fixed;
+      top: 0; width: 100%; height: 60px;
+      background: var(--header-bg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 1000;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .logo-container { display: flex; align-items: center; gap: 10px; }
+    .logo-container img { width: 32px; height: 32px; border-radius: 8px; }
+    .site-title { font-weight: 700; font-size: 17px; letter-spacing: -0.5px; }
+
+    .user-profile {
+      width: 32px; height: 32px;
+      border-radius: 50%; background: #e5e5e5;
+      cursor: pointer; overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* --- Layout --- */
+    .container {
+      max-width: 800px; margin: 80px auto 40px;
+      padding: 0 16px;
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 20px; margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* --- Controls --- */
+    .date-picker-wrap {
+      display: flex; justify-content: center; margin-bottom: 24px;
+    }
+    input[type="date"] {
+      border: none; background: #e5e5ea;
+      padding: 10px 15px; border-radius: 10px;
+      font-size: 16px; font-family: inherit; font-weight: 600;
+    }
+
+    .grid-container {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px; margin-bottom: 24px;
+    }
+
+    .lane-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 15px 10px; text-align: center;
+      box-shadow: var(--shadow);
+      transition: transform 0.1s ease, border-color 0.2s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .lane-card:active { transform: scale(0.95); }
+    .lane-card.has-errors { border-color: rgba(255, 59, 48, 0.3); }
+
+    .lane-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-bottom: 4px; }
+    .lane-count { font-size: 28px; font-weight: 700; }
+    .lane-count.val-zero { color: #d1d1d6; }
+    .lane-count.val-active { color: var(--accent-red); }
+
+    /* --- Buttons --- */
+    .action-group { display: flex; gap: 12px; }
+    .btn {
+      flex: 1; border: none; padding: 16px;
+      border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-save { background: var(--text-main); color: #fff; }
+    .btn-cancel { background: #e5e5ea; color: var(--text-main); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* --- Analytics --- */
+    .analysis-section { display: none; margin-top: 30px; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;
+    }
+    .stat-box {
+      background: var(--card-bg); padding: 15px;
+      border-radius: var(--radius-md); text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .stat-val { display: block; font-size: 24px; font-weight: 700; color: var(--accent-blue); }
+    .stat-lab { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+
+    /* --- Loaders --- */
+    #global-loader {
+      position: fixed; inset: 0; background: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--accent-blue); border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Mobile Adaptivity */
+    @media (max-width: 480px) {
+      .grid-container { grid-template-columns: repeat(2, 1fr); }
+      .site-title { font-size: 15px; }
+    }
   </style>
 </head>
 <body>
-  <!-- ЭКРАН ЗАГРУЗКИ -->
-  <div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading Logo">
-    </div>
+
+  <div id="global-loader">
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; font-weight: 600; color: #86868b;">LUCKY STRIKE KH</p>
   </div>
 
-  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
-  <div class="loader-container" id="loader">
-    <div class="logo-wrapper">
-      <div class="glow-ring"></div>
-      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Loading">
+  <header>
+    <div class="logo-container">
+      <img src="https://i.postimg.cc/dtSpKx0W/1.png" alt="Logo">
+      <span class="site-title">LUCKY STRIKE KH</span>
     </div>
-  </div>
-
-  <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
-  <div id="login-section">
-    <div id="login-container">
-      <div class="login-icon">
-        <i class="fas fa-shield-halved"></i>
-      </div>
-      <h2>УЧЕТ ОШИБОК KH</h2>
-      <div class="login-subtitle">Войдите для доступа</div>
-      <div id="g_id_onload" 
-           data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
-           data-callback="handleCredentialResponse" 
-           data-auto_prompt="false"
-           data-auto_select="false">
-      </div>
-      <div class="g_id_signin" 
-           data-type="standard" 
-           data-shape="pill" 
-           data-theme="outline" 
-           data-text="signin_with" 
-           data-size="large" 
-           data-logo_alignment="left">
-      </div>
+    <div class="user-profile" id="userBtn">
+      <i class="fas fa-user" style="display: flex; align-items: center; justify-content: center; height: 100%; color: #86868b;"></i>
     </div>
-  </div>
+  </header>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
-  <div id="main-content">
-    <header>
-      <div class="logo">
-        <a href="https://smart-bowling.github.io/SMB/">
-          <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
-        </a>
-      </div>
-      <div class="site-name">
-        LUCKY STRIKE KH
-      </div>
-      <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
-        <!-- Здесь будет аватарка или иконка пользователя -->
-      </div>
-      <div class="user-dropdown" id="userDropdown">
-        <a href="#" onclick="signOut()">
-          <i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ
-        </a>
-      </div>
-    </header>
+  <main class="container">
+    <div class="date-picker-wrap">
+      <input type="date" id="mainDate">
+    </div>
 
-    <div class="container">
-      <div class="date-input-container">
-        <input type="date" id="date" value="">
+    <div class="grid-container" id="lanesGrid">
       </div>
-      
-      <div class="machines-grid" id="machinesGrid">
-        <!-- Ячейки машин будут сгенерированы мгновенно -->
-      </div>
-      
-      <div class="controls">
-        <button class="cancel-btn" onclick="cancelChanges()">Отмена</button>
-        <button class="save-btn" onclick="saveData()">Сохранить</button>
-      </div>
-      
-      <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">
-        <span class="btn-text">АНАЛИЗ</span>
-      </button>
-      
-      <div class="charts-container" id="chartsContainer">
-        <div class="chart-wrapper" id="errorsChartWrapper">
-          <div class="chart-title">ОБЩЕЕ КОЛИЧЕСТВО ОШИБОК ЗА МЕСЯЦ</div>
-          <canvas id="errorsChart"></canvas>
+
+    <div class="action-group">
+      <button class="btn btn-cancel" id="btnCancel">Отмена</button>
+      <button class="btn btn-save" id="btnSave">Сохранить</button>
+    </div>
+
+    <button class="btn" id="btnToggleAnalysis" style="width: 100%; margin-top: 12px; background: transparent; color: var(--accent-blue);">
+      Показать анализ
+    </button>
+
+    <div class="analysis-section" id="analysisView">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span class="stat-val" id="statTotalErrors">0</span>
+          <span class="stat-lab">Ошибки / Месяц</span>
         </div>
-        <div class="chart-wrapper" id="fpsChartWrapper">
-          <div class="chart-title">FPS - КОЛИЧЕСТВО ФРЕЙМОВ НА ОДНУ ОШИБКУ</div>
-          <canvas id="fpsChart"></canvas>
+        <div class="stat-box">
+          <span class="stat-val" id="statAvgFps">0</span>
+          <span class="stat-lab">Средний FPS</span>
         </div>
       </div>
       
-      <div class="stats-container" id="statsContainer">
-        <div class="stat-card" id="errorsStatCard">
-          <div class="stat-title">Общее количество ошибок за месяц</div>
-          <div class="stat-value errors-stat" id="totalErrors">0</div>
-        </div>
-        <div class="stat-card" id="fpsStatCard">
-          <div class="stat-title">Общее число FPS за месяц</div>
-          <div class="stat-value fps-stat" id="totalFPS">0</div>
-        </div>
-      </div>
-      
-      <div class="table-container" id="tableContainer">
-        <table class="data-table" id="dataTable">
-          <thead>
-            <tr>
-              <th>День</th>
-              <th>1</th>
-              <th>2</th>
-              <th>3</th>
-              <th>4</th>
-              <th>5</th>
-              <th>6</th>
-              <th>7</th>
-              <th>8</th>
-              <th>9</th>
-              <th>10</th>
-              <th>11</th>
-              <th>12</th>
-              <th>13</th>
-              <th>14</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <!-- Строки таблицы будут сгенерированы через JavaScript -->
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="yearly-comparison-container" id="yearlyComparisonContainer">
-        <div class="chart-title">СРАВНЕНИЕ FPS ПО ГОДАМ</div>
-        <canvas id="yearlyComparisonChart"></canvas>
+      <div class="section-card">
+        <canvas id="chartErrors" height="200"></canvas>
       </div>
     </div>
-  </div>
+  </main>
 
-  <!-- ИСПРАВЛЕННЫЙ JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <script>
-    (function() {
-      'use strict';
+    /**
+     * Конфигурация и Состояние
+     */
+    const CONFIG = {
+      BACKEND_URL: 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec',
+      TOTAL_LANES: 14,
+      SAVE_TIMEOUT: 2000
+    };
+
+    const state = {
+      selectedDate: new Date().toISOString().split('T')[0],
+      currentErrors: Array(CONFIG.TOTAL_LANES).fill(0),
+      initialErrors: Array(CONFIG.TOTAL_LANES).fill(0),
+      isLoading: false,
+      isAnalysisVisible: false
+    };
+
+    /**
+     * Инициализация UI
+     */
+    const dom = {
+      loader: document.getElementById('global-loader'),
+      grid: document.getElementById('lanesGrid'),
+      dateInput: document.getElementById('mainDate'),
+      btnSave: document.getElementById('btnSave'),
+      btnCancel: document.getElementById('btnCancel'),
+      btnToggleAnalysis: document.getElementById('btnToggleAnalysis'),
+      analysisView: document.getElementById('analysisView')
+    };
+
+    function init() {
+      // Установка даты
+      dom.dateInput.value = state.selectedDate;
       
-      // ===== КОНСТАНТЫ =====
-      const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-      const AUTH_SHEET_NAME = '1';
-      const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-      const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
-      const SHEETS_CONFIG = {
-        apiKey: AUTH_API_KEY,
-        spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
-        columnMapping: {1:'F',2:'J',3:'N',4:'R',5:'V',6:'Z',7:'AD',8:'AH',9:'AL',10:'AP',11:'AT',12:'AX',13:'BB',14:'BF'},
-        startRow: 4
-      };
-      const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
-
-      // ===== СОСТОЯНИЕ =====
-      let currentUser = null;
-      let machineErrors = Array(14).fill(0);
-      let machineFPS = Array(14).fill(0);
-      let selectedDate = new Date().toISOString().split('T')[0];
-      let originalErrors = Array(14).fill(0);
-      let errorsChart = null;
-      let fpsChart = null;
-      let yearlyComparisonChart = null;
-      let monthlyErrors = 0;
-      let monthlyFPS = 0;
-      let analyticsLoaded = false;
-      let isAnalysisOpen = false;
-      let dataCache = {};
-      let chartsInitialized = false;
-
-      // ===== ЭЛЕМЕНТЫ =====
-      const loader = document.getElementById('loader');
-      const loadingScreen = document.getElementById('loadingScreen');
-      const loginSection = document.getElementById('login-section');
-      const mainContent = document.getElementById('main-content');
-      const chartsContainer = document.getElementById('chartsContainer');
-      const statsContainer = document.getElementById('statsContainer');
-      const tableContainer = document.getElementById('tableContainer');
-      const yearlyContainer = document.getElementById('yearlyComparisonContainer');
-
-      // ===== УТИЛИТЫ =====
-      const showLoader = () => loader.classList.add('active');
-      const hideLoader = () => loader.classList.remove('active');
+      // Генерация дорожек
+      renderLanes();
       
-      // ===== АВАТАРКА =====
-      window.toggleUserDropdown = () => {
-        const menu = document.getElementById('userDropdown');
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-      };
-      
-      function updateUserAvatar(user) {
-        const av = document.getElementById('userAvatar');
-        av.innerHTML = user?.picture ? `<img src="${user.picture}" alt="Avatar">` : '<i class="fas fa-user"></i>';
+      // Слушатели событий
+      dom.dateInput.addEventListener('change', (e) => handleDateChange(e.target.value));
+      dom.btnSave.addEventListener('click', () => saveData());
+      dom.btnCancel.addEventListener('click', () => resetChanges());
+      dom.btnToggleAnalysis.addEventListener('click', toggleAnalysis);
+
+      // Загрузка начальных данных
+      fetchData();
+
+      // Скрытие лоадера
+      setTimeout(() => dom.loader.style.opacity = '0', 800);
+      setTimeout(() => dom.loader.style.display = 'none', 1300);
+    }
+
+    function renderLanes() {
+      dom.grid.innerHTML = '';
+      for (let i = 0; i < CONFIG.TOTAL_LANES; i++) {
+        const card = document.createElement('div');
+        card.className = 'lane-card';
+        card.onclick = () => incrementError(i);
+        card.innerHTML = `
+          <div class="lane-label">LANE ${i + 1}</div>
+          <div class="lane-count val-zero" id="count-${i}">0</div>
+        `;
+        dom.grid.appendChild(card);
       }
+    }
 
-      document.addEventListener('click', e => {
-        const ud = document.getElementById('userDropdown');
-        const ua = document.getElementById('userAvatar');
-        if (ud.style.display === 'block' && !ua.contains(e.target) && !ud.contains(e.target)) ud.style.display = 'none';
-      });
-
-      // ===== АВТОРИЗАЦИЯ =====
-      function parseJwt(token) {
-        try {
-          const base64Url = token.split('.')[1];
-          return JSON.parse(decodeURIComponent(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-        } catch { return {}; }
-      }
-
-      function loadSheetsAPI() {
-        return new Promise((resolve, reject) => {
-          if (window.gapi?.client?.sheets) return resolve();
-          gapi.load('client', { callback: resolve, onerror: reject, timeout: 5000 });
-        });
-      }
-
-      window.handleCredentialResponse = async (response) => {
-        try {
-          currentUser = parseJwt(response.credential);
-          currentUser.email = currentUser.email.toLowerCase();
-          
-          const loginDiv = document.getElementById('login-container');
-          const originalContent = loginDiv.innerHTML;
-          loginDiv.innerHTML = '<div style="padding:40px; text-align:center;"><div class="loading-spinner"></div><br><span>Проверка доступа...</span></div>';
-          
-          await loadSheetsAPI();
-          await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-          
-          const sheets = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: AUTH_SPREADSHEET_ID,
-            range: `${AUTH_SHEET_NAME}!A:Z`
-          });
-          
-          const hasAccess = (sheets.result.values || []).some(row => {
-            if (!row[0]) return false;
-            const rowEmail = row[0].toLowerCase().trim();
-            if (rowEmail !== currentUser.email) return false;
-            for (let j = 1; j < row.length; j++) {
-              const siteUrl = (row[j] || '').trim().split('?')[0].split('#')[0];
-              if (siteUrl === CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) return true;
-            }
-            return false;
-          });
-          
-          if (hasAccess) {
-            loginSection.style.display = 'none';
-            mainContent.style.display = 'block';
-            updateUserAvatar(currentUser);
-            localStorage.setItem('userLoggedIn', 'true');
-            localStorage.setItem('userEmail', currentUser.email);
-            localStorage.setItem('userName', currentUser.name);
-            localStorage.setItem('userPic', currentUser.picture);
-            
-            setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-            
-            generateMachineCells();
-            document.getElementById('date').value = selectedDate;
-            loadDataForDate(selectedDate);
-            loadFontsAsync();
-          } else {
-            loginDiv.innerHTML = originalContent;
-            alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
-          }
-        } catch (e) {
-          console.error('Auth error:', e);
-          alert('Ошибка авторизации');
-          location.reload();
-        }
-      };
-
-      window.signOut = () => {
-        localStorage.clear();
-        if (google?.accounts?.id) google.accounts.id.disableAutoSelect();
-        mainContent.style.display = 'none';
-        loginSection.style.display = 'flex';
-        loadingScreen.classList.remove('fade-out');
-      };
-
-      function loadFontsAsync() {
-        const link = document.createElement('link');
-        link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
-        link.rel = 'stylesheet';
-        link.onload = () => document.documentElement.classList.add('fonts-loaded');
-        document.head.appendChild(link);
-      }
-
-      // ===== ЗАГРУЗКА ДАННЫХ =====
-      async function ensureSheetsAPI() {
-        if (window.gapi?.client?.sheets) return Promise.resolve();
-        return new Promise((resolve) => {
-          gapi.load('client', async () => {
-            try {
-              await gapi.client.init({ apiKey: SHEETS_CONFIG.apiKey, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-            } catch {}
-            resolve();
-          });
-        });
-      }
-
-      function getSheetNameFromDate(date) {
-        const d = new Date(date);
-        return (d.getMonth() + 1) + '.' + d.getFullYear().toString().slice(-2);
-      }
-
-      async function loadDataDirectly(date) {
-        try {
-          await ensureSheetsAPI();
-          if (!window.gapi?.client?.sheets) return null;
-          
-          const d = new Date(date);
-          const sheetName = getSheetNameFromDate(d);
-          const row = SHEETS_CONFIG.startRow + d.getDate() - 1;
-          
-          const ranges = Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}${row}`);
-          const resp = await gapi.client.sheets.spreadsheets.values.batchGet({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            ranges: ranges,
-            valueRenderOption: 'UNFORMATTED_VALUE'
-          });
-          
-          return {
-            errors: (resp.result.valueRanges || []).map(r => Math.ceil(Number(r.values?.[0]?.[0])) || 0)
-          };
-        } catch {
-          return null;
-        }
-      }
-
-      async function loadDataForDate(date) {
-        if (dataCache[date]) {
-          machineErrors = [...dataCache[date]];
-          originalErrors = [...dataCache[date]];
-          forceDisplayUpdate();
-          return;
-        }
+    /**
+     * Логика данных
+     */
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // Здесь эмуляция или реальный fetch
+        const response = await fetch(`${CONFIG.BACKEND_URL}?date=${state.selectedDate}&simple=true`);
+        const data = await response.json();
         
-        showLoader();
-        
-        let data = await loadDataDirectly(date);
-        
-        if (!data) {
-          try {
-            const res = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`);
-            data = await res.json();
-          } catch {
-            data = { errors: Array(14).fill(0) };
-          }
+        if (data.errors) {
+          state.currentErrors = [...data.errors];
+          state.initialErrors = [...data.errors];
+          updateUI();
         }
-        
-        machineErrors = data.errors || Array(14).fill(0);
-        originalErrors = [...machineErrors];
-        dataCache[date] = [...machineErrors];
-        forceDisplayUpdate();
-        hideLoader();
+      } catch (e) {
+        console.error("Ошибка загрузки:", e);
+      } finally {
+        setLoading(false);
       }
+    }
 
-      function forceDisplayUpdate() {
-        document.querySelectorAll('.machine-cell').forEach((cell, i) => {
-          const el = cell.querySelector('.error-count');
-          const val = machineErrors[i];
-          el.textContent = val;
-          el.className = 'error-count ' + (val === 0 ? 'zero' : 'non-zero');
-        });
-      }
+    function incrementError(index) {
+      state.currentErrors[index]++;
+      updateUI();
+    }
 
-      function generateMachineCells() {
-        const grid = document.getElementById('machinesGrid');
-        let html = '';
-        for (let i = 0; i < 14; i++) {
-          html += `<div class="machine-cell" onclick="incrementMachine(${i})"><div class="machine-number">LANE ${i+1}</div><div class="error-count zero">0</div></div>`;
-        }
-        grid.innerHTML = html;
-      }
-
-      // ===== ОСНОВНЫЕ ДЕЙСТВИЯ =====
-      window.incrementMachine = (i) => {
-        machineErrors[i]++;
-        forceDisplayUpdate();
-        if (chartsInitialized && isAnalysisOpen) {
-          updateCharts();
-        }
-      };
-
-      window.cancelChanges = () => {
-        if (confirm('Отменить все несохраненные изменения?')) {
-          machineErrors = [...originalErrors];
-          forceDisplayUpdate();
-          if (chartsInitialized && isAnalysisOpen) {
-            updateCharts();
-          }
-        }
-      };
-
-      window.saveData = async () => {
-        if (JSON.stringify(machineErrors) === JSON.stringify(originalErrors)) return;
+    function updateUI() {
+      state.currentErrors.forEach((val, i) => {
+        const el = document.getElementById(`count-${i}`);
+        const card = el.parentElement;
+        el.innerText = val;
         
-        showLoader();
-        try {
-          const fd = new URLSearchParams();
-          fd.append('date', selectedDate);
-          const changes = machineErrors.map((v,i) => v - originalErrors[i]);
-          fd.append('errors', JSON.stringify(changes));
-          
-          const res = await fetch(BACKEND_URL, { method: 'POST', body: fd });
-          const data = await res.json();
-          
-          if (data.success) {
-            originalErrors = [...machineErrors];
-            dataCache[selectedDate] = [...machineErrors];
-            
-            const saveBtn = document.querySelector('.save-btn');
-            saveBtn.style.background = '#28a745';
-            saveBtn.textContent = '✓ СОХРАНЕНО';
-            setTimeout(() => {
-              saveBtn.style.background = '#1a2f40';
-              saveBtn.textContent = 'Сохранить';
-            }, 2000);
-          }
-        } catch (e) {
-          alert('Ошибка при сохранении');
-        }
-        hideLoader();
-      };
-
-      // ===== АНАЛИТИКА (ИСПРАВЛЕНО) =====
-      window.toggleCharts = async () => {
-        const btn = document.getElementById('analysisBtn');
-        const btnText = btn.querySelector('.btn-text');
-        
-        if (isAnalysisOpen) {
-          // Скрываем
-          chartsContainer.style.display = 'none';
-          statsContainer.style.display = 'none';
-          tableContainer.style.display = 'none';
-          yearlyContainer.style.display = 'none';
-          isAnalysisOpen = false;
-          btnText.textContent = 'АНАЛИЗ';
+        if (val > 0) {
+          el.className = 'lane-count val-active';
+          card.classList.add('has-errors');
         } else {
-          // Показываем с загрузкой
-          btn.classList.add('loading');
-          btnText.textContent = 'ЗАГРУЗКА...';
-          
-          await loadAnalytics();
-          
-          chartsContainer.style.display = 'grid';
-          statsContainer.style.display = 'grid';
-          tableContainer.style.display = 'block';
-          yearlyContainer.style.display = 'block';
-          
-          // Добавляем классы для анимации
-          setTimeout(() => {
-            chartsContainer.classList.add('loaded');
-            statsContainer.classList.add('loaded');
-            tableContainer.classList.add('loaded');
-            yearlyContainer.classList.add('loaded');
-            
-            document.querySelectorAll('.chart-wrapper, .stat-card, .data-table').forEach(el => {
-              el.classList.add('loaded');
-            });
-          }, 50);
-          
-          isAnalysisOpen = true;
-          btn.classList.remove('loading');
-          btnText.textContent = 'СКРЫТЬ АНАЛИЗ';
-        }
-      };
-
-      async function loadAnalytics() {
-        if (analyticsLoaded) return;
-        
-        // Загружаем Chart.js если еще не загружен
-        if (typeof Chart === 'undefined') {
-          await new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = resolve;
-            document.head.appendChild(script);
-          });
-        }
-        
-        // Загружаем данные для таблицы
-        try {
-          const d = new Date(selectedDate);
-          const sheetName = getSheetNameFromDate(d);
-          const tableData = await loadTableDataFromSheets(sheetName);
-          if (tableData.length > 0) {
-            populateTable(tableData);
-            calculateMonthlyTotals(tableData);
-          } else {
-            populateDemoTable();
-          }
-        } catch (error) {
-          console.warn('Using demo data:', error);
-          populateDemoTable();
-        }
-        
-        // Создаем графики
-        createCharts();
-        createYearlyChart();
-        updateStats();
-        
-        analyticsLoaded = true;
-        chartsInitialized = true;
-      }
-
-      async function loadTableDataFromSheets(sheetName) {
-        try {
-          await ensureSheetsAPI();
-          if (!window.gapi?.client?.sheets) return [];
-          
-          const resp = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            range: `'${sheetName}'!B4:BF34`,
-            valueRenderOption: 'FORMATTED_VALUE'
-          });
-          
-          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
-          const rows = resp.result.values || [];
-          const result = [];
-          
-          rows.forEach(row => {
-            if (!row[0]) return;
-            const dayMatch = String(row[0]).match(/^(\d+)/);
-            if (!dayMatch) return;
-            
-            const errors = [];
-            for (let idx of errorIndices) {
-              errors.push(Math.ceil(Number(row[idx])) || 0);
-            }
-            
-            result.push({
-              day: parseInt(dayMatch[1]),
-              errors: errors
-            });
-          });
-          
-          return result.sort((a, b) => a.day - b.day);
-        } catch {
-          return [];
-        }
-      }
-
-      function populateTable(tableData) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        
-        if (tableData.length === 0) {
-          populateDemoTable();
-          return;
-        }
-        
-        tableData.forEach(row => {
-          const tr = document.createElement('tr');
-          
-          const tdDay = document.createElement('td');
-          tdDay.textContent = row.day;
-          tdDay.style.fontWeight = 'bold';
-          tr.appendChild(tdDay);
-          
-          row.errors.forEach(err => {
-            const td = document.createElement('td');
-            if (err !== 0) {
-              td.textContent = err;
-              td.className = 'non-zero';
-            }
-            tr.appendChild(td);
-          });
-          
-          tbody.appendChild(tr);
-        });
-      }
-
-      function populateDemoTable() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        
-        for (let day = 1; day <= 31; day++) {
-          const tr = document.createElement('tr');
-          
-          const tdDay = document.createElement('td');
-          tdDay.textContent = day;
-          tdDay.style.fontWeight = 'bold';
-          tr.appendChild(tdDay);
-          
-          for (let i = 0; i < 14; i++) {
-            const td = document.createElement('td');
-            const val = Math.floor(Math.random() * 10);
-            if (val !== 0) {
-              td.textContent = val;
-              td.className = 'non-zero';
-            }
-            tr.appendChild(td);
-          }
-          
-          tbody.appendChild(tr);
-        }
-      }
-
-      function calculateMonthlyTotals(tableData) {
-        let totalErrors = 0;
-        let totalFPS = 0;
-        
-        tableData.forEach(row => {
-          row.errors.forEach(err => {
-            totalErrors += err;
-          });
-        });
-        
-        // Примерные данные для FPS
-        totalFPS = Math.floor(totalErrors * 4.5);
-        
-        monthlyErrors = totalErrors;
-        monthlyFPS = totalFPS;
-      }
-
-      function updateStats() {
-        document.getElementById('totalErrors').textContent = monthlyErrors;
-        document.getElementById('totalFPS').textContent = monthlyFPS;
-      }
-
-      function createCharts() {
-        // Уничтожаем старые графики
-        if (errorsChart) errorsChart.destroy();
-        if (fpsChart) fpsChart.destroy();
-        
-        const errorsCtx = document.getElementById('errorsChart')?.getContext('2d');
-        const fpsCtx = document.getElementById('fpsChart')?.getContext('2d');
-        
-        if (!errorsCtx || !fpsCtx) return;
-        
-        // Получаем данные из таблицы
-        const tableData = getTableData();
-        
-        const errorsByMachine = Array(14).fill(0);
-        tableData.forEach(row => {
-          row.errors.forEach((err, idx) => {
-            errorsByMachine[idx] += err;
-          });
-        });
-        
-        const fpsData = errorsByMachine.map(e => Math.floor(e * 5) || Math.floor(Math.random() * 50));
-        
-        errorsChart = new Chart(errorsCtx, {
-          type: 'bar',
-          data: {
-            labels: Array(14).fill(0).map((_, i) => i + 1),
-            datasets: [{
-              label: 'Ошибки',
-              data: errorsByMachine,
-              backgroundColor: 'rgba(220, 20, 60, 0.8)',
-              borderColor: 'rgba(220, 20, 60, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-        
-        fpsChart = new Chart(fpsCtx, {
-          type: 'bar',
-          data: {
-            labels: Array(14).fill(0).map((_, i) => i + 1),
-            datasets: [{
-              label: 'FPS',
-              data: fpsData,
-              backgroundColor: 'rgba(26, 47, 64, 0.8)',
-              borderColor: 'rgba(26, 47, 64, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-      }
-
-      function getTableData() {
-        const rows = document.querySelectorAll('#tableBody tr');
-        const result = [];
-        
-        rows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          if (cells.length < 2) return;
-          
-          const day = parseInt(cells[0].textContent) || 0;
-          const errors = [];
-          
-          for (let i = 1; i < cells.length; i++) {
-            errors.push(parseInt(cells[i].textContent) || 0);
-          }
-          
-          result.push({ day, errors });
-        });
-        
-        return result;
-      }
-
-      function createYearlyChart() {
-        const ctx = document.getElementById('yearlyComparisonChart')?.getContext('2d');
-        if (!ctx) return;
-        
-        if (yearlyComparisonChart) yearlyComparisonChart.destroy();
-        
-        const currentYear = new Date().getFullYear();
-        const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-        
-        // Генерируем демо-данные
-        const lastYearData = months.map(() => Math.floor(Math.random() * 150));
-        const thisYearData = months.map(() => Math.floor(Math.random() * 150));
-        
-        yearlyComparisonChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: months,
-            datasets: [
-              { 
-                label: String(currentYear - 1), 
-                data: lastYearData, 
-                borderColor: '#dc143c', 
-                backgroundColor: 'transparent', 
-                borderWidth: 2, 
-                tension: 0.4 
-              },
-              { 
-                label: String(currentYear), 
-                data: thisYearData, 
-                borderColor: '#1a2f40', 
-                backgroundColor: 'transparent', 
-                borderWidth: 2, 
-                tension: 0.4 
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'top' } },
-            scales: { y: { beginAtZero: true } }
-          }
-        });
-      }
-
-      function updateCharts() {
-        if (errorsChart) {
-          const tableData = getTableData();
-          const errorsByMachine = Array(14).fill(0);
-          tableData.forEach(row => {
-            row.errors.forEach((err, idx) => {
-              errorsByMachine[idx] += err;
-            });
-          });
-          errorsChart.data.datasets[0].data = errorsByMachine;
-          errorsChart.update();
-        }
-        
-        if (fpsChart) {
-          const tableData = getTableData();
-          const errorsByMachine = Array(14).fill(0);
-          tableData.forEach(row => {
-            row.errors.forEach((err, idx) => {
-              errorsByMachine[idx] += err;
-            });
-          });
-          fpsChart.data.datasets[0].data = errorsByMachine.map(e => Math.floor(e * 5) || Math.floor(Math.random() * 50));
-          fpsChart.update();
-        }
-      }
-
-      // ===== ИНИЦИАЛИЗАЦИЯ =====
-      window.onload = function() {
-        const saved = localStorage.getItem('userLoggedIn') === 'true' && localStorage.getItem('userEmail');
-        
-        if (saved) {
-          currentUser = {
-            email: localStorage.getItem('userEmail'),
-            name: localStorage.getItem('userName'),
-            picture: localStorage.getItem('userPic')
-          };
-          loginSection.style.display = 'none';
-          mainContent.style.display = 'block';
-          updateUserAvatar(currentUser);
-          generateMachineCells();
-          document.getElementById('date').value = selectedDate;
-          loadDataForDate(selectedDate);
-          loadFontsAsync();
-          
-          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-        } else {
-          loginSection.style.display = 'flex';
-          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-        }
-        
-        if (google?.accounts?.id) {
-          google.accounts.id.initialize({
-            client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
-            callback: handleCredentialResponse
-          });
-          google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
-            type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', logo_alignment: 'left'
-          });
-        }
-      };
-
-      document.getElementById('date').addEventListener('change', (e) => {
-        const hasUnsaved = machineErrors.some((v,i) => v !== originalErrors[i]);
-        if (hasUnsaved && !confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
-          e.target.value = selectedDate;
-          return;
-        }
-        
-        selectedDate = e.target.value;
-        analyticsLoaded = false;
-        chartsInitialized = false;
-        isAnalysisOpen = false;
-        
-        document.getElementById('analysisBtn').querySelector('.btn-text').textContent = 'АНАЛИЗ';
-        
-        // Скрываем аналитику
-        chartsContainer.style.display = 'none';
-        statsContainer.style.display = 'none';
-        tableContainer.style.display = 'none';
-        yearlyContainer.style.display = 'none';
-        
-        loadDataForDate(selectedDate);
-      });
-
-      window.addEventListener('beforeunload', (e) => {
-        if (machineErrors.some((v,i) => v !== originalErrors[i])) {
-          e.preventDefault();
-          e.returnValue = 'У вас есть несохраненные изменения';
-          return e.returnValue;
+          el.className = 'lane-count val-zero';
+          card.classList.remove('has-errors');
         }
       });
-    })();
+
+      const hasChanges = JSON.stringify(state.currentErrors) !== JSON.stringify(state.initialErrors);
+      dom.btnSave.disabled = !hasChanges;
+    }
+
+    async function saveData() {
+      setLoading(true);
+      const diff = state.currentErrors.map((val, i) => val - state.initialErrors[i]);
+      
+      try {
+        const formData = new URLSearchParams();
+        formData.append('date', state.selectedDate);
+        formData.append('errors', JSON.stringify(diff));
+
+        const res = await fetch(CONFIG.BACKEND_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          state.initialErrors = [...state.currentErrors];
+          alert("Успешно сохранено");
+          updateUI();
+        }
+      } catch (e) {
+        alert("Ошибка при сохранении");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function resetChanges() {
+      if (confirm("Сбросить все изменения?")) {
+        state.currentErrors = [...state.initialErrors];
+        updateUI();
+      }
+    }
+
+    function handleDateChange(newDate) {
+      state.selectedDate = newDate;
+      fetchData();
+    }
+
+    /**
+     * Вспомогательные функции
+     */
+    function setLoading(val) {
+      state.isLoading = val;
+      dom.btnSave.innerText = val ? "Загрузка..." : "Сохранить";
+    }
+
+    function toggleAnalysis() {
+      state.isAnalysisVisible = !state.isAnalysisVisible;
+      dom.analysisView.style.display = state.isAnalysisVisible ? 'block' : 'none';
+      dom.btnToggleAnalysis.innerText = state.isAnalysisVisible ? 'Скрыть анализ' : 'Показать анализ';
+      
+      if (state.isAnalysisVisible) initChart();
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('chartErrors').getContext('2d');
+      if (window.myChart) window.myChart.destroy();
+      
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Array.from({length: 14}, (_, i) => i + 1),
+          datasets: [{
+            label: 'Ошибки',
+            data: state.currentErrors,
+            backgroundColor: '#007aff',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { display: false } } }
+        }
+      });
+    }
+
+    // Запуск
+    window.onload = init;
   </script>
 </body>
 </html>
