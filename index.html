@@ -327,6 +327,64 @@
       100% { transform: scale(1); }
     }
     
+    /* Прогресс-бар для анализа */
+    .progress-container {
+      margin-top: 15px;
+      display: none;
+    }
+    
+    .progress-container.active {
+      display: block;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 24px;
+      background: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #dc143c, #ff4d4d, #dc143c);
+      background-size: 200% 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 12px;
+      animation: progressShimmer 2s infinite;
+    }
+    
+    @keyframes progressShimmer {
+      0% { background-position: 0% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .progress-bar span {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+    
+    .progress-status {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
     .charts-container {
       display: none;
       grid-template-columns: 1fr;
@@ -765,7 +823,7 @@
     </div>
   </div>
 
-  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ (ВМЕСТО СТАРОГО СПИНЕРА) -->
+  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
   <div class="loader-container" id="loader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
@@ -836,6 +894,15 @@
       <button class="analysis-btn" id="analysisBtn" onclick="toggleCharts()">
         <span class="btn-text">АНАЛИЗ</span>
       </button>
+      
+      <!-- Прогресс-бар для анализа -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+          <span id="progressText">0%</span>
+        </div>
+        <div class="progress-status" id="progressStatus">Подготовка...</div>
+      </div>
       
       <div class="charts-container" id="chartsContainer">
         <div class="chart-wrapper" id="errorsChartWrapper">
@@ -942,6 +1009,7 @@
     // Кэш для данных
     let dataCache = {};
     let yearlyDataCache = {};
+    const YEARLY_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 часа
     let lastSaveTime = 0;
     const SAVE_DEBOUNCE_TIME = 1000;
 
@@ -950,6 +1018,10 @@
     const loginSection = document.getElementById("login-section");
     const mainContent = document.getElementById("main-content");
     const loader = document.getElementById("loader");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
+    const progressStatus = document.getElementById("progressStatus");
 
     // ===== ФУНКЦИИ ДЛЯ АВАТАРКИ =====
     function toggleUserDropdown() {
@@ -975,13 +1047,31 @@
       }
     });
 
-    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА =====
+    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА И ПРОГРЕССА =====
     function showLoader() {
       loader.classList.add('active');
     }
 
     function hideLoader() {
       loader.classList.remove('active');
+    }
+    
+    function showProgress(show) {
+      if (show) {
+        progressContainer.classList.add('active');
+      } else {
+        progressContainer.classList.remove('active');
+      }
+    }
+    
+    function updateProgress(percent, status) {
+      if (progressFill && progressText && progressStatus) {
+        progressFill.style.width = percent + '%';
+        progressText.textContent = percent + '%';
+        if (status) {
+          progressStatus.textContent = status;
+        }
+      }
     }
 
     // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
@@ -1180,7 +1270,7 @@
       }
     }
 
-    // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С SHEETS API (ПРЯМОЕ ЧТЕНИЕ) =====
+    // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С SHEETS API =====
     let sheetsAPIPromise = null;
 
     function ensureSheetsAPI() {
@@ -1214,28 +1304,30 @@
       return month + '.' + year;
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ТАБЛИЦЫ
+    function getYearlyCacheKey() {
+      const today = new Date().toDateString();
+      return 'yearly_' + today;
+    }
+
     async function loadTableDataFromSheets(sheetName) {
       try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: SHEETS_CONFIG.spreadsheetId,
           range: `'${sheetName}'!B4:BF34`,
-          valueRenderOption: 'FORMATTED_VALUE' // ВАЖНО: используем отформатированные значения
+          valueRenderOption: 'FORMATTED_VALUE'
         });
         
         const rows = response.result.values || [];
         const tableData = [];
         
-        // Индексы колонок с ошибками (F=4, J=8, N=12, R=16, V=20, Z=24, AD=28, AH=32, AL=36, AP=40, AT=44, AX=48, BB=52, BF=56)
         const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
         
         rows.forEach(row => {
-          if (!row[0]) return; // Пропускаем пустые строки
+          if (!row[0]) return;
           
           const dayValue = row[0];
           let dayNumber;
           
-          // Если это строка, извлекаем число из начала (например "16 марта" -> 16)
           if (typeof dayValue === 'string') {
             const match = dayValue.match(/^(\d+)/);
             dayNumber = match ? parseInt(match[1]) : dayValue;
@@ -1256,7 +1348,6 @@
           tableData.push(rowData);
         });
         
-        // Сортируем по дню
         tableData.sort((a, b) => {
           const dayA = parseInt(a.day) || 0;
           const dayB = parseInt(b.day) || 0;
@@ -1282,7 +1373,6 @@
         
         await ensureSheetsAPI();
         
-        // 1. Читаем данные для всех машин за один запрос
         const ranges = [];
         for (let i = 1; i <= 14; i++) {
           ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
@@ -1294,17 +1384,15 @@
           valueRenderOption: 'UNFORMATTED_VALUE'
         });
         
-        // Парсим результаты
         const errors = response.result.valueRanges.map(range => {
           const value = range.values?.[0]?.[0] || 0;
           return Math.ceil(Number(value)) || 0;
         });
         
-        // 2. Читаем данные для графиков (строки 35-36)
         const chartRanges = [];
         for (let i = 1; i <= 14; i++) {
-          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`); // Ошибки
-          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`); // FPS
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`);
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`);
         }
         
         const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
@@ -1313,7 +1401,6 @@
           valueRenderOption: 'UNFORMATTED_VALUE'
         });
         
-        // Парсим данные для графиков
         const chartErrors = [];
         const chartFPS = [];
         for (let i = 0; i < 14; i++) {
@@ -1323,12 +1410,11 @@
           chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
         }
         
-        // 3. Читаем общую статистику
         const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
           spreadsheetId: SHEETS_CONFIG.spreadsheetId,
           ranges: [
-            `'${sheetName}'!BO35`, // Общие ошибки
-            `'${sheetName}'!BP35`  // Общий FPS
+            `'${sheetName}'!BO35`,
+            `'${sheetName}'!BP35`
           ],
           valueRenderOption: 'UNFORMATTED_VALUE'
         });
@@ -1336,7 +1422,6 @@
         const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
         const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
         
-        // 4. Читаем данные для таблицы
         const tableData = await loadTableDataFromSheets(sheetName);
         
         return {
@@ -1356,7 +1441,6 @@
       } catch (error) {
         console.error('Ошибка при чтении из Sheets:', error);
         if (error.status === 404 || error.status === 400) {
-          // Лист не существует
           return {
             errors: Array(14).fill(0),
             exists: false,
@@ -1371,11 +1455,10 @@
             tableData: []
           };
         }
-        throw error; // Пробрасываем другие ошибки
+        throw error;
       }
     }
 
-    // Резервный метод через Apps Script
     async function loadDataViaAppsScript(date) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -1521,23 +1604,9 @@
       });
     }
 
-    function updateDisplay() {
-      const cells = document.querySelectorAll('.machine-cell');
-      cells.forEach((cell, index) => {
-        const countElement = cell.querySelector('.error-count');
-        countElement.textContent = machineErrors[index];
-        
-        if (machineErrors[index] === 0) {
-          countElement.className = 'error-count zero';
-        } else {
-          countElement.className = 'error-count non-zero';
-        }
-      });
-    }
-
     function incrementMachine(index) {
       machineErrors[index]++;
-      updateDisplay();
+      forceDisplayUpdate();
       
       if (errorsChart && analyticsLoaded && isAnalysisOpen) {
         updateCharts();
@@ -1624,7 +1693,6 @@
       monthlyFPS = 0;
       updateStats();
       
-      // Показываем пустую таблицу без демо-данных
       const tableBody = document.getElementById('tableBody');
       if (tableBody) {
         tableBody.innerHTML = '';
@@ -1734,9 +1802,13 @@
         setTimeout(() => {
           dataTable.classList.add('loaded');
         }, 400);
+        
+        // Скрываем прогресс-бар
+        showProgress(false);
       }, 50);
     }
 
+    // ===== ОПТИМИЗИРОВАННАЯ ФУНКЦИЯ ЗАГРУЗКИ АНАЛИЗА =====
     async function loadAnalyticsData() {
       if (analyticsLoaded && isAnalysisOpen) {
         showAnalyticsElements();
@@ -1744,25 +1816,61 @@
       }
       
       updateAnalysisButtonState('loading');
+      showProgress(true);
+      updateProgress(0, 'Подготовка...');
       
       try {
-        if (!analyticsLoaded) {
-          // Загружаем данные для таблицы, если их нет
-          if (!dataCache[selectedDate]?.tableData || dataCache[selectedDate].tableData.length === 0) {
-            await loadTableData();
-          }
-          
-          // Загружаем данные для годового сравнения
-          await loadYearlyComparisonData();
-          
-          // Создаем графики
-          createCharts();
-          updateStats();
+        const loadPromises = [];
+        let completedTasks = 0;
+        const totalTasks = 2; // таблица и годовые данные
+        
+        // Функция для обновления прогресса
+        const taskCompleted = (taskName) => {
+          completedTasks++;
+          const percent = Math.round((completedTasks / totalTasks) * 100);
+          updateProgress(percent, `Загрузка: ${taskName} (${percent}%)`);
+        };
+        
+        // Загружаем таблицу, если её нет в кэше
+        if (!dataCache[selectedDate]?.tableData || dataCache[selectedDate].tableData.length === 0) {
+          const tablePromise = loadTableData().then(() => {
+            taskCompleted('данные за месяц');
+          });
+          loadPromises.push(tablePromise);
+        } else {
+          completedTasks++;
+          updateProgress(50, 'Данные за месяц из кэша');
         }
+        
+        // Загружаем годовые данные, если их нет в кэше или кэш устарел
+        const cacheKey = getYearlyCacheKey();
+        if (!yearlyDataCache[cacheKey]) {
+          const yearlyPromise = loadYearlyComparisonData().then(() => {
+            taskCompleted('годовое сравнение');
+          });
+          loadPromises.push(yearlyPromise);
+        } else {
+          completedTasks++;
+          updateProgress(100, 'Годовые данные из кэша');
+          // Обновляем график из кэша
+          updateYearlyChart(yearlyDataCache[cacheKey]);
+        }
+        
+        // Ждем выполнения ВСЕХ запросов одновременно
+        if (loadPromises.length > 0) {
+          await Promise.all(loadPromises);
+        }
+        
+        updateProgress(100, 'Готово!');
+        
+        // Создаем графики (это быстро)
+        createCharts();
+        updateStats();
         
         analyticsLoaded = true;
         updateAnalysisButtonState('success');
         showAnalyticsElements();
+        
       } catch (error) {
         console.error('Ошибка при загрузке аналитических данных:', error);
         analyticsLoaded = true;
@@ -1823,7 +1931,6 @@
           }
         }
         
-        // Если не удалось загрузить через Sheets, пробуем через Apps Script
         const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -1845,7 +1952,6 @@
             dataCache[selectedDate].tableData = data.tableData;
           }
         } else {
-          // Показываем пустую таблицу, а не демо-данные
           const tableBody = document.getElementById('tableBody');
           if (tableBody) {
             tableBody.innerHTML = '';
@@ -1862,7 +1968,6 @@
         }
       } catch (error) {
         console.error('Ошибка при загрузке данных таблицы:', error);
-        // Показываем пустую таблицу при ошибке
         const tableBody = document.getElementById('tableBody');
         if (tableBody) {
           tableBody.innerHTML = '';
@@ -1875,7 +1980,6 @@
       tableBody.innerHTML = '';
       
       if (!tableData || tableData.length === 0) {
-        // Показываем пустую таблицу, если нет данных
         return;
       }
       
@@ -1964,14 +2068,12 @@
 
     async function loadYearlyComparisonData() {
       try {
-        // Проверяем кэш
-        const cacheKey = 'yearly_' + new Date().getFullYear();
+        const cacheKey = getYearlyCacheKey();
         if (yearlyDataCache[cacheKey]) {
           updateYearlyChart(yearlyDataCache[cacheKey]);
           return yearlyDataCache[cacheKey];
         }
         
-        // Загружаем данные с сервера
         const response = await fetch(`${BACKEND_URL}?yearlyComparison=true`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -1987,19 +2089,16 @@
           throw new Error('Неверный формат ответа');
         }
         
-        // Проверяем, что данные не пустые
         if (data && data.years && data.months && data.data) {
           yearlyDataCache[cacheKey] = data;
           updateYearlyChart(data);
           return data;
         } else {
-          // Если данные пустые, показываем пустой график
           updateYearlyChart(null);
           return null;
         }
       } catch (error) {
         console.error('Ошибка при загрузке данных сравнения:', error);
-        // Показываем пустой график при ошибке
         updateYearlyChart(null);
         return null;
       }
@@ -2015,7 +2114,6 @@
       if (yearlyComparisonChart) yearlyComparisonChart.destroy();
       
       if (!yearlyData || !yearlyData.years || !yearlyData.months || !yearlyData.data) {
-        // Показываем пустой график с сообщением
         yearlyComparisonChart = new Chart(yearlyComparisonCtx, {
           type: 'line',
           data: {
@@ -2113,7 +2211,6 @@
       }
     }
     
-    // СОХРАНЕНИЕ ДАННЫХ (всегда через Apps Script)
     async function saveData() {
       const now = Date.now();
       if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
