@@ -15,7 +15,6 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   
-  <!-- ВАШИ ПОЛНЫЕ СТИЛИ -->
   <style>
     /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК */
     body, html { 
@@ -608,22 +607,6 @@
       src: url(https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJnecnFHGPezSQ.woff2) format('woff2');
     }
     
-    @font-face {
-      font-family: 'Poppins';
-      font-style: normal;
-      font-weight: 600;
-      font-display: swap;
-      src: url(https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLEj6Z1xlFd2JQEk.woff2) format('woff2');
-    }
-    
-    @font-face {
-      font-family: 'Poppins';
-      font-style: normal;
-      font-weight: 700;
-      font-display: swap;
-      src: url(https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLCz7Z1xlFd2JQEk.woff2) format('woff2');
-    }
-    
     /* Применить шрифт когда загрузится */
     .fonts-loaded body {
       font-family: 'Poppins', system-ui, -apple-system, sans-serif;
@@ -782,7 +765,7 @@
     </div>
   </div>
 
-  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ -->
+  <!-- УНИВЕРСАЛЬНАЯ АНИМАЦИЯ ЗАГРУЗКИ (ВМЕСТО СТАРОГО СПИНЕРА) -->
   <div class="loader-container" id="loader">
     <div class="logo-wrapper">
       <div class="glow-ring"></div>
@@ -910,756 +893,1335 @@
     </div>
   </div>
 
-  <!-- ИСПРАВЛЕННЫЙ JavaScript -->
+  <!-- ПОДКЛЮЧЕНИЕ БИБЛИОТЕК -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script>
-    (function() {
-      'use strict';
+    console.log('Скрипт начал выполняться');
+    
+    // ===== КОНСТАНТЫ =====
+    const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+    const AUTH_SHEET_NAME = '1';
+    const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+    
+    // !!! ВАЖНО: ЭТА ССЫЛКА ДОЛЖНА БЫТЬ В ТАБЛИЦЕ АВТОРИЗАЦИИ !!!
+    const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
+    
+    // КОНФИГУРАЦИЯ ДЛЯ ПРЯМОГО ЧТЕНИЯ ИЗ GOOGLE SHEETS
+    const SHEETS_CONFIG = {
+      apiKey: AUTH_API_KEY,
+      spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
+      columnMapping: {
+        1: 'F', 2: 'J', 3: 'N', 4: 'R', 5: 'V', 6: 'Z', 
+        7: 'AD', 8: 'AH', 9: 'AL', 10: 'AP', 11: 'AT', 
+        12: 'AX', 13: 'BB', 14: 'BF'
+      },
+      startRow: 4
+    };
+    
+    // URL для записи через Apps Script
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
+
+    // Переменные состояния
+    let currentUser = null;
+    let machineErrors = Array(14).fill(0);
+    let machineFPS = Array(14).fill(0);
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let originalErrors = Array(14).fill(0);
+    
+    let errorsChart = null;
+    let fpsChart = null;
+    let yearlyComparisonChart = null;
+    
+    let monthlyErrors = 0;
+    let monthlyFPS = 0;
+    
+    let analyticsLoaded = false;
+    let isAnalysisOpen = false;
+    let isDataLoaded = false;
+    
+    // Кэш для данных
+    let dataCache = {};
+    let yearlyDataCache = {};
+    let lastSaveTime = 0;
+    const SAVE_DEBOUNCE_TIME = 1000;
+
+    // Получаем элементы
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loginSection = document.getElementById("login-section");
+    const mainContent = document.getElementById("main-content");
+    const loader = document.getElementById("loader");
+
+    // ===== ФУНКЦИИ ДЛЯ АВАТАРКИ =====
+    function toggleUserDropdown() {
+      const menu = document.getElementById("userDropdown");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    function updateUserAvatar(user) {
+      const avatarContainer = document.getElementById('userAvatar');
+      if (user?.picture) {
+        avatarContainer.innerHTML = `<img src="${user.picture}" alt="Avatar">`;
+      } else {
+        avatarContainer.innerHTML = '<i class="fas fa-user"></i>';
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const userDropdown = document.getElementById("userDropdown");
+      const userAvatar = document.getElementById("userAvatar");
       
-      // ===== КОНСТАНТЫ =====
-      const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-      const AUTH_SHEET_NAME = '1';
-      const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-      const CURRENT_SITE = 'https://smart-bowling.github.io/PS-STOP-KH/';
-      const SHEETS_CONFIG = {
-        apiKey: AUTH_API_KEY,
-        spreadsheetId: '1F4zy9OcSesAeWktCXsPZdBD4796MbAnOZDXGMqY7zBg',
-        columnMapping: {1:'F',2:'J',3:'N',4:'R',5:'V',6:'Z',7:'AD',8:'AH',9:'AL',10:'AP',11:'AT',12:'AX',13:'BB',14:'BF'},
-        startRow: 4
+      if (userDropdown.style.display === 'block' && !userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+        userDropdown.style.display = 'none';
+      }
+    });
+
+    // ===== ФУНКЦИИ ДЛЯ ЛОАДЕРА =====
+    function showLoader() {
+      loader.classList.add('active');
+    }
+
+    function hideLoader() {
+      loader.classList.remove('active');
+    }
+
+    // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
+    function loadSheetsAPI() {
+      return new Promise((resolve, reject) => {
+        gapi.load('client', {
+          callback: () => resolve(),
+          onerror: () => reject('Ошибка загрузки Google API'),
+          timeout: 10000,
+          ontimeout: () => reject('Таймаут загрузки Google API')
+        });
+      });
+    }
+
+    function handleCredentialResponse(response) {
+      try {
+        const payload = parseJwt(response.credential);
+        
+        currentUser = {
+          email: payload.email.toLowerCase().trim(),
+          name: payload.name,
+          picture: payload.picture
+        };
+        
+        showLoading(true);
+        initAndCheckEmail();
+        
+      } catch (e) {
+        console.error('Ошибка аутентификации:', e);
+        showLoading(false);
+        alert('Ошибка аутентификации');
+      }
+    }
+
+    function showLoading(show) {
+      const loginDiv = document.getElementById('login-container');
+      if (show) {
+        if (!loginDiv.hasAttribute('data-original')) {
+          loginDiv.setAttribute('data-original', loginDiv.innerHTML);
+        }
+        loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="loading-spinner"></div><br><span style="color: #64748b; margin-top: 15px; display: block;">Проверка доступа...</span></div>';
+      } else {
+        if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') {
+          loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+          
+          if (window.google && google.accounts && google.accounts.id) {
+            google.accounts.id.renderButton(
+              document.querySelector('.g_id_signin'),
+              { 
+                type: 'standard', 
+                shape: 'pill', 
+                theme: 'outline', 
+                text: 'signin_with', 
+                size: 'large', 
+                logo_alignment: 'left' 
+              }
+            );
+          }
+        }
+      }
+    }
+
+    async function initAndCheckEmail() {
+      try {
+        await loadSheetsAPI();
+        await gapi.client.init({
+          apiKey: AUTH_API_KEY,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        });
+        
+        await checkEmailInSheet(currentUser.email);
+        
+      } catch (error) {
+        console.error('Ошибка инициализации:', error);
+        showLoading(false);
+        alert('Ошибка инициализации Google API');
+      }
+    }
+
+    async function checkEmailInSheet(email) {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: AUTH_SPREADSHEET_ID,
+          range: `${AUTH_SHEET_NAME}!A:Z`,
+        });
+        
+        const rows = response.result.values;
+        if (!rows || rows.length === 0) {
+          showLoading(false);
+          alert('Таблица пуста');
+          return;
+        }
+        
+        let hasAccess = false;
+        
+        for (let i = 0; i < rows.length; i++) {
+          if (!rows[i]?.[0]) continue;
+          
+          const rowEmail = rows[i][0].toLowerCase().trim();
+          if (rowEmail === email) {
+            for (let j = 1; j < rows[i].length; j++) {
+              const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+              if (siteUrl === CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) {
+                hasAccess = true;
+                break;
+              }
+            }
+            break;
+          }
+        }
+        
+        if (hasAccess) {
+          loginUser(currentUser);
+        } else {
+          showLoading(false);
+          alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
+        }
+        
+      } catch (error) {
+        console.error('Ошибка доступа к таблице:', error);
+        showLoading(false);
+        alert('Ошибка доступа к таблице');
+      }
+    }
+
+    function loginUser(payload) {
+      loginSection.style.display = 'none';
+      mainContent.style.display = 'block';
+      
+      updateUserAvatar(payload);
+      
+      localStorage.setItem('userLoggedIn', 'true');
+      localStorage.setItem('userEmail', payload.email.toLowerCase());
+      localStorage.setItem('userName', payload.name);
+      localStorage.setItem('userPic', payload.picture);
+      
+      showLoading(false);
+      
+      // Скрываем экран загрузки
+      setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+      }, 500);
+      
+      // ИНИЦИАЛИЗИРУЕМ SHEETS API ДЛЯ ЧТЕНИЯ
+      ensureSheetsAPI().then(() => {
+        console.log('Sheets API инициализирован для чтения');
+        initializeApp();
+      }).catch(error => {
+        console.warn('Не удалось инициализировать Sheets API, используем AppsScript:', error);
+        initializeApp();
+      });
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        console.error('Ошибка парсинга JWT:', e);
+        return {};
+      }
+    }
+
+    function signOut() {
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      if (google && google.accounts && google.accounts.id) {
+        google.accounts.id.disableAutoSelect();
+      }
+      
+      mainContent.style.display = 'none';
+      loginSection.style.display = 'flex';
+      
+      const loginDiv = document.getElementById('login-container');
+      if (loginDiv.getAttribute('data-original')) {
+        loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+        
+        if (window.google && google.accounts && google.accounts.id) {
+          google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            { 
+              type: 'standard', 
+              shape: 'pill', 
+              theme: 'outline', 
+              text: 'signin_with', 
+              size: 'large', 
+              logo_alignment: 'left' 
+            }
+          );
+        }
+      }
+    }
+
+    // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С SHEETS API (ПРЯМОЕ ЧТЕНИЕ) =====
+    let sheetsAPIPromise = null;
+
+    function ensureSheetsAPI() {
+      if (sheetsAPIPromise) return sheetsAPIPromise;
+      
+      sheetsAPIPromise = new Promise((resolve, reject) => {
+        if (window.gapi?.client?.sheets) {
+          resolve();
+          return;
+        }
+        
+        gapi.load('client', async () => {
+          try {
+            await gapi.client.init({
+              apiKey: SHEETS_CONFIG.apiKey,
+              discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+            });
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      
+      return sheetsAPIPromise;
+    }
+
+    function getSheetNameFromDate(date) {
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear().toString().slice(-2);
+      return month + '.' + year;
+    }
+
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ТАБЛИЦЫ
+    async function loadTableDataFromSheets(sheetName) {
+      try {
+        const response = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          range: `'${sheetName}'!B4:BF34`,
+          valueRenderOption: 'FORMATTED_VALUE' // ВАЖНО: используем отформатированные значения
+        });
+        
+        const rows = response.result.values || [];
+        const tableData = [];
+        
+        // Индексы колонок с ошибками (F=4, J=8, N=12, R=16, V=20, Z=24, AD=28, AH=32, AL=36, AP=40, AT=44, AX=48, BB=52, BF=56)
+        const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
+        
+        rows.forEach(row => {
+          if (!row[0]) return; // Пропускаем пустые строки
+          
+          const dayValue = row[0];
+          let dayNumber;
+          
+          // Если это строка, извлекаем число из начала (например "16 марта" -> 16)
+          if (typeof dayValue === 'string') {
+            const match = dayValue.match(/^(\d+)/);
+            dayNumber = match ? parseInt(match[1]) : dayValue;
+          } else {
+            dayNumber = dayValue;
+          }
+          
+          const rowData = {
+            day: dayNumber,
+            errors: []
+          };
+          
+          errorIndices.forEach(index => {
+            const value = row[index] || 0;
+            rowData.errors.push(Math.ceil(Number(value)) || 0);
+          });
+          
+          tableData.push(rowData);
+        });
+        
+        // Сортируем по дню
+        tableData.sort((a, b) => {
+          const dayA = parseInt(a.day) || 0;
+          const dayB = parseInt(b.day) || 0;
+          return dayA - dayB;
+        });
+        
+        return tableData;
+        
+      } catch (error) {
+        console.error('Ошибка при чтении таблицы:', error);
+        return [];
+      }
+    }
+
+    async function loadDataDirectlyFromSheets(date) {
+      console.log('Чтение напрямую из Sheets для даты:', date);
+      
+      try {
+        const dateObj = new Date(date);
+        const sheetName = getSheetNameFromDate(dateObj);
+        const day = dateObj.getDate();
+        const row = SHEETS_CONFIG.startRow + day - 1;
+        
+        await ensureSheetsAPI();
+        
+        // 1. Читаем данные для всех машин за один запрос
+        const ranges = [];
+        for (let i = 1; i <= 14; i++) {
+          ranges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}${row}`);
+        }
+        
+        const response = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: ranges,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        // Парсим результаты
+        const errors = response.result.valueRanges.map(range => {
+          const value = range.values?.[0]?.[0] || 0;
+          return Math.ceil(Number(value)) || 0;
+        });
+        
+        // 2. Читаем данные для графиков (строки 35-36)
+        const chartRanges = [];
+        for (let i = 1; i <= 14; i++) {
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}35`); // Ошибки
+          chartRanges.push(`'${sheetName}'!${SHEETS_CONFIG.columnMapping[i]}36`); // FPS
+        }
+        
+        const chartResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: chartRanges,
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        // Парсим данные для графиков
+        const chartErrors = [];
+        const chartFPS = [];
+        for (let i = 0; i < 14; i++) {
+          const errorValue = chartResponse.result.valueRanges[i*2]?.values?.[0]?.[0] || 0;
+          const fpsValue = chartResponse.result.valueRanges[i*2 + 1]?.values?.[0]?.[0] || 0;
+          chartErrors.push(Math.ceil(Number(errorValue)) || 0);
+          chartFPS.push(Math.ceil(Number(fpsValue)) || 0);
+        }
+        
+        // 3. Читаем общую статистику
+        const statsResponse = await gapi.client.sheets.spreadsheets.values.batchGet({
+          spreadsheetId: SHEETS_CONFIG.spreadsheetId,
+          ranges: [
+            `'${sheetName}'!BO35`, // Общие ошибки
+            `'${sheetName}'!BP35`  // Общий FPS
+          ],
+          valueRenderOption: 'UNFORMATTED_VALUE'
+        });
+        
+        const totalErrors = Math.ceil(Number(statsResponse.result.valueRanges[0]?.values?.[0]?.[0])) || 0;
+        const totalFPS = Math.ceil(Number(statsResponse.result.valueRanges[1]?.values?.[0]?.[0])) || 0;
+        
+        // 4. Читаем данные для таблицы
+        const tableData = await loadTableDataFromSheets(sheetName);
+        
+        return {
+          errors: errors,
+          exists: true,
+          chartData: {
+            errors: chartErrors,
+            fps: chartFPS
+          },
+          totalStats: {
+            errors: totalErrors,
+            fps: totalFPS
+          },
+          tableData: tableData
+        };
+        
+      } catch (error) {
+        console.error('Ошибка при чтении из Sheets:', error);
+        if (error.status === 404 || error.status === 400) {
+          // Лист не существует
+          return {
+            errors: Array(14).fill(0),
+            exists: false,
+            chartData: {
+              errors: Array(14).fill(0),
+              fps: Array(14).fill(0)
+            },
+            totalStats: {
+              errors: 0,
+              fps: 0
+            },
+            tableData: []
+          };
+        }
+        throw error; // Пробрасываем другие ошибки
+      }
+    }
+
+    // Резервный метод через Apps Script
+    async function loadDataViaAppsScript(date) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log('Таймаут загрузки данных');
+        controller.abort();
+      }, 8000);
+      
+      const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+      
+      return await response.json();
+    }
+
+    // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
+    window.addEventListener('load', function() {
+      const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+      const email = localStorage.getItem('userEmail');
+      const name = localStorage.getItem('userName');
+      const pic = localStorage.getItem('userPic');
+      
+      if (isLoggedIn && email) {
+        loginSection.style.display = 'none';
+        mainContent.style.display = 'block';
+        
+        currentUser = {
+          email: email,
+          name: name,
+          picture: pic
+        };
+        
+        updateUserAvatar(currentUser);
+        showLoading(true);
+        
+        loadSheetsAPI()
+          .then(() => gapi.client.init({
+            apiKey: AUTH_API_KEY,
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          }))
+          .then(() => checkEmailInSheet(email))
+          .catch(() => {
+            signOut();
+          });
+      } else {
+        loginSection.style.display = 'flex';
+        mainContent.style.display = 'none';
+        
+        setTimeout(() => {
+          loadingScreen.classList.add('fade-out');
+        }, 500);
+      }
+    });
+
+    window.onload = function() {
+      if (google && google.accounts && google.accounts.id) {
+        google.accounts.id.initialize({
+          client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
+          callback: handleCredentialResponse
+        });
+        
+        google.accounts.id.renderButton(
+          document.querySelector('.g_id_signin'),
+          { 
+            type: 'standard', 
+            shape: 'pill', 
+            theme: 'outline', 
+            text: 'signin_with', 
+            size: 'large',
+            logo_alignment: 'left'
+          }
+        );
+      }
+    };
+
+    function initializeApp() {
+      console.log('Инициализация приложения после авторизации');
+      
+      const grid = document.getElementById('machinesGrid');
+      const dateInput = document.getElementById('date');
+      
+      if (grid && dateInput) {
+        generateMachineCells();
+        dateInput.value = selectedDate;
+        loadDataForDate(selectedDate);
+        loadFontsAsync();
+      } else {
+        console.error('Элементы не найдены, повторная попытка через 100мс');
+        setTimeout(() => {
+          generateMachineCells();
+          document.getElementById('date').value = selectedDate;
+          loadDataForDate(selectedDate);
+        }, 100);
+      }
+    }
+
+    function loadFontsAsync() {
+      const link = document.createElement('link');
+      link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
+      link.rel = 'stylesheet';
+      link.onload = function() {
+        document.documentElement.classList.add('fonts-loaded');
       };
-      const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbym_79krm2GhFqOJrq5UwgDXUTQFDnTT-FY67atU3Mpg3Tz2r4qfpBVmvEZ72A4wGMZdQ/exec';
+      document.head.appendChild(link);
+    }
 
-      // ===== СОСТОЯНИЕ =====
-      let currentUser = null;
-      let machineErrors = Array(14).fill(0);
-      let machineFPS = Array(14).fill(0);
-      let selectedDate = new Date().toISOString().split('T')[0];
-      let originalErrors = Array(14).fill(0);
-      let errorsChart = null;
-      let fpsChart = null;
-      let yearlyComparisonChart = null;
-      let monthlyErrors = 0;
-      let monthlyFPS = 0;
-      let analyticsLoaded = false;
-      let isAnalysisOpen = false;
-      let dataCache = {};
-      let chartsInitialized = false;
+    function generateMachineCells() {
+      const grid = document.getElementById('machinesGrid');
+      let html = '';
+      
+      for (let i = 0; i < 14; i++) {
+        html += `
+          <div class="machine-cell" onclick="incrementMachine(${i})">
+            <div class="machine-number">LANE ${i + 1}</div>
+            <div class="error-count zero">0</div>
+          </div>
+        `;
+      }
+      grid.innerHTML = html;
+      console.log('Карточки машин сгенерированы');
+    }
 
-      // ===== ЭЛЕМЕНТЫ =====
-      const loader = document.getElementById('loader');
-      const loadingScreen = document.getElementById('loadingScreen');
-      const loginSection = document.getElementById('login-section');
-      const mainContent = document.getElementById('main-content');
+    function forceDisplayUpdate() {
+      const cells = document.querySelectorAll('.machine-cell');
+      cells.forEach((cell, index) => {
+        const countElement = cell.querySelector('.error-count');
+        const errorCount = machineErrors[index];
+        
+        countElement.textContent = errorCount;
+        
+        countElement.classList.remove('zero', 'non-zero');
+        if (errorCount === 0) {
+          countElement.classList.add('zero');
+        } else {
+          countElement.classList.add('non-zero');
+        }
+      });
+    }
+
+    function updateDisplay() {
+      const cells = document.querySelectorAll('.machine-cell');
+      cells.forEach((cell, index) => {
+        const countElement = cell.querySelector('.error-count');
+        countElement.textContent = machineErrors[index];
+        
+        if (machineErrors[index] === 0) {
+          countElement.className = 'error-count zero';
+        } else {
+          countElement.className = 'error-count non-zero';
+        }
+      });
+    }
+
+    function incrementMachine(index) {
+      machineErrors[index]++;
+      updateDisplay();
+      
+      if (errorsChart && analyticsLoaded && isAnalysisOpen) {
+        updateCharts();
+      }
+    }
+
+    async function loadDataForDate(date, retryCount = 0) {
+      const MAX_RETRIES = 3;
+      console.log('Загрузка данных для даты:', date, 'попытка:', retryCount + 1);
+      
+      if (dataCache[date]) {
+        console.log('Используем кэшированные данные');
+        applyCachedData(dataCache[date]);
+        return;
+      }
+      
+      showLoader();
+      
+      try {
+        let data;
+        
+        if (window.gapi?.client?.sheets) {
+          try {
+            data = await loadDataDirectlyFromSheets(date);
+            console.log('Данные получены напрямую из Sheets');
+          } catch (sheetsError) {
+            console.warn('Не удалось прочитать напрямую, пробуем через Apps Script:', sheetsError);
+            data = await loadDataViaAppsScript(date);
+          }
+        } else {
+          data = await loadDataViaAppsScript(date);
+        }
+        
+        dataCache[date] = data;
+        applyCachedData(data);
+        
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Повторная попытка через ${1000 * (retryCount + 1)}мс`);
+          setTimeout(() => {
+            loadDataForDate(date, retryCount + 1);
+          }, 1000 * (retryCount + 1));
+        } else {
+          console.log('Все попытки исчерпаны, показываем пустые данные');
+          applyDefaultData();
+        }
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function applyCachedData(data) {
+      if (data.errors) {
+        machineErrors = data.errors;
+        originalErrors = [...data.errors];
+        console.log('Применяем кэшированные ошибки:', machineErrors);
+        forceDisplayUpdate();
+      }
+      
+      if (data.chartData) {
+        machineFPS = data.chartData.fps || Array(14).fill(0);
+      }
+      
+      if (data.totalStats) {
+        monthlyErrors = data.totalStats.errors || 0;
+        monthlyFPS = data.totalStats.fps || 0;
+        updateStats();
+      }
+      
+      if (data.tableData && data.tableData.length > 0) {
+        populateTable(data.tableData);
+      }
+      
+      isDataLoaded = true;
+    }
+
+    function applyDefaultData() {
+      machineErrors = Array(14).fill(0);
+      originalErrors = Array(14).fill(0);
+      machineFPS = Array(14).fill(0);
+      monthlyErrors = 0;
+      monthlyFPS = 0;
+      updateStats();
+      
+      // Показываем пустую таблицу без демо-данных
+      const tableBody = document.getElementById('tableBody');
+      if (tableBody) {
+        tableBody.innerHTML = '';
+      }
+      
+      forceDisplayUpdate();
+      isDataLoaded = true;
+    }
+
+    function cancelChanges() {
+      if (confirm('Отменить все несохраненные изменения?')) {
+        machineErrors = [...originalErrors];
+        forceDisplayUpdate();
+        
+        if (analyticsLoaded && isAnalysisOpen) {
+          if (errorsChart && fpsChart) updateCharts();
+          updateStats();
+        }
+      }
+    }
+
+    function updateAnalysisButtonState(state) {
+      const analysisBtn = document.getElementById('analysisBtn');
+      analysisBtn.classList.remove('loading', 'success', 'pulse');
+      
+      switch(state) {
+        case 'loading':
+          analysisBtn.classList.add('loading');
+          break;
+        case 'success':
+          analysisBtn.classList.add('success');
+          setTimeout(() => {
+            if (isAnalysisOpen) {
+              analysisBtn.classList.remove('success');
+              analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
+            }
+          }, 2000);
+          break;
+        case 'pulse':
+          analysisBtn.classList.add('pulse');
+          break;
+        default:
+          if (isAnalysisOpen) {
+            analysisBtn.innerHTML = '<span class="btn-text">СКРЫТЬ АНАЛИЗ</span>';
+          } else {
+            analysisBtn.innerHTML = '<span class="btn-text">АНАЛИЗ</span>';
+          }
+      }
+    }
+
+    function hideAnalyticsElements() {
       const chartsContainer = document.getElementById('chartsContainer');
       const statsContainer = document.getElementById('statsContainer');
       const tableContainer = document.getElementById('tableContainer');
-      const yearlyContainer = document.getElementById('yearlyComparisonContainer');
-      const analysisBtn = document.getElementById('analysisBtn');
-      const dateInput = document.getElementById('date');
-
-      // ===== УТИЛИТЫ =====
-      const showLoader = () => loader.classList.add('active');
-      const hideLoader = () => loader.classList.remove('active');
+      const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
       
-      // ===== АВАТАРКА =====
-      window.toggleUserDropdown = () => {
-        const menu = document.getElementById('userDropdown');
-        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-      };
+      chartsContainer.classList.remove('loaded');
+      statsContainer.classList.remove('loaded');
+      tableContainer.classList.remove('loaded');
+      yearlyComparisonContainer.classList.remove('loaded');
       
-      function updateUserAvatar(user) {
-        const av = document.getElementById('userAvatar');
-        av.innerHTML = user?.picture ? `<img src="${user.picture}" alt="Avatar">` : '<i class="fas fa-user"></i>';
-      }
+      setTimeout(() => {
+        chartsContainer.style.display = 'none';
+        statsContainer.style.display = 'none';
+        tableContainer.style.display = 'none';
+        yearlyComparisonContainer.style.display = 'none';
+      }, 300);
+    }
 
-      document.addEventListener('click', e => {
-        const ud = document.getElementById('userDropdown');
-        const ua = document.getElementById('userAvatar');
-        if (ud.style.display === 'block' && !ua.contains(e.target) && !ud.contains(e.target)) ud.style.display = 'none';
-      });
-
-      // ===== АВТОРИЗАЦИЯ =====
-      function parseJwt(token) {
-        try {
-          const base64Url = token.split('.')[1];
-          return JSON.parse(decodeURIComponent(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-        } catch { return {}; }
-      }
-
-      function loadSheetsAPI() {
-        return new Promise((resolve, reject) => {
-          if (window.gapi?.client?.sheets) return resolve();
-          gapi.load('client', { callback: resolve, onerror: reject, timeout: 5000 });
-        });
-      }
-
-      window.handleCredentialResponse = async (response) => {
-        try {
-          currentUser = parseJwt(response.credential);
-          currentUser.email = currentUser.email.toLowerCase();
-          
-          const loginDiv = document.getElementById('login-container');
-          const originalContent = loginDiv.innerHTML;
-          loginDiv.innerHTML = '<div style="padding:40px; text-align:center;"><div class="loading-spinner"></div><br><span>Проверка доступа...</span></div>';
-          
-          await loadSheetsAPI();
-          await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-          
-          const sheets = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: AUTH_SPREADSHEET_ID,
-            range: `${AUTH_SHEET_NAME}!A:Z`
-          });
-          
-          const hasAccess = (sheets.result.values || []).some(row => {
-            if (!row[0]) return false;
-            const rowEmail = row[0].toLowerCase().trim();
-            if (rowEmail !== currentUser.email) return false;
-            for (let j = 1; j < row.length; j++) {
-              const siteUrl = (row[j] || '').trim().split('?')[0].split('#')[0];
-              if (siteUrl === CURRENT_SITE || siteUrl.includes('PS-STOP-KH')) return true;
-            }
-            return false;
-          });
-          
-          if (hasAccess) {
-            loginSection.style.display = 'none';
-            mainContent.style.display = 'block';
-            updateUserAvatar(currentUser);
-            localStorage.setItem('userLoggedIn', 'true');
-            localStorage.setItem('userEmail', currentUser.email);
-            localStorage.setItem('userName', currentUser.name);
-            localStorage.setItem('userPic', currentUser.picture);
-            
-            setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-            
-            generateMachineCells();
-            if (dateInput) dateInput.value = selectedDate;
-            loadDataForDate(selectedDate);
-            loadFontsAsync();
-          } else {
-            loginDiv.innerHTML = originalContent;
-            alert('Доступ запрещен: Ваш email не найден в таблице или нет прав для этого сайта');
-          }
-        } catch (e) {
-          console.error('Auth error:', e);
-          alert('Ошибка авторизации');
-          location.reload();
-        }
-      };
-
-      window.signOut = () => {
-        localStorage.clear();
-        if (google?.accounts?.id) google.accounts.id.disableAutoSelect();
-        mainContent.style.display = 'none';
-        loginSection.style.display = 'flex';
-        loadingScreen.classList.remove('fade-out');
-      };
-
-      function loadFontsAsync() {
-        const link = document.createElement('link');
-        link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap';
-        link.rel = 'stylesheet';
-        link.onload = () => document.documentElement.classList.add('fonts-loaded');
-        document.head.appendChild(link);
-      }
-
-      // ===== ЗАГРУЗКА ДАННЫХ =====
-      async function ensureSheetsAPI() {
-        if (window.gapi?.client?.sheets) return Promise.resolve();
-        return new Promise((resolve) => {
-          gapi.load('client', async () => {
-            try {
-              await gapi.client.init({ apiKey: SHEETS_CONFIG.apiKey, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-            } catch {}
-            resolve();
-          });
-        });
-      }
-
-      function getSheetNameFromDate(date) {
-        const d = new Date(date);
-        return (d.getMonth() + 1) + '.' + d.getFullYear().toString().slice(-2);
-      }
-
-      async function loadDataDirectly(date) {
-        try {
-          await ensureSheetsAPI();
-          if (!window.gapi?.client?.sheets) return null;
-          
-          const d = new Date(date);
-          const sheetName = getSheetNameFromDate(d);
-          const row = SHEETS_CONFIG.startRow + d.getDate() - 1;
-          
-          const ranges = Object.values(SHEETS_CONFIG.columnMapping).map(col => `'${sheetName}'!${col}${row}`);
-          const resp = await gapi.client.sheets.spreadsheets.values.batchGet({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            ranges: ranges,
-            valueRenderOption: 'UNFORMATTED_VALUE'
-          });
-          
-          return {
-            errors: (resp.result.valueRanges || []).map(r => Math.ceil(Number(r.values?.[0]?.[0])) || 0)
-          };
-        } catch {
-          return null;
-        }
-      }
-
-      async function loadDataForDate(date) {
-        if (dataCache[date]) {
-          machineErrors = [...dataCache[date]];
-          originalErrors = [...dataCache[date]];
-          forceDisplayUpdate();
-          return;
-        }
+    function showAnalyticsElements() {
+      const chartsContainer = document.getElementById('chartsContainer');
+      const statsContainer = document.getElementById('statsContainer');
+      const tableContainer = document.getElementById('tableContainer');
+      const yearlyComparisonContainer = document.getElementById('yearlyComparisonContainer');
+      
+      chartsContainer.style.display = 'grid';
+      statsContainer.style.display = 'grid';
+      tableContainer.style.display = 'block';
+      yearlyComparisonContainer.style.display = 'block';
+      
+      setTimeout(() => {
+        chartsContainer.classList.add('loaded');
+        statsContainer.classList.add('loaded');
+        tableContainer.classList.add('loaded');
+        yearlyComparisonContainer.classList.add('loaded');
         
-        showLoader();
+        const chartWrappers = document.querySelectorAll('.chart-wrapper');
+        const statCards = document.querySelectorAll('.stat-card');
+        const dataTable = document.getElementById('dataTable');
         
-        let data = await loadDataDirectly(date);
+        chartWrappers.forEach(wrapper => wrapper.classList.remove('loaded'));
+        statCards.forEach(card => card.classList.remove('loaded'));
+        dataTable.classList.remove('loaded');
         
-        if (!data) {
-          try {
-            const res = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(date)}&simple=true`);
-            data = await res.json();
-          } catch {
-            data = { errors: Array(14).fill(0) };
-          }
-        }
-        
-        machineErrors = data.errors || Array(14).fill(0);
-        originalErrors = [...machineErrors];
-        dataCache[date] = [...machineErrors];
-        forceDisplayUpdate();
-        hideLoader();
-      }
-
-      function forceDisplayUpdate() {
-        document.querySelectorAll('.machine-cell').forEach((cell, i) => {
-          const el = cell.querySelector('.error-count');
-          const val = machineErrors[i];
-          el.textContent = val;
-          el.className = 'error-count ' + (val === 0 ? 'zero' : 'non-zero');
-        });
-      }
-
-      function generateMachineCells() {
-        const grid = document.getElementById('machinesGrid');
-        if (!grid) return;
-        
-        let html = '';
-        for (let i = 0; i < 14; i++) {
-          html += `<div class="machine-cell" onclick="incrementMachine(${i})"><div class="machine-number">LANE ${i+1}</div><div class="error-count zero">0</div></div>`;
-        }
-        grid.innerHTML = html;
-      }
-
-      // ===== ОСНОВНЫЕ ДЕЙСТВИЯ =====
-      window.incrementMachine = (i) => {
-        machineErrors[i]++;
-        forceDisplayUpdate();
-        if (chartsInitialized && isAnalysisOpen) {
-          updateCharts();
-        }
-      };
-
-      window.cancelChanges = () => {
-        if (confirm('Отменить все несохраненные изменения?')) {
-          machineErrors = [...originalErrors];
-          forceDisplayUpdate();
-          if (chartsInitialized && isAnalysisOpen) {
-            updateCharts();
-          }
-        }
-      };
-
-      window.saveData = async () => {
-        if (JSON.stringify(machineErrors) === JSON.stringify(originalErrors)) return;
-        
-        showLoader();
-        try {
-          const fd = new URLSearchParams();
-          fd.append('date', selectedDate);
-          const changes = machineErrors.map((v,i) => v - originalErrors[i]);
-          fd.append('errors', JSON.stringify(changes));
-          
-          const res = await fetch(BACKEND_URL, { method: 'POST', body: fd });
-          const data = await res.json();
-          
-          if (data.success) {
-            originalErrors = [...machineErrors];
-            dataCache[selectedDate] = [...machineErrors];
-            
-            const saveBtn = document.querySelector('.save-btn');
-            saveBtn.style.background = '#28a745';
-            saveBtn.textContent = '✓ СОХРАНЕНО';
-            setTimeout(() => {
-              saveBtn.style.background = '#1a2f40';
-              saveBtn.textContent = 'Сохранить';
-            }, 2000);
-          }
-        } catch (e) {
-          alert('Ошибка при сохранении');
-        }
-        hideLoader();
-      };
-
-      // ===== АНАЛИТИКА (ИСПРАВЛЕНО) =====
-      window.toggleCharts = async () => {
-        const btnText = analysisBtn.querySelector('.btn-text');
-        
-        if (isAnalysisOpen) {
-          // Скрываем
-          chartsContainer.style.display = 'none';
-          statsContainer.style.display = 'none';
-          tableContainer.style.display = 'none';
-          yearlyContainer.style.display = 'none';
-          isAnalysisOpen = false;
-          btnText.textContent = 'АНАЛИЗ';
-        } else {
-          // Показываем с загрузкой
-          analysisBtn.classList.add('loading');
-          btnText.textContent = 'ЗАГРУЗКА...';
-          
-          await loadAnalytics();
-          
-          chartsContainer.style.display = 'grid';
-          statsContainer.style.display = 'grid';
-          tableContainer.style.display = 'block';
-          yearlyContainer.style.display = 'block';
-          
-          // Добавляем классы для анимации
+        chartWrappers.forEach((wrapper, index) => {
           setTimeout(() => {
-            chartsContainer.classList.add('loaded');
-            statsContainer.classList.add('loaded');
-            tableContainer.classList.add('loaded');
-            yearlyContainer.classList.add('loaded');
-            
-            document.querySelectorAll('.chart-wrapper, .stat-card, .data-table').forEach(el => {
-              el.classList.add('loaded');
-            });
-          }, 50);
-          
-          isAnalysisOpen = true;
-          analysisBtn.classList.remove('loading');
-          btnText.textContent = 'СКРЫТЬ АНАЛИЗ';
-        }
-      };
+            wrapper.classList.add('loaded');
+          }, index * 200);
+        });
+        
+        statCards.forEach((card, index) => {
+          setTimeout(() => {
+            card.classList.add('loaded');
+          }, index * 200);
+        });
+        
+        setTimeout(() => {
+          dataTable.classList.add('loaded');
+        }, 400);
+      }, 50);
+    }
 
-      async function loadAnalytics() {
-        if (analyticsLoaded) return;
-        
-        // Загружаем Chart.js если еще не загружен
-        if (typeof Chart === 'undefined') {
-          await new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = resolve;
-            document.head.appendChild(script);
-          });
-        }
-        
-        // Загружаем данные для таблицы
-        try {
-          const d = new Date(selectedDate);
-          const sheetName = getSheetNameFromDate(d);
-          const tableData = await loadTableDataFromSheets(sheetName);
-          if (tableData && tableData.length > 0) {
-            populateTable(tableData);
-            calculateMonthlyTotals(tableData);
-          } else {
-            populateDemoTable();
+    async function loadAnalyticsData() {
+      if (analyticsLoaded && isAnalysisOpen) {
+        showAnalyticsElements();
+        return;
+      }
+      
+      updateAnalysisButtonState('loading');
+      
+      try {
+        if (!analyticsLoaded) {
+          // Загружаем данные для таблицы, если их нет
+          if (!dataCache[selectedDate]?.tableData || dataCache[selectedDate].tableData.length === 0) {
+            await loadTableData();
           }
-        } catch (error) {
-          console.warn('Using demo data:', error);
-          populateDemoTable();
+          
+          // Загружаем данные для годового сравнения
+          await loadYearlyComparisonData();
+          
+          // Создаем графики
+          createCharts();
+          updateStats();
         }
-        
-        // Создаем графики
-        createCharts();
-        createYearlyChart();
-        updateStats();
         
         analyticsLoaded = true;
-        chartsInitialized = true;
+        updateAnalysisButtonState('success');
+        showAnalyticsElements();
+      } catch (error) {
+        console.error('Ошибка при загрузке аналитических данных:', error);
+        analyticsLoaded = true;
+        updateAnalysisButtonState('pulse');
+        showAnalyticsElements();
       }
+    }
 
-      async function loadTableDataFromSheets(sheetName) {
-        try {
-          await ensureSheetsAPI();
-          if (!window.gapi?.client?.sheets) return [];
-          
-          const resp = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SHEETS_CONFIG.spreadsheetId,
-            range: `'${sheetName}'!B4:BF34`,
-            valueRenderOption: 'FORMATTED_VALUE'
-          });
-          
-          const errorIndices = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56];
-          const rows = resp.result.values || [];
-          const result = [];
-          
-          rows.forEach(row => {
-            if (!row[0]) return;
-            const dayMatch = String(row[0]).match(/^(\d+)/);
-            if (!dayMatch) return;
-            
-            const errors = [];
-            for (let idx of errorIndices) {
-              errors.push(Math.ceil(Number(row[idx])) || 0);
-            }
-            
-            result.push({
-              day: parseInt(dayMatch[1]),
-              errors: errors
-            });
-          });
-          
-          return result.sort((a, b) => a.day - b.day);
-        } catch {
-          return [];
+    async function toggleCharts() {
+      if (isAnalysisOpen) {
+        hideAnalyticsElements();
+        isAnalysisOpen = false;
+        updateAnalysisButtonState('default');
+      } else {
+        updateAnalysisButtonState('pulse');
+        isAnalysisOpen = true;
+        await loadAnalyticsData();
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('totalErrors').textContent = monthlyErrors;
+      document.getElementById('totalFPS').textContent = Math.ceil(monthlyFPS);
+    }
+
+    function calculateMonthlyErrors() {
+      const monthlyErrors = Array(14).fill(0);
+      const tableRows = document.querySelectorAll('#tableBody tr');
+      
+      tableRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        for (let i = 1; i < cells.length; i++) {
+          const errorCount = parseInt(cells[i].textContent) || 0;
+          monthlyErrors[i - 1] += errorCount;
         }
-      }
+      });
+      
+      return monthlyErrors;
+    }
 
-      function populateTable(tableData) {
-        const tbody = document.getElementById('tableBody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
-        
-        if (!tableData || tableData.length === 0) {
-          populateDemoTable();
+    async function loadTableData() {
+      try {
+        if (dataCache[selectedDate]?.tableData && dataCache[selectedDate].tableData.length > 0) {
+          populateTable(dataCache[selectedDate].tableData);
           return;
         }
         
-        tableData.forEach(row => {
-          const tr = document.createElement('tr');
-          
-          const tdDay = document.createElement('td');
-          tdDay.textContent = row.day;
-          tdDay.style.fontWeight = 'bold';
-          tr.appendChild(tdDay);
-          
-          row.errors.forEach(err => {
-            const td = document.createElement('td');
-            if (err !== 0) {
-              td.textContent = err;
-              td.className = 'non-zero';
+        if (window.gapi?.client?.sheets) {
+          const dateObj = new Date(selectedDate);
+          const sheetName = getSheetNameFromDate(dateObj);
+          const tableData = await loadTableDataFromSheets(sheetName);
+          if (tableData.length > 0) {
+            populateTable(tableData);
+            if (dataCache[selectedDate]) {
+              dataCache[selectedDate].tableData = tableData;
             }
-            tr.appendChild(td);
-          });
-          
-          tbody.appendChild(tr);
-        });
-      }
-
-      function populateDemoTable() {
-        const tbody = document.getElementById('tableBody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
-        
-        for (let day = 1; day <= 31; day++) {
-          const tr = document.createElement('tr');
-          
-          const tdDay = document.createElement('td');
-          tdDay.textContent = day;
-          tdDay.style.fontWeight = 'bold';
-          tr.appendChild(tdDay);
-          
-          for (let i = 0; i < 14; i++) {
-            const td = document.createElement('td');
-            const val = Math.floor(Math.random() * 10);
-            if (val !== 0) {
-              td.textContent = val;
-              td.className = 'non-zero';
-            }
-            tr.appendChild(td);
+            return;
           }
-          
-          tbody.appendChild(tr);
+        }
+        
+        // Если не удалось загрузить через Sheets, пробуем через Apps Script
+        const response = await fetch(`${BACKEND_URL}?date=${encodeURIComponent(selectedDate)}&table=true`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        
+        if (!response.ok) throw new Error('Ошибка сети');
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Неверный формат ответа');
+        }
+        
+        if (data.tableData && data.tableData.length > 0) {
+          populateTable(data.tableData);
+          if (dataCache[selectedDate]) {
+            dataCache[selectedDate].tableData = data.tableData;
+          }
+        } else {
+          // Показываем пустую таблицу, а не демо-данные
+          const tableBody = document.getElementById('tableBody');
+          if (tableBody) {
+            tableBody.innerHTML = '';
+          }
+        }
+        
+        if (data.chartData) {
+          machineFPS = data.chartData.fps || Array(14).fill(0);
+        }
+        
+        if (data.totalStats) {
+          monthlyErrors = data.totalStats.errors || 0;
+          monthlyFPS = data.totalStats.fps || 0;
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке данных таблицы:', error);
+        // Показываем пустую таблицу при ошибке
+        const tableBody = document.getElementById('tableBody');
+        if (tableBody) {
+          tableBody.innerHTML = '';
         }
       }
+    }
 
-      function calculateMonthlyTotals(tableData) {
-        let totalErrors = 0;
-        
-        tableData.forEach(row => {
-          row.errors.forEach(err => {
-            totalErrors += err;
-          });
-        });
-        
-        monthlyErrors = totalErrors;
-        monthlyFPS = Math.floor(totalErrors * 4.5) || 1200;
+    function populateTable(tableData) {
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+      
+      if (!tableData || tableData.length === 0) {
+        // Показываем пустую таблицу, если нет данных
+        return;
       }
-
-      function updateStats() {
-        const totalErrorsEl = document.getElementById('totalErrors');
-        const totalFPSEl = document.getElementById('totalFPS');
-        if (totalErrorsEl) totalErrorsEl.textContent = monthlyErrors;
-        if (totalFPSEl) totalFPSEl.textContent = monthlyFPS;
-      }
-
-      function createCharts() {
-        // Уничтожаем старые графики
-        if (errorsChart) errorsChart.destroy();
-        if (fpsChart) fpsChart.destroy();
+      
+      tableData.forEach(row => {
+        if (!row.day && row.errors.every(error => error === 0)) return;
         
-        const errorsCtx = document.getElementById('errorsChart')?.getContext('2d');
-        const fpsCtx = document.getElementById('fpsChart')?.getContext('2d');
+        const tr = document.createElement('tr');
+        const dayCell = document.createElement('td');
+        dayCell.textContent = row.day;
+        dayCell.style.fontWeight = 'bold';
+        tr.appendChild(dayCell);
         
-        if (!errorsCtx || !fpsCtx) return;
-        
-        // Получаем данные из таблицы
-        const tableData = getTableData();
-        
-        const errorsByMachine = Array(14).fill(0);
-        tableData.forEach(row => {
-          if (row.errors) {
-            row.errors.forEach((err, idx) => {
-              errorsByMachine[idx] += err;
-            });
+        row.errors.forEach(error => {
+          const errorCell = document.createElement('td');
+          if (error !== 0) {
+            errorCell.textContent = error;
+            errorCell.className = 'non-zero';
           }
+          tr.appendChild(errorCell);
         });
         
-        const fpsData = errorsByMachine.map(e => Math.floor(e * 5) || Math.floor(Math.random() * 50 + 20));
-        
-        errorsChart = new Chart(errorsCtx, {
-          type: 'bar',
-          data: {
-            labels: Array(14).fill(0).map((_, i) => i + 1),
-            datasets: [{
-              label: 'Ошибки',
-              data: errorsByMachine,
-              backgroundColor: 'rgba(220, 20, 60, 0.8)',
-              borderColor: 'rgba(220, 20, 60, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7
-            }]
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function createCharts() {
+      const machineNumbers = Array.from({length: 14}, (_, i) => `${i + 1}`);
+      
+      if (errorsChart) errorsChart.destroy();
+      if (fpsChart) fpsChart.destroy();
+      
+      const monthlyErrorsData = calculateMonthlyErrors();
+      
+      const errorsCtx = document.getElementById('errorsChart').getContext('2d');
+      errorsChart = new Chart(errorsCtx, {
+        type: 'bar',
+        data: {
+          labels: machineNumbers,
+          datasets: [{
+            data: monthlyErrorsData,
+            backgroundColor: 'rgba(220, 20, 60, 0.8)',
+            borderColor: 'rgba(220, 20, 60, 1)',
+            borderWidth: 1,
+            borderRadius: 5,
+            barPercentage: 0.7,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+            x: { grid: { display: false } }
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { 
-                beginAtZero: true, 
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }, 
-                ticks: { display: false } 
-              },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-        
-        fpsChart = new Chart(fpsCtx, {
-          type: 'bar',
-          data: {
-            labels: Array(14).fill(0).map((_, i) => i + 1),
-            datasets: [{
-              label: 'FPS',
-              data: fpsData,
-              backgroundColor: 'rgba(26, 47, 64, 0.8)',
-              borderColor: 'rgba(26, 47, 64, 1)',
-              borderWidth: 1,
-              borderRadius: 5,
-              barPercentage: 0.7
-            }]
+          animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
+      });
+      
+      const fpsCtx = document.getElementById('fpsChart').getContext('2d');
+      fpsChart = new Chart(fpsCtx, {
+        type: 'bar',
+        data: {
+          labels: machineNumbers,
+          datasets: [{
+            data: machineFPS,
+            backgroundColor: 'rgba(26, 47, 64, 0.8)',
+            borderColor: 'rgba(26, 47, 64, 1)',
+            borderWidth: 1,
+            borderRadius: 5,
+            barPercentage: 0.7,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' }, ticks: { display: false } },
+            x: { grid: { display: false } }
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { 
-                beginAtZero: true, 
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }, 
-                ticks: { display: false } 
-              },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-      }
+          animation: { duration: 1000, easing: 'easeOutQuart' }
+        }
+      });
+    }
 
-      function getTableData() {
-        const rows = document.querySelectorAll('#tableBody tr');
-        const result = [];
+    async function loadYearlyComparisonData() {
+      try {
+        // Проверяем кэш
+        const cacheKey = 'yearly_' + new Date().getFullYear();
+        if (yearlyDataCache[cacheKey]) {
+          updateYearlyChart(yearlyDataCache[cacheKey]);
+          return yearlyDataCache[cacheKey];
+        }
         
-        rows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          if (cells.length < 2) return;
-          
-          const day = parseInt(cells[0]?.textContent) || 0;
-          const errors = [];
-          
-          for (let i = 1; i < cells.length; i++) {
-            errors.push(parseInt(cells[i]?.textContent) || 0);
-          }
-          
-          result.push({ day, errors });
+        // Загружаем данные с сервера
+        const response = await fetch(`${BACKEND_URL}?yearlyComparison=true`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
         });
         
-        return result;
+        if (!response.ok) throw new Error('Ошибка сети');
+        
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Неверный формат ответа');
+        }
+        
+        // Проверяем, что данные не пустые
+        if (data && data.years && data.months && data.data) {
+          yearlyDataCache[cacheKey] = data;
+          updateYearlyChart(data);
+          return data;
+        } else {
+          // Если данные пустые, показываем пустой график
+          updateYearlyChart(null);
+          return null;
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке данных сравнения:', error);
+        // Показываем пустой график при ошибке
+        updateYearlyChart(null);
+        return null;
       }
-
-      function createYearlyChart() {
-        const ctx = document.getElementById('yearlyComparisonChart')?.getContext('2d');
-        if (!ctx) return;
-        
-        if (yearlyComparisonChart) yearlyComparisonChart.destroy();
-        
-        const currentYear = new Date().getFullYear();
-        const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-        
-        // Генерируем демо-данные
-        const lastYearData = months.map(() => Math.floor(Math.random() * 150 + 50));
-        const thisYearData = months.map(() => Math.floor(Math.random() * 150 + 50));
-        
-        yearlyComparisonChart = new Chart(ctx, {
+    }
+    
+    function updateYearlyChart(yearlyData) {
+      const yearlyComparisonCtx = document.getElementById('yearlyComparisonChart');
+      if (!yearlyComparisonCtx) return;
+      
+      yearlyComparisonCtx.style.width = '100%';
+      yearlyComparisonCtx.style.height = '100%';
+      
+      if (yearlyComparisonChart) yearlyComparisonChart.destroy();
+      
+      if (!yearlyData || !yearlyData.years || !yearlyData.months || !yearlyData.data) {
+        // Показываем пустой график с сообщением
+        yearlyComparisonChart = new Chart(yearlyComparisonCtx, {
           type: 'line',
           data: {
-            labels: months,
-            datasets: [
-              { 
-                label: String(currentYear - 1), 
-                data: lastYearData, 
-                borderColor: '#dc143c', 
-                backgroundColor: 'transparent', 
-                borderWidth: 2, 
-                tension: 0.4,
-                pointBackgroundColor: '#dc143c'
-              },
-              { 
-                label: String(currentYear), 
-                data: thisYearData, 
-                borderColor: '#1a2f40', 
-                backgroundColor: 'transparent', 
-                borderWidth: 2, 
-                tension: 0.4,
-                pointBackgroundColor: '#1a2f40'
-              }
-            ]
+            labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+            datasets: []
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-              legend: { 
-                position: 'top',
-                labels: { usePointStyle: true }
-              } 
-            },
-            scales: { 
-              y: { 
-                beginAtZero: true,
-                grid: { color: 'rgba(0, 0, 0, 0.05)' }
-              } 
+            plugins: {
+              legend: { position: 'top' },
+              title: {
+                display: true,
+                text: 'Нет данных для отображения'
+              }
             }
           }
         });
+        return;
       }
-
-      function updateCharts() {
-        if (errorsChart) {
-          const tableData = getTableData();
-          const errorsByMachine = Array(14).fill(0);
-          tableData.forEach(row => {
-            if (row.errors) {
-              row.errors.forEach((err, idx) => {
-                errorsByMachine[idx] += err;
-              });
+      
+      const datasets = yearlyData.years.map((year, index) => {
+        const hue = index * 60 % 360;
+        const dataWithNulls = (yearlyData.data[year] || Array(12).fill(null)).map(value => 
+          value === 0 ? null : value
+        );
+        
+        return {
+          label: year.toString(),
+          data: dataWithNulls,
+          borderColor: `hsl(${hue}, 70%, 50%)`,
+          backgroundColor: `hsla(${hue}, 70%, 50%, 0.2)`,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          spanGaps: false
+        };
+      });
+      
+      yearlyComparisonChart = new Chart(yearlyComparisonCtx, {
+        type: 'line',
+        data: { 
+          labels: yearlyData.months || ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'], 
+          datasets: datasets 
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { bottom: 30 } },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.raw === null ? 'Нет данных' : ` ${context.raw}`;
+                }
+              }
             }
-          });
-          errorsChart.data.datasets[0].data = errorsByMachine;
-          errorsChart.update();
-        }
-        
-        if (fpsChart) {
-          const tableData = getTableData();
-          const errorsByMachine = Array(14).fill(0);
-          tableData.forEach(row => {
-            if (row.errors) {
-              row.errors.forEach((err, idx) => {
-                errorsByMachine[idx] += err;
-              });
+          },
+          scales: {
+            x: { ticks: { padding: 10, maxRotation: 45, autoSkip: true } },
+            y: { 
+              beginAtZero: true,
+              ticks: { callback: function(value) { return value === 0 ? '' : value; } }
             }
-          });
-          fpsChart.data.datasets[0].data = errorsByMachine.map(e => Math.floor(e * 5) || Math.floor(Math.random() * 50 + 20));
-          fpsChart.update();
-        }
-      }
-
-      // ===== ИНИЦИАЛИЗАЦИЯ =====
-      window.onload = function() {
-        const saved = localStorage.getItem('userLoggedIn') === 'true' && localStorage.getItem('userEmail');
-        
-        if (saved) {
-          currentUser = {
-            email: localStorage.getItem('userEmail'),
-            name: localStorage.getItem('userName'),
-            picture: localStorage.getItem('userPic')
-          };
-          loginSection.style.display = 'none';
-          mainContent.style.display = 'block';
-          updateUserAvatar(currentUser);
-          generateMachineCells();
-          if (dateInput) dateInput.value = selectedDate;
-          loadDataForDate(selectedDate);
-          loadFontsAsync();
-          
-          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-        } else {
-          loginSection.style.display = 'flex';
-          setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
-        }
-        
-        if (google?.accounts?.id) {
-          google.accounts.id.initialize({
-            client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
-            callback: handleCredentialResponse
-          });
-          google.accounts.id.renderButton(document.querySelector('.g_id_signin'), {
-            type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', logo_alignment: 'left'
-          });
-        }
-      };
-
-      if (dateInput) {
-        dateInput.addEventListener('change', (e) => {
-          const hasUnsaved = machineErrors.some((v,i) => v !== originalErrors[i]);
-          if (hasUnsaved && !confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
-            e.target.value = selectedDate;
-            return;
+          },
+          elements: {
+            point: {
+              radius: function(context) { return context.raw === null ? 0 : 3; },
+              hoverRadius: function(context) { return context.raw === null ? 0 : 5; }
+            }
           }
-          
-          selectedDate = e.target.value;
-          analyticsLoaded = false;
-          chartsInitialized = false;
-          isAnalysisOpen = false;
-          
-          if (analysisBtn) {
-            analysisBtn.querySelector('.btn-text').textContent = 'АНАЛИЗ';
-          }
-          
-          // Скрываем аналитику
-          if (chartsContainer) chartsContainer.style.display = 'none';
-          if (statsContainer) statsContainer.style.display = 'none';
-          if (tableContainer) tableContainer.style.display = 'none';
-          if (yearlyContainer) yearlyContainer.style.display = 'none';
-          
-          loadDataForDate(selectedDate);
-        });
-      }
-
-      window.addEventListener('beforeunload', (e) => {
-        if (machineErrors.some((v,i) => v !== originalErrors[i])) {
-          e.preventDefault();
-          e.returnValue = 'У вас есть несохраненные изменения';
-          return e.returnValue;
         }
       });
-    })();
+    }
+    
+    function updateYearlyComparisonChart() {
+      if (yearlyComparisonChart) {
+        yearlyComparisonChart.data.datasets.forEach(dataset => {
+          dataset.data = dataset.data.map(value => value === 0 ? null : value);
+        });
+        yearlyComparisonChart.update();
+      }
+    }
+    
+    function updateCharts() {
+      if (errorsChart) {
+        errorsChart.data.datasets[0].data = calculateMonthlyErrors();
+        errorsChart.update();
+      }
+      
+      if (fpsChart) {
+        fpsChart.data.datasets[0].data = machineFPS;
+        fpsChart.update();
+      }
+    }
+    
+    // СОХРАНЕНИЕ ДАННЫХ (всегда через Apps Script)
+    async function saveData() {
+      const now = Date.now();
+      if (now - lastSaveTime < SAVE_DEBOUNCE_TIME) {
+        return;
+      }
+      lastSaveTime = now;
+      
+      showLoader();
+      
+      try {
+        const changes = machineErrors.map((current, index) => current - originalErrors[index]);
+        const hasChanges = changes.some(change => change !== 0);
+        
+        if (!hasChanges) {
+          hideLoader();
+          return;
+        }
+        
+        const formData = new URLSearchParams();
+        formData.append('date', selectedDate);
+        formData.append('errors', JSON.stringify(changes));
+        
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+        
+        const text = await response.text();
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Неверный формат ответа');
+        }
+        
+        if (result.success) {
+          originalErrors = [...machineErrors];
+          
+          if (dataCache[selectedDate]) {
+            dataCache[selectedDate].errors = [...machineErrors];
+          }
+          
+          forceDisplayUpdate();
+          
+          if (analyticsLoaded && isAnalysisOpen) {
+            if (errorsChart && fpsChart) updateCharts();
+            await loadTableData();
+            updateStats();
+          }
+          
+          showSaveNotification();
+          
+        } else {
+          throw new Error(result.error || 'Ошибка при сохранении');
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при сохранении: ' + error.message);
+      } finally {
+        hideLoader();
+      }
+    }
+    
+    function showSaveNotification() {
+      const saveBtn = document.querySelector('.save-btn');
+      const originalText = saveBtn.textContent;
+      
+      saveBtn.textContent = '✓ СОХРАНЕНО';
+      saveBtn.style.background = '#28a745';
+      
+      setTimeout(() => {
+        saveBtn.textContent = originalText;
+        saveBtn.style.background = '#1a2f40';
+      }, 2000);
+    }
+    
+    document.getElementById('date').addEventListener('change', function(e) {
+      const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
+      
+      if (hasUnsavedChanges) {
+        if (!confirm('У вас есть несохраненные изменения. Перейти к другой дате без сохранения?')) {
+          this.value = selectedDate;
+          return;
+        }
+      }
+      
+      selectedDate = e.target.value;
+      analyticsLoaded = false;
+      isAnalysisOpen = false;
+      updateAnalysisButtonState('default');
+      hideAnalyticsElements();
+      loadDataForDate(selectedDate);
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+      const hasUnsavedChanges = machineErrors.some((current, index) => current !== originalErrors[index]);
+      
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите уйти?';
+        return e.returnValue;
+      }
+    });
+
+    window.addEventListener('error', function(e) {
+      console.error('Global error:', e.error);
+    });
   </script>
 </body>
 </html>
