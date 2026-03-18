@@ -13,7 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
+        /* Все ваши стили остаются без изменений */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
@@ -1764,7 +1764,7 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     
     <script>
-        // ===== КОНСТАНТЫ АВТОРИЗАЦИИ (из второго примера) =====
+        // ===== КОНСТАНТЫ АВТОРИЗАЦИИ =====
         const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -1772,8 +1772,13 @@
         // !!! ВАЖНО: ЭТА ССЫЛКА ДОЛЖНА БЫТЬ В ТАБЛИЦЕ АВТОРИЗАЦИИ !!!
         const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
         
-        // ОСНОВНОЙ URL BACKEND
+        // ОСНОВНЫЕ КОНСТАНТЫ ДЛЯ РАБОТЫ С ТАБЛИЦЕЙ (ПРЯМОЕ ЧТЕНИЕ)
+        const SPREADSHEET_ID = '1yq8d4ztXsgjGZYlLBjTQcQCV5tVTof1OLoU0ca0uMxA';
+        const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0'; // Используем тот же API ключ
+        
+        // URL для записи через Apps Script (только для записи)
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
+        
         const CARDS_PER_PAGE = 6;
 
         // Переменные состояния
@@ -1827,7 +1832,20 @@
             loader.classList.remove('active');
         }
 
-        // ===== ФУНКЦИИ АВТОРИЗАЦИИ (из второго примера) =====
+        // ===== ФУНКЦИИ ДЛЯ РАБОТЫ ШАПКИ =====
+        function toggleSiteNameDropdown() {
+            const dropdown = document.getElementById("siteNameDropdown");
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+            
+            const menu = document.getElementById("userDropdown");
+            if (menu.style.display === "block") {
+                menu.style.display = "none";
+            }
+            
+            event.stopPropagation();
+        }
+
+        // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
         function loadSheetsAPI() {
             return new Promise((resolve, reject) => {
                 gapi.load('client', {
@@ -2017,20 +2035,280 @@
             }
         }
 
-        // ===== ФУНКЦИИ ДЛЯ РАБОТЫ ШАПКИ =====
-        function toggleSiteNameDropdown() {
-            const dropdown = document.getElementById("siteNameDropdown");
-            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-            
-            const menu = document.getElementById("userDropdown");
-            if (menu.style.display === "block") {
-                menu.style.display = "none";
+        // ===== НОВЫЕ ФУНКЦИИ ДЛЯ ПРЯМОГО ЧТЕНИЯ ИЗ GOOGLE SHEETS =====
+        
+        /**
+         * Инициализация Sheets API для чтения
+         */
+        async function initSheetsAPI() {
+            try {
+                await gapi.client.init({
+                    apiKey: API_KEY,
+                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+                });
+                console.log('Sheets API инициализирован');
+                return true;
+            } catch (error) {
+                console.error('Ошибка инициализации Sheets API:', error);
+                return false;
             }
-            
-            event.stopPropagation();
         }
 
-        // ===== ОСНОВНЫЕ ФУНКЦИИ ПРИЛОЖЕНИЯ =====
+        /**
+         * Получение данных из Google Sheets напрямую
+         */
+        async function fetchSheetData(range) {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: range,
+                    valueRenderOption: 'FORMATTED_VALUE'
+                });
+                return response.result.values || [];
+            } catch (error) {
+                console.error('Ошибка чтения из Sheets:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Получение списка задач (каталог) напрямую из Sheets
+         */
+        async function loadTasksDirectly() {
+            try {
+                // Читаем лист A (первый лист) - задачи
+                // Предполагаем, что данные начинаются со 2 строки (1 - заголовки)
+                const data = await fetchSheetData('A!A2:H100');
+                
+                if (!data || data.length === 0) {
+                    return [];
+                }
+                
+                const tasks = data.map(row => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const taskNumber = row[0] || '';
+                    const taskName = row[1] || '';
+                    const lastDateStr = row[2] || '';
+                    const frequency = parseFloat(row[4]) || 0;
+                    const driveLink = row[0] || ''; // Ссылка в колонке A
+                    
+                    // Парсим дату последнего выполнения
+                    let lastDate = null;
+                    if (lastDateStr) {
+                        const parts = lastDateStr.split('.');
+                        if (parts.length === 3) {
+                            lastDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                    }
+                    
+                    let daysPassed = 0;
+                    let daysLeft = 0;
+                    let nextDate = '';
+                    
+                    if (lastDate && !isNaN(lastDate.getTime())) {
+                        // Расчет прошедших дней
+                        daysPassed = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+                        
+                        // Расчет оставшихся дней
+                        daysLeft = frequency - daysPassed;
+                        
+                        // Расчет даты следующего выполнения
+                        const nextDateObj = new Date(lastDate);
+                        nextDateObj.setDate(nextDateObj.getDate() + frequency);
+                        
+                        const day = nextDateObj.getDate().toString().padStart(2, '0');
+                        const month = (nextDateObj.getMonth() + 1).toString().padStart(2, '0');
+                        const year = nextDateObj.getFullYear();
+                        nextDate = `${day}.${month}.${year}`;
+                    }
+                    
+                    // Форматируем последнюю дату
+                    const formattedLastDate = lastDate && !isNaN(lastDate.getTime()) ? 
+                        `${lastDate.getDate().toString().padStart(2, '0')}.${(lastDate.getMonth() + 1).toString().padStart(2, '0')}.${lastDate.getFullYear()}` : '';
+                    
+                    return {
+                        id: taskNumber,
+                        task: taskName,
+                        lastDate: formattedLastDate,
+                        daysPassed: daysPassed,
+                        frequency: frequency,
+                        daysLeft: daysLeft,
+                        nextDate: nextDate,
+                        driveLink: driveLink
+                    };
+                }).filter(task => task.id && task.task); // Фильтруем пустые строки
+                
+                return tasks;
+                
+            } catch (error) {
+                console.error('Ошибка загрузки задач напрямую:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Получение журнала задач напрямую из Sheets
+         */
+        async function loadJournalDirectly() {
+            try {
+                // Читаем лист B (второй лист) - журнал
+                // Предполагаем, что данные начинаются со 2 строки (1 - заголовки)
+                const data = await fetchSheetData('B!A2:F500');
+                
+                if (!data || data.length === 0) {
+                    return [];
+                }
+                
+                const journal = data.map((row, index) => {
+                    const taskNumber = row[0] || '';
+                    const taskName = row[1] || '';
+                    const createdDateStr = row[2] || '';
+                    const completedDateStr = row[3] || '';
+                    const executor = row[4] || '';
+                    const driveLink = row[0] || ''; // Ссылка в колонке A
+                    
+                    // Функция парсинга даты из формата DD.MM.YYYY
+                    const parseDate = (dateStr) => {
+                        if (!dateStr) return null;
+                        const parts = dateStr.split('.');
+                        if (parts.length === 3) {
+                            return new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                        return null;
+                    };
+                    
+                    const createdDate = parseDate(createdDateStr);
+                    const completedDate = parseDate(completedDateStr);
+                    
+                    const isCompleted = completedDate && !isNaN(completedDate.getTime()) && executor && executor.trim() !== '';
+                    
+                    // Форматируем даты обратно в строки для отображения
+                    const formatDate = (date) => {
+                        if (!date || isNaN(date.getTime())) return '';
+                        const day = date.getDate().toString().padStart(2, '0');
+                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const year = date.getFullYear();
+                        return `${day}.${month}.${year}`;
+                    };
+                    
+                    return {
+                        id: taskNumber,
+                        task: taskName,
+                        createdDate: formatDate(createdDate),
+                        completedDate: formatDate(completedDate),
+                        executor: executor || '',
+                        isCompleted: isCompleted,
+                        rowIndex: index + 2, // +2 потому что первая строка - заголовок, и индексы начинаются с 0
+                        driveLink: driveLink
+                    };
+                }).filter(item => item.id && item.task); // Фильтруем пустые строки
+                
+                // Сортируем: сначала невыполненные, потом выполненные
+                const pending = journal.filter(item => !item.isCompleted);
+                const completed = journal.filter(item => item.isCompleted);
+                
+                return [...pending, ...completed];
+                
+            } catch (error) {
+                console.error('Ошибка загрузки журнала напрямую:', error);
+                throw error;
+            }
+        }
+
+        // ===== ОСНОВНЫЕ ФУНКЦИИ ЗАГРУЗКИ ДАННЫХ =====
+        
+        async function loadTasks() {
+            try {
+                if (tasksData && !isInitialLoad) {
+                    renderTasksCards(tasksData);
+                    return;
+                }
+                
+                // Очищаем контейнер перед загрузкой
+                const tasksCards = document.getElementById('tasks-cards');
+                tasksCards.innerHTML = '';
+                
+                // Пытаемся загрузить напрямую из Sheets
+                try {
+                    tasksData = await loadTasksDirectly();
+                } catch (directError) {
+                    console.warn('Не удалось загрузить напрямую, пробуем через Apps Script:', directError);
+                    
+                    // Fallback на Apps Script
+                    tasksData = await makeRequest(`${BACKEND_URL}?action=getTasks`);
+                }
+                
+                // Рендерим карточки
+                renderTasksCards(tasksData);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки задач:', error);
+                const tasksCards = document.getElementById('tasks-cards');
+                tasksCards.innerHTML = `
+                    <div class="task-card error">
+                        Ошибка загрузки: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function loadJournal() {
+            try {
+                if (journalData && !isInitialLoad) {
+                    renderJournalCards(journalData);
+                    return;
+                }
+                
+                // Очищаем контейнер перед загрузкой
+                const journalCards = document.getElementById('journal-cards');
+                journalCards.innerHTML = '';
+                
+                // Пытаемся загрузить напрямую из Sheets
+                try {
+                    const journal = await loadJournalDirectly();
+                    
+                    // Сохраняем оригинальные данные
+                    originalJournalData = [...journal];
+                    journalData = [...journal];
+                    
+                    // Извлекаем уникальные даты выполнения
+                    uniqueDates = extractUniqueDatesFromJournal(journalData);
+                    
+                } catch (directError) {
+                    console.warn('Не удалось загрузить напрямую, пробуем через Apps Script:', directError);
+                    
+                    // Fallback на Apps Script
+                    const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
+                    
+                    // Сохраняем оригинальные данные
+                    originalJournalData = [...journal];
+                    journalData = [...journal];
+                    
+                    // Извлекаем уникальные даты выполнения
+                    uniqueDates = extractUniqueDatesFromJournal(journalData);
+                }
+                
+                // Рендерим карточки
+                renderJournalCards(journalData);
+                
+                // Обновляем счетчик при загрузке
+                updateCounterLabel();
+                
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                const journalCards = document.getElementById('journal-cards');
+                journalCards.innerHTML = `
+                    <div class="task-card error">
+                        Ошибка загрузки: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // ===== ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ =====
+        
         function convertGoogleDriveLink(driveLink) {
             if (!driveLink) return null;
             
@@ -2293,73 +2571,6 @@
                 dateInput.value = '';
             }
             filterJournalByDate('');
-        }
-
-        async function loadTasks() {
-            try {
-                if (tasksData && !isInitialLoad) {
-                    renderTasksCards(tasksData);
-                    return;
-                }
-                
-                // Очищаем контейнер перед загрузкой
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = '';
-                
-                const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
-                tasksData = tasks;
-                
-                // Сначала рендерим карточки
-                renderTasksCards(tasks);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки задач:', error);
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
-                // Уведомления отключены
-            }
-        }
-
-        async function loadJournal() {
-            try {
-                if (journalData && !isInitialLoad) {
-                    renderJournalCards(journalData);
-                    return;
-                }
-                
-                // Очищаем контейнер перед загрузкой
-                const journalCards = document.getElementById('journal-cards');
-                journalCards.innerHTML = '';
-                
-                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
-                
-                // Сохраняем оригинальные данные
-                originalJournalData = [...journal];
-                journalData = [...journal];
-                
-                // Извлекаем уникальные даты выполнения
-                uniqueDates = extractUniqueDatesFromJournal(journalData);
-                
-                // Сначала рендерим карточки
-                renderJournalCards(journalData);
-                
-                // Обновляем счетчик при загрузке
-                updateCounterLabel();
-                
-            } catch (error) {
-                console.error('Ошибка загрузки журнала:', error);
-                const journalCards = document.getElementById('journal-cards');
-                journalCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
-                // Уведомления отключены
-            }
         }
 
         async function completeTask(taskId, executor, rowIndex) {
@@ -2693,8 +2904,11 @@
             event.stopPropagation();
         }
 
-        function initializeApp() {
+        async function initializeApp() {
             console.log('Инициализация приложения после авторизации');
+            
+            // Инициализируем Sheets API для чтения
+            await initSheetsAPI();
             
             let lastTouchEnd = 0;
             
