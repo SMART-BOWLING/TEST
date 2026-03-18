@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SMB-LS-KH</title>
     
+    <!-- Preload и асинхронная загрузка -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
     <style>
@@ -62,7 +66,7 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        /* СТИЛИ АВТОРИЗАЦИИ */
+        /* СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ */
         .loading-screen {
             position: fixed;
             inset: 0;
@@ -77,6 +81,48 @@
         .loading-screen.fade-out {
             opacity: 0;
             pointer-events: none;
+        }
+
+        .loader-container {
+            position: fixed;
+            inset: 0;
+            background: #1f2937;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader-container.active {
+            display: flex;
+        }
+
+        .logo-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .glow-ring {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 100%;
+            background: conic-gradient(#dc143c, transparent 100%);
+            animation: spin 5s linear infinite;
+            filter: blur(20px);
+        }
+
+        .logo-wrapper img {
+            width: 120px;
+            z-index: 2;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(365deg); }
         }
 
         #login-section {
@@ -199,10 +245,9 @@
             background-color: #374151;
         }
 
-        /* Аватар пользователя */
         .user-avatar {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 2px solid white;
             background-color: #4a5568;
@@ -226,7 +271,7 @@
         }
 
         .user-avatar i {
-            font-size: 20px;
+            font-size: 18px;
             color: white;
         }
 
@@ -262,49 +307,6 @@
             margin-right: 10px;
             width: 20px;
             text-align: center;
-        }
-
-        /* АНИМАЦИЯ ЗАГРУЗКИ */
-        .loader-container {
-            position: fixed;
-            inset: 0;
-            background: #1f2937;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .loader-container.active {
-            display: flex;
-        }
-
-        .logo-wrapper {
-            position: relative;
-            width: 160px;
-            height: 160px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .glow-ring {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border-radius: 100%;
-            background: conic-gradient(#dc143c, transparent 100%);
-            animation: spin 5s linear infinite;
-            filter: blur(20px);
-        }
-
-        .loader-container img {
-            width: 120px;
-            z-index: 2;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(365deg); }
         }
 
         .container {
@@ -990,16 +992,6 @@
             margin: 0 10px;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(220, 20, 60, 0.2);
-            border-radius: 50%;
-            border-top-color: #dc143c;
-            animation: spin 1s ease-in-out infinite;
-        }
-
         /* iPhone-specific fixes */
         @supports (-webkit-touch-callout: none) {
             .date-filter-input {
@@ -1030,8 +1022,8 @@
             }
             
             .user-avatar {
-                width: 38px;
-                height: 38px;
+                width: 36px;
+                height: 36px;
             }
             
             .user-avatar i {
@@ -1090,7 +1082,6 @@
                 min-width: 36px;
             }
             
-            /* ОСНОВНОЙ ФИКС ДЛЯ iPhone - полная перестройка фильтра */
             .date-filter-container {
                 padding: 12px;
                 padding-left: calc(12px + env(safe-area-inset-left));
@@ -1147,7 +1138,6 @@
                 text-align: left;
             }
             
-            /* Мобильная версия календаря */
             .flatpickr-calendar {
                 max-width: calc(100vw - 40px) !important;
                 left: 50% !important;
@@ -1174,12 +1164,8 @@
             }
             
             .user-avatar {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .user-avatar i {
-                font-size: 17px;
+                width: 32px;
+                height: 32px;
             }
             
             .header-section {
@@ -1220,11 +1206,6 @@
                 font-size: 11px;
                 background: #cccccc;
                 border: 2px solid #cccccc;
-            }
-            
-            .menu-button {
-                width: 28px;
-                height: 20px;
             }
             
             .open-tasks-counter {
@@ -1272,11 +1253,6 @@
             
             .site-name {
                 font-size: 16px;
-            }
-            
-            .user-avatar {
-                width: 34px;
-                height: 34px;
             }
             
             .header-section {
@@ -1690,7 +1666,7 @@
                 </a>
             </div>
         </header>
-        
+
         <div class="container" id="main-container">
             <div class="header-section">
                 <div class="tabs">
@@ -1770,13 +1746,14 @@
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
         
-        // !!! ВАЖНО: ЭТА ССЫЛКА ДОЛЖНА БЫТЬ В ТАБЛИЦЕ АВТОРИЗАЦИИ !!!
+        // Текущий сайт для проверки прав
         const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
         
-        // ОСНОВНОЙ BACKEND
+        // Основной backend URL
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
         const CARDS_PER_PAGE = 6;
 
+        // Переменные состояния
         let currentUser = null;
         let tasksData = null;
         let journalData = null;
@@ -1795,22 +1772,20 @@
         // Переменная для календаря
         let datePicker = null;
 
-        let isInitialLoad = true;
-
         // Получаем элементы
         const loadingScreen = document.getElementById("loadingScreen");
         const loginSection = document.getElementById("login-section");
         const mainContent = document.getElementById("main-content");
         const loader = document.getElementById("loader");
 
-        // ===== ФУНКЦИИ ДЛЯ РАБОТЫ ШАПКИ =====
+        // ===== ФУНКЦИИ ДЛЯ ШАПКИ =====
         function toggleSiteNameDropdown() {
             const dropdown = document.getElementById("siteNameDropdown");
             dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
             
-            const menu = document.getElementById("userDropdown");
-            if (menu.style.display === "block") {
-                menu.style.display = "none";
+            const userDropdown = document.getElementById("userDropdown");
+            if (userDropdown.style.display === "block") {
+                userDropdown.style.display = "none";
             }
             
             event.stopPropagation();
@@ -1820,9 +1795,9 @@
             const menu = document.getElementById("userDropdown");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
             
-            const dropdown = document.getElementById("siteNameDropdown");
-            if (dropdown.style.display === "block") {
-                dropdown.style.display = "none";
+            const siteNameDropdown = document.getElementById("siteNameDropdown");
+            if (siteNameDropdown.style.display === "block") {
+                siteNameDropdown.style.display = "none";
             }
             
             event.stopPropagation();
@@ -1839,7 +1814,7 @@
 
         document.addEventListener('click', function(e) {
             const siteNameDropdown = document.getElementById('siteNameDropdown');
-            const userDropdown = document.getElementById("userDropdown");
+            const userDropdown = document.getElementById('userDropdown');
             
             if (!e.target.closest('.site-name') && siteNameDropdown.style.display === 'block') {
                 siteNameDropdown.style.display = 'none';
@@ -1982,16 +1957,16 @@
             }
         }
 
-        function loginUser(payload) {
+        function loginUser(user) {
             loginSection.style.display = 'none';
             mainContent.style.display = 'block';
             
-            updateUserAvatar(payload);
+            updateUserAvatar(user);
             
             localStorage.setItem('userLoggedIn', 'true');
-            localStorage.setItem('userEmail', payload.email.toLowerCase());
-            localStorage.setItem('userName', payload.name);
-            localStorage.setItem('userPic', payload.picture);
+            localStorage.setItem('userEmail', user.email.toLowerCase());
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userPic', user.picture);
             
             showLoading(false);
             
@@ -2000,7 +1975,7 @@
                 loadingScreen.classList.add('fade-out');
             }, 500);
             
-            // Инициализируем основное приложение
+            // Загружаем данные
             initializeApp();
         }
 
@@ -2050,13 +2025,70 @@
         }
 
         // ===== ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ =====
+        window.addEventListener('load', function() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+            const email = localStorage.getItem('userEmail');
+            const name = localStorage.getItem('userName');
+            const pic = localStorage.getItem('userPic');
+            
+            if (isLoggedIn && email) {
+                loginSection.style.display = 'none';
+                mainContent.style.display = 'block';
+                
+                currentUser = {
+                    email: email,
+                    name: name,
+                    picture: pic
+                };
+                
+                updateUserAvatar(currentUser);
+                showLoading(true);
+                
+                loadSheetsAPI()
+                    .then(() => gapi.client.init({
+                        apiKey: AUTH_API_KEY,
+                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+                    }))
+                    .then(() => checkEmailInSheet(email))
+                    .catch(() => {
+                        signOut();
+                    });
+            } else {
+                loginSection.style.display = 'flex';
+                mainContent.style.display = 'none';
+                
+                setTimeout(() => {
+                    loadingScreen.classList.add('fade-out');
+                }, 500);
+            }
+        });
+
+        window.onload = function() {
+            if (google && google.accounts && google.accounts.id) {
+                google.accounts.id.initialize({
+                    client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
+                    callback: handleCredentialResponse
+                });
+                
+                google.accounts.id.renderButton(
+                    document.querySelector('.g_id_signin'),
+                    { 
+                        type: 'standard', 
+                        shape: 'pill', 
+                        theme: 'outline', 
+                        text: 'signin_with', 
+                        size: 'large',
+                        logo_alignment: 'left'
+                    }
+                );
+            }
+        };
+
         function initializeApp() {
             console.log('Инициализация приложения после авторизации');
-            
-            // Показываем лоадер
             showLoader();
             
-            // Загружаем данные
+            // Загружаем данные и скрываем загрузчик только после полной отрисовки
             Promise.all([
                 loadJournal(),
                 loadTasks()
@@ -2068,42 +2100,21 @@
                 console.error('Ошибка загрузки:', error);
                 hideLoader();
             });
-            
+
             // Настраиваем обработчики событий
             setupEventListeners();
-            
-            // Запускаем автообновление
-            setInterval(() => {
-                const activeTab = document.querySelector('.tab-content.active');
-                if (activeTab.id === 'tab2') {
-                    loadTasks();
-                } else if (activeTab.id === 'tab1') {
-                    loadJournal();
-                }
-            }, 30000);
         }
 
         function setupEventListeners() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
             // Обработчик для открытия фильтра по дате
             document.getElementById('open-tasks-counter').addEventListener('click', toggleDateFilter);
             
             // Обработчик для кнопки сброса фильтра
             document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
             
-            // iPhone-specific: предотвращаем проблемы с вводом на iOS
-            const dateInput = document.getElementById('date-filter-input');
-            if (dateInput && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                dateInput.addEventListener('focus', function() {
-                    this.style.fontSize = '16px';
-                });
-                
-                dateInput.addEventListener('blur', function() {
-                    this.style.fontSize = '';
-                });
-            }
+            // Обработчики вкладок
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
             
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -2125,46 +2136,37 @@
                 });
             });
 
-            setTimeout(() => {
-                isInitialLoad = false;
-            }, 1000);
-            
-            // Обработчик выбора карточки
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.task-card')) {
-                    const card = e.target.closest('.task-card');
-                    
-                    if (e.target.tagName === 'BUTTON' || 
-                        e.target.tagName === 'SELECT' || 
-                        e.target.tagName === 'OPTION' ||
-                        e.target.tagName === 'A' ||
-                        e.target.tagName === 'I') {
-                        return;
-                    }
-                    
-                    document.querySelectorAll('.task-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    
-                    card.classList.add('selected');
-                }
-            });
-            
-            // Обработчик изменения select
-            document.addEventListener('change', function(e) {
-                if (e.target && e.target.classList.contains('executor-select')) {
-                    const card = e.target.closest('.task-card');
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !e.target.value || e.target.value === '';
-                    }
-                }
-            });
-        }
+            // iPhone-specific: предотвращаем проблемы с вводом на iOS
+            const dateInput = document.getElementById('date-filter-input');
+            if (dateInput && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                dateInput.addEventListener('focus', function() {
+                    this.style.fontSize = '16px';
+                });
+                
+                dateInput.addEventListener('blur', function() {
+                    this.style.fontSize = '';
+                });
+            }
 
-        // Функции для работы с данными
-        function showOperationLoading(message) {
-            showLoader();
+            // Обработка двойного касания
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // Обновление данных каждые 30 секунд
+            setInterval(() => {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab.id === 'tab2') {
+                    loadTasks();
+                } else if (activeTab.id === 'tab1') {
+                    loadJournal();
+                }
+            }, 30000);
         }
 
         function convertGoogleDriveLink(driveLink) {
@@ -2193,11 +2195,6 @@
             } else {
                 window.open(driveLink, '_blank');
             }
-        }
-
-        function showNotification(message, type = 'success') {
-            // Уведомления отключены
-            return;
         }
 
         async function makeRequest(url, options = {}) {
@@ -2336,14 +2333,6 @@
             });
         }
 
-        function countCompletedTasksByDate(date, journalData) {
-            if (!date || !journalData) return 0;
-            
-            return journalData.filter(task => {
-                return task.completedDate === date && task.isCompleted;
-            }).length;
-        }
-
         function countAllTasksByDate(date, journalData) {
             if (!date || !journalData) return 0;
             
@@ -2473,7 +2462,7 @@
         }
 
         async function completeTask(taskId, executor, rowIndex) {
-            showOperationLoading('');
+            showLoader();
             
             try {
                 const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
@@ -2746,15 +2735,11 @@
             const button = event.currentTarget;
             const card = button.closest('.task-card');
             
-            if (!card) {
-                return;
-            }
+            if (!card) return;
             
             const select = card.querySelector('.executor-select');
             
-            if (!select) {
-                return;
-            }
+            if (!select) return;
             
             if (!select.value || select.value === '' || select.value === 'Выберите исполнителя') {
                 return;
@@ -2764,74 +2749,17 @@
             event.stopPropagation();
         }
 
-        // Инициализация при загрузке страницы
-        window.addEventListener('load', function() {
-            const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-            const email = localStorage.getItem('userEmail');
-            const name = localStorage.getItem('userName');
-            const pic = localStorage.getItem('userPic');
-            
-            if (isLoggedIn && email) {
-                loginSection.style.display = 'none';
-                mainContent.style.display = 'block';
-                
-                currentUser = {
-                    email: email,
-                    name: name,
-                    picture: pic
-                };
-                
-                updateUserAvatar(currentUser);
-                showLoading(true);
-                
-                loadSheetsAPI()
-                    .then(() => gapi.client.init({
-                        apiKey: AUTH_API_KEY,
-                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-                    }))
-                    .then(() => checkEmailInSheet(email))
-                    .catch(() => {
-                        signOut();
-                    });
-            } else {
-                loginSection.style.display = 'flex';
-                mainContent.style.display = 'none';
-                
-                setTimeout(() => {
-                    loadingScreen.classList.add('fade-out');
-                }, 500);
-            }
+        let isInitialLoad = true;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Уже обработано в window.onload и window.addEventListener('load')
         });
 
-        window.onload = function() {
-            if (google && google.accounts && google.accounts.id) {
-                google.accounts.id.initialize({
-                    client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
-                    callback: handleCredentialResponse
-                });
-                
-                google.accounts.id.renderButton(
-                    document.querySelector('.g_id_signin'),
-                    { 
-                        type: 'standard', 
-                        shape: 'pill', 
-                        theme: 'outline', 
-                        text: 'signin_with', 
-                        size: 'large',
-                        logo_alignment: 'left'
-                    }
-                );
-            }
-        };
-
-        // Предотвращаем двойное нажатие
-        document.addEventListener('touchend', function(event) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
+        // Переопределяем функции пагинации
+        window.goToPage = goToPage;
+        window.changePage = changePage;
+        window.totalJournalPages = totalJournalPages;
+        window.totalTasksPages = totalTasksPages;
     </script>
 
     <!-- ИСПРАВЛЕНИЕ ДЛЯ КНОПОК -->
@@ -2840,8 +2768,6 @@
             'use strict';
             
             let lastTouchEnd = 0;
-            
-            document.removeEventListener('touchend', document.touchEndHandler, false);
             
             document.addEventListener('touchend', function(event) {
                 const target = event.target;
@@ -2855,11 +2781,10 @@
                                      target.closest('.executor-select') ||
                                      target.closest('.page-btn') ||
                                      target.closest('.tab-btn') ||
-                                     target.closest('.menu-button') ||
+                                     target.closest('.user-avatar') ||
                                      target.closest('.site-name') ||
                                      target.closest('.clear-filter-btn') ||
-                                     target.closest('#open-tasks-counter') ||
-                                     target.closest('.user-avatar');
+                                     target.closest('#open-tasks-counter');
                 
                 if (isInteractive) {
                     event.stopPropagation();
@@ -3014,7 +2939,7 @@
             
             const style = document.createElement('style');
             style.textContent = `
-                .schema-button, .submit-btn, .open-button, .executor-select, .user-avatar {
+                .schema-button, .submit-btn, .open-button, .executor-select {
                     position: relative;
                     z-index: 9999 !important;
                     cursor: pointer !important;
@@ -3027,14 +2952,14 @@
                     transform: none !important;
                 }
                 
-                button, a, select, .schema-button, .submit-btn, .open-button, .user-avatar {
+                button, a, select, .schema-button, .submit-btn, .open-button {
                     pointer-events: auto !important;
                     -webkit-user-select: none !important;
                     user-select: none !important;
                 }
                 
                 .schema-button:active, .submit-btn:active:not(:disabled), 
-                .open-button:active, .user-avatar:active {
+                .open-button:active {
                     opacity: 0.7;
                     transform: scale(0.98);
                 }
