@@ -8,14 +8,22 @@
     <!-- КРИТИЧЕСКИЕ СТИЛИ (минимальные для первого экрана) -->
     <style>
         /* Базовые стили для быстрого отображения */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body, html { 
             font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             background: #f4f6f9; 
             color: #1a2f40; 
             font-weight: 700;
             height: 100vh;
             overflow: hidden;
+            width: 100%;
+            position: fixed;
         }
         
         /* Критические стили шапки */
@@ -32,11 +40,49 @@
             right: 0;
             z-index: 1000;
             min-height: 65px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
-        .logo img { width: 40px; height: 40px; }
-        .site-name { flex: 1; text-align: center; font-size: 20px; font-weight: bold; color: white; }
-        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: #4a5568; }
+        .logo img { 
+            width: 40px; 
+            height: 40px; 
+            object-fit: cover;
+            transform: translateY(4px);
+        }
+        
+        .site-name { 
+            flex: 1; 
+            text-align: center; 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: white;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .user-avatar { 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            background: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .user-avatar i {
+            font-size: 18px;
+            color: white;
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         
         /* Контейнер для контента */
         .container { 
@@ -44,6 +90,7 @@
             height: 100vh; 
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            background: #f4f6f9;
         }
         
         /* Скелетон загрузки */
@@ -64,7 +111,229 @@
             margin: 10px 0;
         }
         
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes shimmer { 
+            0% { background-position: 200% 0; } 
+            100% { background-position: -200% 0; } 
+        }
+        
+        /* Минимальные стили для табов */
+        .header-section {
+            padding: 0 16px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 0;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 14px 12px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            color: #1a2f40;
+        }
+        
+        .tab-btn.active {
+            background: #dc143c;
+            color: white;
+            border-color: #dc143c;
+        }
+        
+        .open-tasks-counter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #1a2f40;
+            color: white;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 15px;
+            margin: 8px 0 16px;
+            cursor: pointer;
+        }
+        
+        .open-tasks-counter .count {
+            background: #dc143c;
+            padding: 6px 12px;
+            border-radius: 4px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        /* Экран загрузки */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: #1f2937;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .logo-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .glow-ring {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 100%;
+            background: conic-gradient(#dc143c, transparent 100%);
+            animation: spin 5s linear infinite;
+            filter: blur(20px);
+        }
+        
+        .logo-wrapper img {
+            width: 120px;
+            z-index: 2;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Стили авторизации */
+        #login-section {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: #f4f6f9;
+        }
+        
+        #login-container {
+            background: white;
+            padding: 30px 25px;
+            border-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        #login-container h2 {
+            color: #1e293b;
+            margin: 15px 0 5px;
+            font-size: 20px;
+            font-weight: 800;
+        }
+        
+        .login-subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+        
+        .login-icon {
+            width: 50px;
+            height: 50px;
+            background: #f1f5f9;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        .login-icon i {
+            font-size: 24px;
+            color: #dc143c;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(220,20,60,0.2);
+            border-radius: 50%;
+            border-top-color: #dc143c;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Выпадающие меню */
+        .site-name-dropdown, .user-dropdown {
+            display: none;
+            position: absolute;
+            background: #1f2937;
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 1001;
+            min-width: 150px;
+        }
+        
+        .site-name-dropdown {
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 25px;
+        }
+        
+        .user-dropdown {
+            top: 70px;
+            right: 20px;
+        }
+        
+        .site-name-dropdown a, .user-dropdown a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .site-name-dropdown a:hover, .user-dropdown a:hover {
+            background: #374151;
+        }
+        
+        .icon-space {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Адаптация для мобильных */
+        @media (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
     
     <!-- НЕКРИТИЧЕСКИЕ РЕСУРСЫ ЗАГРУЖАЕМ АСИНХРОННО -->
@@ -75,22 +344,16 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     
-    <!-- Основные стили (загружаются после критических) -->
+    <!-- Flatpickr стили (ленивая загрузка) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
     
     <noscript>
-        <!-- Fallback для браузеров без JS -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
     </noscript>
-    
-    <style>
-        /* Остальные стили вашего приложения (будут добавлены позже) */
-        .full-styles-loaded .task-card { /* стили карточек */ }
-    </style>
 </head>
 <body>
-    <!-- ЭКРАН ЗАГРУЗКИ (минималистичный) -->
+    <!-- ЭКРАН ЗАГРУЗКИ -->
     <div class="loading-screen" id="loadingScreen">
         <div class="logo-wrapper">
             <div class="glow-ring"></div>
@@ -99,8 +362,28 @@
     </div>
 
     <!-- СЕКЦИЯ АВТОРИЗАЦИИ -->
-    <div id="login-section" style="display: none;">
-        <!-- ... ваш код авторизации ... -->
+    <div id="login-section">
+        <div id="login-container">
+            <div class="login-icon">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h2>LUCKY STRIKE KH</h2>
+            <div class="login-subtitle">Войдите для доступа</div>
+            <div id="g_id_onload" 
+                 data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
+                 data-callback="handleCredentialResponse" 
+                 data-auto_prompt="false"
+                 data-auto_select="false">
+            </div>
+            <div class="g_id_signin" 
+                 data-type="standard" 
+                 data-shape="pill" 
+                 data-theme="outline" 
+                 data-text="signin_with" 
+                 data-size="large" 
+                 data-logo_alignment="left">
+            </div>
+        </div>
     </div>
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
@@ -114,15 +397,21 @@
             <div class="site-name" onclick="toggleSiteNameDropdown()">
                 LUCKY STRIKE KH
                 <div class="site-name-dropdown" id="siteNameDropdown">
-                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/">SKYMALL</a>
-                    <a href="https://smart-bowling.github.io/SMB-BB/">BLOCKBUSTER</a>
+                    <a href="https://smart-bowling.github.io/SMB-SKYMALL/">
+                        <span>SKYMALL</span>
+                    </a>
+                    <a href="https://smart-bowling.github.io/SMB-BB/">
+                        <span>BLOCKBUSTER</span>
+                    </a>
                 </div>
             </div>
             <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
                 <i class="fas fa-user"></i>
             </div>
             <div class="user-dropdown" id="userDropdown">
-                <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ</a>
+                <a href="#" onclick="signOut()">
+                    <i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ
+                </a>
             </div>
         </header>
         
@@ -139,7 +428,7 @@
                 </div>
             </div>
             
-            <div class="date-filter-container" id="date-filter-container">
+            <div class="date-filter-container" id="date-filter-container" style="display: none;">
                 <span class="date-filter-label">Просмотр выполненных задач по дате</span>
                 <div class="date-input-wrapper">
                     <i class="fas fa-calendar-alt calendar-icon"></i>
@@ -149,16 +438,26 @@
             </div>
             
             <div class="tab-content active" id="tab1">
-                <!-- СКЕЛЕТОН ЗАГРУЗКИ (показывается сразу) -->
+                <!-- СКЕЛЕТОН ЗАГРУЗКИ -->
                 <div class="cards-grid" id="journal-cards-skeleton">
-                    ${Array(3).fill().map(() => `
-                        <div class="skeleton-card">
-                            <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
-                            <div class="skeleton-line" style="width: 90%;"></div>
-                            <div class="skeleton-line" style="width: 60%;"></div>
-                            <div class="skeleton-line" style="width: 80%;"></div>
-                        </div>
-                    `).join('')}
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
                 </div>
                 <div class="cards-grid" id="journal-cards" style="display: none;"></div>
                 <div class="pagination" id="journal-pagination" style="display: none;"></div>
@@ -166,14 +465,24 @@
             
             <div class="tab-content" id="tab2">
                 <div class="cards-grid" id="tasks-cards-skeleton">
-                    ${Array(3).fill().map(() => `
-                        <div class="skeleton-card">
-                            <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
-                            <div class="skeleton-line" style="width: 90%;"></div>
-                            <div class="skeleton-line" style="width: 60%;"></div>
-                            <div class="skeleton-line" style="width: 80%;"></div>
-                        </div>
-                    `).join('')}
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-line" style="width: 70%; height: 24px;"></div>
+                        <div class="skeleton-line" style="width: 90%;"></div>
+                        <div class="skeleton-line" style="width: 60%;"></div>
+                        <div class="skeleton-line" style="width: 80%;"></div>
+                    </div>
                 </div>
                 <div class="cards-grid" id="tasks-cards" style="display: none;"></div>
                 <div class="pagination" id="tasks-pagination" style="display: none;"></div>
@@ -181,14 +490,18 @@
         </div>
     </div>
 
-    <!-- Flatpickr загружается асинхронно -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/flatpickr" as="script">
-    <link rel="preload" href="https://npmcdn.com/flatpickr/dist/l10n/ru.js" as="script">
-    
+    <!-- УНИВЕРСАЛЬНЫЙ ЛОАДЕР -->
+    <div class="loader-container" id="loader" style="display: none;">
+        <div class="logo-wrapper">
+            <div class="glow-ring"></div>
+            <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading">
+        </div>
+    </div>
+
     <script>
-        // ОПТИМИЗИРОВАННЫЙ JS КОД
+        // ===== ОПТИМИЗИРОВАННЫЙ JS КОД =====
         
-        // Константы вынесены в начало для быстрого доступа
+        // Константы
         const CONFIG = {
             AUTH: {
                 SPREADSHEET_ID: '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4',
@@ -197,11 +510,12 @@
             },
             BACKEND_URL: 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec',
             CARDS_PER_PAGE: 6,
-            CURRENT_SITE: 'https://smart-bowling.github.io/SMB-LS-KH/'
+            CURRENT_SITE: 'https://smart-bowling.github.io/SMB-LS-KH/',
+            CACHE_TTL: 30000 // 30 секунд
         };
 
         // Состояние приложения
-        let state = {
+        const state = {
             user: null,
             tasks: null,
             journal: null,
@@ -212,17 +526,17 @@
             totalTasksPages: 1,
             isFilterActive: false,
             currentFilterDate: '',
-            isInitialLoad: true
+            isInitialLoad: true,
+            datePicker: null
         };
 
         // Кэш для данных
         const cache = {
-            tasks: null,
-            journal: null,
-            timestamp: 0
+            tasks: { data: null, timestamp: 0 },
+            journal: { data: null, timestamp: 0 }
         };
 
-        // DOM элементы (кешируем)
+        // Кэш DOM элементов
         const elements = {
             loader: document.getElementById('loader'),
             loadingScreen: document.getElementById('loadingScreen'),
@@ -237,14 +551,24 @@
             openTasksCounter: document.getElementById('open-tasks-counter'),
             dateFilterContainer: document.getElementById('date-filter-container'),
             dateFilterInput: document.getElementById('date-filter-input'),
+            clearFilterBtn: document.getElementById('clear-filter-btn'),
             userAvatar: document.getElementById('userAvatar'),
             userDropdown: document.getElementById('userDropdown'),
-            siteNameDropdown: document.getElementById('siteNameDropdown')
+            siteNameDropdown: document.getElementById('siteNameDropdown'),
+            tabButtons: document.querySelectorAll('.tab-btn'),
+            tabContents: document.querySelectorAll('.tab-content')
         };
 
-        // ===== ФУНКЦИИ ДЛЯ УСКОРЕНИЯ =====
-        
-        // Показываем скелетон, скрываем реальные карточки
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+
+        function showLoader() {
+            elements.loader.style.display = 'flex';
+        }
+
+        function hideLoader() {
+            elements.loader.style.display = 'none';
+        }
+
         function showSkeleton(tab) {
             if (tab === 'journal') {
                 elements.journalSkeleton.style.display = 'grid';
@@ -255,7 +579,6 @@
             }
         }
 
-        // Скрываем скелетон, показываем карточки
         function hideSkeleton(tab) {
             if (tab === 'journal') {
                 elements.journalSkeleton.style.display = 'none';
@@ -263,34 +586,6 @@
             } else {
                 elements.tasksSkeleton.style.display = 'none';
                 elements.tasksCards.style.display = 'grid';
-            }
-        }
-
-        // Быстрая загрузка данных с кэшированием
-        async function loadData(type, forceRefresh = false) {
-            const now = Date.now();
-            
-            // Используем кэш если он свежий (менее 30 секунд)
-            if (!forceRefresh && cache[type] && (now - cache.timestamp) < 30000) {
-                return cache[type];
-            }
-            
-            showSkeleton(type === 'journal' ? 'journal' : 'tasks');
-            
-            try {
-                let data;
-                if (type === 'journal') {
-                    data = await fetchJournal();
-                } else {
-                    data = await fetchTasks();
-                }
-                
-                cache[type] = data;
-                cache.timestamp = now;
-                
-                return data;
-            } finally {
-                hideSkeleton(type === 'journal' ? 'journal' : 'tasks');
             }
         }
 
@@ -305,6 +600,11 @@
                     signal: controller.signal
                 });
                 clearTimeout(id);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 return await response.json();
             } catch (error) {
                 clearTimeout(id);
@@ -312,17 +612,621 @@
             }
         }
 
-        async function fetchJournal() {
-            return fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=getJournal&_=${Date.now()}`);
+        // ===== ФУНКЦИИ ЗАГРУЗКИ ДАННЫХ =====
+
+        async function loadJournal(forceRefresh = false) {
+            const now = Date.now();
+            
+            // Используем кэш если он свежий
+            if (!forceRefresh && cache.journal.data && (now - cache.journal.timestamp) < CONFIG.CACHE_TTL) {
+                return cache.journal.data;
+            }
+            
+            showSkeleton('journal');
+            
+            try {
+                const data = await fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=getJournal&_=${now}`);
+                
+                // Обновляем кэш
+                cache.journal = {
+                    data: data,
+                    timestamp: now
+                };
+                
+                return data;
+            } catch (error) {
+                console.error('Ошибка загрузки журнала:', error);
+                return [];
+            } finally {
+                hideSkeleton('journal');
+            }
         }
 
-        async function fetchTasks() {
-            return fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=getTasks&_=${Date.now()}`);
+        async function loadTasks(forceRefresh = false) {
+            const now = Date.now();
+            
+            // Используем кэш если он свежий
+            if (!forceRefresh && cache.tasks.data && (now - cache.tasks.timestamp) < CONFIG.CACHE_TTL) {
+                return cache.tasks.data;
+            }
+            
+            showSkeleton('tasks');
+            
+            try {
+                const data = await fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=getTasks&_=${now}`);
+                
+                // Обновляем кэш
+                cache.tasks = {
+                    data: data,
+                    timestamp: now
+                };
+                
+                return data;
+            } catch (error) {
+                console.error('Ошибка загрузки задач:', error);
+                return [];
+            } finally {
+                hideSkeleton('tasks');
+            }
         }
 
-        // ===== АВТОРИЗАЦИЯ (упрощенная) =====
-        
-        // Быстрая проверка локального хранилища
+        // ===== ФУНКЦИИ РЕНДЕРИНГА =====
+
+        function renderTasksCards(tasks) {
+            if (!tasks || tasks.length === 0) {
+                elements.tasksCards.innerHTML = `
+                    <div class="task-card">
+                        <div style="text-align: center; padding: 40px;">Нет задач</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            state.totalTasksPages = Math.ceil(tasks.length / CONFIG.CARDS_PER_PAGE);
+            if (state.currentTasksPage > state.totalTasksPages) {
+                state.currentTasksPage = 1;
+            }
+            
+            const startIndex = (state.currentTasksPage - 1) * CONFIG.CARDS_PER_PAGE;
+            const endIndex = startIndex + CONFIG.CARDS_PER_PAGE;
+            const currentTasks = tasks.slice(startIndex, endIndex);
+            
+            elements.tasksCards.innerHTML = currentTasks.map(task => {
+                let statusClass = 'success';
+                if (task.daysLeft <= 0) {
+                    statusClass = 'danger';
+                } else if (task.daysLeft <= 2) {
+                    statusClass = 'warning';
+                }
+                
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                
+                return `
+                    <div class="task-card catalog-task">
+                        <div class="task-header">
+                            <div class="task-title">${task.task || ''}</div>
+                        </div>
+                        
+                        <div class="card-content">
+                            <div class="content-row">
+                                <span class="row-label">Последнее выполнение:</span>
+                                <span class="row-value">${task.lastDate || '-'}</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Прошло дней:</span>
+                                <span class="row-value">${task.daysPassed || 0}</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Интервал:</span>
+                                <span class="row-value">${task.frequency || 0} дн.</span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Остаток дней:</span>
+                                <span class="row-value">
+                                    <span class="status-badge ${statusClass}">${task.daysLeft || 0}</span>
+                                </span>
+                            </div>
+                            <div class="content-row">
+                                <span class="row-label">Следующее выполнение:</span>
+                                <span class="row-value">${task.nextDate || '-'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="catalog-buttons-container">
+                            <div class="catalog-button-wrapper">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="open-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updatePagination('tasks', state.currentTasksPage, state.totalTasksPages);
+        }
+
+        function renderJournalCards(journal) {
+            if (!journal || journal.length === 0) {
+                elements.journalCards.innerHTML = `
+                    <div class="task-card">
+                        <div style="text-align: center; padding: 40px;">Нет данных</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            updateCounterLabel();
+            
+            state.totalJournalPages = Math.ceil(journal.length / CONFIG.CARDS_PER_PAGE);
+            if (state.currentJournalPage > state.totalJournalPages) {
+                state.currentJournalPage = 1;
+            }
+            
+            const startIndex = (state.currentJournalPage - 1) * CONFIG.CARDS_PER_PAGE;
+            const endIndex = startIndex + CONFIG.CARDS_PER_PAGE;
+            const currentJournal = journal.slice(startIndex, endIndex);
+            
+            let html = '';
+            
+            currentJournal.forEach((task, index) => {
+                const rowIndex = task.rowIndex || (index + 2);
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                const taskId = task.id || task.driveLink || `task-${index}`;
+                
+                if (!task.isCompleted) {
+                    html += `
+                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                            <div class="task-header">
+                                <div class="task-title">${task.task || ''}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">
+                                        <select class="executor-select" id="executor-${taskId}">
+                                            <option value="" selected disabled></option>
+                                            <option value="Вадим">Вадим</option>
+                                            <option value="Гена">Гена</option>
+                                            <option value="Саша">Саша</option>
+                                            <option value="Данил">Данил</option>
+                                        </select>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
+                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="task-card completed">
+                            <div class="task-header">
+                                <div class="task-title">${task.task || ''}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">${task.executor || ''}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <div class="submitted-text">
+                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            elements.journalCards.innerHTML = html;
+            
+            // Добавляем обработчики для select
+            document.querySelectorAll('.executor-select').forEach(select => {
+                select.addEventListener('change', function(e) {
+                    const card = this.closest('.task-card');
+                    const submitBtn = card.querySelector('.submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !this.value;
+                    }
+                    e.stopPropagation();
+                });
+                
+                select.addEventListener('click', (e) => e.stopPropagation());
+            });
+            
+            updatePagination('journal', state.currentJournalPage, state.totalJournalPages);
+        }
+
+        function updatePagination(type, currentPage, totalPages) {
+            const pagination = type === 'journal' ? elements.journalPagination : elements.tasksPagination;
+            
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            pagination.style.display = 'flex';
+            pagination.innerHTML = `
+                <button class="page-btn first-btn" onclick="goToPage('${type}', 1)" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-fast-backward"></i>
+                </button>
+                <button class="page-btn prev-btn" onclick="changePage('${type}', -1)" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="page-info">
+                    Страница ${currentPage} из ${totalPages}
+                </div>
+                <button class="page-btn next-btn" onclick="changePage('${type}', 1)" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button class="page-btn last-btn" onclick="goToPage('${type}', ${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-fast-forward"></i>
+                </button>
+            `;
+        }
+
+        function goToPage(type, pageNumber) {
+            if (type === 'journal') {
+                if (pageNumber >= 1 && pageNumber <= state.totalJournalPages && pageNumber !== state.currentJournalPage) {
+                    state.currentJournalPage = pageNumber;
+                    renderJournalCards(state.journal);
+                }
+            } else {
+                if (pageNumber >= 1 && pageNumber <= state.totalTasksPages && pageNumber !== state.currentTasksPage) {
+                    state.currentTasksPage = pageNumber;
+                    renderTasksCards(state.tasks);
+                }
+            }
+        }
+
+        function changePage(type, direction) {
+            if (type === 'journal') {
+                goToPage('journal', state.currentJournalPage + direction);
+            } else {
+                goToPage('tasks', state.currentTasksPage + direction);
+            }
+        }
+
+        // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С ЗАДАЧАМИ =====
+
+        function convertGoogleDriveLink(driveLink) {
+            if (!driveLink) return null;
+            
+            if (driveLink.includes('drive.google.com/file/d/')) {
+                const match = driveLink.match(/\/d\/([^\/]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+            }
+            return driveLink;
+        }
+
+        function openDriveLink(driveLink) {
+            if (!driveLink) return;
+            const viewLink = convertGoogleDriveLink(driveLink);
+            window.open(viewLink || driveLink, '_blank');
+        }
+
+        async function completeTask(taskId, executor, rowIndex) {
+            showLoader();
+            
+            try {
+                // Обновляем ячейку с исполнителем
+                await fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`);
+                
+                // Запускаем мгновенное обновление
+                await fetchWithTimeout(`${CONFIG.BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
+                
+                // Обновляем кэш
+                cache.journal.timestamp = 0;
+                cache.tasks.timestamp = 0;
+                
+                // Перезагружаем данные
+                const [journal, tasks] = await Promise.all([
+                    loadJournal(true),
+                    loadTasks(true)
+                ]);
+                
+                state.journal = journal;
+                state.originalJournal = [...journal];
+                state.tasks = tasks;
+                
+                renderJournalCards(journal);
+                renderTasksCards(tasks);
+                
+            } catch (error) {
+                console.error('Ошибка выполнения задачи:', error);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function submitTask(event, taskId, rowIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const card = event.currentTarget.closest('.task-card');
+            if (!card) return;
+            
+            const select = card.querySelector('.executor-select');
+            if (!select || !select.value) {
+                alert('Выберите исполнителя');
+                return;
+            }
+            
+            completeTask(taskId, select.value, rowIndex);
+        }
+
+        // ===== ФУНКЦИИ ДЛЯ ФИЛЬТРАЦИИ =====
+
+        function updateCounterLabel() {
+            const labelSpan = elements.openTasksCounter.querySelector('.label');
+            const countSpan = elements.openTasksCounter.querySelector('.count');
+            
+            if (state.isFilterActive && state.currentFilterDate) {
+                const allTasksCount = state.originalJournal?.filter(task => task.completedDate === state.currentFilterDate).length || 0;
+                labelSpan.innerHTML = `Выполненные задачи за дату: ${state.currentFilterDate}`;
+                countSpan.textContent = allTasksCount;
+            } else {
+                const openTasksCount = state.journal?.filter(task => !task.isCompleted).length || 0;
+                labelSpan.innerHTML = 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:';
+                countSpan.textContent = openTasksCount;
+            }
+        }
+
+        function filterJournalByDate(date) {
+            if (!date) {
+                state.isFilterActive = false;
+                state.currentFilterDate = '';
+                state.journal = [...state.originalJournal];
+            } else {
+                state.isFilterActive = true;
+                state.currentFilterDate = date;
+                state.journal = state.originalJournal.filter(task => task.completedDate === date);
+            }
+            
+            state.currentJournalPage = 1;
+            renderJournalCards(state.journal);
+        }
+
+        function clearDateFilter() {
+            if (elements.dateFilterInput) {
+                elements.dateFilterInput.value = '';
+            }
+            filterJournalByDate('');
+            elements.dateFilterContainer.classList.remove('show');
+        }
+
+        // Ленивая загрузка flatpickr
+        async function initDatePicker() {
+            if (state.datePicker) {
+                state.datePicker.destroy();
+            }
+            
+            // Динамически загружаем flatpickr если еще не загружен
+            if (typeof flatpickr === 'undefined') {
+                await import('https://cdn.jsdelivr.net/npm/flatpickr');
+                await import('https://npmcdn.com/flatpickr/dist/l10n/ru.js');
+            }
+            
+            state.datePicker = flatpickr(elements.dateFilterInput, {
+                locale: "ru",
+                dateFormat: "d.m.Y",
+                onChange: function(selectedDates, dateStr) {
+                    if (dateStr) {
+                        filterJournalByDate(dateStr);
+                    }
+                }
+            });
+        }
+
+        // ===== ФУНКЦИИ АВТОРИЗАЦИИ =====
+
+        function toggleUserDropdown() {
+            elements.userDropdown.style.display = elements.userDropdown.style.display === 'block' ? 'none' : 'block';
+            if (elements.siteNameDropdown.style.display === 'block') {
+                elements.siteNameDropdown.style.display = 'none';
+            }
+        }
+
+        function toggleSiteNameDropdown() {
+            elements.siteNameDropdown.style.display = elements.siteNameDropdown.style.display === 'block' ? 'none' : 'block';
+            if (elements.userDropdown.style.display === 'block') {
+                elements.userDropdown.style.display = 'none';
+            }
+        }
+
+        function updateUserAvatar(user) {
+            if (user?.picture) {
+                elements.userAvatar.innerHTML = `<img src="${user.picture}" alt="Avatar">`;
+            } else {
+                elements.userAvatar.innerHTML = '<i class="fas fa-user"></i>';
+            }
+        }
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                return JSON.parse(atob(base64));
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function showLoading(show) {
+            const loginDiv = document.getElementById('login-container');
+            if (show) {
+                if (!loginDiv.hasAttribute('data-original')) {
+                    loginDiv.setAttribute('data-original', loginDiv.innerHTML);
+                }
+                loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="loading-spinner"></div><br><span style="color: #64748b;">Проверка доступа...</span></div>';
+            } else {
+                if (loginDiv.getAttribute('data-original')) {
+                    loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+                }
+            }
+        }
+
+        async function loadSheetsAPI() {
+            return new Promise((resolve, reject) => {
+                gapi.load('client', {
+                    callback: resolve,
+                    onerror: reject,
+                    timeout: 10000
+                });
+            });
+        }
+
+        async function checkEmailInSheet(email) {
+            try {
+                await loadSheetsAPI();
+                await gapi.client.init({
+                    apiKey: CONFIG.AUTH.API_KEY,
+                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+                });
+                
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: CONFIG.AUTH.SPREADSHEET_ID,
+                    range: `${CONFIG.AUTH.SHEET_NAME}!A:Z`,
+                });
+                
+                const rows = response.result.values || [];
+                
+                for (let i = 0; i < rows.length; i++) {
+                    if (!rows[i]?.[0]) continue;
+                    
+                    const rowEmail = rows[i][0].toLowerCase().trim();
+                    if (rowEmail === email) {
+                        for (let j = 1; j < rows[i].length; j++) {
+                            const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+                            if (siteUrl === CONFIG.CURRENT_SITE || siteUrl.includes('SMB-LS-KH')) {
+                                return true;
+                            }
+                        }
+                        break;
+                    }
+                }
+                
+                return false;
+                
+            } catch (error) {
+                console.error('Ошибка проверки email:', error);
+                return false;
+            }
+        }
+
+        async function handleCredentialResponse(response) {
+            try {
+                const payload = parseJwt(response.credential);
+                
+                state.user = {
+                    email: payload.email.toLowerCase().trim(),
+                    name: payload.name,
+                    picture: payload.picture
+                };
+                
+                showLoading(true);
+                
+                const hasAccess = await checkEmailInSheet(state.user.email);
+                
+                if (hasAccess) {
+                    loginUser(state.user);
+                } else {
+                    showLoading(false);
+                    alert('Доступ запрещен');
+                }
+                
+            } catch (e) {
+                console.error('Ошибка аутентификации:', e);
+                showLoading(false);
+                alert('Ошибка аутентификации');
+            }
+        }
+
+        function loginUser(user) {
+            elements.loginSection.style.display = 'none';
+            elements.mainContent.style.display = 'block';
+            
+            updateUserAvatar(user);
+            
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userName', user.name);
+            localStorage.setItem('userPic', user.picture);
+            
+            showLoading(false);
+            
+            // Скрываем экран загрузки
+            setTimeout(() => {
+                elements.loadingScreen.classList.add('fade-out');
+            }, 500);
+            
+            // Загружаем данные
+            loadInitialData();
+        }
+
+        function signOut() {
+            localStorage.clear();
+            
+            if (google?.accounts?.id) {
+                google.accounts.id.disableAutoSelect();
+            }
+            
+            elements.mainContent.style.display = 'none';
+            elements.loginSection.style.display = 'flex';
+            
+            // Сбрасываем состояние
+            state.user = null;
+            state.journal = null;
+            state.originalJournal = null;
+            state.tasks = null;
+            
+            // Сбрасываем кэш
+            cache.journal = { data: null, timestamp: 0 };
+            cache.tasks = { data: null, timestamp: 0 };
+        }
+
         function checkStoredSession() {
             const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
             const email = localStorage.getItem('userEmail');
@@ -335,9 +1239,29 @@
             return null;
         }
 
-        // Инициализация приложения (вызывается сразу)
-        async function initApp() {
-            // Скрываем экран загрузки через 500мс максимум
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+
+        async function loadInitialData() {
+            try {
+                const [journal, tasks] = await Promise.all([
+                    loadJournal(),
+                    loadTasks()
+                ]);
+                
+                state.journal = journal;
+                state.originalJournal = [...journal];
+                state.tasks = tasks;
+                
+                renderJournalCards(journal);
+                renderTasksCards(tasks);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+            }
+        }
+
+        function initApp() {
+            // Скрываем экран загрузки через 500мс
             setTimeout(() => {
                 elements.loadingScreen.classList.add('fade-out');
             }, 500);
@@ -345,61 +1269,95 @@
             const storedUser = checkStoredSession();
             
             if (storedUser) {
-                // Быстрый вход без проверки таблицы
+                // Быстрый вход
                 state.user = storedUser;
                 elements.loginSection.style.display = 'none';
                 elements.mainContent.style.display = 'block';
                 updateUserAvatar(storedUser);
                 
-                // Загружаем данные параллельно
-                Promise.all([
-                    loadData('journal'),
-                    loadData('tasks')
-                ]).then(([journal, tasks]) => {
-                    state.journal = journal;
-                    state.originalJournal = [...journal];
-                    state.tasks = tasks;
-                    renderJournalCards(journal);
-                    renderTasksCards(tasks);
+                // Проверяем доступ в фоне
+                checkEmailInSheet(storedUser.email).then(hasAccess => {
+                    if (!hasAccess) {
+                        signOut();
+                        alert('Доступ был отозван');
+                    }
                 });
+                
+                // Загружаем данные
+                loadInitialData();
             } else {
                 elements.loginSection.style.display = 'flex';
             }
         }
 
-        // Запускаем инициализацию сразу
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+        // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
 
-        // Ленивая загрузка flatpickr (только когда нужен)
-        let flatpickrPromise = null;
-        async function loadFlatpickr() {
-            if (flatpickrPromise) return flatpickrPromise;
-            
-            flatpickrPromise = Promise.all([
-                import('https://cdn.jsdelivr.net/npm/flatpickr'),
-                import('https://npmcdn.com/flatpickr/dist/l10n/ru.js')
-            ]);
-            return flatpickrPromise;
-        }
+        document.addEventListener('DOMContentLoaded', initApp);
 
-        // Обработчик открытия фильтра (ленивая загрузка календаря)
-        elements.openTasksCounter.addEventListener('click', async () => {
+        // Обработчик для открытия фильтра (ленивая загрузка календаря)
+        elements.openTasksCounter.addEventListener('click', () => {
             elements.dateFilterContainer.classList.toggle('show');
             
             if (elements.dateFilterContainer.classList.contains('show')) {
-                await loadFlatpickr();
                 initDatePicker();
             }
         });
 
-        // Остальные функции (renderJournalCards, renderTasksCards и т.д.) остаются без изменений
-        // ... (весь остальной код из предыдущей версии)
+        // Обработчик для кнопки сброса фильтра
+        elements.clearFilterBtn.addEventListener('click', clearDateFilter);
 
-        // Оптимизация для touch-событий
+        // Переключение табов
+        elements.tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                elements.tabButtons.forEach(btn => btn.classList.remove('active'));
+                elements.tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                if (tabId === 'tab2') {
+                    state.currentTasksPage = 1;
+                    if (state.tasks) {
+                        renderTasksCards(state.tasks);
+                    } else {
+                        loadTasks().then(tasks => {
+                            state.tasks = tasks;
+                            renderTasksCards(tasks);
+                        });
+                    }
+                } else if (tabId === 'tab1') {
+                    state.currentJournalPage = 1;
+                    if (state.journal) {
+                        renderJournalCards(state.journal);
+                    } else {
+                        loadJournal().then(journal => {
+                            state.journal = journal;
+                            state.originalJournal = [...journal];
+                            renderJournalCards(journal);
+                        });
+                    }
+                }
+            });
+        });
+
+        // Закрытие выпадающих меню при клике вне
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.site-name') && elements.siteNameDropdown.style.display === 'block') {
+                elements.siteNameDropdown.style.display = 'none';
+            }
+            if (!e.target.closest('.user-avatar') && elements.userDropdown.style.display === 'block') {
+                elements.userDropdown.style.display = 'none';
+            }
+            if (!e.target.closest('#open-tasks-counter') && 
+                !e.target.closest('#date-filter-container') && 
+                elements.dateFilterContainer.classList.contains('show')) {
+                elements.dateFilterContainer.classList.remove('show');
+            }
+        });
+
+        // Оптимизация touch-событий
         let lastTouchEnd = 0;
         document.addEventListener('touchend', (e) => {
             const now = Date.now();
@@ -409,17 +1367,43 @@
             lastTouchEnd = now;
         }, { passive: false });
 
-        // Кэширование селекторов для часто используемых элементов
-        const taskCardsCache = new Map();
-        
-        function getTaskCard(id) {
-            if (!taskCardsCache.has(id)) {
-                taskCardsCache.set(id, document.querySelector(`[data-task-id="${id}"]`));
+        // Обработка изменения select
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('executor-select')) {
+                const card = e.target.closest('.task-card');
+                const submitBtn = card?.querySelector('.submit-btn');
+                if (submitBtn) {
+                    submitBtn.disabled = !e.target.value;
+                }
             }
-            return taskCardsCache.get(id);
-        }
+        });
 
-        console.log('Оптимизированная версия загружена');
+        // Автообновление каждые 30 секунд
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab?.id === 'tab2') {
+                loadTasks(true).then(tasks => {
+                    state.tasks = tasks;
+                    renderTasksCards(tasks);
+                });
+            } else if (activeTab?.id === 'tab1') {
+                loadJournal(true).then(journal => {
+                    state.journal = journal;
+                    state.originalJournal = [...journal];
+                    renderJournalCards(journal);
+                });
+            }
+        }, 30000);
+
+        // Экспорт функций в глобальную область
+        window.goToPage = goToPage;
+        window.changePage = changePage;
+        window.openDriveLink = openDriveLink;
+        window.submitTask = submitTask;
+        window.toggleUserDropdown = toggleUserDropdown;
+        window.toggleSiteNameDropdown = toggleSiteNameDropdown;
+        window.signOut = signOut;
+        window.handleCredentialResponse = handleCredentialResponse;
     </script>
 </body>
 </html>
