@@ -13,7 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* ... (стили остаются без изменений) ... */
+        /* ... (стили остаются без изменений, как в предыдущем ответе) ... */
         /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -1657,8 +1657,8 @@
         <div class="container" id="main-container">
             <div class="header-section">
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="tab1">РЕЕСТР ЗАДАЧ</button>
-                    <button class="tab-btn" data-tab="tab2">КАТАЛОГ ЗАДАЧ</button>
+                    <button class="tab-btn active" data-tab="tab1">МЕХАНИК</button>
+                    <button class="tab-btn" data-tab="tab2">ИНСТРУКТОР</button>
                 </div>
                 
                 <div class="open-tasks-counter" id="open-tasks-counter">
@@ -1700,23 +1700,23 @@
             </div>
             
             <div class="tab-content" id="tab2">
-                <div class="cards-grid" id="tasks-cards">
+                <div class="cards-grid" id="instructor-cards">
                     <!-- Содержимое будет вставлено через JavaScript -->
                 </div>
-                <div class="pagination" id="tasks-pagination" style="display: none;">
-                    <button class="page-btn first-btn" onclick="goToPage('tasks', 1)">
+                <div class="pagination" id="instructor-pagination" style="display: none;">
+                    <button class="page-btn first-btn" onclick="goToPage('instructor', 1)">
                         <i class="fas fa-fast-backward"></i>
                     </button>
-                    <button class="page-btn prev-btn" onclick="changePage('tasks', -1)">
+                    <button class="page-btn prev-btn" onclick="changePage('instructor', -1)">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="page-info">
-                        Страница <span id="tasks-current-page">1</span> из <span id="tasks-total-pages">1</span>
+                        Страница <span id="instructor-current-page">1</span> из <span id="instructor-total-pages">1</span>
                     </div>
-                    <button class="page-btn next-btn" onclick="changePage('tasks', 1)">
+                    <button class="page-btn next-btn" onclick="changePage('instructor', 1)">
                         <i class="fas fa-chevron-right"></i>
                     </button>
-                    <button class="page-btn last-btn" onclick="goToPage('tasks', totalTasksPages)">
+                    <button class="page-btn last-btn" onclick="goToPage('instructor', totalInstructorPages)">
                         <i class="fas fa-fast-forward"></i>
                     </button>
                 </div>
@@ -1742,15 +1742,14 @@
 
         // Переменные состояния
         let currentUser = null;
-        let tasksData = null;
-        let journalData = null;
-        let originalTasksData = null; // Для хранения оригинальных данных задач
+        let journalData = null; // Данные для вкладки МЕХАНИК
+        let instructorData = null; // Данные для вкладки ИНСТРУКТОР
         let originalJournalData = null; // Для хранения оригинальных данных журнала
         
         let currentJournalPage = 1;
-        let currentTasksPage = 1;
+        let currentInstructorPage = 1;
         let totalJournalPages = 1;
-        let totalTasksPages = 1;
+        let totalInstructorPages = 1;
 
         // Переменные для фильтрации
         let isFilterActive = false;
@@ -2043,17 +2042,19 @@
                     renderJournalCards(journalData);
                     updatePagination('journal', currentJournalPage, totalJournalPages);
                 }
-            } else if (type === 'tasks') {
-                if (pageNumber >= 1 && pageNumber <= totalTasksPages && pageNumber !== currentTasksPage) {
-                    currentTasksPage = pageNumber;
-                    renderTasksCards(tasksData);
-                    updatePagination('tasks', currentTasksPage, totalTasksPages);
+            } else if (type === 'instructor') {
+                if (pageNumber >= 1 && pageNumber <= totalInstructorPages && pageNumber !== currentInstructorPage) {
+                    currentInstructorPage = pageNumber;
+                    renderInstructorCards(instructorData);
+                    updatePagination('instructor', currentInstructorPage, totalInstructorPages);
                 }
             }
         }
 
         function updatePagination(type, currentPage, totalPages) {
             const pagination = document.getElementById(`${type}-pagination`);
+            if (!pagination) return;
+            
             const currentPageSpan = document.getElementById(`${type}-current-page`);
             const totalPagesSpan = document.getElementById(`${type}-total-pages`);
             const firstBtn = pagination.querySelector('.first-btn');
@@ -2080,9 +2081,9 @@
             if (type === 'journal') {
                 const newPage = currentJournalPage + direction;
                 goToPage('journal', newPage);
-            } else if (type === 'tasks') {
-                const newPage = currentTasksPage + direction;
-                goToPage('tasks', newPage);
+            } else if (type === 'instructor') {
+                const newPage = currentInstructorPage + direction;
+                goToPage('instructor', newPage);
             }
         }
 
@@ -2184,7 +2185,7 @@
                 // Сброс фильтра
                 isFilterActive = false;
                 currentFilterDate = '';
-                journalData = originalJournalData ? [...originalJournalData] : [];
+                journalData = originalJournalData ? filterTasksByTitle([...originalJournalData], ['PS', 'МЕХ', 'ps', 'мех']) : [];
                 
                 // Обновляем отображение
                 currentJournalPage = 1;
@@ -2223,18 +2224,27 @@
             const labelSpan = openTasksCounter.querySelector('.label');
             const countSpan = openTasksCounter.querySelector('.count');
             
+            // Определяем активную вкладку
+            const activeTab = document.querySelector('.tab-content.active');
+            let currentData = [];
+            
+            if (activeTab.id === 'tab1') {
+                currentData = journalData || [];
+            } else if (activeTab.id === 'tab2') {
+                currentData = instructorData || [];
+            }
+            
             if (isFilterActive && currentFilterDate) {
                 // Показываем количество всех задач за выбранную дату (и выполненных, и невыполненных)
                 const allTasksCount = countAllTasksByDate(currentFilterDate, originalJournalData);
                 labelSpan.innerHTML = `Выполненные задачи за дату: ${currentFilterDate}`;
                 countSpan.textContent = allTasksCount;
-                // Оставляем красный цвет фона как было изначально
                 countSpan.style.backgroundColor = '#dc143c';
             } else {
-                // Показываем количество открытых (незавершенных) задач
+                // Показываем количество открытых (незавершенных) задач для активной вкладки
                 let openTasksCount = 0;
-                if (journalData && journalData.length > 0) {
-                    openTasksCount = journalData.filter(task => !task.isCompleted).length;
+                if (currentData && currentData.length > 0) {
+                    openTasksCount = currentData.filter(task => !task.isCompleted).length;
                 }
                 labelSpan.innerHTML = 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:';
                 countSpan.textContent = openTasksCount;
@@ -2257,39 +2267,6 @@
                 const title = task.task ? task.task.toLowerCase() : '';
                 return keywords.some(keyword => title.includes(keyword.toLowerCase()));
             });
-        }
-
-        async function loadTasks() {
-            try {
-                if (tasksData && !isInitialLoad) {
-                    renderTasksCards(tasksData);
-                    return;
-                }
-                
-                // Очищаем контейнер перед загрузкой
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = '';
-                
-                const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
-                originalTasksData = tasks; // Сохраняем оригинальные данные
-                
-                // Фильтруем задачи по ключевым словам "ИНСТ"
-                const filteredTasks = filterTasksByTitle(originalTasksData, ['ИНСТ', 'инст']);
-                tasksData = filteredTasks;
-                
-                // Сначала рендерим карточки
-                renderTasksCards(filteredTasks);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки задач:', error);
-                const tasksCards = document.getElementById('tasks-cards');
-                tasksCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
-                // Уведомления отключены
-            }
         }
 
         async function loadJournal() {
@@ -2333,6 +2310,46 @@
             }
         }
 
+        async function loadInstructorTasks() {
+            try {
+                if (instructorData && !isInitialLoad) {
+                    renderInstructorCards(instructorData);
+                    return;
+                }
+                
+                // Очищаем контейнер перед загрузкой
+                const instructorCards = document.getElementById('instructor-cards');
+                instructorCards.innerHTML = '';
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
+                
+                // Сохраняем оригинальные данные, если их еще нет
+                if (!originalJournalData) {
+                    originalJournalData = [...journal];
+                }
+                
+                // Фильтруем журнал по ключевому слову "ИНСТ"
+                const filteredInstructor = filterTasksByTitle(journal, ['ИНСТ', 'инст']);
+                instructorData = [...filteredInstructor];
+                
+                // Рендерим карточки
+                renderInstructorCards(instructorData);
+                
+                // Обновляем счетчик при загрузке
+                updateCounterLabel();
+                
+            } catch (error) {
+                console.error('Ошибка загрузки задач инструктора:', error);
+                const instructorCards = document.getElementById('instructor-cards');
+                instructorCards.innerHTML = `
+                    <div class="task-card error">
+                        Ошибка загрузки: ${error.message}
+                    </div>
+                `;
+                // Уведомления отключены
+            }
+        }
+
         async function completeTask(taskId, executor, rowIndex) {
             showLoader();
             
@@ -2367,9 +2384,8 @@
                         
                         // Сбрасываем кэшированные данные
                         journalData = null;
+                        instructorData = null;
                         originalJournalData = null;
-                        tasksData = null;
-                        originalTasksData = null;
                         isFilterActive = false;
                         currentFilterDate = '';
                         
@@ -2383,7 +2399,7 @@
                         // Загружаем новые данные и скрываем загрузчик только после полной отрисовки
                         await Promise.all([
                             loadJournal(),
-                            loadTasks()
+                            loadInstructorTasks()
                         ]);
                         
                         hideLoader();
@@ -2392,9 +2408,8 @@
                         
                         // Сбрасываем кэшированные данные
                         journalData = null;
+                        instructorData = null;
                         originalJournalData = null;
-                        tasksData = null;
-                        originalTasksData = null;
                         isFilterActive = false;
                         currentFilterDate = '';
                         
@@ -2408,7 +2423,7 @@
                         // Загружаем новые данные и скрываем загрузчик только после полной отрисовки
                         await Promise.all([
                             loadJournal(),
-                            loadTasks()
+                            loadInstructorTasks()
                         ]);
                         
                         hideLoader();
@@ -2422,86 +2437,6 @@
                 hideLoader();
                 // Уведомления отключены
             }
-        }
-
-        function renderTasksCards(tasks) {
-            const tasksCards = document.getElementById('tasks-cards');
-            
-            if (!tasks || tasks.length === 0) {
-                tasksCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loading-card-text">Нет задач</div>
-                        </div>
-                    </div>
-                `;
-                updatePagination('tasks', 1, 1);
-                return;
-            }
-            
-            totalTasksPages = Math.ceil(tasks.length / CARDS_PER_PAGE);
-            if (currentTasksPage > totalTasksPages) {
-                currentTasksPage = 1;
-            }
-            
-            const currentTasks = getCurrentPageData(tasks, currentTasksPage);
-            
-            tasksCards.innerHTML = currentTasks.map(task => {
-                let statusClass = 'success';
-                if (task.daysLeft <= 0) {
-                    statusClass = 'danger';
-                } else if (task.daysLeft <= 2) {
-                    statusClass = 'warning';
-                }
-                
-                const hasLink = task.driveLink && task.driveLink.trim() !== '';
-                
-                return `
-                    <div class="task-card catalog-task">
-                        <div class="task-header">
-                            <div class="task-title">${task.task}</div>
-                        </div>
-                        
-                        <div class="card-content">
-                            <div class="content-row">
-                                <span class="row-label">Последнее выполнение:</span>
-                                <span class="row-value">${task.lastDate || '-'}</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Прошло дней:</span>
-                                <span class="row-value">${task.daysPassed}</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Интервал:</span>
-                                <span class="row-value">${task.frequency} дн.</span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Остаток дней:</span>
-                                <span class="row-value">
-                                    <span class="status-badge ${statusClass}">${task.daysLeft}</span>
-                                </span>
-                            </div>
-                            <div class="content-row">
-                                <span class="row-label">Следующее выполнение:</span>
-                                <span class="row-value">${task.nextDate || '-'}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="catalog-buttons-container">
-                            <div class="catalog-button-wrapper">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="open-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            updatePagination('tasks', currentTasksPage, totalTasksPages);
         }
 
         function renderJournalCards(journal) {
@@ -2519,9 +2454,6 @@
                 updatePagination('journal', 1, 1);
                 return;
             }
-            
-            // Обновляем счетчик
-            updateCounterLabel();
             
             // НЕ СОРТИРУЕМ ДАННЫЕ! Сохраняем порядок из Google Таблицы
             const sortedJournal = [...journal];
@@ -2623,7 +2555,7 @@
             
             journalCards.innerHTML = html;
             
-            document.querySelectorAll('.executor-select').forEach(select => {
+            document.querySelectorAll('#tab1 .executor-select').forEach(select => {
                 select.addEventListener('change', function() {
                     const card = this.closest('.task-card');
                     const submitBtn = card.querySelector('.submit-btn');
@@ -2639,6 +2571,140 @@
             });
             
             updatePagination('journal', currentJournalPage, totalJournalPages);
+        }
+
+        function renderInstructorCards(instructor) {
+            const instructorCards = document.getElementById('instructor-cards');
+            
+            if (!instructor || instructor.length === 0) {
+                instructorCards.innerHTML = `
+                    <div class="task-card">
+                        <div class="loading-container">
+                            <div class="loading-card-text">Нет данных</div>
+                        </div>
+                    </div>
+                `;
+                
+                updatePagination('instructor', 1, 1);
+                return;
+            }
+            
+            // НЕ СОРТИРУЕМ ДАННЫЕ! Сохраняем порядок из Google Таблицы
+            const sortedInstructor = [...instructor];
+            
+            totalInstructorPages = Math.ceil(sortedInstructor.length / CARDS_PER_PAGE);
+            if (currentInstructorPage > totalInstructorPages) {
+                currentInstructorPage = 1;
+            }
+            
+            const currentInstructor = getCurrentPageData(sortedInstructor, currentInstructorPage);
+            
+            let html = '';
+            
+            currentInstructor.forEach((task, index) => {
+                const rowIndex = task.rowIndex || (index + 2);
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                const taskId = task.id || task.driveLink || '';
+                
+                if (!task.isCompleted) {
+                    html += `
+                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate || '-'}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">
+                                        <select class="executor-select" id="executor-${taskId}">
+                                            <option value="" selected disabled></option>
+                                            <option value="Вадим">Вадим</option>
+                                            <option value="Гена">Гена</option>
+                                            <option value="Саша">Саша</option>
+                                            <option value="Данил">Данил</option>
+                                        </select>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
+                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="task-card completed">
+                            <div class="task-header">
+                                <div class="task-title">${task.task}</div>
+                            </div>
+                            
+                            <div class="card-content">
+                                <div class="content-row">
+                                    <span class="row-label">Дата появления:</span>
+                                    <span class="row-value">${task.createdDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Дата выполнения:</span>
+                                    <span class="row-value">${task.completedDate}</span>
+                                </div>
+                                <div class="content-row">
+                                    <span class="row-label">Выполнил:</span>
+                                    <span class="row-value">${task.executor}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="buttons-container">
+                                ${hasLink 
+                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
+                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
+                                      </a>`
+                                    : '<div class="no-open">Недоступно</div>'
+                                }
+                                <div class="submitted-text">
+                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            instructorCards.innerHTML = html;
+            
+            document.querySelectorAll('#tab2 .executor-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const card = this.closest('.task-card');
+                    const submitBtn = card.querySelector('.submit-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = !this.value || this.value === '';
+                    }
+                    event.stopPropagation();
+                });
+                
+                select.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                });
+            });
+            
+            updatePagination('instructor', currentInstructorPage, totalInstructorPages);
         }
 
         function submitTask(event, taskId, rowIndex) {
@@ -2723,7 +2789,7 @@
             // Загружаем данные и скрываем загрузчик только после полной отрисовки
             Promise.all([
                 loadJournal(),
-                loadTasks()
+                loadInstructorTasks()
             ]).then(() => {
                 // Небольшая задержка для завершения всех операций рендеринга
                 setTimeout(() => {
@@ -2745,19 +2811,22 @@
                     document.getElementById(tabId).classList.add('active');
                     
                     if (tabId === 'tab2') {
-                        currentTasksPage = 1;
-                        loadTasks(); // loadTasks теперь применяет фильтр "ИНСТ"
+                        currentInstructorPage = 1;
+                        loadInstructorTasks(); // Загружаем задачи для инструктора
                     } else if (tabId === 'tab1') {
                         currentJournalPage = 1;
-                        loadJournal(); // loadJournal теперь применяет фильтр "PS" или "МЕХ"
+                        loadJournal(); // Загружаем задачи для механика
                     }
+                    
+                    // Обновляем счетчик при переключении вкладок
+                    updateCounterLabel();
                 });
             });
 
             setInterval(() => {
                 const activeTab = document.querySelector('.tab-content.active');
                 if (activeTab && activeTab.id === 'tab2') {
-                    loadTasks();
+                    loadInstructorTasks();
                 } else if (activeTab && activeTab.id === 'tab1') {
                     loadJournal();
                 }
@@ -2905,7 +2974,7 @@
             // Принудительное восстановление обработчиков для кнопок
             function forceButtonHandlers() {
                 // Для всех кнопок "открыть задачу" в реестре
-                document.querySelectorAll('#tab1 .schema-button').forEach(btn => {
+                document.querySelectorAll('#tab1 .schema-button, #tab2 .schema-button').forEach(btn => {
                     // Удаляем старые обработчики
                     btn.removeEventListener('click', handleOpenClick);
                     btn.removeEventListener('touchstart', handleTouchStart);
@@ -2920,7 +2989,7 @@
                 });
                 
                 // Для всех кнопок "отправить" в реестре
-                document.querySelectorAll('#tab1 .submit-btn').forEach(btn => {
+                document.querySelectorAll('#tab1 .submit-btn, #tab2 .submit-btn').forEach(btn => {
                     btn.removeEventListener('click', handleSubmitClick);
                     btn.removeEventListener('touchstart', handleTouchStart);
                     
@@ -2937,19 +3006,6 @@
                                 btn.setAttribute('data-row-index', rowIndex);
                             }
                         }
-                        btn.setAttribute('data-handler-fixed', 'true');
-                    }
-                });
-                
-                // Для всех кнопок "открыть задачу" в каталоге
-                document.querySelectorAll('#tab2 .open-button').forEach(btn => {
-                    btn.removeEventListener('click', handleCatalogOpenClick);
-                    btn.removeEventListener('touchstart', handleTouchStart);
-                    
-                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
-                    btn.addEventListener('click', handleCatalogOpenClick);
-                    
-                    if (!btn.hasAttribute('data-handler-fixed')) {
                         btn.setAttribute('data-handler-fixed', 'true');
                     }
                 });
@@ -3011,25 +3067,6 @@
                 
                 if (taskId && rowIndex) {
                     completeTask(taskId, select.value, rowIndex);
-                }
-            }
-            
-            function handleCatalogOpenClick(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const btn = e.currentTarget;
-                const onclickAttr = btn.getAttribute('onclick');
-                
-                if (onclickAttr) {
-                    try {
-                        const match = onclickAttr.match(/'([^']+)'/);
-                        if (match && match[1]) {
-                            window.open(convertGoogleDriveLink(match[1]) || match[1], '_blank');
-                        }
-                    } catch (error) {
-                        console.log('Ошибка открытия ссылки:', error);
-                    }
                 }
             }
             
