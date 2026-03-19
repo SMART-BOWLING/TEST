@@ -13,6 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
+        /* ... (стили остаются без изменений) ... */
         /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -1743,7 +1744,8 @@
         let currentUser = null;
         let tasksData = null;
         let journalData = null;
-        let originalJournalData = null; // Для хранения оригинальных данных
+        let originalTasksData = null; // Для хранения оригинальных данных задач
+        let originalJournalData = null; // Для хранения оригинальных данных журнала
         
         let currentJournalPage = 1;
         let currentTasksPage = 1;
@@ -2182,7 +2184,7 @@
                 // Сброс фильтра
                 isFilterActive = false;
                 currentFilterDate = '';
-                journalData = [...originalJournalData];
+                journalData = originalJournalData ? [...originalJournalData] : [];
                 
                 // Обновляем отображение
                 currentJournalPage = 1;
@@ -2248,6 +2250,15 @@
             filterJournalByDate('');
         }
 
+        // Новая функция для фильтрации задач по названию
+        function filterTasksByTitle(tasks, keywords) {
+            if (!tasks || tasks.length === 0) return [];
+            return tasks.filter(task => {
+                const title = task.task ? task.task.toLowerCase() : '';
+                return keywords.some(keyword => title.includes(keyword.toLowerCase()));
+            });
+        }
+
         async function loadTasks() {
             try {
                 if (tasksData && !isInitialLoad) {
@@ -2260,10 +2271,14 @@
                 tasksCards.innerHTML = '';
                 
                 const tasks = await makeRequest(`${BACKEND_URL}?action=getTasks`);
-                tasksData = tasks;
+                originalTasksData = tasks; // Сохраняем оригинальные данные
+                
+                // Фильтруем задачи по ключевым словам "ИНСТ"
+                const filteredTasks = filterTasksByTitle(originalTasksData, ['ИНСТ', 'инст']);
+                tasksData = filteredTasks;
                 
                 // Сначала рендерим карточки
-                renderTasksCards(tasks);
+                renderTasksCards(filteredTasks);
                 
             } catch (error) {
                 console.error('Ошибка загрузки задач:', error);
@@ -2292,7 +2307,10 @@
                 
                 // Сохраняем оригинальные данные
                 originalJournalData = [...journal];
-                journalData = [...journal];
+                
+                // Фильтруем журнал по ключевым словам "PS" или "МЕХ"
+                const filteredJournal = filterTasksByTitle(originalJournalData, ['PS', 'МЕХ', 'ps', 'мех']);
+                journalData = [...filteredJournal];
                 
                 // Извлекаем уникальные даты выполнения
                 uniqueDates = extractUniqueDatesFromJournal(journalData);
@@ -2351,6 +2369,7 @@
                         journalData = null;
                         originalJournalData = null;
                         tasksData = null;
+                        originalTasksData = null;
                         isFilterActive = false;
                         currentFilterDate = '';
                         
@@ -2375,6 +2394,7 @@
                         journalData = null;
                         originalJournalData = null;
                         tasksData = null;
+                        originalTasksData = null;
                         isFilterActive = false;
                         currentFilterDate = '';
                         
@@ -2726,10 +2746,10 @@
                     
                     if (tabId === 'tab2') {
                         currentTasksPage = 1;
-                        loadTasks();
+                        loadTasks(); // loadTasks теперь применяет фильтр "ИНСТ"
                     } else if (tabId === 'tab1') {
                         currentJournalPage = 1;
-                        loadJournal();
+                        loadJournal(); // loadJournal теперь применяет фильтр "PS" или "МЕХ"
                     }
                 });
             });
