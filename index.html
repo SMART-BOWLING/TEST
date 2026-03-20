@@ -4,16 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SMB-LS-KH</title>
-    <!-- Preload и асинхронная загрузка шрифтов/иконок -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
@@ -21,47 +15,12 @@
             --dark-bg: #1a1a1a;
             --accent: #dc143c;
             --text-dark: #1a2f40;
-            --text-light: #ffffff;
-            --text-gray: #FFF;
-            --text-light-gray: #999999;
-            --border-radius: 8px;
-            --input-padding: 12px;
             --surface: #ffffff;
-            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
-            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Poppins", sans-serif; }
 
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            background-color: #f4f6f9;
-            width: 100%;
-            position: fixed;
-            touch-action: manipulation;
-        }
-
-        body {
-            color: #1a2f40;
-            padding: 0;
-            line-height: 1.5;
-            min-height: 100vh;
-            height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            font-weight: 700;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-            -webkit-text-size-adjust: 100%;
-        }
+        body { background-color: #f4f6f9; color: #1a2f40; height: 100vh; overflow: hidden; }
 
         header {
             background-color: #1f2937;
@@ -71,556 +30,151 @@
             justify-content: space-between;
             padding: 10px 20px;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            user-select: none;
+            top: 0; left: 0; right: 0;
             z-index: 1000;
-            padding-top: max(10px, env(safe-area-inset-top));
-            padding-left: max(20px, env(safe-area-inset-left));
-            padding-right: max(20px, env(safe-area-inset-right));
-            min-height: 65px;
-        }
-
-        .logo img {
-            width: 40px;
-            height: 40px;
-            border-radius: 0;
-            transform: translateY(4px);
-            cursor: pointer;
-        }
-
-        .site-name {
-            flex: 1;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            cursor: default;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 2px solid white;
-            background-color: #4a5568;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            background-color: #1f2937;
-            border: 1px solid #444;
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 9999;
-            min-width: 150px;
-        }
-
-        .user-dropdown a {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .user-dropdown a:hover { background-color: #374151; }
-
-        .loading-screen {
-            position: fixed;
-            inset: 0;
-            background: #1f2937;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-
-        .loader-container {
-            position: fixed;
-            inset: 0;
-            background: #1f2937;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100000;
-        }
-
-        .loader-container.active { display: flex; }
-
-        .logo-wrapper {
-            position: relative;
-            width: 160px;
-            height: 160px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .glow-ring {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border-radius: 100%;
-            background: conic-gradient(#dc143c, transparent 100%);
-            animation: spin 5s linear infinite;
-            filter: blur(20px);
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #login-section {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            background-color: #f4f6f9;
-        }
-
-        #login-container {
-            background: white;
-            padding: 30px 25px;
-            border-radius: 24px;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 420px;
-            width: 100%;
-        }
-
-        .container {
-            max-width: 100%;
-            margin: 0;
-            background-color: var(--surface);
-            overflow: hidden;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .header-section {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 80px 16px 0;
+            height: 65px;
         }
 
         .tabs {
             display: flex;
-            background-color: var(--surface);
-            padding: 16px 0;
+            padding: 16px;
             gap: 8px;
-            border-bottom: 1px solid #f0f0f0;
-            justify-content: space-between;
-            width: 100%;
+            background: white;
+            margin-top: 65px;
         }
 
         .tab-btn {
-            background: var(--surface);
-            border: 1px solid #e5e5e5;
-            color: var(--text-dark);
-            padding: 14px 12px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
             flex: 1;
-            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #e5e5e5;
+            background: white;
             font-weight: 700;
-            position: relative;
-            white-space: nowrap;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative; /* Для позиционирования кружка */
         }
 
         .tab-btn.active {
-            background-color: var(--accent);
-            color: var(--text-light);
+            background: var(--accent);
+            color: white;
             border-color: var(--accent);
         }
 
-        /* --- ЦИФРЫ В КРУЖКАХ НА КНОПКАХ --- */
+        /* СТИЛЬ КРУЖКА С ЦИФРОЙ */
         .tab-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #ffffff;
-            color: #dc143c;
+            background: white;
+            color: var(--accent);
             font-size: 10px;
-            font-weight: 800;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            display: flex;
+            display: none; /* Скрыт по умолчанию */
             align-items: center;
             justify-content: center;
+            border: 1px solid var(--accent);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            border: 1px solid #dc143c;
-            z-index: 10;
         }
 
-        .tab-btn.active .tab-badge {
-            background-color: #ffffff;
-            color: #dc143c;
-            border-color: #ffffff;
-        }
-
-        .open-tasks-counter {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            background-color: #1a2f40;
-            color: white;
-            border-radius: 6px;
-            font-weight: 700;
-            margin: 8px 0 16px;
-            cursor: pointer;
-        }
-
-        .open-tasks-counter .count {
-            background-color: #dc143c;
-            padding: 6px 12px;
-            border-radius: 4px;
-            min-width: 40px;
-            text-align: center;
-        }
-
-        .tab-content { display: none; padding: 0; flex: 1; overflow-y: auto; flex-direction: column; }
-        .tab-content.active { display: flex; }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 16px;
-        }
+        .tab-content { display: none; height: calc(100vh - 180px); overflow-y: auto; padding: 16px; }
+        .tab-content.active { display: block; }
 
         .task-card {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-height: 280px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            padding: 16px;
+            border-left: 5px solid var(--accent);
         }
 
-        .task-header { padding: 16px; border-bottom: 2px solid #dc143c; }
-        .task-title { font-size: 16px; font-weight: 700; color: #000; }
-
-        .content-row {
+        .open-tasks-counter {
+            padding: 10px 16px;
+            background: #1a2f40;
+            color: white;
+            margin: 0 16px;
+            border-radius: 6px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid #e0e0e0;
-            height: 48px;
-        }
-
-        .row-label { font-size: 14px; font-weight: 700; }
-        .row-value { font-size: 14px; font-weight: 700; text-align: right; }
-
-        .executor-select {
-            background: #cccccc;
-            border-radius: 15px;
-            padding: 8px 10px;
-            font-weight: 700;
-            width: 140px;
-            height: 36px;
-        }
-
-        .buttons-container {
-            display: flex;
-            padding: 16px;
-            gap: 10px;
-            margin-top: auto;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .schema-button, .submit-btn {
-            flex: 1;
-            height: 42px;
-            border-radius: 4px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .schema-button { background: #1a2f40; color: white; border: none; }
-        .submit-btn { background: #dc143c; color: white; border: none; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .submitted-text { background: #fff; color: #000; flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 700; height: 42px; }
-
-        .pagination { display: flex; justify-content: center; padding: 20px; gap: 8px; margin-bottom: 80px; }
-        .page-btn { padding: 8px 12px; border: 1px solid #e5e5e5; border-radius: 4px; background: #fff; font-weight: 600; cursor: pointer; }
-        .page-btn.active { background: #dc143c; color: #fff; }
-
-        /* Фикс для мобилок */
-        @media (max-width: 767px) {
-            .tabs { flex-wrap: wrap; }
-            .tab-btn { font-size: 13px; padding: 12px 6px; }
-            .cards-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="loading-screen" id="loadingScreen">
-        <div class="logo-wrapper">
-            <div class="glow-ring"></div>
-            <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo" style="width:120px; z-index:2;">
-        </div>
+
+    <header>
+        <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" style="width:40px;"></div>
+        <div class="site-name">LUCKY STRIKE KH</div>
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab1">МЕХАНИК <span class="tab-badge" id="badge-tab1">0</span></button>
+        <button class="tab-btn" data-tab="tab2">ИНСТРУКТОР <span class="tab-badge" id="badge-tab2">0</span></button>
+        <button class="tab-btn" data-tab="tab3">ИНЖЕНЕР <span class="tab-badge" id="badge-tab3">0</span></button>
     </div>
 
-    <div class="loader-container" id="loader">
-        <div class="logo-wrapper">
-            <div class="glow-ring"></div>
-            <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading" style="width:120px; z-index:2;">
-        </div>
+    <div class="open-tasks-counter">
+        <span>НЕВЫПОЛНЕННЫЕ ЗАДАЧИ:</span>
+        <span id="total-count">0</span>
     </div>
 
-    <div id="login-section">
-        <div id="login-container">
-            <div style="background:#f1f5f9; width:50px; height:50px; border-radius:15px; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
-                <i class="fas fa-shield-halved" style="color:#dc143c; font-size:24px;"></i>
-            </div>
-            <h2 style="font-size:20px; font-weight:800; color:#1e293b;">LUCKY STRIKE KH</h2>
-            <div style="color:#64748b; font-size:13px; margin-bottom:25px;">Войдите для доступа</div>
-            <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
-            <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-size="large"></div>
-        </div>
-    </div>
+    <div id="tab1" class="tab-content active"></div>
+    <div id="tab2" class="tab-content"></div>
+    <div id="tab3" class="tab-content"></div>
 
-    <div id="main-content" style="display: none;">
-        <header>
-            <div class="logo"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
-            <div class="site-name">LUCKY STRIKE KH</div>
-            <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()"><i class="fas fa-user"></i></div>
-            <div class="user-dropdown" id="userDropdown">
-                <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt" style="margin-right:10px;"></i> ВЫЙТИ</a>
-            </div>
-        </header>
-        
-        <div class="container">
-            <div class="header-section">
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="tab1">
-                        <i class="fas fa-wrench" style="margin-right: 8px;"></i>МЕХАНИК
-                        <span class="tab-badge" id="badge-tab1">0</span>
-                    </button>
-                    <button class="tab-btn" data-tab="tab2">
-                        <i class="fas fa-bowling-ball" style="margin-right: 8px;"></i>ИНСТРУКТОР
-                        <span class="tab-badge" id="badge-tab2">0</span>
-                    </button>
-                    <button class="tab-btn" data-tab="tab3">
-                        <i class="fas fa-microchip" style="margin-right: 8px;"></i>ИНЖЕНЕР
-                        <span class="tab-badge" id="badge-tab3">0</span>
-                    </button>
-                </div>
-                
-                <div class="open-tasks-counter" id="open-tasks-counter">
-                    <span class="label">КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:</span>
-                    <span class="count">0</span>
-                </div>
-            </div>
-            
-            <div class="tab-content active" id="tab1"><div class="cards-grid" id="journal-cards"></div><div class="pagination" id="journal-pagination"></div></div>
-            <div class="tab-content" id="tab2"><div class="cards-grid" id="instructor-cards"></div><div class="pagination" id="instructor-pagination"></div></div>
-            <div class="tab-content" id="tab3"><div class="cards-grid" id="engineer-cards"></div><div class="pagination" id="engineer-pagination"></div></div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
-    
     <script>
-        const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-        const AUTH_SHEET_NAME = '1';
-        const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-        const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
-        const CARDS_PER_PAGE = 6;
+        const BACKEND_URL = 'ТВОЙ_URL_СКРИПТА';
+        let originalData = [];
 
-        let currentUser = null, journalData = null, instructorData = null, engineerData = null, originalJournalData = null;
-        let currentJournalPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
-        let totalJournalPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
-        let isInitialLoad = true;
-
-        const loader = document.getElementById("loader");
-        function showLoader() { loader.classList.add('active'); }
-        function hideLoader() { loader.classList.remove('active'); }
-
-        function toggleUserDropdown() {
-            const menu = document.getElementById("userDropdown");
-            menu.style.display = menu.style.display === "block" ? "none" : "block";
-        }
-
-        async function makeRequest(url, options = {}) {
+        async function loadData() {
             try {
-                const separator = url.includes('?') ? '&' : '?';
-                const finalUrl = options.method === 'POST' ? url : `${url}${separator}_=${Date.now()}`;
-                const response = await fetch(finalUrl, options);
-                return await response.json();
-            } catch (error) { console.error('Request Error:', error); throw error; }
+                const response = await fetch(BACKEND_URL + '?action=getJournal');
+                originalData = await response.json();
+                renderAll();
+            } catch (e) { console.error("Ошибка загрузки", e); }
         }
 
-        // --- ЛОГИКА СЧЕТЧИКОВ НА КНОПКАХ ---
-        function updateTabBadges() {
-            if (!originalJournalData) return;
-            const pending = originalJournalData.filter(t => !t.isCompleted);
+        function renderAll() {
+            const pending = originalData.filter(t => !t.isCompleted);
 
-            const counts = {
-                tab1: pending.filter(t => ['PS','МЕХ','ps','мех'].some(k => (t.task||'').toLowerCase().includes(k))).length,
-                tab2: pending.filter(t => ['ИНСТ','инст'].some(k => (t.task||'').toLowerCase().includes(k))).length,
-                tab3: pending.filter(t => ['ИНЖ','инж','ENG','eng'].some(k => (t.task||'').toLowerCase().includes(k))).length
+            // Логика фильтрации по категориям
+            const cats = {
+                tab1: pending.filter(t => /ps|мех/i.test(t.task)),
+                tab2: pending.filter(t => /инст/i.test(t.task)),
+                tab3: pending.filter(t => /инж|eng/i.test(t.task))
             };
 
-            for (let tab in counts) {
-                const badge = document.getElementById(`badge-${tab}`);
-                badge.textContent = counts[tab];
-                badge.style.display = counts[tab] > 0 ? 'flex' : 'none';
-            }
-        }
-
-        function updateCounterLabel() {
-            const label = document.querySelector('#open-tasks-counter .count');
-            const activeTab = document.querySelector('.tab-content.active').id;
-            const data = activeTab === 'tab1' ? journalData : (activeTab === 'tab2' ? instructorData : engineerData);
-            label.textContent = data ? data.filter(t => !t.isCompleted).length : 0;
-            updateTabBadges();
-        }
-
-        async function loadAllData() {
-            try {
-                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
-                originalJournalData = [...journal];
-                journalData = journal.filter(t => ['PS','МЕХ','ps','мех'].some(k => (t.task||'').toLowerCase().includes(k)));
-                instructorData = journal.filter(t => ['ИНСТ','инст'].some(k => (t.task||'').toLowerCase().includes(k)));
-                engineerData = journal.filter(t => ['ИНЖ','инж','ENG','eng'].some(k => (t.task||'').toLowerCase().includes(k)));
+            // Обновление счетчиков-кружков
+            for (let id in cats) {
+                const badge = document.getElementById('badge-' + id);
+                const count = cats[id].length;
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
                 
-                renderJournalCards(journalData);
-                renderInstructorCards(instructorData);
-                renderEngineerCards(engineerData);
-                updateCounterLabel();
-            } catch (e) { console.error(e); }
-        }
-
-        function renderJournalCards(data) { renderGenericCards('journal', data, currentJournalPage); }
-        function renderInstructorCards(data) { renderGenericCards('instructor', data, currentInstructorPage); }
-        function renderEngineerCards(data) { renderGenericCards('engineer', data, currentEngineerPage); }
-
-        function renderGenericCards(type, data, page) {
-            const container = document.getElementById(`${type}-cards`);
-            if (!data || data.length === 0) { container.innerHTML = '<div class="task-card"><div style="padding:40px; text-align:center;">Нет данных</div></div>'; return; }
-            
-            const start = (page - 1) * CARDS_PER_PAGE;
-            const current = data.slice(start, start + CARDS_PER_PAGE);
-            
-            container.innerHTML = current.map(task => {
-                const id = task.id || task.rowIndex;
-                const isComp = task.isCompleted;
-                return `
-                <div class="task-card" data-row-index="${task.rowIndex}">
-                    <div class="task-header"><div class="task-title">${task.task}</div></div>
-                    <div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">
-                            ${isComp ? task.executor : `<select class="executor-select" onchange="this.closest('.task-card').querySelector('.submit-btn').disabled=false"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select>`}
-                        </span></div>
+                // Рендер карточек в табы (упрощенно)
+                document.getElementById(id).innerHTML = cats[id].map(t => `
+                    <div class="task-card">
+                        <strong>${t.task}</strong><br>
+                        <small>${t.createdDate}</small>
                     </div>
-                    <div class="buttons-container">
-                        ${task.driveLink ? `<a href="#" onclick="window.open('${task.driveLink}','_blank')" class="schema-button">ОТКРЫТЬ</a>` : '<div class="submitted-text">НЕТ ССЫЛКИ</div>'}
-                        ${isComp ? '<div class="submitted-text">ГОТОВО</div>' : `<button class="submit-btn" disabled onclick="submitTask(event, ${task.rowIndex})">ОТПРАВИТЬ</button>`}
-                    </div>
-                </div>`;
-            }).join('');
-            updatePagination(type, data.length, page);
+                `).join('');
+            }
+
+            document.getElementById('total-count').textContent = pending.length;
         }
 
-        function updatePagination(type, totalItems, currentPage) {
-            const totalPages = Math.ceil(totalItems / CARDS_PER_PAGE);
-            const container = document.getElementById(`${type}-pagination`);
-            container.innerHTML = Array.from({length: totalPages}, (_, i) => `
-                <button class="page-btn ${i+1 === currentPage ? 'active' : ''}" onclick="changePage('${type}', ${i+1})">${i+1}</button>
-            `).join('');
-        }
-
-        function changePage(type, page) {
-            if(type === 'journal') currentJournalPage = page;
-            else if(type === 'instructor') currentInstructorPage = page;
-            else currentEngineerPage = page;
-            loadAllData();
-        }
-
-        async function submitTask(event, rowIndex) {
-            const card = event.target.closest('.task-card');
-            const executor = card.querySelector('select').value;
-            showLoader();
-            try {
-                const res = await makeRequest(`${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`);
-                if(res.success) {
-                    await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
-                    await loadAllData();
-                }
-            } finally { hideLoader(); }
-        }
-
-        // --- AUTH & INIT ---
-        function handleCredentialResponse(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            currentUser = { email: payload.email.toLowerCase(), name: payload.name, picture: payload.picture };
-            localStorage.setItem('userEmail', currentUser.email);
-            initApp();
-        }
-
-        function initApp() {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            document.getElementById('loadingScreen').classList.add('fade-out');
-            loadAllData();
-            
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.getElementById(btn.dataset.tab).classList.add('active');
-                    updateCounterLabel();
-                });
+        // Переключение табов
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
             });
-        }
+        });
 
-        function signOut() { localStorage.clear(); location.reload(); }
-
-        window.onload = () => {
-            const saved = localStorage.getItem('userEmail');
-            if(saved) initApp();
-            else document.getElementById('loadingScreen').classList.add('fade-out'), document.getElementById('login-section').style.display = 'flex';
-        };
+        window.onload = loadData;
     </script>
 </body>
 </html>
