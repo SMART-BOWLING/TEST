@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SMB-LS-KH</title>
-    <!-- Preload и асинхронная загрузка шрифтов/иконок -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
@@ -314,6 +312,7 @@
             padding-left: max(16px, env(safe-area-inset-left));
             padding-right: max(16px, env(safe-area-inset-right));
             padding-top: 80px;
+            flex-shrink: 0; /* чтобы шапка не сжималась */
         }
 
         .tabs {
@@ -324,7 +323,7 @@
             flex-shrink: 0;
             border-bottom: 1px solid #f0f0f0;
             justify-content: space-between;
-            flex-wrap: nowrap; /* три кнопки в один ряд */
+            flex-wrap: nowrap;
             width: 100%;
             margin-top: 0;
             padding-left: env(safe-area-inset-left);
@@ -378,6 +377,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
+            flex-shrink: 0;
         }
 
         .open-tasks-counter:hover {
@@ -408,6 +408,7 @@
             justify-content: center;
             gap: 10px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .date-filter-container.show {
@@ -526,10 +527,13 @@
             flex: 1;
             overflow-y: auto;
             flex-direction: column;
+            min-height: 0; /* важно для корректного overflow во flex-контейнере */
         }
 
         .tab-content.active {
             display: flex;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
 
         .cards-grid {
@@ -920,6 +924,7 @@
             margin-left: auto;
             margin-right: auto;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .page-btn {
@@ -1187,9 +1192,39 @@
         window.onload=function(){ if(google && google.accounts && google.accounts.id){ google.accounts.id.initialize({client_id:'328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',callback:handleCredentialResponse}); google.accounts.id.renderButton(document.querySelector('.g_id_signin'),{type:'standard',shape:'pill',theme:'outline',text:'signin_with',size:'large',logo_alignment:'left'}); } };
     </script>
 
-    <!-- ФИКС КНОПОК -->
+    <!-- ФИКС КНОПОК И ПРОКРУТКИ -->
     <script>
-        (function fixButtonsOnAllPages(){ 'use strict'; let lastTouchEnd=0; document.addEventListener('touchend',function(e){ const target=e.target; const isInteractive=target.closest('button')||target.closest('a')||target.closest('select')||target.closest('.submit-btn')||target.closest('.open-button')||target.closest('.schema-button')||target.closest('.executor-select')||target.closest('.page-btn')||target.closest('.tab-btn')||target.closest('.clear-filter-btn')||target.closest('#open-tasks-counter')||target.closest('.user-avatar'); if(isInteractive){ e.stopPropagation(); return true; } const now=Date.now(); if(now-lastTouchEnd<=300) e.preventDefault(); lastTouchEnd=now; },{passive:false}); function forceHandlers(){ document.querySelectorAll('#tab1 .schema-button, #tab2 .schema-button, #tab3 .schema-button').forEach(btn=>{ btn.removeEventListener('click',openHandler); btn.removeEventListener('touchstart',touchStop); btn.addEventListener('touchstart',touchStop,{passive:false}); btn.addEventListener('click',openHandler); }); document.querySelectorAll('#tab1 .submit-btn, #tab2 .submit-btn, #tab3 .submit-btn').forEach(btn=>{ btn.removeEventListener('click',submitHandler); btn.removeEventListener('touchstart',touchStop); btn.addEventListener('touchstart',touchStop,{passive:false}); btn.addEventListener('click',submitHandler); }); document.querySelectorAll('.executor-select').forEach(sel=>{ sel.removeEventListener('change',selChange); sel.removeEventListener('touchstart',touchStop); sel.addEventListener('touchstart',touchStop,{passive:false}); sel.addEventListener('change',selChange); }); } function touchStop(e){ e.stopPropagation(); } function openHandler(e){ e.preventDefault(); e.stopPropagation(); const btn=e.currentTarget; const attr=btn.getAttribute('onclick'); if(attr){ try{ const match=attr.match(/'([^']+)'/); if(match&&match[1]) window.open(convertGoogleDriveLink(match[1])||match[1],'_blank'); }catch(err){} } } function submitHandler(e){ e.preventDefault(); e.stopPropagation(); const btn=e.currentTarget; if(btn.disabled) return; const card=btn.closest('.task-card'); if(!card) return; const select=card.querySelector('.executor-select'); if(!select||!select.value) return; const taskId=card.dataset.taskId||btn.dataset.taskId; const rowIndex=card.dataset.rowIndex||btn.dataset.rowIndex; if(taskId&&rowIndex) completeTask(taskId,select.value,rowIndex); } function selChange(e){ e.stopPropagation(); const sel=e.target; const card=sel.closest('.task-card'); if(card){ const btn=card.querySelector('.submit-btn'); if(btn) btn.disabled=!sel.value; } } const style=document.createElement('style'); style.textContent=` .schema-button, .submit-btn, .open-button, .executor-select { position:relative; z-index:9999!important; cursor:pointer!important; pointer-events:auto!important; touch-action:manipulation!important; } .executor-select { background-color:#cccccc!important; border:2px solid #cccccc!important; color:#666666!important; } `; document.head.appendChild(style); const obs=new MutationObserver(()=>setTimeout(forceHandlers,50)); obs.observe(document.getElementById('tab1')||document.body,{childList:true,subtree:true}); obs.observe(document.getElementById('tab2')||document.body,{childList:true,subtree:true}); obs.observe(document.getElementById('tab3')||document.body,{childList:true,subtree:true}); setTimeout(forceHandlers,200); })();
+        (function fixButtonsAndScroll(){ 
+            'use strict'; 
+            let lastTouchEnd=0; 
+            document.addEventListener('touchend',function(e){ 
+                const target=e.target; 
+                const isInteractive=target.closest('button')||target.closest('a')||target.closest('select')||target.closest('.submit-btn')||target.closest('.open-button')||target.closest('.schema-button')||target.closest('.executor-select')||target.closest('.page-btn')||target.closest('.tab-btn')||target.closest('.clear-filter-btn')||target.closest('#open-tasks-counter')||target.closest('.user-avatar'); 
+                if(isInteractive){ e.stopPropagation(); return true; } 
+                const now=Date.now(); if(now-lastTouchEnd<=300) e.preventDefault(); lastTouchEnd=now; 
+            },{passive:false}); 
+            function forceHandlers(){ 
+                document.querySelectorAll('#tab1 .schema-button, #tab2 .schema-button, #tab3 .schema-button').forEach(btn=>{ 
+                    btn.removeEventListener('click',openHandler); btn.removeEventListener('touchstart',touchStop); btn.addEventListener('touchstart',touchStop,{passive:false}); btn.addEventListener('click',openHandler); 
+                }); 
+                document.querySelectorAll('#tab1 .submit-btn, #tab2 .submit-btn, #tab3 .submit-btn').forEach(btn=>{ 
+                    btn.removeEventListener('click',submitHandler); btn.removeEventListener('touchstart',touchStop); btn.addEventListener('touchstart',touchStop,{passive:false}); btn.addEventListener('click',submitHandler); 
+                }); 
+                document.querySelectorAll('.executor-select').forEach(sel=>{ 
+                    sel.removeEventListener('change',selChange); sel.removeEventListener('touchstart',touchStop); sel.addEventListener('touchstart',touchStop,{passive:false}); sel.addEventListener('change',selChange); 
+                }); 
+            } 
+            function touchStop(e){ e.stopPropagation(); } 
+            function openHandler(e){ e.preventDefault(); e.stopPropagation(); const btn=e.currentTarget; const attr=btn.getAttribute('onclick'); if(attr){ try{ const match=attr.match(/'([^']+)'/); if(match&&match[1]) window.open(convertGoogleDriveLink(match[1])||match[1],'_blank'); }catch(err){} } } 
+            function submitHandler(e){ e.preventDefault(); e.stopPropagation(); const btn=e.currentTarget; if(btn.disabled) return; const card=btn.closest('.task-card'); if(!card) return; const select=card.querySelector('.executor-select'); if(!select||!select.value) return; const taskId=card.dataset.taskId||btn.dataset.taskId; const rowIndex=card.dataset.rowIndex||btn.dataset.rowIndex; if(taskId&&rowIndex) completeTask(taskId,select.value,rowIndex); } 
+            function selChange(e){ e.stopPropagation(); const sel=e.target; const card=sel.closest('.task-card'); if(card){ const btn=card.querySelector('.submit-btn'); if(btn) btn.disabled=!sel.value; } } 
+            const style=document.createElement('style'); style.textContent=` .schema-button, .submit-btn, .open-button, .executor-select { position:relative; z-index:9999!important; cursor:pointer!important; pointer-events:auto!important; touch-action:manipulation!important; } .executor-select { background-color:#cccccc!important; border:2px solid #cccccc!important; color:#666666!important; } `; document.head.appendChild(style); 
+            const obs=new MutationObserver(()=>setTimeout(forceHandlers,50)); 
+            obs.observe(document.getElementById('tab1')||document.body,{childList:true,subtree:true}); 
+            obs.observe(document.getElementById('tab2')||document.body,{childList:true,subtree:true}); 
+            obs.observe(document.getElementById('tab3')||document.body,{childList:true,subtree:true}); 
+            setTimeout(forceHandlers,200); 
+        })();
     </script>
 </body>
 </html>
