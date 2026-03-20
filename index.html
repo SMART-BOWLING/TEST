@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>SMB-LS-KH | Механик | Инструктор | Инженер</title>
+    <title>SMB-LS-KH | Инженер</title>
     <!-- Preload и асинхронная загрузка шрифтов/иконок -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,18 +13,22 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* ===== БАЗОВЫЕ СТИЛИ ===== */
+        /* === БАЗОВЫЕ СТИЛИ (как в оригинале, адаптировано под три вкладки) === */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
             --light-bg: #fefefe;
             --dark-bg: #1a1a1a;
             --accent: #dc143c;
-            --accent-engineer: #2c7a4d;
             --text-dark: #1a2f40;
             --text-light: #ffffff;
-            --surface: #ffffff;
+            --text-gray: #FFF;
+            --text-light-gray: #999999;
             --border-radius: 8px;
+            --input-padding: 12px;
+            --surface: #ffffff;
+            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
+            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         * {
@@ -46,15 +50,19 @@
 
         body {
             color: #1a2f40;
+            padding: 0;
             line-height: 1.5;
+            min-height: 100vh;
             height: 100vh;
             -webkit-font-smoothing: antialiased;
             font-weight: 700;
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            -webkit-text-size-adjust: 100%;
         }
 
-        /* ШАПКА */
         header {
             background-color: #1f2937;
             color: white;
@@ -67,6 +75,7 @@
             left: 0;
             right: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            user-select: none;
             z-index: 1000;
             padding-top: max(10px, env(safe-area-inset-top));
             padding-left: max(20px, env(safe-area-inset-left));
@@ -78,6 +87,8 @@
             width: 40px;
             height: 40px;
             object-fit: cover;
+            border-radius: 0;
+            transform: translateY(4px);
             cursor: pointer;
         }
 
@@ -87,6 +98,7 @@
             font-size: 20px;
             font-weight: bold;
             color: white;
+            cursor: default;
         }
 
         .user-avatar {
@@ -98,285 +110,74 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        .user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .user-avatar i { font-size: 18px; color: white; }
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            background-color: #1f2937;
-            border-radius: 8px;
             overflow: hidden;
-            z-index: 9999;
-            min-width: 150px;
-        }
-        .user-dropdown a {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            display: flex;
-            align-items: center;
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+        .user-avatar:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-avatar i { font-size: 18px; color: white; }
+        .user-dropdown { display: none; position: absolute; top: 70px; right: 20px; background-color: #1f2937; border: 1px solid #444; border-radius: 8px; overflow: hidden; z-index: 9999; min-width: 150px; }
+        .user-dropdown a { padding: 10px 15px; text-decoration: none; color: white; display: flex; align-items: center; cursor: pointer; }
         .user-dropdown a:hover { background-color: #374151; }
         .icon-space { margin-right: 10px; width: 20px; text-align: center; }
 
-        /* Лоадеры */
-        .loading-screen, .loader-container {
-            position: fixed;
-            inset: 0;
-            background: #1f2937;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.5s ease;
-        }
-        .loader-container { display: none; z-index: 100000; }
-        .loader-container.active { display: flex; }
+        .loading-screen { position: fixed; inset: 0; background: #1f2937; display: flex; justify-content: center; align-items: center; z-index: 10000; transition: opacity 0.5s ease; }
         .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-        .logo-wrapper {
-            position: relative;
-            width: 160px;
-            height: 160px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .glow-ring {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border-radius: 100%;
-            background: conic-gradient(#dc143c, transparent 100%);
-            animation: spin 5s linear infinite;
-            filter: blur(20px);
-        }
+        .loader-container, .action-loader { position: fixed; inset: 0; background: #1f2937; display: none; justify-content: center; align-items: center; z-index: 100000; }
+        .loader-container.active, .action-loader.active { display: flex; }
+        .logo-wrapper { position: relative; width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; }
+        .glow-ring { position: absolute; width: 80px; height: 80px; border-radius: 100%; background: conic-gradient(#dc143c, transparent 100%); animation: spin 5s linear infinite; filter: blur(20px); }
         .logo-wrapper img { width: 120px; z-index: 2; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #login-section {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f4f6f9;
-        }
-        #login-container {
-            background: white;
-            padding: 30px 25px;
-            border-radius: 24px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 420px;
-            width: 100%;
-        }
-        .loading-spinner {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(220,20,60,0.2);
-            border-radius: 50%;
-            border-top-color: #dc143c;
-            animation: spin 1s ease-in-out infinite;
-        }
+        #login-section { display: none; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f6f9; }
+        #login-container { background: white; padding: 30px 25px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); text-align: center; max-width: 420px; width: 100%; }
+        #login-container h2 { color: #1e293b; margin: 15px 0 5px; font-size: 20px; font-weight: 800; }
+        .login-subtitle { color: #64748b; font-size: 13px; margin-bottom: 25px; }
+        .login-icon { width: 50px; height: 50px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .login-icon i { font-size: 24px; color: #dc143c; }
+        .loading-spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(220,20,60,0.2); border-radius: 50%; border-top-color: #dc143c; animation: spin 1s ease-in-out infinite; }
 
-        /* Контейнер */
-        .container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding-top: env(safe-area-inset-top);
-        }
-        .header-section {
-            padding: 80px 16px 0;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        .tabs {
-            display: flex;
-            background: var(--surface);
-            gap: 8px;
-            padding: 16px 0;
-            border-bottom: 1px solid #f0f0f0;
-            flex-wrap: wrap;
-        }
-        .tab-btn {
-            background: var(--surface);
-            border: 1px solid #e5e5e5;
-            color: var(--text-dark);
-            padding: 14px 12px;
-            font-size: 15px;
-            cursor: pointer;
-            font-weight: 700;
-            border-radius: 6px;
-            flex: 1;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active {
-            background-color: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-        .open-tasks-counter {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            background-color: #1a2f40;
-            color: white;
-            border-radius: 6px;
-            font-weight: 700;
-            margin: 8px 0 16px;
-            cursor: pointer;
-        }
-        .date-filter-container {
-            display: none;
-            padding: 16px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+        .container { max-width: 100%; margin: 0; background-color: var(--surface); border-radius: 0; box-shadow: none; overflow: hidden; height: 100%; display: flex; flex-direction: column; border: none; min-height: -webkit-fill-available; padding-top: env(safe-area-inset-top); }
+        .header-section { display: flex; flex-direction: column; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 16px; padding-top: 80px; }
+        .tabs { display: flex; background-color: var(--surface); padding: 16px 0; gap: 8px; flex-shrink: 0; border-bottom: 1px solid #f0f0f0; justify-content: space-between; flex-wrap: nowrap; width: 100%; }
+        .tab-btn { background: var(--surface); border: 1px solid #e5e5e5; color: var(--text-dark); padding: 14px 12px; font-size: 15px; cursor: pointer; transition: all 0.3s ease; flex: 1; text-align: center; border-radius: 6px; font-weight: 700; white-space: nowrap; touch-action: manipulation; }
+        .tab-btn.active { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
+        .open-tasks-counter { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background-color: #1a2f40; color: white; border-radius: 6px; font-weight: 700; margin: 8px 0 16px; cursor: pointer; }
+        .open-tasks-counter .count { background-color: #dc143c; padding: 6px 12px; border-radius: 4px; min-width: 40px; text-align: center; }
+        .date-filter-container { display: none; padding: 16px; background-color: #f8f9fa; border-bottom: 1px solid #e0e0e0; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .date-filter-container.show { display: flex; }
-        .date-filter-input {
-            padding: 8px 12px 8px 40px;
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
-            font-weight: 600;
-            background: white;
-            width: 100%;
-        }
-        .clear-filter-btn {
-            background: #1a2f40;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .tab-content {
-            display: none;
-            flex: 1;
-            overflow-y: auto;
-            flex-direction: column;
-        }
+        .date-filter-input { padding: 8px 12px; padding-left: 40px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; font-weight: 600; background-color: white; cursor: pointer; width: 100%; }
+        .clear-filter-btn { padding: 8px 16px; background-color: #1a2f40; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .tab-content { display: none; padding: 0; flex: 1; overflow-y: auto; flex-direction: column; }
         .tab-content.active { display: flex; }
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-            padding: 16px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        .task-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .task-card:hover { transform: translateY(-2px); }
-        .task-header {
-            padding: 16px;
-            border-bottom: 2px solid #dc143c;
-        }
-        .task-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #000;
-        }
-        .content-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid #eee;
-            align-items: center;
-        }
-        .row-label { font-weight: 700; color: #000; }
-        .row-value { font-weight: 700; text-align: right; }
-        .executor-select {
-            background: #cccccc;
-            border: 2px solid #cccccc;
-            border-radius: 15px;
-            padding: 8px 10px;
-            font-weight: 700;
-            cursor: pointer;
-            min-width: 120px;
-        }
-        .buttons-container {
-            display: flex;
-            gap: 10px;
-            padding: 16px;
-            border-top: 1px solid #e0e0e0;
-        }
-        .schema-button, .submit-btn {
-            flex: 1;
-            background: #1a2f40;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 11px 14px;
-            font-weight: 700;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-        }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px; max-width: 1200px; margin: 0 auto; padding: 16px; }
+        .task-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; flex-direction: column; cursor: pointer; overflow: hidden; min-height: 280px; }
+        .task-card.selected { box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c; }
+        .task-header { padding: 16px 16px 12px; border-bottom: 2px solid #dc143c; }
+        .task-title { font-size: 16px; font-weight: 700; color: #000000; line-height: 1.4; }
+        .content-row { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; border-bottom: 1px solid #e0e0e0; min-height: 48px; }
+        .row-label { font-size: 14px; color: #000000; font-weight: 700; }
+        .row-value { font-size: 14px; font-weight: 700; color: #000000; text-align: right; flex: 1; display: flex; justify-content: flex-end; align-items: center; }
+        .executor-select { background: #cccccc; border: 2px solid #cccccc; border-radius: 15px; padding: 8px 10px; font-size: 15px; font-weight: 700; color: #666666; cursor: pointer; max-width: 160px; min-width: 140px; height: 36px; }
+        .buttons-container { display: flex; justify-content: space-between; gap: 10px; padding: 16px; border-top: 1px solid #e0e0e0; margin-top: auto; }
+        .schema-button, .submit-btn { background-color: #1a2f40; color: white; padding: 11px 14px; font-weight: 700; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; flex: 1; text-align: center; transition: 0.3s; height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         .submit-btn { background-color: #dc143c; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .submitted-text {
-            flex: 1;
-            background: #f0f0f0;
-            color: #000;
-            border-radius: 4px;
-            padding: 11px;
-            text-align: center;
-            font-weight: 700;
-        }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 20px;
-            margin-bottom: 80px;
-        }
-        .page-btn {
-            background: white;
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .page-btn.active { background: #dc143c; color: white; border-color: #dc143c; }
-        .page-btn:disabled { opacity: 0.5; cursor: default; }
-        @media (max-width: 767px) {
-            .tabs { flex-direction: column; }
-            .tab-btn { width: 100%; }
-            .cards-grid { grid-template-columns: 1fr; }
-        }
-        .no-data { text-align: center; padding: 40px; color: #666; font-weight: 600; }
-        .notification { position: fixed; top: 20px; right: 20px; padding: 12px; border-radius: 6px; background: #1a2f40; color: white; z-index: 10000; display: none; }
+        .submit-btn:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
+        .submitted-text { background: #FFFFFF; color: #000; padding: 11px 14px; border-radius: 4px; font-size: 13px; text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 42px; }
+        .no-open { background: #f8f9fa; border: 1px dashed #ddd; border-radius: 4px; padding: 11px 14px; font-size: 11px; text-align: center; flex: 1; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; height: 42px; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 80px; padding: 20px 10px; flex-wrap: wrap; }
+        .page-btn { background: white; border: 1px solid #e5e5e5; padding: 8px 12px; font-size: 14px; cursor: pointer; border-radius: 4px; font-weight: 600; min-width: 40px; }
+        .page-btn.active { background-color: #dc143c; color: white; }
+        .page-btn:disabled { background-color: #f0f0f0; color: #999; cursor: not-allowed; }
+        @media (max-width: 767px) { .tabs { gap: 6px; } .tab-btn { padding: 12px 6px; font-size: 13px; } .header-section { padding-top: 75px; } .cards-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .tab-btn { font-size: 12px; padding: 10px 4px; } }
     </style>
 </head>
 <body>
     <div class="loading-screen" id="loadingScreen"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div></div>
     <div class="loader-container" id="loader"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading"></div></div>
-
     <div id="login-section"><div id="login-container"><div class="login-icon"><i class="fas fa-shield-halved"></i></div><h2>LUCKY STRIKE KH</h2><div class="login-subtitle">Войдите для доступа</div><div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div></div></div>
 
     <div id="main-content" style="display: none;">
@@ -384,9 +185,9 @@
         <div class="container" id="main-container">
             <div class="header-section">
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="tab1"><i class="fas fa-wrench"></i> МЕХАНИК</button>
-                    <button class="tab-btn" data-tab="tab2"><i class="fas fa-bowling-ball"></i> ИНСТРУКТОР</button>
-                    <button class="tab-btn" data-tab="tab3"><i class="fas fa-microchip"></i> ИНЖЕНЕР</button>
+                    <button class="tab-btn active" data-tab="tab1"><i class="fas fa-wrench" style="margin-right: 8px;"></i>МЕХАНИК</button>
+                    <button class="tab-btn" data-tab="tab2"><i class="fas fa-bowling-ball" style="margin-right: 8px;"></i>ИНСТРУКТОР</button>
+                    <button class="tab-btn" data-tab="tab3"><i class="fas fa-microchip" style="margin-right: 8px;"></i>ИНЖЕНЕР</button>
                 </div>
                 <div class="open-tasks-counter" id="open-tasks-counter"><span class="label">КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:</span><span class="count">0</span></div>
             </div>
@@ -413,14 +214,15 @@
         const CARDS_PER_PAGE = 6;
 
         let currentUser = null;
-        let masterData = null;
-        let mechanicTasks = [];
-        let instructorTasks = [];
-        let engineerTasks = [];
-        
-        let currentMechanicPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
-        let totalMechanicPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
-        
+        let originalAllTasks = null;       // полные данные с сервера
+        let mechanicTasks = [];    // МЕХАНИК (PS, МЕХ)
+        let instructorTasks = [];  // ИНСТРУКТОР (ИНСТ, инст)
+        let engineerTasks = [];     // ИНЖЕНЕР (инженер, ИНЖЕНЕР, ENGINEER)
+
+        let currentMechanicPage = 1, totalMechanicPages = 1;
+        let currentInstructorPage = 1, totalInstructorPages = 1;
+        let currentEngineerPage = 1, totalEngineerPages = 1;
+
         let isFilterActive = false, currentFilterDate = '', filterType = 'mechanic';
         let datePicker = null;
         let isInitialLoad = true;
@@ -430,268 +232,60 @@
         const mainContent = document.getElementById("main-content");
         const loader = document.getElementById("loader");
 
-        function showLoader() { loader.classList.add('active'); }
-        function hideLoader() { loader.classList.remove('active'); }
         function toggleUserDropdown() { const menu = document.getElementById("userDropdown"); menu.style.display = menu.style.display === "block" ? "none" : "block"; }
         function updateUserAvatar(user) { const container = document.getElementById('userAvatar'); if (user?.picture) container.innerHTML = `<img src="${user.picture}" alt="Avatar">`; else container.innerHTML = '<i class="fas fa-user"></i>'; }
+        function showLoader() { loader.classList.add('active'); }
+        function hideLoader() { loader.classList.remove('active'); }
 
-        function filterByTitle(tasks, keywords) {
-            if (!tasks) return [];
-            return tasks.filter(task => {
-                const title = (task.task || '').toLowerCase();
-                return keywords.some(kw => title.includes(kw.toLowerCase()));
-            });
-        }
-
-        function updateCounterLabel() {
-            const activeTab = document.querySelector('.tab-content.active');
-            const labelSpan = document.querySelector('#open-tasks-counter .label');
-            const countSpan = document.querySelector('#open-tasks-counter .count');
-            if (!activeTab) return;
-            
-            if (isFilterActive && currentFilterDate) {
-                let count = 0;
-                if (activeTab.id === 'tab1') count = mechanicTasks.filter(t => t.completedDate === currentFilterDate).length;
-                else if (activeTab.id === 'tab2') count = instructorTasks.filter(t => t.completedDate === currentFilterDate).length;
-                else if (activeTab.id === 'tab3') count = engineerTasks.filter(t => t.completedDate === currentFilterDate).length;
-                labelSpan.innerHTML = `Задачи за ${currentFilterDate} (${activeTab.id === 'tab1' ? 'МЕХАНИК' : activeTab.id === 'tab2' ? 'ИНСТРУКТОР' : 'ИНЖЕНЕР'})`;
-                countSpan.textContent = count;
-            } else {
-                let openCount = 0;
-                if (activeTab.id === 'tab1') openCount = mechanicTasks.filter(t => !t.isCompleted).length;
-                else if (activeTab.id === 'tab2') openCount = instructorTasks.filter(t => !t.isCompleted).length;
-                else if (activeTab.id === 'tab3') openCount = engineerTasks.filter(t => !t.isCompleted).length;
-                labelSpan.innerHTML = 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:';
-                countSpan.textContent = openCount;
-            }
-        }
-
-        function scrollToTop() { const active = document.querySelector('.tab-content.active'); if(active) active.scrollTop = 0; }
-
-        function renderPagination(type, currentPage, totalPages) {
-            const paginationDiv = document.getElementById(`${type}-pagination`);
-            if (!paginationDiv) return;
-            if (totalPages <= 1) { paginationDiv.innerHTML = ''; paginationDiv.style.display = 'none'; return; }
-            paginationDiv.style.display = 'flex';
-            paginationDiv.innerHTML = `
-                <button class="page-btn" onclick="goToPage('${type}', 1)" ${currentPage===1?'disabled':''}><i class="fas fa-fast-backward"></i></button>
-                <button class="page-btn" onclick="changePage('${type}', -1)" ${currentPage===1?'disabled':''}><i class="fas fa-chevron-left"></i></button>
-                <span class="page-info">Страница ${currentPage} из ${totalPages}</span>
-                <button class="page-btn" onclick="changePage('${type}', 1)" ${currentPage===totalPages?'disabled':''}><i class="fas fa-chevron-right"></i></button>
-                <button class="page-btn" onclick="goToPage('${type}', ${totalPages})" ${currentPage===totalPages?'disabled':''}><i class="fas fa-fast-forward"></i></button>
-            `;
-        }
-
-        window.goToPage = function(type, page) {
-            if(type === 'mechanic') { if(page>=1 && page<=totalMechanicPages && page!==currentMechanicPage){ currentMechanicPage=page; renderMechanicCards(); scrollToTop(); } }
-            else if(type === 'instructor') { if(page>=1 && page<=totalInstructorPages && page!==currentInstructorPage){ currentInstructorPage=page; renderInstructorCards(); scrollToTop(); } }
-            else if(type === 'engineer') { if(page>=1 && page<=totalEngineerPages && page!==currentEngineerPage){ currentEngineerPage=page; renderEngineerCards(); scrollToTop(); } }
-        };
-        window.changePage = function(type, delta) {
-            if(type === 'mechanic') goToPage('mechanic', currentMechanicPage+delta);
-            else if(type === 'instructor') goToPage('instructor', currentInstructorPage+delta);
-            else if(type === 'engineer') goToPage('engineer', currentEngineerPage+delta);
-        };
-
+        function loadSheetsAPI() { return new Promise((resolve, reject) => { gapi.load('client', { callback: resolve, onerror: () => reject('Ошибка загрузки Google API'), timeout: 10000 }); }); }
+        function handleCredentialResponse(response) { try { const payload = parseJwt(response.credential); currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture }; showLoading(true); initAndCheckEmail(); } catch(e) { console.error(e); showLoading(false); alert('Ошибка аутентификации'); } }
+        function showLoading(show) { const loginDiv = document.getElementById('login-container'); if (show) { if (!loginDiv.hasAttribute('data-original')) loginDiv.setAttribute('data-original', loginDiv.innerHTML); loginDiv.innerHTML = '<div style="padding:40px;text-align:center;"><div class="loading-spinner"></div><br><span>Проверка доступа...</span></div>'; } else { if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') loginDiv.innerHTML = loginDiv.getAttribute('data-original'); } }
+        async function initAndCheckEmail() { try { await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] }); await checkEmailInSheet(currentUser.email); } catch(error) { console.error(error); showLoading(false); alert('Ошибка инициализации'); } }
+        async function checkEmailInSheet(email) { try { const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` }); const rows = response.result.values; let hasAccess = false; for (let i = 0; i < rows.length; i++) { if (rows[i]?.[0]?.toLowerCase().trim() === email) { for (let j = 1; j < rows[i].length; j++) { const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || ''; if (siteUrl === CURRENT_SITE || siteUrl.includes('SMB-LS-KH')) { hasAccess = true; break; } } break; } } if (hasAccess) loginUser(currentUser); else { showLoading(false); alert('Доступ запрещен'); } } catch(error) { console.error(error); showLoading(false); alert('Ошибка доступа к таблице'); } }
+        function loginUser(payload) { loginSection.style.display = 'none'; mainContent.style.display = 'block'; updateUserAvatar(payload); localStorage.setItem('userLoggedIn', 'true'); localStorage.setItem('userEmail', payload.email); localStorage.setItem('userName', payload.name); localStorage.setItem('userPic', payload.picture); showLoading(false); setTimeout(() => loadingScreen.classList.add('fade-out'), 500); initializeApp(); }
+        function parseJwt(token) { try { const base64Url = token.split('.')[1]; const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/'); const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); return JSON.parse(jsonPayload); } catch(e) { return {}; } }
+        function signOut() { localStorage.clear(); sessionStorage.clear(); if (google?.accounts?.id) google.accounts.id.disableAutoSelect(); mainContent.style.display = 'none'; loginSection.style.display = 'flex'; const loginDiv = document.getElementById('login-container'); if (loginDiv.getAttribute('data-original')) loginDiv.innerHTML = loginDiv.getAttribute('data-original'); }
+        function convertGoogleDriveLink(link) { if (!link) return null; if (link.includes('drive.google.com/file/d/')) { const match = link.match(/\/d\/([^\/]+)/); if (match) return `https://drive.google.com/uc?export=view&id=${match[1]}`; } return link; }
+        function openDriveLink(link) { if (!link) return; window.open(convertGoogleDriveLink(link) || link, '_blank'); }
+        async function makeRequest(url, options = {}) { try { const finalUrl = (!options.method || options.method === 'GET') ? `${url}${url.includes('?')?'&': '?'}_=${Date.now()}` : url; const response = await fetch(finalUrl, options); return await response.json(); } catch(e) { throw e; } }
+        function scrollToTop() { const active = document.querySelector('.tab-content.active'); if (active) active.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function goToPage(type, page) { if (type === 'mechanic' && page >=1 && page <= totalMechanicPages && page !== currentMechanicPage) { currentMechanicPage = page; renderMechanicCards(); scrollToTop(); } else if (type === 'instructor' && page >=1 && page <= totalInstructorPages && page !== currentInstructorPage) { currentInstructorPage = page; renderInstructorCards(); scrollToTop(); } else if (type === 'engineer' && page >=1 && page <= totalEngineerPages && page !== currentEngineerPage) { currentEngineerPage = page; renderEngineerCards(); scrollToTop(); } }
+        function changePage(type, delta) { if (type === 'mechanic') goToPage('mechanic', currentMechanicPage + delta); else if (type === 'instructor') goToPage('instructor', currentInstructorPage + delta); else if (type === 'engineer') goToPage('engineer', currentEngineerPage + delta); }
+        function updatePagination(prefix, current, total) { const container = document.getElementById(`${prefix}-pagination`); if (!container) return; if (total <= 1) { container.style.display = 'none'; return; } container.style.display = 'flex'; container.innerHTML = `
+            <button class="page-btn first-btn" onclick="goToPage('${prefix}', 1)"><i class="fas fa-fast-backward"></i></button>
+            <button class="page-btn prev-btn" onclick="changePage('${prefix}', -1)"><i class="fas fa-chevron-left"></i></button>
+            <div class="page-info">Страница <span id="${prefix}-current-page">${current}</span> из <span id="${prefix}-total-pages">${total}</span></div>
+            <button class="page-btn next-btn" onclick="changePage('${prefix}', 1)"><i class="fas fa-chevron-right"></i></button>
+            <button class="page-btn last-btn" onclick="goToPage('${prefix}', ${total})"><i class="fas fa-fast-forward"></i></button>
+        `; const first = container.querySelector('.first-btn'), prev = container.querySelector('.prev-btn'), next = container.querySelector('.next-btn'), last = container.querySelector('.last-btn'); if (first) first.disabled = current === 1; if (prev) prev.disabled = current === 1; if (next) next.disabled = current === total; if (last) last.disabled = current === total; }
         function getCurrentPageData(arr, page) { const start = (page-1)*CARDS_PER_PAGE; return arr.slice(start, start+CARDS_PER_PAGE); }
 
-        async function completeTask(taskId, executor, rowIndex) {
-            showLoader();
-            try {
-                const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
-                await fetch(updateUrl);
-                await fetch(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
-                masterData = null;
-                await loadAllTasks();
-                if(isFilterActive && currentFilterDate){
-                    if(filterType === 'mechanic') filterMechanicByDate(currentFilterDate);
-                    else if(filterType === 'instructor') filterInstructorByDate(currentFilterDate);
-                    else if(filterType === 'engineer') filterEngineerByDate(currentFilterDate);
-                } else {
-                    updateCounterLabel();
-                }
-                hideLoader();
-            } catch(e) { console.error(e); hideLoader(); }
-        }
+        // фильтрация задач по названию (ключевые слова)
+        function filterTasksByKeywords(tasks, keywords) { return tasks.filter(t => keywords.some(kw => (t.task || '').toLowerCase().includes(kw.toLowerCase()))); }
 
-        function openDriveLink(link) { if(link) window.open(link, '_blank'); }
+        async function loadAllTasks() { try { const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); originalAllTasks = [...journal]; mechanicTasks = filterTasksByKeywords(originalAllTasks, ['PS', 'МЕХ', 'ps', 'мех']); instructorTasks = filterTasksByKeywords(originalAllTasks, ['ИНСТ', 'инст']); engineerTasks = filterTasksByKeywords(originalAllTasks, ['инженер', 'ИНЖЕНЕР', 'ENGINEER', 'engineer']); } catch(e) { console.error(e); throw e; } }
 
-        function renderMechanicCards() {
-            const container = document.getElementById('journal-cards');
-            let data = mechanicTasks;
-            if(isFilterActive && filterType === 'mechanic' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate);
-            const total = Math.ceil(data.length / CARDS_PER_PAGE);
-            totalMechanicPages = total || 1;
-            if(currentMechanicPage > totalMechanicPages) currentMechanicPage = 1;
-            const pageData = getCurrentPageData(data, currentMechanicPage);
-            if(pageData.length === 0) { container.innerHTML = '<div class="task-card"><div class="loading-container">Нет задач</div></div>'; renderPagination('mechanic', currentMechanicPage, totalMechanicPages); return; }
-            let html = '';
-            pageData.forEach(task => {
-                const rowIdx = task.rowIndex;
-                const taskId = task.id || `task_${rowIdx}`;
-                const hasLink = task.driveLink && task.driveLink.trim();
-                if(!task.isCompleted){
-                    html += `<div class="task-card pending" data-row="${rowIdx}"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" data-taskid="${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')"><i class="fas fa-file-alt"></i> ОТКРЫТЬ</button>` : '<div class="no-open">Недоступно</div>'}
-                        <button class="submit-btn" data-row="${rowIdx}" disabled><i class="fas fa-paper-plane"></i> ОТПРАВИТЬ</button></div></div>`;
-                } else {
-                    html += `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')"><i class="fas fa-file-alt"></i> ОТКРЫТЬ</button>` : '<div class="no-open">Недоступно</div>'}
-                        <div class="submitted-text"><i class="fas fa-check-circle"></i> ОТПРАВЛЕНО</div></div></div>`;
-                }
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#tab1 .executor-select').forEach(select => {
-                select.addEventListener('change', function(e){ const card = this.closest('.task-card'); const btn = card.querySelector('.submit-btn'); if(btn) btn.disabled = !this.value; e.stopPropagation(); });
-            });
-            document.querySelectorAll('#tab1 .submit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => { const card = btn.closest('.task-card'); const select = card.querySelector('.executor-select'); const row = parseInt(card.dataset.row); if(select && select.value && row) completeTask('', select.value, row); e.stopPropagation(); });
-            });
-            renderPagination('mechanic', currentMechanicPage, totalMechanicPages);
-        }
+        function renderMechanicCards() { const container = document.getElementById('journal-cards'); let data = [...mechanicTasks]; if (isFilterActive && filterType === 'mechanic' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate); totalMechanicPages = Math.ceil(data.length / CARDS_PER_PAGE); if (currentMechanicPage > totalMechanicPages) currentMechanicPage = Math.max(1, totalMechanicPages); const pageData = getCurrentPageData(data, currentMechanicPage); if (!pageData.length) { container.innerHTML = '<div class="task-card"><div class="loading-container">Нет данных</div></div>'; updatePagination('journal', 1, 1); return; } container.innerHTML = pageData.map(task => { const rowIndex = task.rowIndex || 1; const taskId = task.id || task.driveLink || Math.random(); const hasLink = task.driveLink && task.driveLink.trim(); if (!task.isCompleted) return `<div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled><i class="fas fa-paper-plane"></i>ОТПРАВИТЬ</button></div></div>`; else return `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ОТПРАВЛЕНО</div></div></div>`; }).join(''); attachSelectEvents('journal-cards'); updatePagination('journal', currentMechanicPage, totalMechanicPages); updateCounterLabel(); }
+        function renderInstructorCards() { const container = document.getElementById('instructor-cards'); let data = [...instructorTasks]; if (isFilterActive && filterType === 'instructor' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate); totalInstructorPages = Math.ceil(data.length / CARDS_PER_PAGE); if (currentInstructorPage > totalInstructorPages) currentInstructorPage = Math.max(1, totalInstructorPages); const pageData = getCurrentPageData(data, currentInstructorPage); if (!pageData.length) { container.innerHTML = '<div class="task-card">Нет данных</div>'; updatePagination('instructor', 1, 1); return; } container.innerHTML = pageData.map(task => { const rowIndex = task.rowIndex || 1; const taskId = task.id || task.driveLink || Math.random(); const hasLink = task.driveLink && task.driveLink.trim(); if (!task.isCompleted) return `<div class="task-card pending"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>ОТПРАВИТЬ</button></div></div>`; else return `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text">ОТПРАВЛЕНО</div></div></div>`; }).join(''); attachSelectEvents('instructor-cards'); updatePagination('instructor', currentInstructorPage, totalInstructorPages); updateCounterLabel(); }
+        function renderEngineerCards() { const container = document.getElementById('engineer-cards'); let data = [...engineerTasks]; if (isFilterActive && filterType === 'engineer' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate); totalEngineerPages = Math.ceil(data.length / CARDS_PER_PAGE); if (currentEngineerPage > totalEngineerPages) currentEngineerPage = Math.max(1, totalEngineerPages); const pageData = getCurrentPageData(data, currentEngineerPage); if (!pageData.length) { container.innerHTML = '<div class="task-card">Нет данных</div>'; updatePagination('engineer', 1, 1); return; } container.innerHTML = pageData.map(task => { const rowIndex = task.rowIndex || 1; const taskId = task.id || task.driveLink || Math.random(); const hasLink = task.driveLink && task.driveLink.trim(); if (!task.isCompleted) return `<div class="task-card pending"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>ОТПРАВИТЬ</button></div></div>`; else return `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">ОТКРЫТЬ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text">ОТПРАВЛЕНО</div></div></div>`; }).join(''); attachSelectEvents('engineer-cards'); updatePagination('engineer', currentEngineerPage, totalEngineerPages); updateCounterLabel(); }
 
-        function renderInstructorCards() {
-            const container = document.getElementById('instructor-cards');
-            let data = instructorTasks;
-            if(isFilterActive && filterType === 'instructor' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate);
-            const total = Math.ceil(data.length / CARDS_PER_PAGE);
-            totalInstructorPages = total || 1;
-            if(currentInstructorPage > totalInstructorPages) currentInstructorPage = 1;
-            const pageData = getCurrentPageData(data, currentInstructorPage);
-            if(pageData.length === 0) { container.innerHTML = '<div class="task-card">Нет задач инструктора</div>'; renderPagination('instructor', currentInstructorPage, totalInstructorPages); return; }
-            let html = '';
-            pageData.forEach(task => {
-                const rowIdx = task.rowIndex;
-                const hasLink = task.driveLink && task.driveLink.trim();
-                if(!task.isCompleted){
-                    html += `<div class="task-card pending" data-row="${rowIdx}"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')"><i class="fas fa-file-alt"></i> ОТКРЫТЬ</button>` : '<div>Недоступно</div>'}
-                        <button class="submit-btn" data-row="${rowIdx}" disabled>ОТПРАВИТЬ</button></div></div>`;
-                } else {
-                    html += `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')">ОТКРЫТЬ</button>` : '<div>Недоступно</div>'}
-                        <div class="submitted-text">ОТПРАВЛЕНО</div></div></div>`;
-                }
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#tab2 .executor-select').forEach(select => { select.addEventListener('change', function(e){ const card = this.closest('.task-card'); const btn = card.querySelector('.submit-btn'); if(btn) btn.disabled = !this.value; e.stopPropagation(); }); });
-            document.querySelectorAll('#tab2 .submit-btn').forEach(btn => { btn.addEventListener('click', (e) => { const card = btn.closest('.task-card'); const select = card.querySelector('.executor-select'); const row = parseInt(card.dataset.row); if(select && select.value && row) completeTask('', select.value, row); e.stopPropagation(); }); });
-            renderPagination('instructor', currentInstructorPage, totalInstructorPages);
-        }
+        function attachSelectEvents(containerId) { const container = document.getElementById(containerId); if (!container) return; container.querySelectorAll('.executor-select').forEach(select => { select.removeEventListener('change', select._handler); select._handler = function() { const card = this.closest('.task-card'); const btn = card?.querySelector('.submit-btn'); if (btn) btn.disabled = !this.value; }; select.addEventListener('change', select._handler); }); }
 
-        function renderEngineerCards() {
-            const container = document.getElementById('engineer-cards');
-            let data = engineerTasks;
-            if(isFilterActive && filterType === 'engineer' && currentFilterDate) data = data.filter(t => t.completedDate === currentFilterDate);
-            const total = Math.ceil(data.length / CARDS_PER_PAGE);
-            totalEngineerPages = total || 1;
-            if(currentEngineerPage > totalEngineerPages) currentEngineerPage = 1;
-            const pageData = getCurrentPageData(data, currentEngineerPage);
-            if(pageData.length === 0) { container.innerHTML = '<div class="task-card"><div class="loading-container">Нет инженерных задач</div></div>'; renderPagination('engineer', currentEngineerPage, totalEngineerPages); return; }
-            let html = '';
-            pageData.forEach(task => {
-                const rowIdx = task.rowIndex;
-                const hasLink = task.driveLink && task.driveLink.trim();
-                if(!task.isCompleted){
-                    html += `<div class="task-card pending" data-row="${rowIdx}"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')"><i class="fas fa-file-alt"></i> ОТКРЫТЬ</button>` : '<div>Недоступно</div>'}
-                        <button class="submit-btn" data-row="${rowIdx}" disabled>ОТПРАВИТЬ</button></div></div>`;
-                } else {
-                    html += `<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content">
-                        <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
-                        <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
-                        <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div>
-                        <div class="buttons-container">${hasLink ? `<button class="schema-button" onclick="openDriveLink('${task.driveLink}')">ОТКРЫТЬ</button>` : '<div>Недоступно</div>'}
-                        <div class="submitted-text">ОТПРАВЛЕНО</div></div></div>`;
-                }
-            });
-            container.innerHTML = html;
-            document.querySelectorAll('#tab3 .executor-select').forEach(select => { select.addEventListener('change', function(e){ const card = this.closest('.task-card'); const btn = card.querySelector('.submit-btn'); if(btn) btn.disabled = !this.value; e.stopPropagation(); }); });
-            document.querySelectorAll('#tab3 .submit-btn').forEach(btn => { btn.addEventListener('click', (e) => { const card = btn.closest('.task-card'); const select = card.querySelector('.executor-select'); const row = parseInt(card.dataset.row); if(select && select.value && row) completeTask('', select.value, row); e.stopPropagation(); }); });
-            renderPagination('engineer', currentEngineerPage, totalEngineerPages);
-        }
+        async function completeTask(taskId, executor, rowIndex) { showLoader(); try { const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`; await makeRequest(updateUrl); await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`); originalAllTasks = null; await loadAllTasks(); const activeTab = document.querySelector('.tab-content.active')?.id; if (activeTab === 'tab1') { mechanicTasks = filterTasksByKeywords(originalAllTasks, ['PS', 'МЕХ', 'ps', 'мех']); renderMechanicCards(); } else if (activeTab === 'tab2') { instructorTasks = filterTasksByKeywords(originalAllTasks, ['ИНСТ', 'инст']); renderInstructorCards(); } else if (activeTab === 'tab3') { engineerTasks = filterTasksByKeywords(originalAllTasks, ['инженер', 'ИНЖЕНЕР', 'ENGINEER']); renderEngineerCards(); } if (isFilterActive && currentFilterDate) applyFilterToActiveTab(); updateCounterLabel(); hideLoader(); } catch(e) { console.error(e); hideLoader(); alert('Ошибка'); } }
+        function submitTask(event, taskId, rowIndex) { const btn = event.currentTarget; const card = btn.closest('.task-card'); const select = card?.querySelector('.executor-select'); if (!select || !select.value) return; completeTask(taskId, select.value, rowIndex); event.stopPropagation(); }
 
-        async function loadAllTasks() {
-            try {
-                const res = await fetch(`${BACKEND_URL}?action=getJournal&_=${Date.now()}`);
-                const journal = await res.json();
-                masterData = journal;
-                mechanicTasks = filterByTitle(journal, ['PS', 'МЕХ', 'ps', 'мех']);
-                instructorTasks = filterByTitle(journal, ['ИНСТ', 'инст']);
-                engineerTasks = filterByTitle(journal, ['ИНЖЕНЕР', 'инженер']);
-                const active = document.querySelector('.tab-content.active');
-                if(active.id === 'tab1') renderMechanicCards();
-                else if(active.id === 'tab2') renderInstructorCards();
-                else if(active.id === 'tab3') renderEngineerCards();
-                updateCounterLabel();
-            } catch(e) { console.error(e); }
-        }
+        function updateCounterLabel() { const activeTab = document.querySelector('.tab-content.active'); const counter = document.getElementById('open-tasks-counter'); const labelSpan = counter.querySelector('.label'); const countSpan = counter.querySelector('.count'); if (!activeTab) return; let openCount = 0; let prefix = ''; if (activeTab.id === 'tab1') { const data = isFilterActive && filterType==='mechanic' && currentFilterDate ? mechanicTasks.filter(t=>t.completedDate===currentFilterDate) : mechanicTasks; openCount = data.filter(t=>!t.isCompleted).length; prefix = isFilterActive ? `Задачи за ${currentFilterDate} (МЕХАНИК)` : 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:'; } else if (activeTab.id === 'tab2') { const data = isFilterActive && filterType==='instructor' && currentFilterDate ? instructorTasks.filter(t=>t.completedDate===currentFilterDate) : instructorTasks; openCount = data.filter(t=>!t.isCompleted).length; prefix = isFilterActive ? `Задачи за ${currentFilterDate} (ИНСТРУКТОР)` : 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:'; } else if (activeTab.id === 'tab3') { const data = isFilterActive && filterType==='engineer' && currentFilterDate ? engineerTasks.filter(t=>t.completedDate===currentFilterDate) : engineerTasks; openCount = data.filter(t=>!t.isCompleted).length; prefix = isFilterActive ? `Задачи за ${currentFilterDate} (ИНЖЕНЕР)` : 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:'; } labelSpan.innerHTML = prefix; countSpan.textContent = openCount; }
 
-        function filterMechanicByDate(date) { isFilterActive=true; currentFilterDate=date; filterType='mechanic'; currentMechanicPage=1; renderMechanicCards(); updateCounterLabel(); }
-        function filterInstructorByDate(date) { isFilterActive=true; currentFilterDate=date; filterType='instructor'; currentInstructorPage=1; renderInstructorCards(); updateCounterLabel(); }
-        function filterEngineerByDate(date) { isFilterActive=true; currentFilterDate=date; filterType='engineer'; currentEngineerPage=1; renderEngineerCards(); updateCounterLabel(); }
-        function clearDateFilter() {
-            isFilterActive = false; currentFilterDate = ''; filterType = '';
-            const active = document.querySelector('.tab-content.active');
-            if(active.id === 'tab1') renderMechanicCards();
-            else if(active.id === 'tab2') renderInstructorCards();
-            else if(active.id === 'tab3') renderEngineerCards();
-            updateCounterLabel();
-            const dateInput = document.getElementById('date-filter-input'); if(dateInput) dateInput.value = '';
-        }
-        function initDatePicker() { if(datePicker) datePicker.destroy(); datePicker = flatpickr("#date-filter-input", { locale: "ru", dateFormat: "d.m.Y", onChange: (dates, dateStr) => { if(dateStr){ const active = document.querySelector('.tab-content.active'); if(active.id === 'tab1') filterMechanicByDate(dateStr); else if(active.id === 'tab2') filterInstructorByDate(dateStr); else if(active.id === 'tab3') filterEngineerByDate(dateStr); } } }); }
-        function toggleDateFilter() { const container = document.getElementById('date-filter-container'); container.classList.toggle('show'); if(container.classList.contains('show')) initDatePicker(); }
+        function applyFilterToActiveTab() { const active = document.querySelector('.tab-content.active'); if (!active) return; if (active.id === 'tab1') filterMechanicByDate(currentFilterDate); else if (active.id === 'tab2') filterInstructorByDate(currentFilterDate); else if (active.id === 'tab3') filterEngineerByDate(currentFilterDate); }
+        function filterMechanicByDate(date) { isFilterActive = !!date; currentFilterDate = date || ''; filterType = 'mechanic'; currentMechanicPage = 1; renderMechanicCards(); const input = document.getElementById('date-filter-input'); if (input && !date) input.value = ''; updateCounterLabel(); }
+        function filterInstructorByDate(date) { isFilterActive = !!date; currentFilterDate = date || ''; filterType = 'instructor'; currentInstructorPage = 1; renderInstructorCards(); if (!date) document.getElementById('date-filter-input').value = ''; updateCounterLabel(); }
+        function filterEngineerByDate(date) { isFilterActive = !!date; currentFilterDate = date || ''; filterType = 'engineer'; currentEngineerPage = 1; renderEngineerCards(); if (!date) document.getElementById('date-filter-input').value = ''; updateCounterLabel(); }
+        function clearDateFilter() { const active = document.querySelector('.tab-content.active'); if (!active) return; if (active.id === 'tab1') filterMechanicByDate(''); else if (active.id === 'tab2') filterInstructorByDate(''); else filterEngineerByDate(''); document.getElementById('date-filter-input').value = ''; }
+        function toggleDateFilter() { const container = document.getElementById('date-filter-container'); container.classList.toggle('show'); if (container.classList.contains('show')) { if (!datePicker) { datePicker = flatpickr('#date-filter-input', { locale: "ru", dateFormat: "d.m.Y", onChange: (dates, str) => { if (str) { const active = document.querySelector('.tab-content.active'); if (active.id === 'tab1') filterMechanicByDate(str); else if (active.id === 'tab2') filterInstructorByDate(str); else filterEngineerByDate(str); } } }); } } }
 
-        async function initializeApp() {
-            showLoader();
-            await loadAllTasks();
-            hideLoader();
-            document.getElementById('open-tasks-counter').addEventListener('click', toggleDateFilter);
-            document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-                    btn.classList.add('active');
-                    const tabId = btn.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                    if(tabId === 'tab1') { currentMechanicPage=1; renderMechanicCards(); }
-                    else if(tabId === 'tab2') { currentInstructorPage=1; renderInstructorCards(); }
-                    else if(tabId === 'tab3') { currentEngineerPage=1; renderEngineerCards(); }
-                    if(isFilterActive && currentFilterDate){
-                        if(tabId === 'tab1') filterMechanicByDate(currentFilterDate);
-                        else if(tabId === 'tab2') filterInstructorByDate(currentFilterDate);
-                        else if(tabId === 'tab3') filterEngineerByDate(currentFilterDate);
-                    } else updateCounterLabel();
-                    scrollToTop();
-                });
-            });
-            setInterval(() => loadAllTasks(), 35000);
-            setTimeout(() => { isInitialLoad = false; }, 1000);
-        }
+        async function initializeApp() { showLoader(); await loadAllTasks(); renderMechanicCards(); renderInstructorCards(); renderEngineerCards(); hideLoader(); document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); const id = btn.getAttribute('data-tab'); document.getElementById(id).classList.add('active'); if (id === 'tab1') { currentMechanicPage = 1; renderMechanicCards(); } else if (id === 'tab2') { currentInstructorPage = 1; renderInstructorCards(); } else { currentEngineerPage = 1; renderEngineerCards(); } if (isFilterActive && currentFilterDate) applyFilterToActiveTab(); else updateCounterLabel(); scrollToTop(); }); }); document.getElementById('open-tasks-counter').addEventListener('click', toggleDateFilter); document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter); setInterval(async () => { await loadAllTasks(); const active = document.querySelector('.tab-content.active'); if (active?.id === 'tab1') renderMechanicCards(); else if (active?.id === 'tab2') renderInstructorCards(); else if (active?.id === 'tab3') renderEngineerCards(); }, 30000); isInitialLoad = false; }
 
-        function handleCredentialResponse(resp) { try { const payload = JSON.parse(atob(resp.credential.split('.')[1])); currentUser = { email: payload.email.toLowerCase(), name: payload.name, picture: payload.picture }; showLoading(true); initAndCheckEmail(); } catch(e){ alert('Ошибка входа'); } }
-        function showLoading(show) { const cont = document.getElementById('login-container'); if(show) cont.innerHTML = '<div style="padding:40px"><div class="loading-spinner"></div><br>Проверка доступа...</div>'; else location.reload(); }
-        async function initAndCheckEmail() { await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] }); await checkEmailInSheet(currentUser.email); }
-        async function checkEmailInSheet(email) { const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` }); const rows = resp.result.values || []; let ok=false; for(let row of rows){ if(row[0]?.toLowerCase().trim() === email && row.some(cell => cell?.includes(CURRENT_SITE) || cell?.includes('SMB-LS-KH'))){ ok=true; break; } } if(ok){ loginUser(currentUser); } else { showLoading(false); alert('Доступ запрещён'); } }
-        function loginUser(user) { loginSection.style.display='none'; mainContent.style.display='block'; updateUserAvatar(user); localStorage.setItem('userLoggedIn','true'); localStorage.setItem('userEmail',user.email); localStorage.setItem('userName',user.name); localStorage.setItem('userPic',user.picture||''); loadingScreen.classList.add('fade-out'); initializeApp(); }
-        window.signOut = function() { localStorage.clear(); google.accounts.id.disableAutoSelect(); mainContent.style.display='none'; loginSection.style.display='flex'; location.reload(); };
-        window.onload = function() { const logged = localStorage.getItem('userLoggedIn')==='true'; if(logged && localStorage.getItem('userEmail')){ loginSection.style.display='none'; mainContent.style.display='block'; currentUser={ email:localStorage.getItem('userEmail'), name:localStorage.getItem('userName'), picture:localStorage.getItem('userPic') }; updateUserAvatar(currentUser); initializeApp(); setTimeout(()=>loadingScreen.classList.add('fade-out'),300); } else { loginSection.style.display='flex'; loadingScreen.classList.add('fade-out'); google.accounts.id.initialize({ client_id:'328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com', callback:handleCredentialResponse }); google.accounts.id.renderButton(document.querySelector('.g_id_signin'),{ type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large' }); } };
+        window.addEventListener('load', () => { const isLogged = localStorage.getItem('userLoggedIn') === 'true'; const email = localStorage.getItem('userEmail'); if (isLogged && email) { loginSection.style.display = 'none'; mainContent.style.display = 'block'; currentUser = { email: email, name: localStorage.getItem('userName'), picture: localStorage.getItem('userPic') }; updateUserAvatar(currentUser); showLoading(true); loadSheetsAPI().then(()=>gapi.client.init({apiKey:AUTH_API_KEY,discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4']})).then(()=>checkEmailInSheet(email)).catch(()=>signOut()); } else { loginSection.style.display = 'flex'; mainContent.style.display = 'none'; setTimeout(()=>loadingScreen.classList.add('fade-out'),500); } if (google?.accounts?.id) google.accounts.id.initialize({client_id:'328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',callback:handleCredentialResponse}); });
     </script>
 </body>
 </html>
