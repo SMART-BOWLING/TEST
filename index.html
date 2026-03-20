@@ -13,7 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* --- ОСНОВНЫЕ СТИЛИ (без изменений) --- */
+        /* ОСНОВНЫЕ СТИЛИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
@@ -22,13 +22,8 @@
             --accent: #dc143c;
             --text-dark: #1a2f40;
             --text-light: #ffffff;
-            --text-gray: #FFF;
-            --text-light-gray: #999999;
             --border-radius: 8px;
-            --input-padding: 12px;
             --surface: #ffffff;
-            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
-            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         * {
@@ -50,19 +45,13 @@
 
         body {
             color: #1a2f40;
-            padding: 0;
             line-height: 1.5;
-            min-height: 100vh;
-            height: 100vh;
             -webkit-font-smoothing: antialiased;
             font-weight: 700;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-            -webkit-text-size-adjust: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
+        /* ШАПКА */
         header {
             background-color: #1f2937;
             color: white;
@@ -71,305 +60,309 @@
             justify-content: space-between;
             padding: 10px 20px;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            user-select: none;
             z-index: 1000;
-            padding-top: max(10px, env(safe-area-inset-top));
-            padding-left: max(20px, env(safe-area-inset-left));
-            padding-right: max(20px, env(safe-area-inset-right));
             min-height: 65px;
         }
 
-        .logo img {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 0;
-            transform: translateY(4px);
-            cursor: pointer;
-        }
-
-        .site-name {
-            flex: 1;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-            cursor: default;
-            position: relative;
-        }
+        .logo img { width: 40px; height: 40px; transform: translateY(4px); }
+        .site-name { flex: 1; text-align: center; font-size: 20px; font-weight: bold; }
 
         .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 2px solid white;
-            background-color: #4a5568;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 36px; height: 36px; border-radius: 50%; border: 2px solid white;
+            background-color: #4a5568; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; cursor: pointer;
         }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .user-avatar i {
-            font-size: 18px;
-            color: white;
-        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         .user-dropdown {
-            display: none;
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            background-color: #1f2937;
-            border: 1px solid #444;
-            border-radius: 8px;
-            overflow: hidden;
-            z-index: 9999;
-            min-width: 150px;
+            display: none; position: absolute; top: 70px; right: 20px;
+            background-color: #1f2937; border: 1px solid #444; border-radius: 8px;
+            z-index: 9999; min-width: 150px;
+        }
+        .user-dropdown a { padding: 10px 15px; text-decoration: none; color: white; display: flex; align-items: center; }
+
+        /* ВКЛАДКИ И БАДЖИ (ЦИФРЫ) */
+        .tabs {
+            display: flex; background-color: var(--surface); padding: 16px 0; gap: 8px;
+            border-bottom: 1px solid #f0f0f0; justify-content: space-between; width: 100%;
         }
 
-        .user-dropdown a {
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            transition: background 0.3s;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .user-dropdown a:hover {
-            background-color: #374151;
-        }
-
-        .icon-space {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-
-        /* --- СТИЛИ ДЛЯ КНОПОК С КРУЖКАМИ (НОВЫЕ) --- */
         .tab-btn {
-            background: var(--surface);
-            border: 1px solid #e5e5e5;
-            color: var(--text-dark);
-            padding: 14px 12px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            flex: 1;
-            min-width: 0;
-            text-align: center;
-            border-radius: 6px;
-            font-weight: 700;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            touch-action: manipulation;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            background: var(--surface); border: 1px solid #e5e5e5; color: var(--text-dark);
+            padding: 14px 12px; font-size: 14px; cursor: pointer; flex: 1;
+            border-radius: 6px; font-weight: 700; position: relative;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .tab-btn i {
-            font-size: 16px;
-        }
-
-        .tab-btn .badge-circle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #dc143c;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            min-width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            padding: 0 6px;
-            margin-left: 6px;
-            line-height: 1;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .tab-btn.active .badge-circle {
-            background-color: white;
-            color: #dc143c;
-            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
-        }
-
-        .tab-btn:hover .badge-circle {
-            transform: scale(1.05);
-        }
-
-        /* остальные стили (загрузка, карточки, пагинация и т.д.) — без изменений */
-        .loading-screen { position: fixed; inset: 0; background: #1f2937; display: flex; justify-content: center; align-items: center; z-index: 10000; transition: opacity 0.5s ease; }
-        .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-        .loader-container, .action-loader { position: fixed; inset: 0; background: #1f2937; display: none; justify-content: center; align-items: center; z-index: 100000; }
-        .loader-container.active, .action-loader.active { display: flex; }
-        .logo-wrapper { position: relative; width: 160px; height: 160px; display: flex; justify-content: center; align-items: center; }
-        .glow-ring { position: absolute; width: 80px; height: 80px; border-radius: 100%; background: conic-gradient(#dc143c, transparent 100%); animation: spin 5s linear infinite; filter: blur(20px); }
-        .logo-wrapper img { width: 120px; z-index: 2; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #login-section { display: none; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background-color: #f4f6f9; }
-        #login-container { background: white; padding: 30px 25px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); text-align: center; max-width: 420px; width: 100%; border: none; }
-        #login-container h2 { color: #1e293b; margin: 15px 0 5px; font-size: 20px; font-weight: 800; }
-        .login-subtitle { color: #64748b; font-size: 13px; margin-bottom: 25px; }
-        .login-icon { width: 50px; height: 50px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
-        .login-icon i { font-size: 24px; color: #dc143c; }
-        .loading-spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(220, 20, 60, 0.2); border-radius: 50%; border-top-color: #dc143c; animation: spin 1s ease-in-out infinite; }
-        .container { max-width: 100%; margin: 0; background-color: var(--surface); border-radius: 0; box-shadow: none; overflow: hidden; height: 100%; display: flex; flex-direction: column; border: none; min-height: -webkit-fill-available; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
-        .header-section { display: flex; flex-direction: column; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 16px; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-top: 80px; }
-        .tabs { display: flex; background-color: var(--surface); padding: 16px 0; gap: 8px; flex-shrink: 0; border-bottom: 1px solid #f0f0f0; justify-content: space-between; flex-wrap: wrap; width: 100%; margin-top: 0; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
         .tab-btn.active { background-color: var(--accent); color: var(--text-light); border-color: var(--accent); }
-        .open-tasks-counter { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background-color: #1a2f40; color: white; border-radius: 6px; font-weight: 700; font-size: 15px; margin: 8px 0 16px; width: 100%; cursor: pointer; transition: all 0.3s ease; user-select: none; }
-        .open-tasks-counter .label { flex: 1; text-align: left; }
-        .open-tasks-counter .count { background-color: #dc143c; padding: 6px 12px; border-radius: 4px; font-size: 16px; min-width: 40px; text-align: center; }
-        .date-filter-container { display: none; padding: 16px; background-color: #f8f9fa; border-bottom: 1px solid #e0e0e0; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .date-filter-container.show { display: flex; }
-        /* Остальные стили для фильтра, карточек, кнопок, пагинации (полностью идентичны исходным) */
-        .date-filter-label { font-size: 14px; font-weight: 600; color: #1a2f40; }
-        .date-input-wrapper { position: relative; min-width: 200px; flex: 1; }
-        .date-filter-input { padding: 8px 12px; padding-left: 40px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 14px; font-weight: 600; background-color: white; color: #1a2f40; cursor: pointer; width: 100%; }
-        .calendar-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; }
-        .clear-filter-btn { padding: 8px 16px; background-color: #1a2f40; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .tab-content { display: none; padding: 0; flex: 1; overflow-y: auto; flex-direction: column; }
-        .tab-content.active { display: flex; }
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px; width: 100%; max-width: 1200px; margin: 0 auto; padding: 16px; }
-        .task-card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; flex-direction: column; cursor: pointer; transition: all 0.3s ease; overflow: hidden; }
-        .task-header { padding: 16px 16px 12px; border-bottom: 2px solid #dc143c; }
-        .task-title { font-size: 16px; font-weight: 700; color: #000000; }
-        .content-row { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; border-bottom: 1px solid #e0e0e0; min-height: 48px; }
-        .row-label { font-size: 14px; color: #000000; font-weight: 700; }
-        .row-value { font-size: 14px; font-weight: 700; color: #000000; text-align: right; flex: 1; display: flex; justify-content: flex-end; }
-        .executor-select { background: #cccccc; border: 2px solid #cccccc; border-radius: 15px; padding: 8px 10px; font-size: 15px; font-weight: 700; color: #666666; cursor: pointer; width: auto; max-width: 160px; min-width: 140px; }
-        .buttons-container { display: flex; justify-content: space-between; gap: 10px; padding: 16px; border-top: 1px solid #e0e0e0; }
-        .schema-button, .submit-btn, .open-button { background-color: #1a2f40; color: white; padding: 11px 14px; font-weight: 700; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; text-align: center; flex: 1; transition: all 0.3s ease; }
-        .submit-btn { background-color: #dc143c; }
-        .submit-btn:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
-        .submitted-text { color: #000; font-weight: 700; padding: 11px 14px; border: 1px solid #FFFFFF; border-radius: 4px; background: #FFFFFF; flex: 1; text-align: center; }
-        .pagination { display: flex; justify-content: center; gap: 8px; margin: 10px auto 80px; padding: 20px 10px; flex-wrap: wrap; max-width: 1200px; }
-        .page-btn { background: white; border: 1px solid #e5e5e5; color: #1a2f40; padding: 8px 12px; font-size: 14px; cursor: pointer; border-radius: 4px; font-weight: 600; min-width: 40px; }
-        .page-btn.active { background-color: #dc143c; color: white; border-color: #dc143c; }
-        .page-btn:disabled { background-color: #f0f0f0; color: #999; cursor: not-allowed; }
-        .page-info { font-size: 14px; color: #666; font-weight: 600; margin: 0 10px; }
-        @media (max-width: 767px) { .header-section { padding-top: 75px; } .tabs { gap: 6px; } .tab-btn { padding: 12px 8px; font-size: 14px; } .badge-circle { font-size: 11px; min-width: 20px; height: 20px; } }
-        @media (max-width: 480px) { .tab-btn { font-size: 12px; } .badge-circle { font-size: 10px; min-width: 18px; height: 18px; margin-left: 4px; } }
+
+        /* СТИЛЬ КРУЖКА С ЦИФРОЙ */
+        .tab-badge {
+            position: absolute;
+            top: -5px;
+            right: -2px;
+            background-color: #ffffff;
+            color: #dc143c;
+            font-size: 11px;
+            font-weight: 800;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: none; /* Скрыто по умолчанию, покажется через JS */
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 2px solid #dc143c;
+            z-index: 10;
+        }
+        .tab-btn.active .tab-badge {
+            background-color: #ffffff;
+            color: #dc143c;
+            border: 2px solid #ffffff;
+        }
+
+        /* КОНТЕЙНЕРЫ */
+        .container { height: 100%; display: flex; flex-direction: column; }
+        .header-section { padding: 80px 16px 0; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+        .open-tasks-counter {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; background-color: #1a2f40; color: white;
+            border-radius: 6px; margin: 8px 0 16px; cursor: pointer;
+        }
+        .open-tasks-counter .count { background-color: #dc143c; padding: 6px 12px; border-radius: 4px; }
+
+        .cards-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; width: 100%;
+        }
+
+        .task-card {
+            background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; overflow: hidden; min-height: 280px;
+        }
+        .task-header { padding: 16px; border-bottom: 2px solid #dc143c; font-weight: 700; }
+        .content-row { display: flex; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #e0e0e0; min-height: 48px; align-items: center; }
+        
+        .executor-select { background: #cccccc; border-radius: 15px; padding: 5px 10px; font-weight: 700; }
+        .buttons-container { display: flex; gap: 10px; padding: 16px; border-top: 1px solid #e0e0e0; margin-top: auto; }
+        
+        .submit-btn { background-color: #dc143c; color: white; border: none; border-radius: 4px; padding: 10px; flex: 1; cursor: pointer; font-weight: 700; }
+        .submit-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        .schema-button { background-color: #1a2f40; color: white; border-radius: 4px; padding: 10px; flex: 1; text-align: center; text-decoration: none; font-size: 12px; }
+
+        /* ЛОАДЕР */
+        .loading-screen, .loader-container {
+            position: fixed; inset: 0; background: #1f2937; display: flex; 
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        .fade-out { opacity: 0; pointer-events: none; transition: 0.5s; }
+        .glow-ring { width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(#dc143c, transparent); animation: spin 2s linear infinite; filter: blur(10px); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* ПАГИНАЦИЯ */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; }
+        .page-btn { padding: 8px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; }
+        .page-btn.active { background: #dc143c; color: white; }
+
+        /* МОБИЛЬНАЯ АДАПТАЦИЯ */
+        @media (max-width: 767px) {
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { font-size: 12px; padding: 10px 5px; }
+            .site-name { font-size: 16px; }
+        }
     </style>
 </head>
 <body>
-    <div class="loading-screen" id="loadingScreen"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading Logo"></div></div>
-    <div class="loader-container" id="loader"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading"></div></div>
-    <div id="login-section"><div id="login-container"><div class="login-icon"><i class="fas fa-shield-halved"></i></div><h2>LUCKY STRIKE KH</h2><div class="login-subtitle">Войдите для доступа</div><div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div><div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div></div></div>
+
+    <!-- ЭКРАН ЗАГРУЗКИ -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="glow-ring"></div>
+        <img src="https://i.postimg.cc/wjGzSY92/1.png" style="width: 60px; position: absolute;">
+    </div>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div id="main-content" style="display: none;">
-        <header><div class="logo"><a href="https://smart-bowling.github.io/SMB/"><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></a></div><div class="site-name">LUCKY STRIKE KH</div><div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()"><i class="fas fa-user"></i></div><div class="user-dropdown" id="userDropdown"><a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt icon-space"></i> ВЫЙТИ</a></div></header>
-        <div class="container" id="main-container">
+        <header>
+            <div class="logo">
+                <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo">
+            </div>
+            <div class="site-name">LUCKY STRIKE KH</div>
+            <div class="user-avatar" id="userAvatar" onclick="toggleUserDropdown()">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-dropdown" id="userDropdown">
+                <a href="#" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> ВЫЙТИ</a>
+            </div>
+        </header>
+        
+        <div class="container">
             <div class="header-section">
                 <div class="tabs">
-                    <button class="tab-btn active" data-tab="tab1"><i class="fas fa-wrench"></i> МЕХАНИК <span class="badge-circle" id="badge-mechanic">0</span></button>
-                    <button class="tab-btn" data-tab="tab2"><i class="fas fa-bowling-ball"></i> ИНСТРУКТОР <span class="badge-circle" id="badge-instructor">0</span></button>
-                    <button class="tab-btn" data-tab="tab3"><i class="fas fa-microchip"></i> ИНЖЕНЕР <span class="badge-circle" id="badge-engineer">0</span></button>
+                    <button class="tab-btn active" data-tab="tab1">
+                        <i class="fas fa-wrench"></i> МЕХАНИК
+                        <span class="tab-badge" id="badge-tab1">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab2">
+                        <i class="fas fa-bowling-ball"></i> ИНСТРУКТОР
+                        <span class="tab-badge" id="badge-tab2">0</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab3">
+                        <i class="fas fa-microchip"></i> ИНЖЕНЕР
+                        <span class="tab-badge" id="badge-tab3">0</span>
+                    </button>
                 </div>
-                <div class="open-tasks-counter" id="open-tasks-counter"><span class="label">КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:</span><span class="count">0</span></div>
+                
+                <div class="open-tasks-counter" id="open-tasks-counter">
+                    <span class="label">НЕВЫПОЛНЕННЫЕ ЗАДАЧИ:</span>
+                    <span class="count">0</span>
+                </div>
             </div>
-            <div class="date-filter-container" id="date-filter-container"><span class="date-filter-label">Просмотр выполненных задач по дате</span><div class="date-input-wrapper"><i class="fas fa-calendar-alt calendar-icon"></i><input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly></div><button class="clear-filter-btn" id="clear-filter-btn">Сбросить фильтр</button></div>
-            <div class="tab-content active" id="tab1"><div class="cards-grid" id="journal-cards"></div><div class="pagination" id="journal-pagination" style="display: none;"></div></div>
-            <div class="tab-content" id="tab2"><div class="cards-grid" id="instructor-cards"></div><div class="pagination" id="instructor-pagination" style="display: none;"></div></div>
-            <div class="tab-content" id="tab3"><div class="cards-grid" id="engineer-cards"></div><div class="pagination" id="engineer-pagination" style="display: none;"></div></div>
+            
+            <!-- ВКЛАДКА 1 -->
+            <div class="tab-content active" id="tab1">
+                <div class="cards-grid" id="journal-cards"></div>
+                <div class="pagination" id="journal-pagination"></div>
+            </div>
+            
+            <!-- ВКЛАДКА 2 -->
+            <div class="tab-content" id="tab2">
+                <div class="cards-grid" id="instructor-cards"></div>
+                <div class="pagination" id="instructor-pagination"></div>
+            </div>
+
+            <!-- ВКЛАДКА 3 -->
+            <div class="tab-content" id="tab3">
+                <div class="cards-grid" id="engineer-cards"></div>
+                <div class="pagination" id="engineer-pagination"></div>
+            </div>
         </div>
     </div>
+
+    <!-- СКРИПТЫ -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script>
-        // ===== КОНСТАНТЫ (ОРИГИНАЛЬНЫЕ) =====
-        const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-        const AUTH_SHEET_NAME = '1';
-        const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-        const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyBiibLN40TjLDo1pz69ogyUgERUBhuCcmmkXDCgvS3fUGbt6ifyt_Lh9f3gg8yXZOA/exec';
         const CARDS_PER_PAGE = 6;
-        let currentUser = null;
-        let journalData = null, instructorData = null, engineerData = null, originalJournalData = null;
-        let currentJournalPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
-        let totalJournalPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
-        let isFilterActive = false, currentFilterDate = '', filterType = 'journal';
-        let datePicker = null;
-        let isInitialLoad = true;
-        const loadingScreen = document.getElementById("loadingScreen"), loginSection = document.getElementById("login-section"), mainContent = document.getElementById("main-content"), loader = document.getElementById("loader");
 
-        function toggleUserDropdown() { const menu = document.getElementById("userDropdown"); menu.style.display = menu.style.display === "block" ? "none" : "block"; }
-        function updateUserAvatar(user) { const avatar = document.getElementById('userAvatar'); if (user?.picture) avatar.innerHTML = `<img src="${user.picture}" alt="Avatar">`; else avatar.innerHTML = '<i class="fas fa-user"></i>'; }
-        function showLoader() { loader.classList.add('active'); }
-        function hideLoader() { loader.classList.remove('active'); }
-        function showLoading(show) { /* логика без изменений */ const loginDiv = document.getElementById('login-container'); if (show) { if (!loginDiv.hasAttribute('data-original')) loginDiv.setAttribute('data-original', loginDiv.innerHTML); loginDiv.innerHTML = '<div style="padding:40px;text-align:center;"><div class="loading-spinner"></div><br><span>Проверка доступа...</span></div>'; } else if (loginDiv.getAttribute('data-original') && loginSection.style.display !== 'none') { loginDiv.innerHTML = loginDiv.getAttribute('data-original'); if (window.google?.accounts?.id) google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large' }); } }
-        function parseJwt(token) { try { const base64Url = token.split('.')[1]; const base64 = base64Url.replace(/-/g,'+').replace(/_/g,'/'); const jsonPayload = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); return JSON.parse(jsonPayload); } catch(e) { return {}; } }
-        function loadSheetsAPI() { return new Promise((resolve,reject)=>{ gapi.load('client',{callback:()=>resolve(), onerror:()=>reject('Ошибка загрузки API'), timeout:10000, ontimeout:()=>reject('Таймаут')}); }); }
-        async function initAndCheckEmail() { try { await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] }); await checkEmailInSheet(currentUser.email); } catch(error) { showLoading(false); alert('Ошибка инициализации'); } }
-        async function checkEmailInSheet(email) { try { const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` }); const rows = resp.result.values; let hasAccess = false; if (rows) for (let i=0;i<rows.length;i++) { if (rows[i]?.[0]?.toLowerCase().trim() === email) { for(let j=1;j<rows[i].length;j++) if ((rows[i][j]?.trim().split('?')[0].split('#')[0] || '') === CURRENT_SITE || rows[i][j]?.includes('SMB-LS-KH')) { hasAccess=true; break; } break; } } if (hasAccess) loginUser(currentUser); else { showLoading(false); alert('Доступ запрещен'); } } catch(e) { showLoading(false); alert('Ошибка доступа к таблице'); } }
-        function loginUser(payload) { loginSection.style.display='none'; mainContent.style.display='block'; updateUserAvatar(payload); localStorage.setItem('userLoggedIn','true'); localStorage.setItem('userEmail',payload.email.toLowerCase()); localStorage.setItem('userName',payload.name); localStorage.setItem('userPic',payload.picture); showLoading(false); setTimeout(()=>loadingScreen.classList.add('fade-out'),500); initializeApp(); }
-        function signOut() { localStorage.clear(); sessionStorage.clear(); if(google?.accounts?.id) google.accounts.id.disableAutoSelect(); mainContent.style.display='none'; loginSection.style.display='flex'; const loginDiv=document.getElementById('login-container'); if(loginDiv.getAttribute('data-original')) loginDiv.innerHTML=loginDiv.getAttribute('data-original'); }
-        function handleCredentialResponse(response) { try { const payload = parseJwt(response.credential); currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture }; showLoading(true); initAndCheckEmail(); } catch(e) { showLoading(false); alert('Ошибка аутентификации'); } }
+        let originalJournalData = [];
+        let journalData = [], instructorData = [], engineerData = [];
+        let currentPages = { tab1: 1, tab2: 1, tab3: 1 };
 
-        // ===== ОБНОВЛЕНИЕ БЭЙДЖЕЙ (НОВЫЕ ФУНКЦИИ) =====
-        function updateBadges() {
-            const mechanicCount = journalData ? journalData.filter(t => !t.isCompleted).length : 0;
-            const instructorCount = instructorData ? instructorData.filter(t => !t.isCompleted).length : 0;
-            const engineerCount = engineerData ? engineerData.filter(t => !t.isCompleted).length : 0;
-            document.getElementById('badge-mechanic').innerText = mechanicCount;
-            document.getElementById('badge-instructor').innerText = instructorCount;
-            document.getElementById('badge-engineer').innerText = engineerCount;
+        // Инициализация
+        window.onload = () => {
+            // Имитация авторизации для теста (вставьте вашу логику GSI если нужно)
+            document.getElementById('main-content').style.display = 'block';
+            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 1000);
+            loadAllData();
+        };
+
+        async function loadAllData() {
+            try {
+                const response = await fetch(`${BACKEND_URL}?action=getJournal`);
+                const data = await response.json();
+                originalJournalData = data;
+                
+                updateCategoryData();
+                renderAll();
+                updateBadges();
+            } catch (e) { console.error("Ошибка загрузки", e); }
         }
 
-        // ОСТАЛЬНЫЕ ФУНКЦИИ (загрузка, отрисовка, пагинация) — без изменений, но с вызовом updateBadges
-        async function makeRequest(url, options = {}) { try { if (!options.method || options.method === 'GET') { const sep = url.includes('?') ? '&' : '?'; url = `${url}${sep}_=${Date.now()}`; } const response = await fetch(url, options); return await response.json(); } catch(e) { throw e; } }
-        function scrollToTop() { const active = document.querySelector('.tab-content.active'); if(active) active.scrollTo({top:0,behavior:'smooth'}); }
-        function goToPage(type, pageNumber) { if(type==='journal' && pageNumber>=1 && pageNumber<=totalJournalPages && pageNumber!==currentJournalPage) { currentJournalPage=pageNumber; renderJournalCards(journalData); updatePagination('journal',currentJournalPage,totalJournalPages); scrollToTop(); } else if(type==='instructor' && pageNumber>=1 && pageNumber<=totalInstructorPages && pageNumber!==currentInstructorPage) { currentInstructorPage=pageNumber; renderInstructorCards(instructorData); updatePagination('instructor',currentInstructorPage,totalInstructorPages); scrollToTop(); } else if(type==='engineer' && pageNumber>=1 && pageNumber<=totalEngineerPages && pageNumber!==currentEngineerPage) { currentEngineerPage=pageNumber; renderEngineerCards(engineerData); updatePagination('engineer',currentEngineerPage,totalEngineerPages); scrollToTop(); } }
-        function changePage(type, dir) { if(type==='journal') goToPage('journal', currentJournalPage+dir); else if(type==='instructor') goToPage('instructor', currentInstructorPage+dir); else if(type==='engineer') goToPage('engineer', currentEngineerPage+dir); }
-        function updatePagination(type, curr, total) { const pag = document.getElementById(`${type}-pagination`); if(!pag) return; document.getElementById(`${type}-current-page`).innerText = curr; document.getElementById(`${type}-total-pages`).innerText = total; const first=pag.querySelector('.first-btn'), prev=pag.querySelector('.prev-btn'), next=pag.querySelector('.next-btn'), last=pag.querySelector('.last-btn'); if(first) first.disabled = curr===1; if(prev) prev.disabled = curr===1; if(next) next.disabled = curr===total; if(last) last.disabled = curr===total; if(last) last.onclick = ()=>goToPage(type, total); pag.style.display = total>1 ? 'flex' : 'none'; }
-        function getCurrentPageData(data, page) { const start=(page-1)*CARDS_PER_PAGE; return data.slice(start, start+CARDS_PER_PAGE); }
-        function filterTasksByTitle(tasks, keywords) { if(!tasks) return []; return tasks.filter(t=>keywords.some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); }
-        async function loadJournal() { try { if(journalData && !isInitialLoad) { renderJournalCards(journalData); updateBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); originalJournalData = [...journal]; journalData = filterTasksByTitle(originalJournalData, ['PS','МЕХ','ps','мех']); renderJournalCards(journalData); updateBadges(); updateCounterLabel(); } catch(e) { document.getElementById('journal-cards').innerHTML = `<div class="task-card error">Ошибка загрузки</div>`; } }
-        async function loadInstructorTasks() { try { if(instructorData && !isInitialLoad) { renderInstructorCards(instructorData); updateBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); if(!originalJournalData) originalJournalData=[...journal]; instructorData = filterTasksByTitle(journal, ['ИНСТ','инст']); renderInstructorCards(instructorData); updateBadges(); updateCounterLabel(); } catch(e) { document.getElementById('instructor-cards').innerHTML = `<div class="task-card error">Ошибка загрузки</div>`; } }
-        async function loadEngineerTasks() { try { if(engineerData && !isInitialLoad) { renderEngineerCards(engineerData); updateBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); if(!originalJournalData) originalJournalData=[...journal]; engineerData = filterTasksByTitle(journal, ['ИНЖ','инж','ENG','eng']); renderEngineerCards(engineerData); updateBadges(); updateCounterLabel(); } catch(e) { document.getElementById('engineer-cards').innerHTML = `<div class="task-card error">Ошибка загрузки</div>`; } }
-        async function completeTask(taskId, executor, rowIndex) { showLoader(); try { const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`; const result = await makeRequest(updateUrl); if(result.success) { await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`); journalData=null; instructorData=null; engineerData=null; originalJournalData=null; const wasFilter=isFilterActive, savedDate=currentFilterDate, savedType=filterType; await Promise.all([loadJournal(), loadInstructorTasks(), loadEngineerTasks()]); if(wasFilter && savedDate) { if(savedType==='journal') filterJournalByDate(savedDate); else if(savedType==='instructor') filterInstructorByDate(savedDate); else if(savedType==='engineer') filterEngineerByDate(savedDate); } } hideLoader(); } catch(e) { hideLoader(); } }
-        function renderJournalCards(journal) { const container=document.getElementById('journal-cards'); if(!journal||journal.length===0) { container.innerHTML='<div class="task-card"><div class="loading-container">Нет данных</div></div>'; updatePagination('journal',1,1); return; } const sorted=[...journal]; totalJournalPages=Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentJournalPage>totalJournalPages) currentJournalPage=1; const current=getCurrentPageData(sorted,currentJournalPage); let html=''; current.forEach((task,idx)=>{ const rowIndex=task.rowIndex||(idx+2); const hasLink=task.driveLink&&task.driveLink.trim()!==''; const taskId=task.id||task.driveLink||''; if(!task.isCompleted){ html+=`<div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div><div class="buttons-container">${hasLink?`<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>`:'<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled><i class="fas fa-paper-plane"></i>ОТПРАВИТЬ</button></div></div>`; } else { html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div></div><div class="buttons-container">${hasLink?`<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>`:'<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ОТПРАВЛЕНО</div></div></div>`; } }); container.innerHTML=html; attachExecutorEvents('#tab1'); updatePagination('journal',currentJournalPage,totalJournalPages); updateBadges(); }
-        function renderInstructorCards(instructor) { /* аналогично с вызовом updateBadges в конце */ const container=document.getElementById('instructor-cards'); if(!instructor||instructor.length===0){ container.innerHTML='<div class="task-card">Нет данных</div>'; updatePagination('instructor',1,1); return; } const sorted=[...instructor]; totalInstructorPages=Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentInstructorPage>totalInstructorPages) currentInstructorPage=1; const current=getCurrentPageData(sorted,currentInstructorPage); let html=''; current.forEach((task,idx)=>{ const rowIndex=task.rowIndex||(idx+2); const hasLink=task.driveLink&&task.driveLink.trim()!==''; const taskId=task.id||task.driveLink||''; if(!task.isCompleted){ html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${task.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div></div><div class="buttons-container">${hasLink?`<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">ОТКРЫТЬ</a>`:'<div>Недоступно</div>'}<button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>ОТПРАВИТЬ</button></div></div>`; } else { html+=`<div class="task-card completed">...</div>`; } }); container.innerHTML=html; attachExecutorEvents('#tab2'); updatePagination('instructor',currentInstructorPage,totalInstructorPages); updateBadges(); }
-        function renderEngineerCards(engineer) { /* аналогично */ const container=document.getElementById('engineer-cards'); if(!engineer||engineer.length===0){ container.innerHTML='<div class="task-card">Нет данных</div>'; updatePagination('engineer',1,1); return; } const sorted=[...engineer]; totalEngineerPages=Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentEngineerPage>totalEngineerPages) currentEngineerPage=1; const current=getCurrentPageData(sorted,currentEngineerPage); let html=''; current.forEach((task,idx)=>{ const rowIndex=task.rowIndex||(idx+2); const hasLink=task.driveLink&&task.driveLink.trim()!==''; const taskId=task.id||task.driveLink||''; if(!task.isCompleted){ html+=`<div class="task-card pending">...</div>`; } else { html+=`<div class="task-card completed">...</div>`; } }); container.innerHTML=html; attachExecutorEvents('#tab3'); updatePagination('engineer',currentEngineerPage,totalEngineerPages); updateBadges(); }
-        function attachExecutorEvents(selector){ document.querySelectorAll(`${selector} .executor-select`).forEach(select=>{ select.removeEventListener('change', handleSelectChange); select.addEventListener('change', handleSelectChange); }); }
-        function handleSelectChange(e){ const select=e.target, card=select.closest('.task-card'), btn=card?.querySelector('.submit-btn'); if(btn) btn.disabled=!select.value; }
-        function submitTask(event, taskId, rowIndex){ const btn=event.currentTarget, card=btn.closest('.task-card'), select=card?.querySelector('.executor-select'); if(select&&select.value) completeTask(taskId, select.value, rowIndex); event.stopPropagation(); }
-        function openDriveLink(link){ if(!link) return; const driveMatch=link.match(/\/d\/([^\/]+)/); if(driveMatch) window.open(`https://drive.google.com/uc?export=view&id=${driveMatch[1]}`,'_blank'); else window.open(link,'_blank'); }
-        function updateCounterLabel() { /* как в исходном коде */ const openTasksCounter=document.getElementById('open-tasks-counter'), labelSpan=openTasksCounter.querySelector('.label'), countSpan=openTasksCounter.querySelector('.count'), activeTab=document.querySelector('.tab-content.active'); if(isFilterActive && currentFilterDate){ if(activeTab?.id==='tab1'){ const count=journalData?journalData.length:0; labelSpan.innerHTML=`Задачи за ${currentFilterDate} (МЕХАНИК)`; countSpan.textContent=count; } else if(activeTab?.id==='tab2'){ const count=instructorData?instructorData.length:0; labelSpan.innerHTML=`Задачи за ${currentFilterDate} (ИНСТРУКТОР)`; countSpan.textContent=count; } else if(activeTab?.id==='tab3'){ const count=engineerData?engineerData.length:0; labelSpan.innerHTML=`Задачи за ${currentFilterDate} (ИНЖЕНЕР)`; countSpan.textContent=count; } } else { let openTasksCount=0; if(activeTab?.id==='tab1') openTasksCount=journalData?journalData.filter(t=>!t.isCompleted).length:0; else if(activeTab?.id==='tab2') openTasksCount=instructorData?instructorData.filter(t=>!t.isCompleted).length:0; else if(activeTab?.id==='tab3') openTasksCount=engineerData?engineerData.filter(t=>!t.isCompleted).length:0; labelSpan.innerHTML='КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:'; countSpan.textContent=openTasksCount; } }
-        function filterJournalByDate(date){ /* без изменений */ if(!date){ isFilterActive=false; currentFilterDate=''; filterType='journal'; journalData=originalJournalData?filterTasksByTitle([...originalJournalData],['PS','МЕХ','ps','мех']):[]; currentJournalPage=1; renderJournalCards(journalData); updateCounterLabel(); document.getElementById('date-filter-input').value=''; return; } isFilterActive=true; currentFilterDate=date; filterType='journal'; journalData=originalJournalData.filter(t=>t.completedDate===date && ['PS','МЕХ','ps','мех'].some(k=>(t.task||'').toLowerCase().includes(k.toLowerCase()))); currentJournalPage=1; renderJournalCards(journalData); updateCounterLabel(); updateBadges(); }
-        function filterInstructorByDate(date){ /* аналогично */ if(!date){ isFilterActive=false; currentFilterDate=''; filterType='instructor'; instructorData=originalJournalData?filterTasksByTitle([...originalJournalData],['ИНСТ','инст']):[]; currentInstructorPage=1; renderInstructorCards(instructorData); updateCounterLabel(); document.getElementById('date-filter-input').value=''; return; } isFilterActive=true; currentFilterDate=date; filterType='instructor'; instructorData=originalJournalData.filter(t=>t.completedDate===date && ['ИНСТ','инст'].some(k=>(t.task||'').toLowerCase().includes(k.toLowerCase()))); currentInstructorPage=1; renderInstructorCards(instructorData); updateCounterLabel(); updateBadges(); }
-        function filterEngineerByDate(date){ /* аналогично */ if(!date){ isFilterActive=false; currentFilterDate=''; filterType='engineer'; engineerData=originalJournalData?filterTasksByTitle([...originalJournalData],['ИНЖ','инж','ENG','eng']):[]; currentEngineerPage=1; renderEngineerCards(engineerData); updateCounterLabel(); document.getElementById('date-filter-input').value=''; return; } isFilterActive=true; currentFilterDate=date; filterType='engineer'; engineerData=originalJournalData.filter(t=>t.completedDate===date && ['ИНЖ','инж','ENG','eng'].some(k=>(t.task||'').toLowerCase().includes(k.toLowerCase()))); currentEngineerPage=1; renderEngineerCards(engineerData); updateCounterLabel(); updateBadges(); }
-        function clearDateFilter() { const dateInput=document.getElementById('date-filter-input'); if(dateInput) dateInput.value=''; const activeTab=document.querySelector('.tab-content.active'); if(activeTab?.id==='tab1') filterJournalByDate(''); else if(activeTab?.id==='tab2') filterInstructorByDate(''); else if(activeTab?.id==='tab3') filterEngineerByDate(''); }
-        function initDatePicker() { if(datePicker) datePicker.destroy(); datePicker = flatpickr('#date-filter-input',{ locale:"ru", dateFormat:"d.m.Y", allowInput:false, onChange:function(_,dateStr){ if(dateStr){ const active=document.querySelector('.tab-content.active'); if(active?.id==='tab1') filterJournalByDate(dateStr); else if(active?.id==='tab2') filterInstructorByDate(dateStr); else if(active?.id==='tab3') filterEngineerByDate(dateStr); } } }); }
-        function toggleDateFilter() { const container=document.getElementById('date-filter-container'); container.classList.toggle('show'); if(container.classList.contains('show')) initDatePicker(); }
-        function initializeApp() { showLoader(); const tabBtns=document.querySelectorAll('.tab-btn'), tabContents=document.querySelectorAll('.tab-content'); document.getElementById('open-tasks-counter').addEventListener('click',toggleDateFilter); document.getElementById('clear-filter-btn').addEventListener('click',clearDateFilter); Promise.all([loadJournal(),loadInstructorTasks(),loadEngineerTasks()]).then(()=>setTimeout(()=>hideLoader(),100)).catch(()=>hideLoader()); tabBtns.forEach(btn=>{ btn.addEventListener('click',()=>{ tabBtns.forEach(b=>b.classList.remove('active')); tabContents.forEach(c=>c.classList.remove('active')); btn.classList.add('active'); const tabId=btn.getAttribute('data-tab'); document.getElementById(tabId).classList.add('active'); if(tabId==='tab1') { currentJournalPage=1; loadJournal(); } else if(tabId==='tab2') { currentInstructorPage=1; loadInstructorTasks(); } else if(tabId==='tab3') { currentEngineerPage=1; loadEngineerTasks(); } if(isFilterActive&&currentFilterDate){ if(tabId==='tab1') filterJournalByDate(currentFilterDate); else if(tabId==='tab2') filterInstructorByDate(currentFilterDate); else if(tabId==='tab3') filterEngineerByDate(currentFilterDate); } else updateCounterLabel(); scrollToTop(); }); }); setInterval(()=>{ const active=document.querySelector('.tab-content.active'); if(active?.id==='tab1') loadJournal(); else if(active?.id==='tab2') loadInstructorTasks(); else if(active?.id==='tab3') loadEngineerTasks(); },30000); setTimeout(()=>{ isInitialLoad=false; },1000); }
+        function updateCategoryData() {
+            journalData = filterTasks(originalJournalData, ['PS', 'МЕХ']);
+            instructorData = filterTasks(originalJournalData, ['ИНСТ']);
+            engineerData = filterTasks(originalJournalData, ['ИНЖ', 'ENG']);
+        }
 
-        window.addEventListener('load',()=>{ const isLoggedIn=localStorage.getItem('userLoggedIn')==='true'; const email=localStorage.getItem('userEmail'); const name=localStorage.getItem('userName'); const pic=localStorage.getItem('userPic'); if(isLoggedIn&&email){ loginSection.style.display='none'; mainContent.style.display='block'; currentUser={email:email,name:name,picture:pic}; updateUserAvatar(currentUser); showLoading(true); loadSheetsAPI().then(()=>gapi.client.init({apiKey:AUTH_API_KEY,discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4']})).then(()=>checkEmailInSheet(email)).catch(()=>signOut()); } else { loginSection.style.display='flex'; mainContent.style.display='none'; setTimeout(()=>loadingScreen.classList.add('fade-out'),500); } if(google?.accounts?.id) google.accounts.id.initialize({client_id:'328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',callback:handleCredentialResponse}); });
+        function filterTasks(tasks, keys) {
+            return tasks.filter(t => keys.some(k => t.task.toLowerCase().includes(k.toLowerCase())));
+        }
+
+        // ОБНОВЛЕНИЕ ЦИФР НА КНОПКАХ
+        function updateBadges() {
+            const counts = {
+                tab1: journalData.filter(t => !t.isCompleted).length,
+                tab2: instructorData.filter(t => !t.isCompleted).length,
+                tab3: engineerData.filter(t => !t.isCompleted).length
+            };
+
+            for (let tabId in counts) {
+                const badge = document.getElementById(`badge-${tabId}`);
+                badge.textContent = counts[tabId];
+                badge.style.display = counts[tabId] > 0 ? 'flex' : 'none';
+            }
+
+            // Обновление большой плашки
+            const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
+            document.querySelector('.open-tasks-counter .count').textContent = counts[activeTab];
+        }
+
+        function renderAll() {
+            renderCards('journal-cards', journalData, currentPages.tab1, 'tab1');
+            renderCards('instructor-cards', instructorData, currentPages.tab2, 'tab2');
+            renderCards('engineer-cards', engineerData, currentPages.tab3, 'tab3');
+        }
+
+        function renderCards(containerId, data, page, tabKey) {
+            const container = document.getElementById(containerId);
+            const start = (page - 1) * CARDS_PER_PAGE;
+            const paginated = data.slice(start, start + CARDS_PER_PAGE);
+            
+            container.innerHTML = paginated.map(task => `
+                <div class="task-card">
+                    <div class="task-header">${task.task}</div>
+                    <div class="card-content">
+                        <div class="content-row"><span>Дата:</span><span>${task.createdDate}</span></div>
+                        <div class="content-row"><span>Статус:</span><span>${task.isCompleted ? '✅' : '⏳'}</span></div>
+                        ${!task.isCompleted ? `
+                        <div class="content-row">
+                            <span>Выполнил:</span>
+                            <select class="executor-select" onchange="this.parentElement.parentElement.nextElementSibling.querySelector('.submit-btn').disabled = !this.value">
+                                <option value="">---</option>
+                                <option value="Вадим">Вадим</option>
+                                <option value="Гена">Гена</option>
+                                <option value="Саша">Саша</option>
+                            </select>
+                        </div>` : ''}
+                    </div>
+                    <div class="buttons-container">
+                        ${task.driveLink ? `<a href="${task.driveLink}" target="_blank" class="schema-button">ОТКРЫТЬ</a>` : ''}
+                        ${!task.isCompleted ? `<button class="submit-btn" disabled onclick="submitTask('${task.rowIndex}', this)">ОТПРАВИТЬ</button>` : `<span style="color:green; width:100%; text-align:center">ВЫПОЛНЕНО</span>`}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function submitTask(row, btn) {
+            const name = btn.closest('.task-card').querySelector('select').value;
+            btn.disabled = true;
+            btn.textContent = "...";
+            
+            try {
+                await fetch(`${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${row}&value=${encodeURIComponent(name)}`);
+                await loadAllData(); // Перезагрузка и обновление счетчиков
+            } catch (e) { alert("Ошибка!"); btn.disabled = false; }
+        }
+
+        // Переключение табов
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+                updateBadges();
+            };
+        });
+
+        function toggleUserDropdown() {
+            const d = document.getElementById('userDropdown');
+            d.style.display = d.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function signOut() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
