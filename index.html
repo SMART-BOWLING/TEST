@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -13,7 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* ... (стили остаются без изменений, как в предыдущем ответе) ... */
+        /* ... (стили остаются без изменений) ... */
         /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -1363,8 +1363,8 @@
             .tab-btn {
                 padding: 12px 8px;
                 font-size: 14px;
-                min-width: calc(50% - 10px);
-                flex: 1 1 calc(50% - 10px);
+                min-width: calc(33% - 10px);
+                flex: 1 1 calc(33% - 10px);
             }
             
             .open-tasks-counter {
@@ -1458,8 +1458,8 @@
             .tab-btn {
                 padding: 10px 6px;
                 font-size: 13px;
-                min-width: calc(50% - 6px);
-                flex: 1 1 calc(50% - 6px);
+                min-width: calc(33% - 6px);
+                flex: 1 1 calc(33% - 6px);
             }
             
             .open-tasks-counter {
@@ -1650,6 +1650,9 @@
                     <button class="tab-btn" data-tab="tab2">
                         <i class="fas fa-bowling-ball" style="margin-right: 8px;"></i>ИНСТРУКТОР
                     </button>
+                    <button class="tab-btn" data-tab="tab3">
+                        <i class="fas fa-microchip" style="margin-right: 8px;"></i>ИНЖЕНЕР
+                    </button>
                 </div>
                 
                 <div class="open-tasks-counter" id="open-tasks-counter">
@@ -1669,7 +1672,7 @@
             
             <div class="tab-content active" id="tab1">
                 <div class="cards-grid" id="journal-cards">
-                    <!-- Содержимое будет вставлено через JavaScript -->
+                    <!-- Содержимое для МЕХАНИК -->
                 </div>
                 <div class="pagination" id="journal-pagination" style="display: none;">
                     <button class="page-btn first-btn" onclick="goToPage('journal', 1)">
@@ -1692,7 +1695,7 @@
             
             <div class="tab-content" id="tab2">
                 <div class="cards-grid" id="instructor-cards">
-                    <!-- Содержимое будет вставлено через JavaScript -->
+                    <!-- Содержимое для ИНСТРУКТОР -->
                 </div>
                 <div class="pagination" id="instructor-pagination" style="display: none;">
                     <button class="page-btn first-btn" onclick="goToPage('instructor', 1)">
@@ -1708,6 +1711,30 @@
                         <i class="fas fa-chevron-right"></i>
                     </button>
                     <button class="page-btn last-btn" onclick="goToPage('instructor', totalInstructorPages)">
+                        <i class="fas fa-fast-forward"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Новая вкладка ИНЖЕНЕР -->
+            <div class="tab-content" id="tab3">
+                <div class="cards-grid" id="engineer-cards">
+                    <!-- Содержимое для ИНЖЕНЕР -->
+                </div>
+                <div class="pagination" id="engineer-pagination" style="display: none;">
+                    <button class="page-btn first-btn" onclick="goToPage('engineer', 1)">
+                        <i class="fas fa-fast-backward"></i>
+                    </button>
+                    <button class="page-btn prev-btn" onclick="changePage('engineer', -1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="page-info">
+                        Страница <span id="engineer-current-page">1</span> из <span id="engineer-total-pages">1</span>
+                    </div>
+                    <button class="page-btn next-btn" onclick="changePage('engineer', 1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="page-btn last-btn" onclick="goToPage('engineer', totalEngineerPages)">
                         <i class="fas fa-fast-forward"></i>
                     </button>
                 </div>
@@ -1732,20 +1759,22 @@
 
         // Переменные состояния
         let currentUser = null;
-        let journalData = null; // Данные для вкладки МЕХАНИК
-        let instructorData = null; // Данные для вкладки ИНСТРУКТОР
+        let journalData = null;      // Механик
+        let instructorData = null;   // Инструктор
+        let engineerData = null;     // Инженер
         let originalJournalData = null; // Для хранения оригинальных данных журнала
         
         let currentJournalPage = 1;
         let currentInstructorPage = 1;
+        let currentEngineerPage = 1;
         let totalJournalPages = 1;
         let totalInstructorPages = 1;
+        let totalEngineerPages = 1;
 
         // Переменные для фильтрации
         let isFilterActive = false;
         let currentFilterDate = '';
-        let filterType = 'journal'; // 'journal' или 'instructor'
-        let uniqueDates = [];
+        let filterType = 'journal'; // 'journal', 'instructor', 'engineer'
         
         // Переменная для календаря
         let datePicker = null;
@@ -2033,21 +2062,28 @@
             }
         }
 
-        // Обновленная функция goToPage с добавлением скролла
+        // Обновленная функция goToPage
         function goToPage(type, pageNumber) {
             if (type === 'journal') {
                 if (pageNumber >= 1 && pageNumber <= totalJournalPages && pageNumber !== currentJournalPage) {
                     currentJournalPage = pageNumber;
                     renderJournalCards(journalData);
                     updatePagination('journal', currentJournalPage, totalJournalPages);
-                    scrollToTop(); // Скролл вверх
+                    scrollToTop();
                 }
             } else if (type === 'instructor') {
                 if (pageNumber >= 1 && pageNumber <= totalInstructorPages && pageNumber !== currentInstructorPage) {
                     currentInstructorPage = pageNumber;
                     renderInstructorCards(instructorData);
                     updatePagination('instructor', currentInstructorPage, totalInstructorPages);
-                    scrollToTop(); // Скролл вверх
+                    scrollToTop();
+                }
+            } else if (type === 'engineer') {
+                if (pageNumber >= 1 && pageNumber <= totalEngineerPages && pageNumber !== currentEngineerPage) {
+                    currentEngineerPage = pageNumber;
+                    renderEngineerCards(engineerData);
+                    updatePagination('engineer', currentEngineerPage, totalEngineerPages);
+                    scrollToTop();
                 }
             }
         }
@@ -2085,6 +2121,9 @@
             } else if (type === 'instructor') {
                 const newPage = currentInstructorPage + direction;
                 goToPage('instructor', newPage);
+            } else if (type === 'engineer') {
+                const newPage = currentEngineerPage + direction;
+                goToPage('engineer', newPage);
             }
         }
 
@@ -2112,7 +2151,6 @@
             
             const dateInput = document.getElementById('date-filter-input');
             
-            // Инициализируем календарь
             datePicker = flatpickr(dateInput, {
                 locale: "ru",
                 dateFormat: "d.m.Y",
@@ -2122,12 +2160,13 @@
                 onChange: function(selectedDates, dateStr, instance) {
                     if (dateStr) {
                         const formattedDate = dateStr;
-                        // Определяем активную вкладку и применяем фильтр
                         const activeTab = document.querySelector('.tab-content.active');
                         if (activeTab && activeTab.id === 'tab1') {
                             filterJournalByDate(formattedDate);
                         } else if (activeTab && activeTab.id === 'tab2') {
                             filterInstructorByDate(formattedDate);
+                        } else if (activeTab && activeTab.id === 'tab3') {
+                            filterEngineerByDate(formattedDate);
                         }
                     }
                 },
@@ -2146,83 +2185,85 @@
 
         function filterJournalByDate(date) {
             if (!date || date === '') {
-                // Сброс фильтра для журнала
                 isFilterActive = false;
                 currentFilterDate = '';
                 filterType = 'journal';
                 journalData = originalJournalData ? filterTasksByTitle([...originalJournalData], ['PS', 'МЕХ', 'ps', 'мех']) : [];
-                
                 currentJournalPage = 1;
                 renderJournalCards(journalData);
                 updateCounterLabel();
-                
                 const dateInput = document.getElementById('date-filter-input');
-                if (dateInput) {
-                    dateInput.value = '';
-                }
-                
+                if (dateInput) dateInput.value = '';
                 return;
             }
-            
-            // Применяем фильтр для журнала
             isFilterActive = true;
             currentFilterDate = date;
             filterType = 'journal';
-            
-            // Фильтруем задачи по дате и ключевым словам для механика
             const filteredData = originalJournalData.filter(task => {
                 const titleMatch = ['PS', 'МЕХ', 'ps', 'мех'].some(keyword => 
                     (task.task || '').toLowerCase().includes(keyword.toLowerCase())
                 );
                 return task.completedDate === date && titleMatch;
             });
-            
             journalData = filteredData;
-            
             currentJournalPage = 1;
             renderJournalCards(journalData);
-            
             updateCounterLabel();
         }
 
         function filterInstructorByDate(date) {
             if (!date || date === '') {
-                // Сброс фильтра для инструктора
                 isFilterActive = false;
                 currentFilterDate = '';
                 filterType = 'instructor';
                 instructorData = originalJournalData ? filterTasksByTitle([...originalJournalData], ['ИНСТ', 'инст']) : [];
-                
                 currentInstructorPage = 1;
                 renderInstructorCards(instructorData);
                 updateCounterLabel();
-                
                 const dateInput = document.getElementById('date-filter-input');
-                if (dateInput) {
-                    dateInput.value = '';
-                }
-                
+                if (dateInput) dateInput.value = '';
                 return;
             }
-            
-            // Применяем фильтр для инструктора
             isFilterActive = true;
             currentFilterDate = date;
             filterType = 'instructor';
-            
-            // Фильтруем задачи по дате и ключевому слову для инструктора
             const filteredData = originalJournalData.filter(task => {
                 const titleMatch = ['ИНСТ', 'инст'].some(keyword => 
                     (task.task || '').toLowerCase().includes(keyword.toLowerCase())
                 );
                 return task.completedDate === date && titleMatch;
             });
-            
             instructorData = filteredData;
-            
             currentInstructorPage = 1;
             renderInstructorCards(instructorData);
-            
+            updateCounterLabel();
+        }
+
+        function filterEngineerByDate(date) {
+            if (!date || date === '') {
+                isFilterActive = false;
+                currentFilterDate = '';
+                filterType = 'engineer';
+                engineerData = originalJournalData ? filterTasksByTitle([...originalJournalData], ['ИНЖ', 'инж', 'ENG', 'eng']) : [];
+                currentEngineerPage = 1;
+                renderEngineerCards(engineerData);
+                updateCounterLabel();
+                const dateInput = document.getElementById('date-filter-input');
+                if (dateInput) dateInput.value = '';
+                return;
+            }
+            isFilterActive = true;
+            currentFilterDate = date;
+            filterType = 'engineer';
+            const filteredData = originalJournalData.filter(task => {
+                const titleMatch = ['ИНЖ', 'инж', 'ENG', 'eng'].some(keyword => 
+                    (task.task || '').toLowerCase().includes(keyword.toLowerCase())
+                );
+                return task.completedDate === date && titleMatch;
+            });
+            engineerData = filteredData;
+            currentEngineerPage = 1;
+            renderEngineerCards(engineerData);
             updateCounterLabel();
         }
 
@@ -2230,11 +2271,9 @@
             const openTasksCounter = document.getElementById('open-tasks-counter');
             const labelSpan = openTasksCounter.querySelector('.label');
             const countSpan = openTasksCounter.querySelector('.count');
-            
             const activeTab = document.querySelector('.tab-content.active');
             
             if (isFilterActive && currentFilterDate) {
-                // Показываем количество задач за выбранную дату для активной вкладки
                 if (activeTab && activeTab.id === 'tab1') {
                     const count = journalData ? journalData.length : 0;
                     labelSpan.innerHTML = `Задачи за ${currentFilterDate} (МЕХАНИК)`;
@@ -2243,15 +2282,20 @@
                     const count = instructorData ? instructorData.length : 0;
                     labelSpan.innerHTML = `Задачи за ${currentFilterDate} (ИНСТРУКТОР)`;
                     countSpan.textContent = count;
+                } else if (activeTab && activeTab.id === 'tab3') {
+                    const count = engineerData ? engineerData.length : 0;
+                    labelSpan.innerHTML = `Задачи за ${currentFilterDate} (ИНЖЕНЕР)`;
+                    countSpan.textContent = count;
                 }
                 countSpan.style.backgroundColor = '#dc143c';
             } else {
-                // Показываем количество невыполненных задач для активной вкладки
                 let openTasksCount = 0;
                 if (activeTab && activeTab.id === 'tab1') {
                     openTasksCount = journalData ? journalData.filter(task => !task.isCompleted).length : 0;
                 } else if (activeTab && activeTab.id === 'tab2') {
                     openTasksCount = instructorData ? instructorData.filter(task => !task.isCompleted).length : 0;
+                } else if (activeTab && activeTab.id === 'tab3') {
+                    openTasksCount = engineerData ? engineerData.filter(task => !task.isCompleted).length : 0;
                 }
                 labelSpan.innerHTML = 'КОЛИЧЕСТВО НЕВЫПОЛНЕННЫХ ЗАДАЧ:';
                 countSpan.textContent = openTasksCount;
@@ -2261,19 +2305,17 @@
 
         function clearDateFilter() {
             const dateInput = document.getElementById('date-filter-input');
-            if (dateInput) {
-                dateInput.value = '';
-            }
-            
+            if (dateInput) dateInput.value = '';
             const activeTab = document.querySelector('.tab-content.active');
             if (activeTab && activeTab.id === 'tab1') {
                 filterJournalByDate('');
             } else if (activeTab && activeTab.id === 'tab2') {
                 filterInstructorByDate('');
+            } else if (activeTab && activeTab.id === 'tab3') {
+                filterEngineerByDate('');
             }
         }
 
-        // Функция для фильтрации задач по названию
         function filterTasksByTitle(tasks, keywords) {
             if (!tasks || tasks.length === 0) return [];
             return tasks.filter(task => {
@@ -2288,31 +2330,17 @@
                     renderJournalCards(journalData);
                     return;
                 }
-                
                 const journalCards = document.getElementById('journal-cards');
                 journalCards.innerHTML = '';
-                
                 const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
-                
                 originalJournalData = [...journal];
-                
                 const filteredJournal = filterTasksByTitle(originalJournalData, ['PS', 'МЕХ', 'ps', 'мех']);
                 journalData = [...filteredJournal];
-                
-                uniqueDates = extractUniqueDatesFromJournal(originalJournalData);
-                
                 renderJournalCards(journalData);
-                
                 updateCounterLabel();
-                
             } catch (error) {
                 console.error('Ошибка загрузки журнала:', error);
-                const journalCards = document.getElementById('journal-cards');
-                journalCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
+                document.getElementById('journal-cards').innerHTML = `<div class="task-card error">Ошибка загрузки: ${error.message}</div>`;
             }
         }
 
@@ -2322,96 +2350,67 @@
                     renderInstructorCards(instructorData);
                     return;
                 }
-                
                 const instructorCards = document.getElementById('instructor-cards');
                 instructorCards.innerHTML = '';
-                
                 const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
-                
-                if (!originalJournalData) {
-                    originalJournalData = [...journal];
-                }
-                
+                if (!originalJournalData) originalJournalData = [...journal];
                 const filteredInstructor = filterTasksByTitle(journal, ['ИНСТ', 'инст']);
                 instructorData = [...filteredInstructor];
-                
                 renderInstructorCards(instructorData);
-                
                 updateCounterLabel();
-                
             } catch (error) {
                 console.error('Ошибка загрузки задач инструктора:', error);
-                const instructorCards = document.getElementById('instructor-cards');
-                instructorCards.innerHTML = `
-                    <div class="task-card error">
-                        Ошибка загрузки: ${error.message}
-                    </div>
-                `;
+                document.getElementById('instructor-cards').innerHTML = `<div class="task-card error">Ошибка загрузки: ${error.message}</div>`;
             }
         }
 
-        function extractUniqueDatesFromJournal(journalData) {
-            const dates = new Set();
-            
-            if (journalData && journalData.length > 0) {
-                journalData.forEach(task => {
-                    if (task.completedDate && task.completedDate.trim() !== '' && task.completedDate !== '-') {
-                        dates.add(task.completedDate);
-                    }
-                });
+        async function loadEngineerTasks() {
+            try {
+                if (engineerData && !isInitialLoad) {
+                    renderEngineerCards(engineerData);
+                    return;
+                }
+                const engineerCards = document.getElementById('engineer-cards');
+                engineerCards.innerHTML = '';
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`);
+                if (!originalJournalData) originalJournalData = [...journal];
+                const filteredEngineer = filterTasksByTitle(journal, ['ИНЖ', 'инж', 'ENG', 'eng']);
+                engineerData = [...filteredEngineer];
+                renderEngineerCards(engineerData);
+                updateCounterLabel();
+            } catch (error) {
+                console.error('Ошибка загрузки задач инженера:', error);
+                document.getElementById('engineer-cards').innerHTML = `<div class="task-card error">Ошибка загрузки: ${error.message}</div>`;
             }
-            
-            return Array.from(dates).sort((a, b) => {
-                const [dayA, monthA, yearA] = a.split('.').map(Number);
-                const [dayB, monthB, yearB] = b.split('.').map(Number);
-                
-                if (yearA !== yearB) return yearB - yearA;
-                if (monthA !== monthB) return monthB - monthA;
-                return dayB - dayA;
-            });
         }
 
         async function completeTask(taskId, executor, rowIndex) {
             showLoader();
-            
             try {
                 const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executor)}`;
                 const result = await makeRequest(updateUrl);
-                
                 if (result.success) {
-                    const immediateUpdateResult = await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
-                    
-                    // Сбрасываем кэшированные данные
+                    await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`);
                     journalData = null;
                     instructorData = null;
+                    engineerData = null;
                     originalJournalData = null;
-                    
-                    // Определяем, нужно ли сохранить текущий фильтр
                     const wasFilterActive = isFilterActive;
                     const savedFilterDate = currentFilterDate;
                     const savedFilterType = filterType;
-                    
-                    // Обновляем интерфейс
                     updateCounterLabel();
-                    
                     const dateFilterContainer = document.getElementById('date-filter-container');
                     dateFilterContainer.classList.remove('show');
-                    
-                    // Загружаем новые данные
                     await Promise.all([
                         loadJournal(),
-                        loadInstructorTasks()
+                        loadInstructorTasks(),
+                        loadEngineerTasks()
                     ]);
-                    
-                    // Если был активен фильтр, применяем его к новым данным
                     if (wasFilterActive && savedFilterDate) {
-                        if (savedFilterType === 'journal') {
-                            filterJournalByDate(savedFilterDate);
-                        } else if (savedFilterType === 'instructor') {
-                            filterInstructorByDate(savedFilterDate);
-                        }
+                        if (savedFilterType === 'journal') filterJournalByDate(savedFilterDate);
+                        else if (savedFilterType === 'instructor') filterInstructorByDate(savedFilterDate);
+                        else if (savedFilterType === 'engineer') filterEngineerByDate(savedFilterDate);
                     }
-                    
                     hideLoader();
                 } else {
                     hideLoader();
@@ -2423,426 +2422,251 @@
         }
 
         function renderJournalCards(journal) {
-            const journalCards = document.getElementById('journal-cards');
-            
+            const container = document.getElementById('journal-cards');
             if (!journal || journal.length === 0) {
-                journalCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loading-card-text">Нет данных</div>
-                        </div>
-                    </div>
-                `;
-                
+                container.innerHTML = `<div class="task-card"><div class="loading-container"><div class="loading-card-text">Нет данных</div></div></div>`;
                 updatePagination('journal', 1, 1);
                 return;
             }
-            
-            const sortedJournal = [...journal];
-            
-            totalJournalPages = Math.ceil(sortedJournal.length / CARDS_PER_PAGE);
-            if (currentJournalPage > totalJournalPages) {
-                currentJournalPage = 1;
-            }
-            
-            const currentJournal = getCurrentPageData(sortedJournal, currentJournalPage);
-            
+            const sorted = [...journal];
+            totalJournalPages = Math.ceil(sorted.length / CARDS_PER_PAGE);
+            if (currentJournalPage > totalJournalPages) currentJournalPage = 1;
+            const current = getCurrentPageData(sorted, currentJournalPage);
             let html = '';
-            
-            currentJournal.forEach((task, index) => {
-                const rowIndex = task.rowIndex || (index + 2);
+            current.forEach((task, idx) => {
+                const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
-                
                 if (!task.isCompleted) {
                     html += `
                         <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
                             <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate || '-'}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">
-                                        <select class="executor-select" id="executor-${taskId}">
-                                            <option value="" selected disabled></option>
-                                            <option value="Вадим">Вадим</option>
-                                            <option value="Гена">Гена</option>
-                                            <option value="Саша">Саша</option>
-                                            <option value="Данил">Данил</option>
-                                        </select>
-                                    </span>
-                                </div>
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div>
                             </div>
-                            
                             <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
-                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
-                                </button>
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled><i class="fas fa-paper-plane"></i>ОТПРАВИТЬ</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else {
                     html += `
                         <div class="task-card completed">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
                             <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">${task.executor}</span>
-                                </div>
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div>
                             </div>
-                            
                             <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <div class="submitted-text">
-                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
-                                </div>
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <div class="submitted-text"><i class="fas fa-check-circle"></i>ОТПРАВЛЕНО</div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
             });
-            
-            journalCards.innerHTML = html;
-            
-            document.querySelectorAll('#tab1 .executor-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const card = this.closest('.task-card');
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !this.value || this.value === '';
-                    }
-                    event.stopPropagation();
-                });
-                
-                select.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                });
-            });
-            
+            container.innerHTML = html;
+            attachExecutorEvents('#tab1');
             updatePagination('journal', currentJournalPage, totalJournalPages);
         }
 
         function renderInstructorCards(instructor) {
-            const instructorCards = document.getElementById('instructor-cards');
-            
+            const container = document.getElementById('instructor-cards');
             if (!instructor || instructor.length === 0) {
-                instructorCards.innerHTML = `
-                    <div class="task-card">
-                        <div class="loading-container">
-                            <div class="loading-card-text">Нет данных</div>
-                        </div>
-                    </div>
-                `;
-                
+                container.innerHTML = `<div class="task-card"><div class="loading-container"><div class="loading-card-text">Нет данных</div></div></div>`;
                 updatePagination('instructor', 1, 1);
                 return;
             }
-            
-            const sortedInstructor = [...instructor];
-            
-            totalInstructorPages = Math.ceil(sortedInstructor.length / CARDS_PER_PAGE);
-            if (currentInstructorPage > totalInstructorPages) {
-                currentInstructorPage = 1;
-            }
-            
-            const currentInstructor = getCurrentPageData(sortedInstructor, currentInstructorPage);
-            
+            const sorted = [...instructor];
+            totalInstructorPages = Math.ceil(sorted.length / CARDS_PER_PAGE);
+            if (currentInstructorPage > totalInstructorPages) currentInstructorPage = 1;
+            const current = getCurrentPageData(sorted, currentInstructorPage);
             let html = '';
-            
-            currentInstructor.forEach((task, index) => {
-                const rowIndex = task.rowIndex || (index + 2);
+            current.forEach((task, idx) => {
+                const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
-                
                 if (!task.isCompleted) {
                     html += `
                         <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
                             <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate || '-'}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">
-                                        <select class="executor-select" id="executor-${taskId}">
-                                            <option value="" selected disabled></option>
-                                            <option value="Вадим">Вадим</option>
-                                            <option value="Гена">Гена</option>
-                                            <option value="Саша">Саша</option>
-                                            <option value="Данил">Данил</option>
-                                        </select>
-                                    </span>
-                                </div>
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div>
                             </div>
-                            
                             <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled>
-                                    <i class="fas fa-paper-plane"></i>ОТПРАВИТЬ
-                                </button>
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled><i class="fas fa-paper-plane"></i>ОТПРАВИТЬ</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else {
                     html += `
                         <div class="task-card completed">
-                            <div class="task-header">
-                                <div class="task-title">${task.task}</div>
-                            </div>
-                            
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
                             <div class="card-content">
-                                <div class="content-row">
-                                    <span class="row-label">Дата появления:</span>
-                                    <span class="row-value">${task.createdDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Дата выполнения:</span>
-                                    <span class="row-value">${task.completedDate}</span>
-                                </div>
-                                <div class="content-row">
-                                    <span class="row-label">Выполнил:</span>
-                                    <span class="row-value">${task.executor}</span>
-                                </div>
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div>
                             </div>
-                            
                             <div class="buttons-container">
-                                ${hasLink 
-                                    ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button">
-                                        <i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ
-                                      </a>`
-                                    : '<div class="no-open">Недоступно</div>'
-                                }
-                                <div class="submitted-text">
-                                    <i class="fas fa-check-circle"></i>ОТПРАВЛЕНО
-                                </div>
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <div class="submitted-text"><i class="fas fa-check-circle"></i>ОТПРАВЛЕНО</div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
             });
-            
-            instructorCards.innerHTML = html;
-            
-            document.querySelectorAll('#tab2 .executor-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const card = this.closest('.task-card');
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !this.value || this.value === '';
-                    }
-                    event.stopPropagation();
-                });
-                
-                select.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                });
-            });
-            
+            container.innerHTML = html;
+            attachExecutorEvents('#tab2');
             updatePagination('instructor', currentInstructorPage, totalInstructorPages);
+        }
+
+        function renderEngineerCards(engineer) {
+            const container = document.getElementById('engineer-cards');
+            if (!engineer || engineer.length === 0) {
+                container.innerHTML = `<div class="task-card"><div class="loading-container"><div class="loading-card-text">Нет данных</div></div></div>`;
+                updatePagination('engineer', 1, 1);
+                return;
+            }
+            const sorted = [...engineer];
+            totalEngineerPages = Math.ceil(sorted.length / CARDS_PER_PAGE);
+            if (currentEngineerPage > totalEngineerPages) currentEngineerPage = 1;
+            const current = getCurrentPageData(sorted, currentEngineerPage);
+            let html = '';
+            current.forEach((task, idx) => {
+                const rowIndex = task.rowIndex || (idx + 2);
+                const hasLink = task.driveLink && task.driveLink.trim() !== '';
+                const taskId = task.id || task.driveLink || '';
+                if (!task.isCompleted) {
+                    html += `
+                        <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
+                            <div class="card-content">
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><select class="executor-select" id="executor-${taskId}"><option value="" selected disabled></option><option value="Вадим">Вадим</option><option value="Гена">Гена</option><option value="Саша">Саша</option><option value="Данил">Данил</option></select></span></div>
+                            </div>
+                            <div class="buttons-container">
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})" disabled><i class="fas fa-paper-plane"></i>ОТПРАВИТЬ</button>
+                            </div>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="task-card completed">
+                            <div class="task-header"><div class="task-title">${task.task}</div></div>
+                            <div class="card-content">
+                                <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
+                                <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate}</span></div>
+                                <div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${task.executor}</span></div>
+                            </div>
+                            <div class="buttons-container">
+                                ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
+                                <div class="submitted-text"><i class="fas fa-check-circle"></i>ОТПРАВЛЕНО</div>
+                            </div>
+                        </div>`;
+                }
+            });
+            container.innerHTML = html;
+            attachExecutorEvents('#tab3');
+            updatePagination('engineer', currentEngineerPage, totalEngineerPages);
+        }
+
+        function attachExecutorEvents(parentSelector) {
+            document.querySelectorAll(`${parentSelector} .executor-select`).forEach(select => {
+                select.removeEventListener('change', handleSelectChange);
+                select.addEventListener('change', handleSelectChange);
+            });
+        }
+
+        function handleSelectChange(e) {
+            const select = e.target;
+            const card = select.closest('.task-card');
+            if (card) {
+                const submitBtn = card.querySelector('.submit-btn');
+                if (submitBtn) submitBtn.disabled = !select.value;
+            }
         }
 
         function submitTask(event, taskId, rowIndex) {
             const button = event.currentTarget;
             const card = button.closest('.task-card');
-            
-            if (!card) {
-                return;
-            }
-            
+            if (!card) return;
             const select = card.querySelector('.executor-select');
-            
-            if (!select) {
-                return;
-            }
-            
-            if (!select.value || select.value === '' || select.value === 'Выберите исполнителя') {
-                return;
-            }
-            
+            if (!select || !select.value) return;
             completeTask(taskId, select.value, rowIndex);
             event.stopPropagation();
         }
 
         function initializeApp() {
             console.log('Инициализация приложения после авторизации');
-            
             let lastTouchEnd = 0;
-            
             document.addEventListener('touchend', function(event) {
                 const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
+                if (now - lastTouchEnd <= 300) event.preventDefault();
                 lastTouchEnd = now;
             }, false);
-            
             document.addEventListener('click', function(e) {
                 const userDropdown = document.getElementById('userDropdown');
                 const dateFilterContainer = document.getElementById('date-filter-container');
-                
-                if (!e.target.closest('.user-avatar') && userDropdown.style.display === 'block') {
-                    userDropdown.style.display = 'none';
-                }
-                
-                if (!e.target.closest('#open-tasks-counter') && 
-                    !e.target.closest('#date-filter-container') && 
-                    dateFilterContainer.classList.contains('show')) {
-                    dateFilterContainer.classList.remove('show');
-                }
+                if (!e.target.closest('.user-avatar') && userDropdown.style.display === 'block') userDropdown.style.display = 'none';
+                if (!e.target.closest('#open-tasks-counter') && !e.target.closest('#date-filter-container') && dateFilterContainer.classList.contains('show')) dateFilterContainer.classList.remove('show');
             });
-            
             showLoader();
-            
             const tabButtons = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
-            
             document.getElementById('open-tasks-counter').addEventListener('click', toggleDateFilter);
-            
             document.getElementById('clear-filter-btn').addEventListener('click', clearDateFilter);
-            
             const dateInput = document.getElementById('date-filter-input');
             if (dateInput && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                dateInput.addEventListener('focus', function() {
-                    this.style.fontSize = '16px';
-                });
-                
-                dateInput.addEventListener('blur', function() {
-                    this.style.fontSize = '';
-                });
+                dateInput.addEventListener('focus', function() { this.style.fontSize = '16px'; });
+                dateInput.addEventListener('blur', function() { this.style.fontSize = ''; });
             }
-            
             Promise.all([
                 loadJournal(),
-                loadInstructorTasks()
-            ]).then(() => {
-                setTimeout(() => {
-                    hideLoader();
-                }, 100);
-            }).catch(error => {
-                console.error('Ошибка загрузки:', error);
-                hideLoader();
-            });
-            
+                loadInstructorTasks(),
+                loadEngineerTasks()
+            ]).then(() => { setTimeout(() => hideLoader(), 100); }).catch(error => { console.error(error); hideLoader(); });
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     tabContents.forEach(content => content.classList.remove('active'));
-                    
                     button.classList.add('active');
-                    
                     const tabId = button.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
-                    
-                    if (tabId === 'tab2') {
-                        currentInstructorPage = 1;
-                        loadInstructorTasks();
-                    } else if (tabId === 'tab1') {
-                        currentJournalPage = 1;
-                        loadJournal();
-                    }
-                    
-                    // Если активен фильтр, применяем его к новой вкладке
+                    if (tabId === 'tab2') { currentInstructorPage = 1; loadInstructorTasks(); }
+                    else if (tabId === 'tab1') { currentJournalPage = 1; loadJournal(); }
+                    else if (tabId === 'tab3') { currentEngineerPage = 1; loadEngineerTasks(); }
                     if (isFilterActive && currentFilterDate) {
-                        if (tabId === 'tab1') {
-                            filterJournalByDate(currentFilterDate);
-                        } else if (tabId === 'tab2') {
-                            filterInstructorByDate(currentFilterDate);
-                        }
-                    } else {
-                        updateCounterLabel();
-                    }
-                    
+                        if (tabId === 'tab1') filterJournalByDate(currentFilterDate);
+                        else if (tabId === 'tab2') filterInstructorByDate(currentFilterDate);
+                        else if (tabId === 'tab3') filterEngineerByDate(currentFilterDate);
+                    } else updateCounterLabel();
                     scrollToTop();
                 });
             });
-
             setInterval(() => {
                 const activeTab = document.querySelector('.tab-content.active');
-                if (activeTab && activeTab.id === 'tab2') {
-                    loadInstructorTasks();
-                } else if (activeTab && activeTab.id === 'tab1') {
-                    loadJournal();
-                }
+                if (activeTab && activeTab.id === 'tab2') loadInstructorTasks();
+                else if (activeTab && activeTab.id === 'tab1') loadJournal();
+                else if (activeTab && activeTab.id === 'tab3') loadEngineerTasks();
             }, 30000);
-
-            setTimeout(() => {
-                isInitialLoad = false;
-            }, 1000);
-
+            setTimeout(() => { isInitialLoad = false; }, 1000);
             document.addEventListener('click', function(e) {
                 if (e.target.closest('.task-card')) {
                     const card = e.target.closest('.task-card');
-                    
-                    if (e.target.tagName === 'BUTTON' || 
-                        e.target.tagName === 'SELECT' || 
-                        e.target.tagName === 'OPTION' ||
-                        e.target.tagName === 'A' ||
-                        e.target.tagName === 'I') {
-                        return;
-                    }
-                    
-                    document.querySelectorAll('.task-card').forEach(c => {
-                        c.classList.remove('selected');
-                    });
-                    
+                    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION' || e.target.tagName === 'A' || e.target.tagName === 'I') return;
+                    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                 }
             });
-            
             document.addEventListener('change', function(e) {
                 if (e.target && e.target.classList.contains('executor-select')) {
                     const card = e.target.closest('.task-card');
                     const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !e.target.value || e.target.value === '';
-                    }
+                    if (submitBtn) submitBtn.disabled = !e.target.value;
                 }
             });
         }
@@ -2852,57 +2676,27 @@
             const email = localStorage.getItem('userEmail');
             const name = localStorage.getItem('userName');
             const pic = localStorage.getItem('userPic');
-            
             if (isLoggedIn && email) {
                 loginSection.style.display = 'none';
                 mainContent.style.display = 'block';
-                
-                currentUser = {
-                    email: email,
-                    name: name,
-                    picture: pic
-                };
-                
+                currentUser = { email: email, name: name, picture: pic };
                 updateUserAvatar(currentUser);
                 showLoading(true);
-                
                 loadSheetsAPI()
-                    .then(() => gapi.client.init({
-                        apiKey: AUTH_API_KEY,
-                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-                    }))
+                    .then(() => gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] }))
                     .then(() => checkEmailInSheet(email))
-                    .catch(() => {
-                        signOut();
-                    });
+                    .catch(() => signOut());
             } else {
                 loginSection.style.display = 'flex';
                 mainContent.style.display = 'none';
-                
-                setTimeout(() => {
-                    loadingScreen.classList.add('fade-out');
-                }, 500);
+                setTimeout(() => loadingScreen.classList.add('fade-out'), 500);
             }
         });
 
         window.onload = function() {
             if (google && google.accounts && google.accounts.id) {
-                google.accounts.id.initialize({
-                    client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com',
-                    callback: handleCredentialResponse
-                });
-                
-                google.accounts.id.renderButton(
-                    document.querySelector('.g_id_signin'),
-                    { 
-                        type: 'standard', 
-                        shape: 'pill', 
-                        theme: 'outline', 
-                        text: 'signin_with', 
-                        size: 'large',
-                        logo_alignment: 'left'
-                    }
-                );
+                google.accounts.id.initialize({ client_id: '328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com', callback: handleCredentialResponse });
+                google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', logo_alignment: 'left' });
             }
         };
     </script>
@@ -2911,225 +2705,65 @@
     <script>
         (function fixButtonsOnAllPages() {
             'use strict';
-            
             let lastTouchEnd = 0;
-            
             document.removeEventListener('touchend', document.touchEndHandler, false);
-            
             document.addEventListener('touchend', function(event) {
                 const target = event.target;
-                
-                const isInteractive = target.closest('button') || 
-                                     target.closest('a') || 
-                                     target.closest('select') || 
-                                     target.closest('.submit-btn') || 
-                                     target.closest('.open-button') || 
-                                     target.closest('.schema-button') ||
-                                     target.closest('.executor-select') ||
-                                     target.closest('.page-btn') ||
-                                     target.closest('.tab-btn') ||
-                                     target.closest('.menu-button') ||
-                                     target.closest('.clear-filter-btn') ||
-                                     target.closest('#open-tasks-counter') ||
-                                     target.closest('.user-avatar');
-                
-                if (isInteractive) {
-                    event.stopPropagation();
-                    return true;
-                }
-                
+                const isInteractive = target.closest('button') || target.closest('a') || target.closest('select') || target.closest('.submit-btn') || target.closest('.open-button') || target.closest('.schema-button') || target.closest('.executor-select') || target.closest('.page-btn') || target.closest('.tab-btn') || target.closest('.menu-button') || target.closest('.clear-filter-btn') || target.closest('#open-tasks-counter') || target.closest('.user-avatar');
+                if (isInteractive) { event.stopPropagation(); return true; }
                 const now = Date.now();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
+                if (now - lastTouchEnd <= 300) event.preventDefault();
                 lastTouchEnd = now;
             }, { passive: false });
-            
             function forceButtonHandlers() {
-                document.querySelectorAll('#tab1 .schema-button, #tab2 .schema-button').forEach(btn => {
+                document.querySelectorAll('#tab1 .schema-button, #tab2 .schema-button, #tab3 .schema-button').forEach(btn => {
                     btn.removeEventListener('click', handleOpenClick);
-                    btn.removeEventListener('touchstart', handleTouchStart);
-                    
-                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
                     btn.addEventListener('click', handleOpenClick);
-                    
-                    if (!btn.hasAttribute('data-handler-fixed')) {
-                        btn.setAttribute('data-handler-fixed', 'true');
-                    }
                 });
-                
-                document.querySelectorAll('#tab1 .submit-btn, #tab2 .submit-btn').forEach(btn => {
+                document.querySelectorAll('#tab1 .submit-btn, #tab2 .submit-btn, #tab3 .submit-btn').forEach(btn => {
                     btn.removeEventListener('click', handleSubmitClick);
-                    btn.removeEventListener('touchstart', handleTouchStart);
-                    
-                    btn.addEventListener('touchstart', handleTouchStart, { passive: false });
                     btn.addEventListener('click', handleSubmitClick);
-                    
-                    if (!btn.hasAttribute('data-handler-fixed')) {
-                        const card = btn.closest('.task-card');
-                        if (card) {
-                            const taskId = card.dataset.taskId;
-                            const rowIndex = card.dataset.rowIndex;
-                            if (taskId && rowIndex) {
-                                btn.setAttribute('data-task-id', taskId);
-                                btn.setAttribute('data-row-index', rowIndex);
-                            }
-                        }
-                        btn.setAttribute('data-handler-fixed', 'true');
-                    }
-                });
-                
-                document.querySelectorAll('.executor-select').forEach(select => {
-                    select.removeEventListener('change', handleSelectChange);
-                    select.removeEventListener('touchstart', handleTouchStart);
-                    select.removeEventListener('click', handleSelectClick);
-                    
-                    select.addEventListener('touchstart', handleTouchStart, { passive: false });
-                    select.addEventListener('click', handleSelectClick);
-                    select.addEventListener('change', handleSelectChange);
                 });
             }
-            
-            function handleTouchStart(e) {
-                e.stopPropagation();
-            }
-            
             function handleOpenClick(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
                 const btn = e.currentTarget;
                 const onclickAttr = btn.getAttribute('onclick');
-                
                 if (onclickAttr) {
                     try {
                         const match = onclickAttr.match(/'([^']+)'/);
-                        if (match && match[1]) {
-                            window.open(convertGoogleDriveLink(match[1]) || match[1], '_blank');
-                        }
-                    } catch (error) {
-                        console.log('Ошибка открытия ссылки:', error);
-                    }
+                        if (match && match[1]) window.open(convertGoogleDriveLink(match[1]) || match[1], '_blank');
+                    } catch (error) { console.log('Ошибка открытия ссылки:', error); }
                 }
             }
-            
             function handleSubmitClick(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
                 const btn = e.currentTarget;
                 if (btn.disabled) return;
-                
                 const card = btn.closest('.task-card');
                 if (!card) return;
-                
                 const select = card.querySelector('.executor-select');
-                if (!select || !select.value) {
-                    alert('Выберите исполнителя');
-                    return;
-                }
-                
+                if (!select || !select.value) { alert('Выберите исполнителя'); return; }
                 const taskId = card.dataset.taskId || btn.dataset.taskId;
                 const rowIndex = card.dataset.rowIndex || btn.dataset.rowIndex;
-                
-                if (taskId && rowIndex) {
-                    completeTask(taskId, select.value, rowIndex);
-                }
+                if (taskId && rowIndex) completeTask(taskId, select.value, rowIndex);
             }
-            
-            function handleSelectClick(e) {
-                e.stopPropagation();
-            }
-            
-            function handleSelectChange(e) {
-                e.stopPropagation();
-                const select = e.target;
-                const card = select.closest('.task-card');
-                if (card) {
-                    const submitBtn = card.querySelector('.submit-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = !select.value;
-                    }
-                }
-            }
-            
             const style = document.createElement('style');
-            style.textContent = `
-                .schema-button, .submit-btn, .open-button, .executor-select {
-                    position: relative;
-                    z-index: 9999 !important;
-                    cursor: pointer !important;
-                    pointer-events: auto !important;
-                    touch-action: manipulation !important;
-                    -webkit-tap-highlight-color: rgba(220,20,60,0.2) !important;
-                }
-                
-                .task-card:active {
-                    transform: none !important;
-                }
-                
-                button, a, select, .schema-button, .submit-btn, .open-button, .user-avatar {
-                    pointer-events: auto !important;
-                    -webkit-user-select: none !important;
-                    user-select: none !important;
-                }
-                
-                .schema-button:active, .submit-btn:active:not(:disabled), 
-                .open-button:active, .user-avatar:active {
-                    opacity: 0.7;
-                    transform: scale(0.98);
-                }
-                
-                .executor-select {
-                    background-color: #cccccc !important;
-                    border: 2px solid #cccccc !important;
-                    color: #666666 !important;
-                    -webkit-appearance: menulist !important;
-                    appearance: menulist !important;
-                }
-            `;
+            style.textContent = `.schema-button, .submit-btn, .open-button, .executor-select { position: relative; z-index: 9999 !important; cursor: pointer !important; pointer-events: auto !important; touch-action: manipulation !important; -webkit-tap-highlight-color: rgba(220,20,60,0.2) !important; } .task-card:active { transform: none !important; } button, a, select, .schema-button, .submit-btn, .open-button, .user-avatar { pointer-events: auto !important; -webkit-user-select: none !important; user-select: none !important; } .schema-button:active, .submit-btn:active:not(:disabled), .open-button:active, .user-avatar:active { opacity: 0.7; transform: scale(0.98); } .executor-select { background-color: #cccccc !important; border: 2px solid #cccccc !important; color: #666666 !important; -webkit-appearance: menulist !important; appearance: menulist !important; }`;
             document.head.appendChild(style);
-            
-            const observer = new MutationObserver(function(mutations) {
-                let needsUpdate = false;
-                
-                mutations.forEach(mutation => {
-                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                        needsUpdate = true;
-                    }
-                });
-                
-                if (needsUpdate) {
-                    setTimeout(forceButtonHandlers, 50);
-                    setTimeout(forceButtonHandlers, 150);
-                }
-            });
-            
-            const tab1 = document.getElementById('tab1');
-            const tab2 = document.getElementById('tab2');
-            
+            const observer = new MutationObserver(function(mutations) { setTimeout(forceButtonHandlers, 50); setTimeout(forceButtonHandlers, 150); });
+            const tab1 = document.getElementById('tab1'), tab2 = document.getElementById('tab2'), tab3 = document.getElementById('tab3');
             if (tab1) observer.observe(tab1, { childList: true, subtree: true });
             if (tab2) observer.observe(tab2, { childList: true, subtree: true });
-            
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(forceButtonHandlers, 100);
-                setTimeout(forceButtonHandlers, 500);
-                setTimeout(forceButtonHandlers, 1000);
-            });
-            
+            if (tab3) observer.observe(tab3, { childList: true, subtree: true });
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(forceButtonHandlers, 100); setTimeout(forceButtonHandlers, 500); setTimeout(forceButtonHandlers, 1000); });
             const originalGoToPage = window.goToPage;
-            window.goToPage = function(type, pageNumber) {
-                originalGoToPage(type, pageNumber);
-                setTimeout(forceButtonHandlers, 100);
-            };
-            
+            window.goToPage = function(type, pageNumber) { originalGoToPage(type, pageNumber); setTimeout(forceButtonHandlers, 100); };
             const originalChangePage = window.changePage;
-            window.changePage = function(type, direction) {
-                originalChangePage(type, direction);
-                setTimeout(forceButtonHandlers, 100);
-            };
-            
-            console.log('Фикс кнопок установлен');
+            window.changePage = function(type, direction) { originalChangePage(type, direction); setTimeout(forceButtonHandlers, 100); };
+            console.log('Фикс кнопок установлен (включая инженер)');
         })();
     </script>
 </body>
