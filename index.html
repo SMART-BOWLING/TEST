@@ -809,6 +809,113 @@
             margin: 0 10px;
         }
 
+        /* Стили для модального окна подтверждения */
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .confirm-modal-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.2s ease;
+        }
+
+        .confirm-modal-icon {
+            width: 60px;
+            height: 60px;
+            background-color: #dc143c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .confirm-modal-icon i {
+            font-size: 30px;
+            color: white;
+        }
+
+        .confirm-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a2f40;
+            margin-bottom: 8px;
+        }
+
+        .confirm-modal-message {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .confirm-modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .confirm-modal-btn.confirm {
+            background-color: #dc143c;
+            color: white;
+        }
+
+        .confirm-modal-btn.confirm:hover {
+            background-color: #a90e2e;
+            transform: scale(1.02);
+        }
+
+        .confirm-modal-btn.cancel {
+            background-color: #e5e5e5;
+            color: #1a2f40;
+        }
+
+        .confirm-modal-btn.cancel:hover {
+            background-color: #d0d0d0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @media (max-width: 767px) {
             header {
                 padding: 12px 15px;
@@ -2185,24 +2292,64 @@
             }
         }
 
-        // Функция для отправки задачи с именем из столбца B
-        function submitTask(event, taskId, rowIndex) {
-            event.preventDefault();
-            event.stopPropagation();
+        // Функция для показа модального окна подтверждения
+        function showConfirmModal(taskId, rowIndex) {
+            // Создаем модальное окно
+            const modal = document.createElement('div');
+            modal.className = 'confirm-modal';
+            modal.innerHTML = `
+                <div class="confirm-modal-content">
+                    <div class="confirm-modal-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="confirm-modal-title">Подтверждение</div>
+                    <div class="confirm-modal-message">Вы уверены, что хотите выполнить эту задачу?</div>
+                    <div class="confirm-modal-buttons">
+                        <button class="confirm-modal-btn confirm" id="confirmYesBtn">Да, выполнить</button>
+                        <button class="confirm-modal-btn cancel" id="confirmNoBtn">Отмена</button>
+                    </div>
+                </div>
+            `;
             
-            // Используем имя из столбца B таблицы (currentUserNameFromSheet)
-            if (!currentUserNameFromSheet) {
-                console.error('Имя пользователя не найдено в таблице');
-                alert('Ошибка: не удалось определить имя пользователя');
-                return;
-            }
+            document.body.appendChild(modal);
             
-            const executorName = currentUserNameFromSheet;
-            console.log(`Отправка задачи ${taskId} с исполнителем: ${executorName} (из столбца B)`);
-            completeTask(taskId, executorName, rowIndex);
+            // Обработчик для кнопки "Да"
+            const confirmBtn = modal.querySelector('#confirmYesBtn');
+            confirmBtn.onclick = function() {
+                modal.remove();
+                // Используем имя из столбца B таблицы (currentUserNameFromSheet)
+                if (!currentUserNameFromSheet) {
+                    console.error('Имя пользователя не найдено в таблице');
+                    alert('Ошибка: не удалось определить имя пользователя');
+                    return;
+                }
+                const executorName = currentUserNameFromSheet;
+                console.log(`Отправка задачи ${taskId} с исполнителем: ${executorName} (из столбца B)`);
+                completeTask(taskId, executorName, rowIndex);
+            };
+            
+            // Обработчик для кнопки "Отмена"
+            const cancelBtn = modal.querySelector('#confirmNoBtn');
+            cancelBtn.onclick = function() {
+                modal.remove();
+            };
+            
+            // Закрытие при клике на фон
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         }
 
-        // Функция рендеринга карточек для МЕХАНИК (с именем из столбца B)
+        // Функция для отправки задачи с подтверждением
+        function submitTaskWithConfirm(event, taskId, rowIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            showConfirmModal(taskId, rowIndex);
+        }
+
+        // Функция рендеринга карточек для МЕХАНИК (с модальным окном подтверждения)
         function renderJournalCards(journal) {
             const container = document.getElementById('journal-cards');
             if (!journal || journal.length === 0) {
@@ -2230,7 +2377,7 @@
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                                <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                             </div>
                         </div>`;
                 } else {
@@ -2253,7 +2400,7 @@
             updatePagination('journal', currentJournalPage, totalJournalPages);
         }
 
-        // Функция рендеринга для ИНСТРУКТОР
+        // Функция рендеринга для ИНСТРУКТОР (с модальным окном подтверждения)
         function renderInstructorCards(instructor) {
             const container = document.getElementById('instructor-cards');
             if (!instructor || instructor.length === 0) {
@@ -2281,7 +2428,7 @@
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                                <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                             </div>
                         </div>`;
                 } else {
@@ -2304,7 +2451,7 @@
             updatePagination('instructor', currentInstructorPage, totalInstructorPages);
         }
 
-        // Функция рендеринга для ИНЖЕНЕР
+        // Функция рендеринга для ИНЖЕНЕР (с модальным окном подтверждения)
         function renderEngineerCards(engineer) {
             const container = document.getElementById('engineer-cards');
             if (!engineer || engineer.length === 0) {
@@ -2332,7 +2479,7 @@
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                                <button class="submit-btn" onclick="submitTask(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                                <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${taskId}', ${rowIndex})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                             </div>
                         </div>`;
                 } else {
@@ -2449,6 +2596,14 @@
                 google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type: 'standard', shape: 'pill', theme: 'outline', text: 'signin_with', size: 'large', logo_alignment: 'left' });
             }
         };
+        
+        // Делаем функции доступными глобально
+        window.openDriveLink = openDriveLink;
+        window.submitTaskWithConfirm = submitTaskWithConfirm;
+        window.goToPage = goToPage;
+        window.changePage = changePage;
+        window.toggleUserDropdown = toggleUserDropdown;
+        window.signOut = signOut;
     </script>
 
     <!-- ИСПРАВЛЕНИЕ ДЛЯ КНОПОК -->
