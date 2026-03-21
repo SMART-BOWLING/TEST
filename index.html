@@ -1,4 +1,4 @@
-В таблице где хранятся посты с правами доступа , в одной строке с почтой в столбце B есть имя пользователя той или иной почты. Вот читай этот столбец то имя которое там должно отображаться в карточке на сайте. Еще, при нажатии на кнопку отправить , сделай какое то предупреждение , это нужно для предотвращения случайного нажатия: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -2363,7 +2363,7 @@
             }
         }
 
-        // Функция для отправки задачи с именем текущего пользователя
+        // Функция для отправки задачи с именем текущего пользователя и ПРЕДУПРЕЖДЕНИЕМ
         function submitTask(event, taskId, rowIndex) {
             event.preventDefault();
             event.stopPropagation();
@@ -2375,12 +2375,18 @@
                 return;
             }
             
+            // === НОВОЕ ПРЕДУПРЕЖДЕНИЕ ===
+            const userConfirmed = confirm("Вы уверены, что хотите отправить задачу? Это действие нельзя отменить.");
+            if (!userConfirmed) {
+                return; // Если пользователь нажал "Отмена", выходим из функции
+            }
+            
             const executorName = currentUser.name;
             console.log(`Отправка задачи ${taskId} с исполнителем: ${executorName}`);
             completeTask(taskId, executorName, rowIndex);
         }
 
-        // Функция рендеринга карточек для МЕХАНИК (без выпадающего списка, с именем пользователя)
+        // Функция рендеринга карточек для МЕХАНИК (с отображением имени пользователя)
         function renderJournalCards(journal) {
             const container = document.getElementById('journal-cards');
             if (!journal || journal.length === 0) {
