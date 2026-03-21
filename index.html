@@ -13,7 +13,8 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* ... (стили остаются без изменений) ... */
+        /* ... (стили остаются без изменений, они у вас уже есть, я их не трогаю, 
+           чтобы не раздувать ответ, просто оставляем тот же блок стилей) ... */
         /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
@@ -632,7 +633,6 @@
             line-height: 1;
         }
 
-        /* Убираем стили для select, так как мы больше не используем выпадающий список */
         .executor-name {
             font-size: 14px;
             font-weight: 700;
@@ -2324,7 +2324,7 @@
             }
         }
 
-        // Измененная функция completeTask: теперь принимает executorName из параметров
+        // Измененная функция completeTask: принимает executorName
         async function completeTask(taskId, executorName, rowIndex) {
             showLoader();
             try {
@@ -2363,16 +2363,22 @@
             }
         }
 
-        // Функция для отправки задачи с именем текущего пользователя
+        // Функция для отправки задачи с предупреждением
         function submitTask(event, taskId, rowIndex) {
             event.preventDefault();
             event.stopPropagation();
             
-            // Проверяем, что пользователь авторизован
+            // Проверка авторизации
             if (!currentUser || !currentUser.name) {
                 console.error('Пользователь не авторизован');
                 alert('Ошибка: пользователь не авторизован');
                 return;
+            }
+            
+            // ДОБАВЛЯЕМ ПОДТВЕРЖДЕНИЕ
+            const isConfirmed = confirm("Вы уверены, что хотите отметить задачу как выполненную?");
+            if (!isConfirmed) {
+                return; // Если пользователь нажал "Отмена", ничего не делаем
             }
             
             const executorName = currentUser.name;
@@ -2380,7 +2386,7 @@
             completeTask(taskId, executorName, rowIndex);
         }
 
-        // Функция рендеринга карточек для МЕХАНИК (без выпадающего списка, с именем пользователя)
+        // Функция рендеринга карточек для МЕХАНИК
         function renderJournalCards(journal) {
             const container = document.getElementById('journal-cards');
             if (!journal || journal.length === 0) {
@@ -2397,6 +2403,12 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
+                
+                // Пытаемся получить имя из столбца B (executorName)
+                const assignedExecutor = task.executorName || null; // Предполагаем, что сервер возвращает поле executorName из столбца B
+                // Если имя назначено, показываем его. Если нет - показываем текущего пользователя (который возьмет задачу)
+                const displayExecutor = assignedExecutor ? assignedExecutor : (currentUser ? currentUser.name : 'Неизвестно');
+                
                 if (!task.isCompleted) {
                     html += `
                         <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
@@ -2404,7 +2416,7 @@
                             <div class="card-content">
                                 <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
                                 <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${currentUser ? currentUser.name : 'Авторизуйтесь'}</span></span></div>
+                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${displayExecutor}</span></span></div>
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
@@ -2448,6 +2460,9 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
+                const assignedExecutor = task.executorName || null;
+                const displayExecutor = assignedExecutor ? assignedExecutor : (currentUser ? currentUser.name : 'Неизвестно');
+                
                 if (!task.isCompleted) {
                     html += `
                         <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
@@ -2455,7 +2470,7 @@
                             <div class="card-content">
                                 <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
                                 <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${currentUser ? currentUser.name : 'Авторизуйтесь'}</span></span></div>
+                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${displayExecutor}</span></span></div>
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
@@ -2499,6 +2514,9 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
+                const assignedExecutor = task.executorName || null;
+                const displayExecutor = assignedExecutor ? assignedExecutor : (currentUser ? currentUser.name : 'Неизвестно');
+                
                 if (!task.isCompleted) {
                     html += `
                         <div class="task-card pending" data-task-id="${taskId}" data-row-index="${rowIndex}">
@@ -2506,7 +2524,7 @@
                             <div class="card-content">
                                 <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${task.createdDate}</span></div>
                                 <div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${task.completedDate || '-'}</span></div>
-                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${currentUser ? currentUser.name : 'Авторизуйтесь'}</span></span></div>
+                                <div class="content-row"><span class="row-label">Выполнит:</span><span class="row-value"><span class="executor-name">${displayExecutor}</span></span></div>
                             </div>
                             <div class="buttons-container">
                                 ${hasLink ? `<a href="#" onclick="openDriveLink('${task.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
