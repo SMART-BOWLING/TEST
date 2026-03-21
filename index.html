@@ -13,7 +13,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* СТИЛИ (оставляем без изменений из предыдущего кода) */
+        /* КРИТИЧЕСКИЕ СТИЛИ ДЛЯ КАРТОЧЕК И ШАПКИ - ИСПРАВЛЕН СКРОЛЛ */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
@@ -22,13 +22,8 @@
             --accent: #dc143c;
             --text-dark: #1a2f40;
             --text-light: #ffffff;
-            --text-gray: #FFF;
-            --text-light-gray: #999999;
             --border-radius: 8px;
-            --input-padding: 12px;
             --surface: #ffffff;
-            --elevation-1: 0 1px 2px rgba(0,0,0,0.05);
-            --elevation-2: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         * {
@@ -39,13 +34,11 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* ИСПРАВЛЕНИЕ СКРОЛЛА - убираем overflow: hidden и position: fixed */
         html, body {
             height: 100%;
-            overflow: hidden;
             background-color: #f4f6f9;
             width: 100%;
-            position: fixed;
-            touch-action: manipulation;
         }
 
         body {
@@ -53,7 +46,6 @@
             padding: 0;
             line-height: 1.5;
             min-height: 100vh;
-            height: 100vh;
             -webkit-font-smoothing: antialiased;
             font-weight: 700;
             padding-top: env(safe-area-inset-top);
@@ -61,8 +53,11 @@
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
             -webkit-text-size-adjust: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
+        /* ШАПКА - фиксированная, но не мешает скроллу */
         header {
             background-color: #1f2937;
             color: white;
@@ -166,6 +161,7 @@
             text-align: center;
         }
 
+        /* СТИЛИ АВТОРИЗАЦИИ И ЗАГРУЗКИ */
         .loading-screen {
             position: fixed;
             inset: 0;
@@ -284,22 +280,16 @@
             animation: spin 1s ease-in-out infinite;
         }
 
+        /* ОСНОВНОЙ КОНТЕЙНЕР - теперь с отступом от шапки и скроллом */
         .container {
             max-width: 100%;
             margin: 0;
             background-color: var(--surface);
             border-radius: 0;
             box-shadow: none;
-            overflow: hidden;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            border: none;
-            min-height: -webkit-fill-available;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
+            min-height: 100vh;
+            padding-top: 75px; /* Отступ под фиксированную шапку */
+            padding-bottom: 20px;
         }
 
         .header-section {
@@ -311,7 +301,6 @@
             padding: 0 16px;
             padding-left: max(16px, env(safe-area-inset-left));
             padding-right: max(16px, env(safe-area-inset-right));
-            padding-top: 80px;
         }
 
         .tabs {
@@ -324,9 +313,6 @@
             justify-content: space-between;
             flex-wrap: wrap;
             width: 100%;
-            margin-top: 0;
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
         }
 
         .tab-btn {
@@ -342,7 +328,6 @@
             text-align: center;
             border-radius: 6px;
             font-weight: 700;
-            position: relative;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -352,7 +337,6 @@
         .tab-btn:hover {
             background-color: #fafafa;
             border-color: #d0d0d0;
-            color: var(--text-dark);
         }
 
         .tab-btn.active {
@@ -406,6 +390,7 @@
             justify-content: center;
             gap: 10px;
             flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
         .date-filter-container.show {
@@ -470,59 +455,9 @@
             background-color: #0d1f2d;
         }
 
-        .flatpickr-calendar {
-            font-family: "Poppins", sans-serif;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
-            background: #dc143c;
-            border-color: #dc143c;
-        }
-
-        .flatpickr-day.today {
-            border-color: #1a2f40;
-        }
-
-        .flatpickr-day.today:hover {
-            background: #1a2f40;
-            border-color: #1a2f40;
-            color: white;
-        }
-
-        .flatpickr-months .flatpickr-month {
-            background: #1a2f40;
-            color: white;
-            fill: white;
-        }
-
-        .flatpickr-current-month .flatpickr-monthDropdown-months {
-            color: white;
-        }
-
-        .flatpickr-current-month input.cur-year {
-            color: white;
-        }
-
-        .flatpickr-weekdays {
-            background: #2d3e50;
-        }
-
-        .flatpickr-weekday {
-            color: white;
-        }
-
-        .flatpickr-day {
-            font-weight: 600;
-        }
-
         .tab-content {
             display: none;
             padding: 0;
-            flex: 1;
-            overflow-y: auto;
             flex-direction: column;
         }
 
@@ -582,6 +517,7 @@
             line-height: 1.4;
             text-align: left;
             padding: 0 5px;
+            word-break: break-word;
         }
 
         .card-content {
@@ -598,7 +534,9 @@
             padding: 0 16px;
             border-bottom: 1px solid #e0e0e0;
             min-height: 48px;
-            height: 48px;
+            height: auto;
+            padding-top: 10px;
+            padding-bottom: 10px;
         }
 
         .content-row:last-child {
@@ -613,7 +551,6 @@
             line-height: 1;
             display: flex;
             align-items: center;
-            height: 100%;
         }
 
         .row-value {
@@ -625,8 +562,8 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            height: 100%;
-            line-height: 1;
+            word-break: break-word;
+            margin-left: 10px;
         }
 
         .executor-name {
@@ -637,11 +574,6 @@
             padding: 4px 12px;
             border-radius: 20px;
             display: inline-block;
-        }
-
-        .executor-name-assigned {
-            background: rgba(26,47,64,0.1);
-            color: #1a2f40;
         }
 
         .buttons-container {
@@ -736,6 +668,19 @@
             gap: 6px;
         }
 
+        .no-open {
+            color: #999;
+            font-style: italic;
+            padding: 11px 14px;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+            background: #f8f9fa;
+            flex: 1;
+            white-space: nowrap;
+        }
+
         .loading-container {
             display: flex;
             flex-direction: column;
@@ -768,7 +713,7 @@
             align-items: center;
             gap: 8px;
             margin-top: 10px;
-            margin-bottom: 80px;
+            margin-bottom: 30px;
             padding: 20px 10px;
             flex-wrap: wrap;
             max-width: 1200px;
@@ -789,7 +734,6 @@
             font-weight: 600;
             min-width: 40px;
             text-align: center;
-            position: relative;
             touch-action: manipulation;
         }
 
@@ -818,24 +762,103 @@
             margin: 0 10px;
         }
 
+        .flatpickr-calendar {
+            font-family: "Poppins", sans-serif;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+            background: #dc143c;
+            border-color: #dc143c;
+        }
+
+        /* Медиа-запросы для мобильных устройств */
         @media (max-width: 767px) {
+            .container {
+                padding-top: 70px;
+            }
+            
             .cards-grid {
                 grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
             }
-            .header-section {
-                padding-top: 75px;
-            }
+            
             .tabs {
-                flex-wrap: wrap;
+                gap: 6px;
             }
+            
             .tab-btn {
                 padding: 10px 8px;
                 font-size: 13px;
+            }
+            
+            .schema-button, .submit-btn, .submitted-text, .no-open {
+                height: 38px;
+                min-height: 38px;
+                padding: 8px 10px;
+                font-size: 11px;
+                white-space: normal;
+                word-break: break-word;
+            }
+            
+            .buttons-container {
+                flex-wrap: wrap;
+            }
+            
+            .schema-button, .submit-btn, .submitted-text, .no-open {
+                flex: 1 1 auto;
+                min-width: 120px;
+            }
+            
+            .date-filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .date-input-wrapper {
+                width: 100%;
+            }
+            
+            .clear-filter-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding-top: 65px;
+            }
+            
+            .row-label, .row-value {
+                font-size: 12px;
+            }
+            
+            .executor-name {
+                font-size: 11px;
+                padding: 2px 8px;
+            }
+            
+            .task-title {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
+    <!-- ЭКРАН ЗАГРУЗКИ -->
     <div class="loading-screen" id="loadingScreen">
         <div class="logo-wrapper">
             <div class="glow-ring"></div>
@@ -972,7 +995,7 @@
 
         // Переменные состояния
         let currentUser = null;
-        let currentUserSheetName = null; // Имя пользователя из столбца B таблицы
+        let currentUserSheetName = null;
         let journalData = null;
         let instructorData = null;
         let engineerData = null;
@@ -1020,8 +1043,7 @@
         }
 
         function scrollToTop() {
-            const activeTab = document.querySelector('.tab-content.active');
-            if (activeTab) activeTab.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function escapeHtml(text) {
@@ -1081,12 +1103,14 @@
             currentPageSpan.textContent = currentPage;
             totalPagesSpan.textContent = totalPages;
             
-            firstBtn.disabled = currentPage === 1;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-            lastBtn.disabled = currentPage === totalPages;
+            if (firstBtn) firstBtn.disabled = currentPage === 1;
+            if (prevBtn) prevBtn.disabled = currentPage === 1;
+            if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+            if (lastBtn) lastBtn.disabled = currentPage === totalPages;
             
-            lastBtn.onclick = function() { goToPage(type, totalPages); };
+            if (lastBtn) {
+                lastBtn.onclick = function() { goToPage(type, totalPages); };
+            }
             pagination.style.display = totalPages > 1 ? 'flex' : 'none';
         }
 
@@ -1180,7 +1204,6 @@
                     if (!rows[i]?.[0]) continue;
                     const rowEmail = rows[i][0].toLowerCase().trim();
                     if (rowEmail === email) {
-                        // Проверяем доступ к сайту
                         let hasAccess = false;
                         for (let j = 2; j < rows[i].length; j++) {
                             const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
@@ -1190,9 +1213,7 @@
                             }
                         }
                         if (hasAccess) {
-                            // Возвращаем имя из столбца B (индекс 1)
-                            const userNameFromSheet = rows[i][1] ? rows[i][1].trim() : null;
-                            return userNameFromSheet;
+                            return rows[i][1] ? rows[i][1].trim() : null;
                         }
                         return null;
                     }
@@ -1343,7 +1364,6 @@
             }
         }
 
-        // Функция отправки задачи с именем из столбца B
         async function completeTask(taskId, executorName, rowIndex) {
             showLoader();
             try {
@@ -1381,7 +1401,6 @@
             }
         }
 
-        // Функция отправки с подтверждением
         function submitTask(event, taskId, rowIndex) {
             event.preventDefault();
             event.stopPropagation();
@@ -1395,12 +1414,11 @@
             const isConfirmed = confirm("⚠️ Вы уверены, что хотите отметить задачу как выполненную?\n\nЭто действие нельзя отменить.");
             if (!isConfirmed) return;
             
-            const executorName = currentUserSheetName; // Используем имя из столбца B таблицы
+            const executorName = currentUserSheetName;
             console.log(`Отправка задачи ${taskId} с исполнителем: ${executorName} (из таблицы)`);
             completeTask(taskId, executorName, rowIndex);
         }
 
-        // Функции рендеринга
         function renderJournalCards(journal) {
             const container = document.getElementById('journal-cards');
             if (!journal || journal.length === 0) {
@@ -1417,9 +1435,7 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
-                
-                // Отображаем имя из таблицы (currentUserSheetName) для незавершенных задач
-                const displayExecutor = `<span class="executor-name">${currentUserSheetName || currentUser?.name || 'Неизвестно'}</span>`;
+                const displayExecutor = `<span class="executor-name">${escapeHtml(currentUserSheetName || currentUser?.name || 'Неизвестно')}</span>`;
                 
                 if (!task.isCompleted) {
                     html += `
@@ -1471,7 +1487,7 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
-                const displayExecutor = `<span class="executor-name">${currentUserSheetName || currentUser?.name || 'Неизвестно'}</span>`;
+                const displayExecutor = `<span class="executor-name">${escapeHtml(currentUserSheetName || currentUser?.name || 'Неизвестно')}</span>`;
                 
                 if (!task.isCompleted) {
                     html += `
@@ -1523,7 +1539,7 @@
                 const rowIndex = task.rowIndex || (idx + 2);
                 const hasLink = task.driveLink && task.driveLink.trim() !== '';
                 const taskId = task.id || task.driveLink || '';
-                const displayExecutor = `<span class="executor-name">${currentUserSheetName || currentUser?.name || 'Неизвестно'}</span>`;
+                const displayExecutor = `<span class="executor-name">${escapeHtml(currentUserSheetName || currentUser?.name || 'Неизвестно')}</span>`;
                 
                 if (!task.isCompleted) {
                     html += `
@@ -1559,7 +1575,7 @@
             updatePagination('engineer', currentEngineerPage, totalEngineerPages);
         }
 
-        // Функции фильтрации (сокращены для краткости)
+        // Функции фильтрации
         function initDatePicker() {
             if (datePicker) datePicker.destroy();
             const dateInput = document.getElementById('date-filter-input');
@@ -1684,7 +1700,6 @@
             }
         }
 
-        // Инициализация приложения
         function initializeApp() {
             console.log('Инициализация приложения, имя исполнителя из таблицы:', currentUserSheetName);
             
