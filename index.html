@@ -9,11 +9,213 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
-    <!-- Все кастомные стили удалены — оставлены только нативные браузерные стили -->
+    <!-- Все кастомные стили удалены — только базовая структура -->
+    <style>
+        /* Минимальные необходимые стили для корректного отображения таблицы и кнопок */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        /* Базовые стили таблицы */
+        table {
+            border-collapse: collapse;
+        }
+        td, th {
+            border: 1px solid #ccc;
+            text-align: center;
+            vertical-align: middle;
+            padding: 4px 6px;
+            font-size: 11px;
+        }
+        /* Фиксация первых двух колонок */
+        #main-table th:nth-child(1),
+        #main-table td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 12;
+            background-color: #dc143c;
+            color: white;
+            font-weight: 700;
+        }
+        #main-table th:nth-child(2),
+        #main-table td:nth-child(2) {
+            position: sticky;
+            left: 48px;
+            z-index: 11;
+            background-color: #2c3e50;
+            color: white;
+            font-weight: 600;
+        }
+        /* Заголовки букв и времени */
+        #letter-row th:nth-child(n+3) {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        #time-row th:nth-child(n+3) {
+            position: sticky;
+            top: 34px;
+            z-index: 9;
+            background: #f1f5f9;
+        }
+        /* Кнопка-переключатель групп */
+        .toggle-btn {
+            cursor: pointer;
+            background-color: #475569;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            color: white;
+            margin-left: 4px;
+            transition: 0.1s;
+        }
+        .toggle-btn:active {
+            background-color: #dc143c;
+            transform: scale(0.95);
+        }
+        /* Активная ячейка (броски) */
+        .active-cell {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: 700;
+        }
+        /* Контейнер для даты */
+        .date-cell-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .native-date-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            z-index: 2;
+        }
+        .date-btn-overlay {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            pointer-events: none;
+        }
+        .date-btn {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            border-radius: 30px;
+            background: white;
+            text-align: center;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .logo-cell img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            cursor: pointer;
+        }
+        /* Контейнеры */
+        #main-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f4f6fa;
+        }
+        .table-container {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .table-wrapper {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            overflow: auto;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        #main-table {
+            width: auto;
+            min-width: 100%;
+        }
+        .logout-btn {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: #1f2937;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 8px 18px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-btn:active {
+            transform: scale(0.96);
+        }
+        /* Скрытые колонки */
+        .hidden-column {
+            display: none !important;
+        }
+        /* Адаптив */
+        @media (max-width: 768px) {
+            td, th { padding: 0 4px; height: 30px; }
+            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 44px; }
+            .date-btn { padding: 5px 6px; font-size: 10px; }
+        }
+        @media (max-width: 480px) {
+            td, th { padding: 0 3px; height: 28px; font-size: 10px; }
+            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 40px; }
+            .date-btn { padding: 4px 5px; font-size: 9px; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- Экран загрузки (без стилей) -->
+<!-- Экран загрузки -->
 <div id="loadingScreen" style="display: flex; justify-content: center; align-items: center; position: fixed; inset: 0; background: #1f2937; z-index: 10000;">
     <div style="text-align: center;">
         <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" style="width: 85px;">
@@ -41,30 +243,26 @@
 </div>
 
 <!-- Основной контент -->
-<div id="main-content" style="display: none; width: 100%; height: 100%; background: #f4f6fa; overflow: hidden; flex-direction: column;">
-    <button onclick="signOut()" style="position: fixed; bottom: 16px; right: 16px; background: #1f2937; color: white; border: none; border-radius: 40px; padding: 8px 18px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 1100;">
-        <i class="fas fa-sign-out-alt"></i> Выйти
-    </button>
-    <div style="flex: 1; min-height: 0; width: 100%; padding: 12px; display: flex; flex-direction: column; overflow: hidden;">
-        <div style="flex: 1; min-height: 0; width: 100%; overflow: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <table id="main-table" style="border-collapse: collapse; width: auto; min-width: 100%; font-size: 11px;">
+<div id="main-content" style="display: none;">
+    <button class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table id="main-table">
                 <thead>
                     <tr id="letter-row">
-                        <th style="border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f1f5f9;">
-                            <img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo" style="width: 28px; height: 28px; object-fit: contain; cursor: pointer;">
-                        </th>
-                        <th id="date-cell-header" style="border: 1px solid #e2e8f0; text-align: center; padding: 0; height: 34px; background: #f1f5f9;">
-                            <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-                                <input type="date" id="date-picker-native" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; background: transparent; z-index: 2;">
-                                <div style="position: relative; z-index: 1; width: 100%; pointer-events: none;">
-                                    <div style="width: 100%; padding: 6px 8px; font-size: 11px; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 30px; background: white; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📅 ДАТА</div>
+                        <th class="logo-cell"><img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo"></th>
+                        <th id="date-cell-header">
+                            <div class="date-cell-inner">
+                                <input type="date" id="date-picker-native" class="native-date-input">
+                                <div class="date-btn-overlay">
+                                    <div class="date-btn">📅 ДАТА</div>
                                 </div>
                             </div>
                         </th>
                     </tr>
                     <tr id="time-row">
-                        <th style="border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f1f5f9;">LANE</th>
-                        <th id="overall-total" style="border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f1f5f9;">0ч 0м</th>
+                        <th>LANE</th>
+                        <th id="overall-total">0ч 0м</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
@@ -89,7 +287,6 @@
     const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body');
     const nativeDateInput = document.getElementById('date-picker-native');
     
-    // Текущая выбранная дата
     let currentSelectedDate = null;
     
     // ========== ФУНКЦИИ РАБОТЫ С ДАТОЙ ==========
@@ -115,29 +312,23 @@
     function toggleGroup(idxs) {
         idxs.forEach(i => {
             [timeRow, letterRow].forEach(row => { 
-                if(row.children[i+2]) {
-                    if(row.children[i+2].style.display === 'none') row.children[i+2].style.display = '';
-                    else row.children[i+2].style.display = 'none';
-                }
+                if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column');
             });
             tableBody.querySelectorAll('tr').forEach(tr => { 
-                if(tr.children[i+2]) {
-                    if(tr.children[i+2].style.display === 'none') tr.children[i+2].style.display = '';
-                    else tr.children[i+2].style.display = 'none';
-                }
+                if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column');
             });
         });
     }
     
     function areAllHidden() { 
-        return allGroups.every(g => timeRow.children[g[0]+2]?.style.display === 'none'); 
+        return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); 
     }
     
     function toggleAll(forceHide = null) {
         const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
         allGroups.forEach(g => { 
             const el = timeRow.children[g[0]+2]; 
-            if(el && ((el.style.display === 'none') !== shouldHide)) toggleGroup(g); 
+            if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); 
         });
         document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
     }
@@ -146,7 +337,6 @@
         const btn = document.createElement('div'); 
         btn.className = 'toggle-btn'; 
         btn.textContent = '+';
-        btn.style.cssText = 'cursor: pointer; background-color: #475569; border-radius: 20px; font-weight: bold; font-size: 9px; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: white; margin-left: 4px;';
         let last = 0;
         btn.onclick = (e) => {
             e.stopPropagation(); 
@@ -154,7 +344,7 @@
             if(now - last < 300) toggleAll(!areAllHidden());
             else { 
                 toggleGroup(idxs); 
-                btn.textContent = timeRow.children[idxs[0]+2].style.display === 'none' ? '+' : '–'; 
+                btn.textContent = timeRow.children[idxs[0]+2].classList.contains('hidden-column') ? '+' : '–'; 
             }
             last = now;
         };
@@ -165,17 +355,16 @@
         const fragL = document.createDocumentFragment(), fragT = document.createDocumentFragment();
         for (let i = 1; i <= totalMinutes; i++) {
             const thL = document.createElement('th');
-            thL.style.cssText = 'border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f8fafc;';
             fragL.appendChild(thL);
             const h = Math.floor((i-1)/60), m = (i-1)%60;
             const thT = document.createElement('th');
-            thT.style.cssText = 'border: 1px solid #e2e8f0; text-align: center; padding: 2px 1px; height: 34px; background: #f1f5f9;';
             thT.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; line-height: 1.15;"><span style="font-size: 9px; font-weight: 700;">${String(h).padStart(2,'0')}</span><span style="font-size: 8px;">${String(m).padStart(2,'0')}</span></div>`;
             fragT.appendChild(thT);
             if ((h*60+m) % groupInterval === 0) {
                 const start = (h*60+m)===0 ? 1 : (h*60+m)+1;
                 const end = Math.min(start+groupSize-1, totalMinutes-1);
-                const idxs = []; for (let j=start; j<=end; j++) idxs.push(j);
+                const idxs = []; 
+                for (let j=start; j<=end; j++) idxs.push(j);
                 if (idxs.length) { 
                     thL.appendChild(makeBtn(idxs)); 
                     allGroups.push(idxs); 
@@ -192,15 +381,12 @@
             const tr = document.createElement('tr');
             const thLane = document.createElement('th'); 
             thLane.textContent = lane+1; 
-            thLane.style.cssText = 'border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f1f5f9;';
             tr.appendChild(thLane);
             const thCount = document.createElement('th'); 
-            thCount.style.cssText = 'border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; background: #f1f5f9;';
             tr.appendChild(thCount);
             const cells = [];
             for (let i=0; i<totalMinutes; i++) { 
                 const td = document.createElement('td'); 
-                td.style.cssText = 'border: 1px solid #e2e8f0; text-align: center; padding: 0 6px; height: 34px; white-space: nowrap;';
                 tr.appendChild(td); 
                 cells.push(td); 
             }
@@ -277,52 +463,10 @@
     function initTableEvents() {
         nativeDateInput.addEventListener('change', onDateChange);
         
-        // Добавляем простые эффекты наведения (без сложных стилей, просто меняем фон)
-        document.addEventListener('mouseover', e => {
-            if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
-                const ci = e.target.cellIndex, row = e.target.parentElement;
-                if (row && row.tagName === 'TR') {
-                    for(let i=0; i<row.children.length; i++) {
-                        if(row.children[i]) row.children[i].style.backgroundColor = '#fecdd3';
-                    }
-                }
-                if (ci >= 0) {
-                    const rows = document.querySelectorAll('#main-table tr');
-                    for(let r=0; r<rows.length; r++) {
-                        if(rows[r].children[ci]) rows[r].children[ci].style.backgroundColor = '#fecdd3';
-                    }
-                }
-            }
-        });
-        
-        document.addEventListener('mouseout', () => {
-            const allCells = document.querySelectorAll('#main-table td, #main-table th');
-            allCells.forEach(cell => {
-                if(!cell.classList || !cell.classList.contains('active-cell')) {
-                    // Возвращаем оригинальные цвета в зависимости от типа ячейки
-                    if(cell.parentElement && cell.parentElement.parentElement && cell.parentElement.parentElement.tagName === 'THEAD') {
-                        if(cell.cellIndex === 0 || cell.cellIndex === 1) {
-                            if(cell.cellIndex === 0) cell.style.backgroundColor = '#dc143c';
-                            else if(cell.cellIndex === 1) cell.style.backgroundColor = '#2c3e50';
-                            else cell.style.backgroundColor = '#f8fafc';
-                        } else {
-                            cell.style.backgroundColor = '#f1f5f9';
-                        }
-                    } else if(cell.parentElement && cell.parentElement.tagName === 'TR' && cell.cellIndex === 0) {
-                        cell.style.backgroundColor = '#dc143c';
-                    } else if(cell.parentElement && cell.parentElement.tagName === 'TR' && cell.cellIndex === 1) {
-                        cell.style.backgroundColor = '#2c3e50';
-                    } else {
-                        cell.style.backgroundColor = '';
-                    }
-                }
-            });
-        });
-        
-        // Логотип для выбора даты
-        const logoCell = document.querySelector('.logo-cell');
-        if(logoCell) {
-            logoCell.addEventListener('click', () => {
+        // Клик по логотипу для выбора даты
+        const logoImg = document.querySelector('.logo-cell img');
+        if(logoImg) {
+            logoImg.addEventListener('click', () => {
                 nativeDateInput.click();
             });
         }
