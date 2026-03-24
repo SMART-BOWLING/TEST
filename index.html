@@ -313,18 +313,47 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
         .date-btn:active {
             background-color: #f1f5f9;
             transform: scale(0.98);
         }
-        /* Скрываем нативный инпут даты */
-        #date-picker-hidden {
+        
+        /* Стили для нативного инпута даты — делаем видимым, но прозрачным и поверх кнопки */
+        .date-cell {
+            position: relative;
+            padding: 0 !important;
+            overflow: visible;
+        }
+        .date-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .native-date-input {
             position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             opacity: 0;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            z-index: 2;
+        }
+        .date-btn-overlay {
+            position: relative;
+            z-index: 1;
+            width: 100%;
             pointer-events: none;
-            width: 0;
-            height: 0;
         }
         
         .logo-cell img {
@@ -452,9 +481,13 @@
                 <thead>
                     <tr id="letter-row">
                         <th class="logo-cell"><img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo"></th>
-                        <th>
-                            <button class="date-btn" id="date-btn">📅 ДАТА</button>
-                            <input type="date" id="date-picker-hidden">
+                        <th class="date-cell">
+                            <div class="date-wrapper">
+                                <input type="date" id="date-picker-native" class="native-date-input">
+                                <div class="date-btn-overlay">
+                                    <div class="date-btn">📅 ДАТА</div>
+                                </div>
+                            </div>
                         </th>
                     </tr>
                     <tr id="time-row">
@@ -482,20 +515,15 @@
     let allGroups = [], allDataCells = [];
     const letterRow = document.getElementById('letter-row'), timeRow = document.getElementById('time-row');
     const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body');
-    const dateBtn = document.getElementById('date-btn');
-    const hiddenDateInput = document.getElementById('date-picker-hidden');
+    const nativeDateInput = document.getElementById('date-picker-native');
     
     // Текущая выбранная дата
     let currentSelectedDate = null;
     
     // ========== ФУНКЦИИ РАБОТЫ С ДАТОЙ ==========
-    function openDatePicker() {
-        hiddenDateInput.click();
-    }
-    
     function onDateChange() {
-        if (hiddenDateInput.value) {
-            currentSelectedDate = hiddenDateInput.value;
+        if (nativeDateInput.value) {
+            currentSelectedDate = nativeDateInput.value;
             loadData();
         }
     }
@@ -506,7 +534,7 @@
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         currentSelectedDate = `${year}-${month}-${day}`;
-        hiddenDateInput.value = currentSelectedDate;
+        nativeDateInput.value = currentSelectedDate;
     }
     
     // ========== ФУНКЦИИ ТАБЛИЦЫ ==========
@@ -611,9 +639,8 @@
     }
     
     function initTableEvents() {
-        // Настройка кнопки выбора даты
-        dateBtn.addEventListener('click', openDatePicker);
-        hiddenDateInput.addEventListener('change', onDateChange);
+        // Настройка выбора даты — нативный инпут сам открывается при клике
+        nativeDateInput.addEventListener('change', onDateChange);
         
         document.addEventListener('mouseover', e => {
             if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
@@ -624,7 +651,9 @@
         });
         
         document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
-        document.querySelector('.logo-cell')?.addEventListener('click', () => openDatePicker());
+        document.querySelector('.logo-cell')?.addEventListener('click', () => {
+            nativeDateInput.click();
+        });
         
         let lastTouch = 0;
         document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
