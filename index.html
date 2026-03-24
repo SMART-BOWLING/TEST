@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>LUCKY STRIKE KH – Данные по дорожкам</title>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <title>LUCKY STRIKE KH — Lane Manager | Бодрая аналитика</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
@@ -18,726 +19,814 @@
         }
 
         :root {
-            --accent: #dc143c;
-            --primary-dark: #1f2937;
-            --secondary-dark: #2c3e50;
-            --bg-light: #f4f6fa;
-            --border-light: #e2e8f0;
+            --primary: #c8102e;
+            --primary-dark: #a00c26;
+            --primary-glow: rgba(200, 16, 46, 0.25);
+            --dark-slate: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-200: #e2e8f0;
+            --bg-soft: #f8fafc;
             --white: #ffffff;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: var(--bg-light);
-            font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
         body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-soft);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
         }
 
-        /* ЭКРАНЫ ЗАГРУЗКИ */
-        .loading-screen, .loader-container {
+        /* АНИМАЦИОННЫЕ ЭКРАНЫ */
+        .screen-loader {
             position: fixed;
             inset: 0;
-            background: var(--primary-dark);
+            background: linear-gradient(145deg, #0f172a 0%, #1e1b2f 100%);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             z-index: 10000;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.5s ease, visibility 0.5s;
+            backdrop-filter: blur(2px);
         }
-        .loader-container {
-            z-index: 100000;
-            display: none;
-            background: rgba(31, 41, 55, 0.96);
-            backdrop-filter: blur(4px);
+        .screen-loader.fade-out {
+            opacity: 0;
+            visibility: hidden;
         }
-        .loader-container.active { display: flex; }
-        .loading-screen.fade-out { opacity: 0; pointer-events: none; }
-        .logo-wrapper {
+        .loader-ring {
+            width: 100px;
+            height: 100px;
             position: relative;
-            width: 120px;
-            height: 120px;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
-        .glow-ring {
-            position: absolute;
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: conic-gradient(var(--accent), transparent 70%);
-            animation: spin 4s linear infinite;
-            filter: blur(16px);
+        .loader-ring svg {
+            width: 100%;
+            height: 100%;
+            animation: spin 1.2s linear infinite;
         }
-        .logo-wrapper img { width: 85px; z-index: 2; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loader-logo {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: url('https://i.postimg.cc/wjGzSY92/1.png') center/contain no-repeat;
+            filter: drop-shadow(0 0 8px rgba(200,16,46,0.6));
+        }
 
-        /* АВТОРИЗАЦИЯ */
-        #login-section {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
+        /* АВТОРИЗАЦИЯ — СТИЛЬНЫЙ КАРД */
+        .auth-container {
             height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            background: radial-gradient(circle at 10% 30%, #fef2f2, #f1f5f9);
         }
-        #login-container {
+        .auth-card {
             background: var(--white);
-            padding: 28px 24px;
-            border-radius: 32px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            border-radius: 48px;
+            padding: 40px 32px;
+            max-width: 400px;
+            width: 100%;
             text-align: center;
-            max-width: 380px;
-            width: 100%;
+            box-shadow: var(--shadow-md);
+            backdrop-filter: blur(2px);
+            transition: transform 0.2s;
+            border: 1px solid rgba(200,16,46,0.15);
         }
-        #login-container h2 {
-            color: var(--primary-dark);
-            margin: 12px 0 6px;
-            font-size: 24px;
-            font-weight: 700;
-        }
-        .login-subtitle {
-            color: #475569;
-            font-size: 13px;
-            margin-bottom: 24px;
-        }
-        .login-icon {
-            width: 56px;
-            height: 56px;
-            background: #fff0f2;
-            border-radius: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-        }
-        .login-icon i { font-size: 28px; color: var(--accent); }
-
-        /* КНОПКА ВЫХОДА */
-        .logout-btn {
-            position: fixed;
-            bottom: 16px;
-            right: 16px;
-            background: rgba(31, 41, 55, 0.92);
-            backdrop-filter: blur(8px);
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 8px 18px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 1100;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .logout-btn:active { transform: scale(0.96); background: var(--accent); }
-
-        /* ОСНОВНОЙ КОНТЕЙНЕР */
-        #main-content {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--bg-light);
-        }
-
-        .table-container {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .table-wrapper {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid var(--border-light);
-        }
-
-        /* ТАБЛИЦА */
-        #main-table {
-            border-collapse: collapse;
-            table-layout: auto;
-            width: auto;
-            min-width: 100%;
-            font-size: 11px;
-        }
-
-        td, th {
-            text-align: center;
-            border: 1px solid var(--border-light);
-            white-space: nowrap;
-            vertical-align: middle;
-            padding: 0 6px;
-            height: 34px;
-        }
-
-        th {
-            background-color: #f1f5f9;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        /* ФИКСАЦИЯ ПЕРВЫХ ДВУХ КОЛОНОК */
-        #main-table th:nth-child(1),
-        #main-table td:nth-child(1),
-        #main-table th:nth-child(2),
-        #main-table td:nth-child(2) {
-            position: sticky;
-            background-clip: padding-box;
-        }
-        #main-table th:nth-child(1),
-        #main-table td:nth-child(1) {
-            left: 0;
-            z-index: 12;
-            background-color: var(--accent);
-            color: white;
-            font-weight: 700;
-            width: 48px;
-            min-width: 48px;
-        }
-        #main-table th:nth-child(2),
-        #main-table td:nth-child(2) {
-            left: 48px;
-            z-index: 11;
-            background-color: var(--secondary-dark);
-            color: white;
-            font-weight: 600;
-            width: 88px;
-            min-width: 88px;
-        }
-
-        #letter-row th:nth-child(1),
-        #letter-row th:nth-child(2),
-        #time-row th:nth-child(1),
-        #time-row th:nth-child(2) {
-            background-color: #eef2ff !important;
-            color: var(--secondary-dark) !important;
-        }
-
-        #letter-row th:nth-child(n+3) {
-            background: #f8fafc;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            width: 28px;
-            min-width: 28px;
-        }
-
-        #time-row th:nth-child(n+3) {
-            position: sticky;
-            top: 34px;
-            z-index: 9;
-            background: #f1f5f9;
-            padding: 2px 1px;
-            width: 28px;
-            min-width: 28px;
-        }
-        #time-row th div {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1.15;
-        }
-        #time-row th .hour { font-size: 9px; font-weight: 700; }
-        #time-row th .minute { font-size: 8px; opacity: 0.8; }
-
-        .toggle-btn {
-            cursor: pointer;
-            background-color: #475569;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 9px;
+        .auth-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #fff0f2, #ffe6ea);
+            border-radius: 60px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 16px;
-            height: 16px;
-            color: white;
-            margin-left: 4px;
-            transition: 0.1s;
+            margin-bottom: 20px;
         }
-        .toggle-btn:active { background-color: var(--accent); transform: scale(0.95); }
-        .hidden-column { display: none !important; }
-
-        .active-cell {
-            background-color: var(--secondary-dark);
-            color: white;
-            font-weight: 700;
+        .auth-icon i {
+            font-size: 40px;
+            color: var(--primary);
+        }
+        .auth-card h2 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #c8102e, #9b1d3a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+        .auth-sub {
+            color: var(--slate-700);
+            font-size: 14px;
+            margin-bottom: 32px;
         }
 
-        td.hover-row, th.hover-row,
-        td.hover-col, th.hover-col {
-            background-color: #fecdd3 !important;
-        }
-
-        /* СТИЛИ ДЛЯ КНОПКИ ВЫБОРА ДАТЫ */
-        .date-btn {
+        /* ОСНОВНАЯ ЗОНА */
+        .app-main {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
             width: 100%;
-            padding: 6px 8px;
-            font-size: 11px;
-            font-weight: 600;
-            border: 1px solid #cbd5e1;
-            border-radius: 30px;
-            background: white;
-            cursor: pointer;
-            font-family: inherit;
-            text-align: center;
-            color: #1e293b;
-            transition: all 0.2s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            background: var(--bg-soft);
+            position: relative;
+        }
+
+        /* ТУЛБАР */
+        .toolbar {
+            padding: 12px 20px;
+            background: var(--white);
+            border-bottom: 1px solid var(--slate-200);
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 4px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.92);
+            z-index: 50;
         }
-        .date-btn:active {
-            background-color: #f1f5f9;
-            transform: scale(0.98);
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        
-        /* Стили для нативного инпута даты — делаем видимым, но прозрачным и поверх кнопки */
-        .date-cell {
+        .brand img {
+            height: 36px;
+            width: auto;
+        }
+        .brand span {
+            font-weight: 800;
+            font-size: 18px;
+            background: linear-gradient(135deg, #c8102e, #b91c3c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .date-picker-area {
             position: relative;
-            padding: 0 !important;
-            overflow: visible;
+            display: flex;
+            align-items: center;
         }
-        .date-wrapper {
-            position: relative;
+        .date-glass-btn {
+            background: white;
+            border: 1px solid var(--slate-200);
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+        }
+        .date-glass-btn:active {
+            transform: scale(0.97);
+            background: var(--bg-soft);
+        }
+        .date-glass-btn i {
+            color: var(--primary);
+        }
+        .hidden-native-date {
+            position: absolute;
+            opacity: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .native-date-input {
-            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
             cursor: pointer;
-            border: none;
+        }
+        .total-badge {
+            background: var(--dark-slate);
+            padding: 6px 16px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logout-btn {
             background: transparent;
-            z-index: 2;
-        }
-        .date-btn-overlay {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            pointer-events: none;
-        }
-        
-        .logo-cell img {
-            width: 28px;
-            height: 28px;
-            object-fit: contain;
+            border: 1px solid var(--slate-200);
+            border-radius: 40px;
+            padding: 6px 18px;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             cursor: pointer;
+            transition: var(--transition);
+            color: var(--slate-700);
         }
-        #overall-total {
+        .logout-btn:active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ТАБЛИЦА – ГЛАДКИЙ СКРОЛЛ */
+        .table-viewport {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            padding: 8px 12px 12px 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .table-scroll {
+            flex: 1;
+            overflow: auto;
+            border-radius: 24px;
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--slate-200);
+            -webkit-overflow-scrolling: touch;
+        }
+        .data-table {
+            border-collapse: collapse;
+            font-size: 11px;
+            min-width: 100%;
+            white-space: nowrap;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid var(--slate-200);
+            padding: 0 5px;
+            height: 36px;
+            text-align: center;
+            transition: background 0.05s linear;
+        }
+        /* Фиксация колонок */
+        .data-table th:first-child,
+        .data-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: var(--primary);
+            color: white;
             font-weight: 800;
+            width: 52px;
+            min-width: 52px;
+            z-index: 15;
+            font-size: 13px;
+        }
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            position: sticky;
+            left: 52px;
+            background: var(--slate-800);
+            color: white;
+            font-weight: 700;
+            width: 94px;
+            min-width: 94px;
+            z-index: 14;
+        }
+        /* Заголовки букв и времени */
+        .letter-head th {
+            background: #f1f5fc;
+            font-weight: 700;
+            color: #0f172a;
+            position: sticky;
+            top: 0;
+            z-index: 10;
             font-size: 11px;
         }
-
-        /* АДАПТАЦИЯ ПОД РАЗНЫЕ ЭКРАНЫ */
-        @media (max-width: 768px) {
-            td, th {
-                height: 30px;
-                padding: 0 4px;
-            }
-            #time-row th {
-                top: 30px;
-            }
-            #main-table th:nth-child(1),
-            #main-table td:nth-child(1) {
-                width: 44px;
-                min-width: 44px;
-            }
-            #main-table th:nth-child(2),
-            #main-table td:nth-child(2) {
-                left: 44px;
-                width: 82px;
-                min-width: 82px;
-            }
-            #letter-row th:nth-child(n+3),
-            #time-row th:nth-child(n+3) {
-                width: 26px;
-                min-width: 26px;
-            }
-            .date-btn {
-                padding: 5px 6px;
-                font-size: 10px;
-            }
+        .time-head th {
+            background: #eef2ff;
+            font-weight: 600;
+            position: sticky;
+            top: 36px;
+            z-index: 9;
+            font-size: 9px;
+            padding: 2px 3px;
+        }
+        .letter-head th:first-child, .time-head th:first-child,
+        .letter-head th:nth-child(2), .time-head th:nth-child(2) {
+            background: var(--primary-dark) !important;
+            color: white !important;
+        }
+        .time-head th:nth-child(2) {
+            background: var(--slate-700) !important;
+        }
+        .toggle-group {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #475569;
+            color: white;
+            border-radius: 20px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .toggle-group:active {
+            background: var(--primary);
+            transform: scale(0.92);
+        }
+        .hidden-column {
+            display: none !important;
+        }
+        .active-cell {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            color: white;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+        }
+        .hover-row-bg td, .hover-row-bg th {
+            background-color: #fce7eb !important;
+        }
+        .hover-col-bg {
+            background-color: #fecdd3 !important;
+        }
+        .logo-clickable {
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .logo-clickable:active {
+            transform: scale(0.95);
         }
 
-        @media (max-width: 480px) {
-            td, th {
-                height: 28px;
-                font-size: 10px;
-                padding: 0 3px;
-            }
-            #time-row th {
-                top: 28px;
-            }
-            #main-table th:nth-child(1),
-            #main-table td:nth-child(1) {
-                width: 40px;
-                min-width: 40px;
-            }
-            #main-table th:nth-child(2),
-            #main-table td:nth-child(2) {
-                left: 40px;
-                width: 76px;
-                min-width: 76px;
-            }
-            #letter-row th:nth-child(n+3),
-            #time-row th:nth-child(n+3) {
-                width: 24px;
-                min-width: 24px;
-            }
-            .date-btn {
-                padding: 4px 5px;
-                font-size: 9px;
-            }
+        /* адаптивность */
+        @media (max-width: 720px) {
+            .data-table th:first-child, .data-table td:first-child { width: 44px; min-width: 44px; }
+            .data-table th:nth-child(2), .data-table td:nth-child(2) { left: 44px; width: 82px; min-width: 82px; }
+            .data-table td, .data-table th { height: 32px; font-size: 10px; }
+            .time-head th { top: 32px; }
         }
-
-        @media (orientation: landscape) and (max-width: 900px) {
-            td, th {
-                height: 26px;
-                font-size: 9px;
-            }
-            #time-row th {
-                top: 26px;
-            }
-            .toggle-btn {
-                width: 14px;
-                height: 14px;
-                font-size: 8px;
-            }
-            .date-btn {
-                padding: 4px 5px;
-                font-size: 9px;
-            }
+        @media (max-width: 500px) {
+            .toolbar { padding: 8px 12px; }
+            .brand span { font-size: 14px; }
+            .date-glass-btn { padding: 5px 14px; font-size: 12px; }
         }
-
-        .table-wrapper::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .table-wrapper::-webkit-scrollbar-track { background: #eef2ff; border-radius: 8px; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
+        .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: #eef2ff; border-radius: 8px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+<div id="globalLoader" class="screen-loader">
+    <div class="loader-ring">
+        <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(200,16,46,0.2)" stroke-width="4"/>
+            <path fill="none" stroke="#c8102e" stroke-width="4" stroke-linecap="round" d="M50 5 A45 45 0 0 1 90 50" stroke-dasharray="4 6">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="1s" repeatCount="indefinite"/>
+            </path>
+        </svg>
+        <div class="loader-logo"></div>
+    </div>
 </div>
-<div class="loader-container" id="loader"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading"></div></div>
 
-<div id="login-section">
-    <div id="login-container">
-        <div class="login-icon"><i class="fas fa-bowling-ball"></i></div>
+<div id="loginPanel" style="display: none;" class="auth-container">
+    <div class="auth-card">
+        <div class="auth-icon"><i class="fas fa-bowling-ball"></i></div>
         <h2>LUCKY STRIKE KH</h2>
-        <div class="login-subtitle">Войдите через Google для доступа</div>
-        <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+        <div class="auth-sub">Войдите через Google, чтобы загрузить треки дорожек</div>
+        <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleGoogleResponse" data-auto_prompt="false"></div>
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
     </div>
 </div>
 
-<div id="main-content">
-    <button class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
-    <div class="table-container">
-        <div class="table-wrapper">
-            <table id="main-table">
+<div id="dashboard" style="display: none;" class="app-main">
+    <div class="toolbar">
+        <div class="brand">
+            <img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="LS" style="height: 34px;">
+            <span>LANE ANALYTICS</span>
+        </div>
+        <div class="date-picker-area">
+            <div id="fakeDateBtn" class="date-glass-btn">
+                <i class="fas fa-calendar-alt"></i> <span id="selectedDateLabel">Выберите дату</span>
+            </div>
+            <input type="date" id="nativeDateInput" class="hidden-native-date">
+        </div>
+        <div class="total-badge">
+            <i class="fas fa-chart-line"></i> <span id="totalTimeDisplay">0ч 0м</span>
+        </div>
+        <button id="logoutButton" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    </div>
+    <div class="table-viewport">
+        <div class="table-scroll">
+            <table class="data-table" id="coreTable">
                 <thead>
-                    <tr id="letter-row">
-                        <th class="logo-cell"><img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo"></th>
-                        <th class="date-cell">
-                            <div class="date-wrapper">
-                                <input type="date" id="date-picker-native" class="native-date-input">
-                                <div class="date-btn-overlay">
-                                    <div class="date-btn">📅 ДАТА</div>
-                                </div>
-                            </div>
-                        </th>
+                    <tr id="letterHeaderRow" class="letter-head">
+                        <th><i class="fas fa-tachometer-alt"></i></th>
+                        <th id="laneTotalHeader">📊 СУММА</th>
                     </tr>
-                    <tr id="time-row">
-                        <th>LANE</th>
-                        <th id="overall-total">0ч 0м</th>
+                    <tr id="timeHeaderRow" class="time-head">
+                        <th>№</th>
+                        <th id="overallLaneTotal">0ч 0м</th>
                     </tr>
                 </thead>
-                <tbody id="table-body"></tbody>
+                <tbody id="tableBodyRows"></tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    // ========== АВТОРИЗАЦИЯ ==========
-    const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
-    const AUTH_SHEET_NAME = '1';
-    const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-    const CURRENT_SITE = window.location.href.split('?')[0].split('#')[0];
+    // ---------- КОНФИГИ ----------
+    const SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+    const SHEET_NAME = '1';
+    const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+    const CURRENT_URL = window.location.href.split('?')[0].split('#')[0];
     const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwJcg8Ov4_-ijxTLQxJDjm2-IKCmI8l0AAsDo4sMeU-avSQp3F_E54gyB7f26z_KaE0FA/exec';
-
-    let currentUser = null, currentUserNameFromSheet = null, isLoadingData = false;
-    let fetchControllers = new Map();
-    const totalMinutes = 1440, groupInterval = 15, groupSize = 14;
-    let allGroups = [], allDataCells = [];
-    const letterRow = document.getElementById('letter-row'), timeRow = document.getElementById('time-row');
-    const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body');
-    const nativeDateInput = document.getElementById('date-picker-native');
     
-    // Текущая выбранная дата
-    let currentSelectedDate = null;
+    const TOTAL_MINUTES = 1440;
+    const GROUP_SIZE = 14;
+    const GROUP_STEP = 15;
+    let allGroups = [];          // массив массивов индексов минут
+    let lanesDataRef = [];       // { headerCell, cells: [] }
+    let currentDate = null;
+    let currentUser = null;
+    let userNameFromSheet = null;
+    let isLoadingData = false;
+    let abortControllers = new Map();
     
-    // ========== ФУНКЦИИ РАБОТЫ С ДАТОЙ ==========
-    function onDateChange() {
-        if (nativeDateInput.value) {
-            currentSelectedDate = nativeDateInput.value;
-            loadData();
-        }
-    }
+    // DOM elements
+    const loaderScreen = document.getElementById('globalLoader');
+    const loginPanel = document.getElementById('loginPanel');
+    const dashboard = document.getElementById('dashboard');
+    const tableBody = document.getElementById('tableBodyRows');
+    const letterRow = document.getElementById('letterHeaderRow');
+    const timeRow = document.getElementById('timeHeaderRow');
+    const overallTotalSpan = document.getElementById('totalTimeDisplay');
+    const laneTotalHeader = document.getElementById('laneTotalHeader');
+    const selectedDateSpan = document.getElementById('selectedDateLabel');
+    const nativeDatePicker = document.getElementById('nativeDateInput');
+    const fakeDateBtn = document.getElementById('fakeDateBtn');
     
-    function setDefaultDate() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        currentSelectedDate = `${year}-${month}-${day}`;
-        nativeDateInput.value = currentSelectedDate;
-    }
-    
-    // ========== ФУНКЦИИ ТАБЛИЦЫ ==========
-    function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
-    
-    function toggleGroup(idxs) {
-        idxs.forEach(i => {
-            [timeRow, letterRow].forEach(row => { if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column'); });
-            tableBody.querySelectorAll('tr').forEach(tr => { if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column'); });
-        });
-    }
-    
-    function areAllHidden() { return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); }
-    
-    function toggleAll(forceHide = null) {
-        const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
-        allGroups.forEach(g => { const el = timeRow.children[g[0]+2]; if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); });
-        document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
-    }
-    
-    function makeBtn(idxs) {
-        const btn = document.createElement('div'); btn.className = 'toggle-btn'; btn.textContent = '+';
-        let last = 0;
-        btn.onclick = (e) => {
-            e.stopPropagation(); const now = Date.now();
-            if(now - last < 300) toggleAll(!areAllHidden());
-            else { toggleGroup(idxs); btn.textContent = timeRow.children[idxs[0]+2].classList.contains('hidden-column') ? '+' : '–'; }
-            last = now;
-        };
-        return btn;
-    }
-    
-    function buildHeaders() {
-        const fragL = document.createDocumentFragment(), fragT = document.createDocumentFragment();
-        for (let i = 1; i <= totalMinutes; i++) {
-            const thL = document.createElement('th'); fragL.appendChild(thL);
-            const h = Math.floor((i-1)/60), m = (i-1)%60;
-            const thT = document.createElement('th');
-            thT.innerHTML = `<div><span class="hour">${String(h).padStart(2,'0')}</span><span class="minute">${String(m).padStart(2,'0')}</span></div>`;
-            fragT.appendChild(thT);
-            if ((h*60+m) % groupInterval === 0) {
-                const start = (h*60+m)===0 ? 1 : (h*60+m)+1;
-                const end = Math.min(start+groupSize-1, totalMinutes-1);
-                const idxs = []; for (let j=start; j<=end; j++) idxs.push(j);
-                if (idxs.length) { fragL.lastChild.appendChild(makeBtn(idxs)); allGroups.push(idxs); }
+    // ========== 1. ПОСТРОЕНИЕ ЗАГОЛОВКОВ (МИНУТЫ + ГРУППЫ) ==========
+    function buildMinuteHeaders() {
+        const fragLetters = document.createDocumentFragment();
+        const fragTimes = document.createDocumentFragment();
+        allGroups = [];
+        // от 1 до TOTAL_MINUTES-1 (0-минута не используется, но для наглядности начинаем с 1)
+        for (let m = 1; m <= TOTAL_MINUTES; m++) {
+            const thLetter = document.createElement('th');
+            const hour = Math.floor((m-1)/60);
+            const minute = (m-1)%60;
+            thLetter.textContent = `${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+            fragLetters.appendChild(thLetter);
+            
+            const thTime = document.createElement('th');
+            thTime.innerHTML = `<div><span class="hour">${String(hour).padStart(2,'0')}</span><span class="minute">${String(minute).padStart(2,'0')}</span></div>`;
+            fragTimes.appendChild(thTime);
+            
+            // Группировка по GROUP_STEP
+            if ((hour*60 + minute) % GROUP_STEP === 0) {
+                let startIdx = (hour*60 + minute) === 0 ? 1 : (hour*60 + minute) + 1;
+                let endIdx = Math.min(startIdx + GROUP_SIZE - 1, TOTAL_MINUTES);
+                let groupIndices = [];
+                for (let idx = startIdx; idx <= endIdx; idx++) groupIndices.push(idx);
+                if (groupIndices.length) {
+                    allGroups.push(groupIndices);
+                    const btn = document.createElement('span');
+                    btn.className = 'toggle-group';
+                    btn.textContent = '+';
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const currentlyHidden = timeRow.children[groupIndices[0]+2]?.classList.contains('hidden-column');
+                        groupIndices.forEach(idx => {
+                            const targetThLetter = letterRow.children[idx+2];
+                            const targetThTime = timeRow.children[idx+2];
+                            const tds = document.querySelectorAll(`#coreTable tbody tr td:nth-child(${idx+3})`);
+                            if(targetThLetter) targetThLetter.classList.toggle('hidden-column');
+                            if(targetThTime) targetThTime.classList.toggle('hidden-column');
+                            tds.forEach(td => td.classList.toggle('hidden-column'));
+                        });
+                        btn.textContent = timeRow.children[groupIndices[0]+2]?.classList.contains('hidden-column') ? '+' : '–';
+                    });
+                    thLetter.appendChild(btn);
+                }
             }
         }
-        letterRow.appendChild(fragL); timeRow.appendChild(fragT);
+        letterRow.appendChild(fragLetters);
+        timeRow.appendChild(fragTimes);
     }
     
-    function buildBody() {
-        const frag = document.createDocumentFragment();
-        for (let lane=0; lane<16; lane++) {
+    // 2. Построение тела (16 lanes)
+    function buildTableBody() {
+        tableBody.innerHTML = '';
+        lanesDataRef = [];
+        for (let lane = 0; lane < 16; lane++) {
             const tr = document.createElement('tr');
-            const thLane = document.createElement('th'); thLane.textContent = lane+1; tr.appendChild(thLane);
-            const thCount = document.createElement('th'); tr.appendChild(thCount);
+            const thLane = document.createElement('th');
+            thLane.textContent = (lane+1).toString();
+            tr.appendChild(thLane);
+            const tdTotal = document.createElement('th');
+            tdTotal.textContent = '0ч 0м';
+            tr.appendChild(tdTotal);
             const cells = [];
-            for (let i=0; i<totalMinutes; i++) { const td = document.createElement('td'); tr.appendChild(td); cells.push(td); }
-            frag.appendChild(tr);
-            allDataCells.push({ header: thCount, cells });
+            for (let m = 0; m < TOTAL_MINUTES; m++) {
+                const td = document.createElement('td');
+                td.textContent = '⚡';
+                td.style.color = '#dc143c';
+                tr.appendChild(td);
+                cells.push(td);
+            }
+            tableBody.appendChild(tr);
+            lanesDataRef.push({ headerCell: tdTotal, cells });
         }
-        tableBody.appendChild(frag);
     }
     
-    function clearRows() {
-        fetchControllers.forEach(c => c.abort()); fetchControllers.clear();
-        overallTotal.textContent = '0ч 0м';
-        allDataCells.forEach(r => { r.header.textContent = ''; r.cells.forEach(c => { c.classList.remove('active-cell'); c.textContent = ''; c.style.color = ''; }); });
+    // Форматирование минут
+    function formatTime(minutes) {
+        return `${Math.floor(minutes/60)}ч ${minutes%60}м`;
     }
     
-    async function loadLaneData(idx, date) {
-        const controller = new AbortController(); fetchControllers.set(idx, controller);
-        try {
-            const res = await fetch(`${BACKEND_URL}?action=getData&index=${idx}&date=${date}&t=${Date.now()}`, { signal: controller.signal });
-            return await res.json();
-        } finally { fetchControllers.delete(idx); }
-    }
-    
-    async function loadData() {
-        if (!currentSelectedDate || isLoadingData) return;
-        isLoadingData = true; clearRows();
-        const selectedDate = currentSelectedDate;
-        let sumAll = 0;
-        const promises = [];
-        for (let idx=0; idx<allDataCells.length; idx++) {
-            promises.push(loadLaneData(idx, selectedDate).then(data => {
-                const row = allDataCells[idx]; let sum=0;
-                row.cells.forEach((cell,i) => {
-                    const time = `${String(Math.floor(i/60)).padStart(2,'0')}:${String(i%60).padStart(2,'0')}`;
-                    cell.classList.remove('active-cell');
-                    if (data.c && data.c.includes(time)) { cell.classList.add('active-cell'); cell.textContent = '🎳'; sum++; }
-                    else if (data.b && data.b.includes(time)) { cell.textContent = ''; cell.style.color = '#475569'; }
-                    else { cell.textContent = '⚡'; cell.style.color = '#dc143c'; }
+    // Скрыть все группы по умолчанию (сжатый вид)
+    function collapseAllGroups() {
+        if (!allGroups.length) return;
+        const anyVisible = [...timeRow.children].some((el, idx) => idx>1 && !el.classList.contains('hidden-column'));
+        if (anyVisible) {
+            allGroups.forEach(group => {
+                group.forEach(idx => {
+                    const letterCell = letterRow.children[idx+2];
+                    const timeCell = timeRow.children[idx+2];
+                    const tds = document.querySelectorAll(`#coreTable tbody tr td:nth-child(${idx+3})`);
+                    if(letterCell && !letterCell.classList.contains('hidden-column')) {
+                        letterCell.classList.add('hidden-column');
+                        timeCell?.classList.add('hidden-column');
+                        tds.forEach(td => td.classList.add('hidden-column'));
+                    }
                 });
-                row.header.textContent = formatMinutes(sum);
-                sumAll += sum;
-            }).catch(err => console.warn(`Лейн ${idx+1} ошибка`)));
+            });
+            document.querySelectorAll('.toggle-group').forEach(btn => btn.textContent = '+');
+        } else {
+            // если уже скрыты, ничего не делаем
         }
-        await Promise.allSettled(promises);
-        overallTotal.textContent = formatMinutes(sumAll);
+    }
+    
+    // Очистка данных перед загрузкой
+    function resetTableData() {
+        lanesDataRef.forEach(lane => {
+            lane.headerCell.textContent = '0ч 0м';
+            lane.cells.forEach(cell => {
+                cell.classList.remove('active-cell');
+                cell.textContent = '⚡';
+                cell.style.color = '#dc143c';
+            });
+        });
+        overallTotalSpan.textContent = '0ч 0м';
+        laneTotalHeader.textContent = '📊 СУММА';
+    }
+    
+    // Загрузка одного лейна
+    async function fetchLaneData(laneIdx, date) {
+        const controller = new AbortController();
+        abortControllers.set(laneIdx, controller);
+        try {
+            const url = `${BACKEND_URL}?action=getData&index=${laneIdx}&date=${date}&_=${Date.now()}`;
+            const resp = await fetch(url, { signal: controller.signal });
+            return await resp.json();
+        } catch(e) {
+            return { c: [], b: [] };
+        } finally {
+            abortControllers.delete(laneIdx);
+        }
+    }
+    
+    async function loadDataForDate(date) {
+        if (!date || isLoadingData) return;
+        isLoadingData = true;
+        resetTableData();
+        const selected = date;
+        let totalAllMinutes = 0;
+        const lanePromises = [];
+        for (let i = 0; i < lanesDataRef.length; i++) {
+            lanePromises.push(fetchLaneData(i, selected).then(data => {
+                const row = lanesDataRef[i];
+                let laneSum = 0;
+                row.cells.forEach((cell, minuteIndex) => {
+                    const timeStr = `${String(Math.floor(minuteIndex/60)).padStart(2,'0')}:${String(minuteIndex%60).padStart(2,'0')}`;
+                    cell.classList.remove('active-cell');
+                    if (data.c && data.c.includes(timeStr)) {
+                        cell.classList.add('active-cell');
+                        cell.textContent = '🎳';
+                        cell.style.color = '';
+                        laneSum++;
+                    } 
+                    else if (data.b && data.b.includes(timeStr)) {
+                        cell.textContent = '';
+                        cell.style.color = '#475569';
+                    }
+                    else {
+                        cell.textContent = '⚡';
+                        cell.style.color = '#dc143c';
+                    }
+                });
+                const formatted = formatTime(laneSum);
+                row.headerCell.textContent = formatted;
+                return laneSum;
+            }).catch(() => 0));
+        }
+        const sums = await Promise.all(lanePromises);
+        totalAllMinutes = sums.reduce((a,b) => a+b, 0);
+        overallTotalSpan.textContent = formatTime(totalAllMinutes);
+        laneTotalHeader.textContent = `📊 СУММА (${formatTime(totalAllMinutes)})`;
         isLoadingData = false;
     }
     
-    function initTableEvents() {
-        // Настройка выбора даты — нативный инпут сам открывается при клике
-        nativeDateInput.addEventListener('change', onDateChange);
-        
-        document.addEventListener('mouseover', e => {
-            if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
-                const ci = e.target.cellIndex, row = e.target.parentElement;
-                if (row && row.tagName === 'TR') row.querySelectorAll('td,th').forEach(c => c.classList.add('hover-row'));
-                if (ci >= 0) document.querySelectorAll('#main-table tr').forEach(r => { if(r.children[ci]) r.children[ci].classList.add('hover-col'); });
+    // Инициализация событий таблицы (наведение)
+    function attachHoverEvents() {
+        const table = document.getElementById('coreTable');
+        table.addEventListener('mouseover', (e) => {
+            const target = e.target;
+            if (target.tagName === 'TD' || target.tagName === 'TH') {
+                const colIdx = target.cellIndex;
+                const rowEl = target.parentElement;
+                if (rowEl && rowEl.tagName === 'TR') {
+                    rowEl.querySelectorAll('td,th').forEach(cell => cell.classList.add('hover-row-bg'));
+                }
+                if (colIdx >= 0) {
+                    document.querySelectorAll('#coreTable tr').forEach(row => {
+                        if(row.children[colIdx]) row.children[colIdx].classList.add('hover-col-bg');
+                    });
+                }
             }
         });
-        
-        document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
-        document.querySelector('.logo-cell')?.addEventListener('click', () => {
-            nativeDateInput.click();
+        table.addEventListener('mouseout', () => {
+            document.querySelectorAll('.hover-row-bg, .hover-col-bg').forEach(el => el.classList.remove('hover-row-bg', 'hover-col-bg'));
         });
-        
-        let lastTouch = 0;
-        document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
-        
-        setDefaultDate();
-        setTimeout(() => { toggleAll(true); loadData(); }, 150);
     }
     
-    function initializeTableApp() {
-        buildHeaders();
-        buildBody();
-        initTableEvents();
+    // Инициализация даты
+    function initDatePicker() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth()+1).padStart(2,'0');
+        const dd = String(today.getDate()).padStart(2,'0');
+        const defaultDate = `${yyyy}-${mm}-${dd}`;
+        currentDate = defaultDate;
+        nativeDatePicker.value = defaultDate;
+        selectedDateSpan.textContent = defaultDate;
+        nativeDatePicker.addEventListener('change', (e) => {
+            currentDate = e.target.value;
+            selectedDateSpan.textContent = currentDate;
+            loadDataForDate(currentDate);
+        });
+        fakeDateBtn.addEventListener('click', () => {
+            nativeDatePicker.showPicker ? nativeDatePicker.showPicker() : nativeDatePicker.click();
+        });
     }
-
-    // ========== АВТОРИЗАЦИЯ ==========
-    function showLoaderUI(show) { document.getElementById('loader').classList.toggle('active', show); }
-    function parseJwt(t) { try { const b = t.split('.')[1]; return JSON.parse(atob(b.replace(/-/g, '+').replace(/_/g, '/'))); } catch(e) { return {}; } }
-    function loadSheetsAPI() { return new Promise((res, rej) => gapi.load('client', { callback: res, onerror: rej, timeout: 10000 })); }
     
-    async function checkEmailInSheet(email) {
+    function fullTableInit() {
+        buildMinuteHeaders();
+        buildTableBody();
+        attachHoverEvents();
+        initDatePicker();
+        setTimeout(() => {
+            collapseAllGroups();   // компактный вид
+            loadDataForDate(currentDate);
+        }, 50);
+    }
+    
+    // ========== АВТОРИЗАЦИЯ (Google + таблица доступа) ==========
+    function showLoader(show) {
+        loaderScreen.style.opacity = show ? '1' : '0';
+        loaderScreen.style.visibility = show ? 'visible' : 'hidden';
+    }
+    
+    function parseJwt(token) {
         try {
-            const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` });
-            const rows = resp.result.values;
-            let hasAccess = false, foundName = null;
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(base64));
+        } catch(e) { return {}; }
+    }
+    
+    async function initGapi() {
+        return new Promise((resolve, reject) => {
+            gapi.load('client', { callback: resolve, onerror: reject, timeout: 8000 });
+        });
+    }
+    
+    async function verifyEmailInSheet(email) {
+        try {
+            await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+            const response = await gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: `${SHEET_NAME}!A:Z`
+            });
+            const rows = response.result.values || [];
+            let hasAccess = false;
+            let foundName = null;
+            const normalizedEmail = email.toLowerCase().trim();
             for (let i = 0; i < rows.length; i++) {
-                if (!rows[i]?.[0]) continue;
-                if (rows[i][0].toLowerCase().trim() === email) {
+                const rowEmail = rows[i]?.[0]?.toLowerCase().trim();
+                if (rowEmail === normalizedEmail) {
                     for (let j = 1; j < rows[i].length; j++) {
-                        const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
-                        if (siteUrl === CURRENT_SITE || siteUrl.includes('SMB-LS-KH') || siteUrl.includes('smart-bowling')) { hasAccess = true; break; }
+                        const site = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+                        if (site === CURRENT_URL || site.includes('SMB-LS-KH') || site.includes('smart-bowling')) {
+                            hasAccess = true;
+                            if (rows[i][1]) foundName = rows[i][1].trim();
+                            break;
+                        }
                     }
-                    if (rows[i].length > 1 && rows[i][1]) foundName = rows[i][1].trim();
                     break;
                 }
             }
-            if (hasAccess) { currentUserNameFromSheet = foundName || currentUser.name; loginUser(currentUser); }
-            else { alert('Доступ запрещён'); showLoaderUI(false); }
-        } catch(e) { alert('Ошибка проверки доступа'); showLoaderUI(false); }
-    }
-    
-    function loginUser(user) {
-        localStorage.setItem('userLoggedIn', 'true'); localStorage.setItem('userEmail', user.email.toLowerCase());
-        localStorage.setItem('userName', user.name); localStorage.setItem('userNameFromSheet', currentUserNameFromSheet || user.name);
-        localStorage.setItem('userPic', user.picture);
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('main-content').style.display = 'flex';
-        setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 300);
-        initializeTableApp();
-    }
-    
-    async function initAndCheckEmail(email) {
-        await loadSheetsAPI(); 
-        await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-        await checkEmailInSheet(email);
-    }
-    
-    function handleCredentialResponse(response) {
-        const payload = parseJwt(response.credential);
-        currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture };
-        showLoaderUI(true); 
-        initAndCheckEmail(currentUser.email).catch(e => { alert('Ошибка'); showLoaderUI(false); });
-    }
-    
-    function signOut() { localStorage.clear(); if (google?.accounts?.id) google.accounts.id.disableAutoSelect(); location.reload(); }
-
-    window.addEventListener('load', () => {
-        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-        const email = localStorage.getItem('userEmail'), name = localStorage.getItem('userName'), nameFromSheet = localStorage.getItem('userNameFromSheet'), pic = localStorage.getItem('userPic');
-        if (isLoggedIn && email) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('main-content').style.display = 'flex';
-            currentUser = { email, name, picture: pic };
-            currentUserNameFromSheet = nameFromSheet || name;
-            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 200);
-            initializeTableApp();
-        } else {
-            document.getElementById('login-section').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
-            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 500);
+            if (hasAccess) {
+                userNameFromSheet = foundName || currentUser.name;
+                return true;
+            }
+            return false;
+        } catch(err) {
+            console.error(err);
+            return false;
         }
-    });
+    }
     
-    window.handleCredentialResponse = handleCredentialResponse;
-    window.signOut = signOut;
+    async function onLoginSuccess(userObj) {
+        showLoader(true);
+        try {
+            await initGapi();
+            const accessGranted = await verifyEmailInSheet(userObj.email);
+            if (!accessGranted) {
+                alert('❌ Доступ запрещён. Ваш email не найден в белом списке.');
+                showLoader(false);
+                return;
+            }
+            localStorage.setItem('lsLogged', 'true');
+            localStorage.setItem('lsEmail', userObj.email);
+            localStorage.setItem('lsName', userObj.name);
+            localStorage.setItem('lsSheetName', userNameFromSheet || userObj.name);
+            localStorage.setItem('lsPicture', userObj.picture);
+            loginPanel.style.display = 'none';
+            dashboard.style.display = 'flex';
+            setTimeout(() => { loaderScreen.style.opacity = '0'; loaderScreen.style.visibility = 'hidden'; }, 200);
+            fullTableInit();
+        } catch(err) {
+            alert('Ошибка подключения к таблице доступа');
+            showLoader(false);
+        }
+    }
+    
+    window.handleGoogleResponse = (response) => {
+        const payload = parseJwt(response.credential);
+        currentUser = {
+            email: payload.email.toLowerCase().trim(),
+            name: payload.name,
+            picture: payload.picture
+        };
+        onLoginSuccess(currentUser);
+    };
+    
+    function logout() {
+        localStorage.clear();
+        if (google?.accounts?.id) google.accounts.id.disableAutoSelect();
+        location.reload();
+    }
+    
+    // Восстановление сессии
+    function restoreSession() {
+        const isLogged = localStorage.getItem('lsLogged') === 'true';
+        const savedEmail = localStorage.getItem('lsEmail');
+        const savedName = localStorage.getItem('lsName');
+        if (isLogged && savedEmail) {
+            currentUser = { email: savedEmail, name: savedName, picture: localStorage.getItem('lsPicture') };
+            userNameFromSheet = localStorage.getItem('lsSheetName') || savedName;
+            loginPanel.style.display = 'none';
+            dashboard.style.display = 'flex';
+            setTimeout(() => {
+                loaderScreen.style.opacity = '0';
+                loaderScreen.style.visibility = 'hidden';
+            }, 100);
+            fullTableInit();
+        } else {
+            loginPanel.style.display = 'flex';
+            dashboard.style.display = 'none';
+            setTimeout(() => {
+                loaderScreen.style.opacity = '0';
+                loaderScreen.style.visibility = 'hidden';
+            }, 300);
+        }
+    }
+    
+    window.addEventListener('load', () => {
+        restoreSession();
+        document.getElementById('logoutButton')?.addEventListener('click', logout);
+    });
 </script>
 </body>
 </html>
