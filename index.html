@@ -2,277 +2,630 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LUCKY STRIKE KH</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>LUCKY STRIKE KH – Данные по дорожкам</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        :root {
-            --apple-bg: #ffffff;
-            --apple-secondary: #f5f5f7;
-            --apple-text: #1d1d1f;
-            --apple-accent: #dc143c;
-            --border-color: #d2d2d7;
-            --row-hover: #f5f5f7;
-            --col-hover: rgba(220, 20, 60, 0.05);
-        }
-
+        /* ===== RESET & БАЗА ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --accent: #dc143c;
+            --primary-dark: #1f2937;
+            --secondary-dark: #2c3e50;
+            --bg-light: #f4f6fa;
+            --border-light: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            background-color: var(--bg-light);
+            font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-weight: 500;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--apple-bg);
-            color: var(--apple-text);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            position: relative;
+            height: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        /* --- LOADING SCREEN (Minimalist) --- */
-        #loadingScreen {
+        /* ===== ЭКРАНЫ ЗАГРУЗКИ ===== */
+        .loading-screen, .loader-container {
             position: fixed;
             inset: 0;
-            background: #fff;
+            background: var(--primary-dark);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
-            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10000;
+            transition: opacity 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
-        .fade-out { opacity: 0; pointer-events: none; }
-        .spinner-minimal {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--apple-secondary);
-            border-top-color: var(--apple-accent);
+        .loader-container {
+            z-index: 100000;
+            display: none;
+            background: rgba(31, 41, 55, 0.96);
+            backdrop-filter: blur(4px);
+        }
+        .loader-container.active { display: flex; }
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .logo-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .glow-ring {
+            position: absolute;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            background: conic-gradient(var(--accent), transparent 70%);
+            animation: spin 4s linear infinite;
+            filter: blur(18px);
         }
+        .logo-wrapper img {
+            width: 100px;
+            z-index: 2;
+            object-fit: contain;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- LOGIN SECTION --- */
+        /* ===== АВТОРИЗАЦИЯ ===== */
         #login-section {
-            height: 100vh;
-            display: flex;
-            align-items: center;
+            display: none;
             justify-content: center;
-            background: var(--apple-secondary);
+            align-items: center;
+            min-height: 100%;
+            width: 100%;
+            padding: 24px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         }
         #login-container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
+            background: var(--white);
+            padding: 32px 28px;
+            border-radius: 32px;
+            box-shadow: var(--shadow-md), 0 20px 35px -12px rgba(0,0,0,0.15);
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            max-width: 420px;
+            width: 100%;
+            transition: transform 0.2s;
         }
-        #login-container h2 { font-weight: 600; margin-bottom: 8px; letter-spacing: -0.5px; }
-        .login-subtitle { color: #86868b; font-size: 14px; margin-bottom: 30px; }
+        #login-container h2 {
+            color: var(--primary-dark);
+            margin: 16px 0 8px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .login-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 28px;
+            font-weight: 500;
+        }
+        .login-icon {
+            width: 64px;
+            height: 64px;
+            background: #fff0f2;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .login-icon i { font-size: 32px; color: var(--accent); }
+        .loading-spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(220,20,60,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
 
-        /* --- TABLE ARCHITECTURE --- */
+        /* ===== КНОПКА ВЫХОДА ===== */
+        .logout-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1100;
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
+            font-family: inherit;
+            backdrop-filter: blur(2px);
+            background: rgba(31, 41, 55, 0.95);
+        }
+        .logout-btn:hover {
+            background: var(--accent);
+            transform: scale(1.02);
+        }
+
+        /* ===== ОСНОВНОЙ КОНТЕЙНЕР (ГЛАВНЫЙ ЭКРАН) ===== */
         #main-content {
             display: none;
-            flex: 1;
+            width: 100%;
+            height: 100%;
             flex-direction: column;
             overflow: hidden;
-            padding-top: env(safe-area-inset-top);
+            background: var(--bg-light);
+        }
+
+        /* УНИВЕРСАЛЬНЫЙ КОНТЕЙНЕР ТАБЛИЦЫ С ГАРАНТИЕЙ РАЗМЕРОВ */
+        .table-container {
+            flex: 1;
+            min-height: 0;  /* критически важно для flex-ребёнка */
+            width: 100%;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .table-wrapper {
             flex: 1;
-            overflow: auto;
-            position: relative;
-            border-top: 1px solid var(--border-color);
-        }
-
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
+            min-height: 0;
             width: 100%;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            position: relative;
         }
 
-        /* Headers & Sticky */
-        th, td {
-            height: 32px;
-            padding: 0 8px;
-            font-size: 12px;
-            border-right: 1px solid var(--apple-secondary);
-            border-bottom: 1px solid var(--apple-secondary);
+        /* ТАБЛИЦА — фиксированная структура без скачков */
+        #main-table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: auto;
+            min-width: 100%;
+            font-size: 11px;
+        }
+
+        td, th {
+            height: 28px;
             text-align: center;
+            border: 1px solid var(--border-light);
             white-space: nowrap;
+            vertical-align: middle;
+            padding: 0 6px;
+            transition: background 0.1s ease;
         }
 
         th {
-            background: var(--apple-secondary);
+            background-color: #f1f5f9;
             font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Фиксация первых двух колонок — надёжно */
+        #main-table th:nth-child(1),
+        #main-table td:nth-child(1),
+        #main-table th:nth-child(2),
+        #main-table td:nth-child(2) {
+            position: sticky;
+            background-clip: padding-box;
+        }
+        #main-table th:nth-child(1),
+        #main-table td:nth-child(1) {
+            left: 0;
+            z-index: 12;
+            background-color: var(--accent);
+            color: white;
+            width: 48px;
+            min-width: 48px;
+            max-width: 48px;
+            font-weight: 700;
+        }
+        #main-table th:nth-child(2),
+        #main-table td:nth-child(2) {
+            left: 48px;
+            z-index: 11;
+            background-color: var(--secondary-dark);
+            color: white;
+            width: 90px;
+            min-width: 90px;
+            max-width: 90px;
+            font-weight: 600;
+        }
+
+        /* Заголовки строк (буквы + время) */
+        #letter-row th:nth-child(1),
+        #letter-row th:nth-child(2),
+        #time-row th:nth-child(1),
+        #time-row th:nth-child(2) {
+            background-color: #eef2ff !important;
+            color: var(--secondary-dark) !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+        }
+
+        #letter-row th:nth-child(n+3) {
+            background: #f8fafc;
+            width: 26px;
+            min-width: 26px;
             position: sticky;
             top: 0;
             z-index: 10;
-        }
-
-        /* Sticky Columns */
-        td:nth-child(1), th:nth-child(1) {
-            position: sticky;
-            left: 0;
-            z-index: 20;
-            background: #fff;
-            width: 50px;
-            font-weight: 700;
-            border-right: 2px solid var(--border-color);
-        }
-        td:nth-child(2), th:nth-child(2) {
-            position: sticky;
-            left: 50px;
-            z-index: 19;
-            background: #fff;
-            width: 85px;
-            border-right: 1px solid var(--border-color);
-        }
-        th:nth-child(1), th:nth-child(2) { background: var(--apple-secondary); z-index: 30; }
-
-        /* Cells Branding */
-        .active-cell {
-            background-color: var(--apple-accent) !important;
-            color: #fff !important;
-            font-size: 10px;
-        }
-        
-        /* Input & Controls */
-        #date-picker {
-            border: none;
-            background: transparent;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--apple-accent);
-            cursor: pointer;
-            outline: none;
-        }
-
-        /* Bottom Action Bar */
-        .action-bar {
-            padding: 12px 20px;
-            display: flex;
-            justify-content: flex-end;
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-color);
-            padding-bottom: calc(12px + env(safe-area-inset-bottom));
-        }
-        .logout-btn {
-            background: var(--apple-text);
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
             font-weight: 500;
-            cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .logout-btn:active { opacity: 0.7; }
 
+        #time-row th:nth-child(n+3) {
+            width: 26px;
+            min-width: 26px;
+            position: sticky;
+            top: 28px; /* высота первой строки заголовка */
+            z-index: 9;
+            background: #f1f5f9;
+            padding: 2px 2px;
+        }
+        #time-row th div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.2;
+        }
+        #time-row th .hour { font-size: 10px; font-weight: 700; }
+        #time-row th .minute { font-size: 9px; opacity: 0.8; }
+
+        /* Группировка + кнопки */
         .toggle-btn {
-            background: var(--apple-secondary);
-            color: var(--apple-text);
-            width: 18px;
-            height: 18px;
-            border-radius: 4px;
+            cursor: pointer;
+            background-color: #334155;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 10px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 4px;
+            width: 18px;
+            height: 18px;
+            color: white;
+            margin-left: 6px;
+            transition: 0.1s;
+            box-shadow: var(--shadow-sm);
         }
-
-        /* Hover States */
-        tr:hover td { background-color: var(--row-hover); }
-        .hover-col { background-color: var(--col-hover) !important; }
-
+        .toggle-btn:hover { background-color: var(--accent); transform: scale(1.05); }
         .hidden-column { display: none !important; }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Активные ячейки (страйки) */
+        .active-cell {
+            background-color: var(--secondary-dark);
+            color: white;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+        }
+        td.hover-row, th.hover-row,
+        td.hover-col, th.hover-col {
+            background-color: #fecdd3 !important;
+        }
+
+        /* Элементы управления */
+        #date-picker {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+            text-align: center;
+        }
+        #date-picker:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(220,20,60,0.2); }
+        .logo-cell img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .logo-cell img:active { transform: scale(0.96); }
+
+        /* Общий итог */
+        #overall-total {
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== АДАПТИВНОСТЬ: ГАРАНТИЯ ЧТО НИЧЕГО НЕ ЛОМАЕТСЯ ===== */
+        @media (max-width: 768px) {
+            .table-container { padding: 12px; }
+            #main-table th:nth-child(1), #main-table td:nth-child(1) { width: 42px; min-width: 42px; }
+            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 42px; width: 78px; min-width: 78px; }
+            td, th { height: 26px; padding: 0 4px; font-size: 10px; }
+            #letter-row th:nth-child(n+3), #time-row th:nth-child(n+3) { width: 24px; min-width: 24px; }
+            #time-row th { top: 26px; }
+            .toggle-btn { width: 16px; height: 16px; font-size: 9px; margin-left: 4px; }
+        }
+
+        @media (max-width: 480px) {
+            .table-container { padding: 8px; }
+            #main-table th:nth-child(1), #main-table td:nth-child(1) { width: 38px; min-width: 38px; }
+            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 38px; width: 70px; min-width: 70px; }
+            td, th { height: 24px; font-size: 9px; padding: 0 3px; }
+            #letter-row th:nth-child(n+3), #time-row th:nth-child(n+3) { width: 22px; min-width: 22px; }
+            #time-row th { top: 24px; }
+            .logout-btn { padding: 8px 16px; font-size: 12px; bottom: 14px; right: 14px; }
+        }
+
+        /* Скроллбары всегда аккуратные */
+        .table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track { background: #eef2ff; border-radius: 10px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--accent); }
     </style>
 </head>
 <body>
 
-<div id="loadingScreen">
-    <div class="spinner-minimal"></div>
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div class="loading-screen" id="loadingScreen">
+    <div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
 </div>
+<div class="loader-container" id="loader"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading"></div></div>
 
+<!-- АВТОРИЗАЦИЯ -->
 <div id="login-section">
     <div id="login-container">
-        <h2>LUCKY STRIKE</h2>
-        <div class="login-subtitle">KH Dashboard</div>
+        <div class="login-icon"><i class="fas fa-bowling-ball"></i></div>
+        <h2>LUCKY STRIKE KH</h2>
+        <div class="login-subtitle">Войдите через Google для доступа</div>
         <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
-        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
     </div>
 </div>
 
+<!-- ОСНОВНОЙ КОНТЕНТ (только таблица, без шапки) -->
 <div id="main-content">
-    <div class="table-wrapper">
-        <table id="main-table">
-            <thead>
-                <tr id="letter-row">
-                    <th style="color: var(--apple-accent)">LS</th>
-                    <th><input type="date" id="date-picker"></th>
-                </tr>
-                <tr id="time-row">
-                    <th>LANE</th>
-                    <th id="overall-total">0h 0m</th>
-                </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-        </table>
-    </div>
-    
-    <div class="action-bar">
-        <button class="logout-btn" onclick="signOut()">Выйти</button>
+    <button class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table id="main-table">
+                <thead>
+                    <tr id="letter-row">
+                        <th class="logo-cell"><img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo"></th>
+                        <th><input type="date" id="date-picker" /></th>
+                    </tr>
+                    <tr id="time-row">
+                        <th>LANE</th>
+                        <th id="overall-total">0ч 0м</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // Весь ваш JS остается прежним, обновляем только логику отображения лоадера и скрытия секций
-    // Важно: в JS функциях buildHeaders и buildBody CSS-классы сохранены.
-    
-    // ... (весь функциональный JS из вашего кода) ...
-    
-    // Маленькая правка для красоты вывода времени в JS:
-    function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
+    // ========== АВТОРИЗАЦИЯ (полная копия логики) ==========
+    const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
+    const AUTH_SHEET_NAME = '1';
+    const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+    const CURRENT_SITE = window.location.href.split('?')[0].split('#')[0];
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwJcg8Ov4_-ijxTLQxJDjm2-IKCmI8l0AAsDo4sMeU-avSQp3F_E54gyB7f26z_KaE0FA/exec';
 
-    // Инициализация (адаптированная под новый стиль)
-    function initTableEvents() {
-        datePicker.addEventListener('change', loadData);
-        // Эффект выделения колонки
-        document.addEventListener('mouseover', function(e) {
-            if(e.target.tagName === 'TD' || e.target.tagName === 'TH') {
-                const ci = e.target.cellIndex;
-                if(ci > 1) {
-                    document.querySelectorAll('#main-table tr').forEach(r => {
-                        if(r.children[ci]) r.children[ci].classList.add('hover-col');
-                    });
+    let currentUser = null, currentUserNameFromSheet = null, isLoadingData = false;
+    let fetchControllers = new Map();
+    const totalMinutes = 1440, groupInterval = 15, groupSize = 14;
+    let allGroups = [], allDataCells = [];
+    const letterRow = document.getElementById('letter-row'), timeRow = document.getElementById('time-row');
+    const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body'), datePicker = document.getElementById('date-picker');
+
+    function showLoaderUI(show) { document.getElementById('loader').classList.toggle('active', show); }
+    function parseJwt(t) { try { const b = t.split('.')[1]; return JSON.parse(atob(b.replace(/-/g, '+').replace(/_/g, '/'))); } catch(e) { return {}; } }
+    function loadSheetsAPI() { return new Promise((res, rej) => gapi.load('client', { callback: res, onerror: rej, timeout: 10000 })); }
+    async function checkEmailInSheet(email) {
+        try {
+            const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` });
+            const rows = resp.result.values;
+            let hasAccess = false, foundName = null;
+            for (let i = 0; i < rows.length; i++) {
+                if (!rows[i]?.[0]) continue;
+                if (rows[i][0].toLowerCase().trim() === email) {
+                    for (let j = 1; j < rows[i].length; j++) {
+                        const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
+                        if (siteUrl === CURRENT_SITE || siteUrl.includes('SMB-LS-KH') || siteUrl.includes('smart-bowling')) { hasAccess = true; break; }
+                    }
+                    if (rows[i].length > 1 && rows[i][1]) foundName = rows[i][1].trim();
+                    break;
                 }
             }
-        });
-        document.addEventListener('mouseout', function(e) {
-            document.querySelectorAll('.hover-col').forEach(el => el.classList.remove('hover-col'));
-        });
-
-        const today = new Date();
-        datePicker.value = today.toISOString().split('T')[0];
-        setTimeout(() => { toggleAll(true); loadData(); }, 200);
+            if (hasAccess) { currentUserNameFromSheet = foundName || currentUser.name; loginUser(currentUser); }
+            else { alert('Доступ запрещён'); showLoaderUI(false); }
+        } catch(e) { alert('Ошибка проверки доступа'); showLoaderUI(false); }
     }
-    
-    // Оставляем оригинальную логику скриптов...
-    // (Скопируйте все функции: handleCredentialResponse, loadData, buildHeaders и т.д. из вашего кода)
+    function loginUser(user) {
+        localStorage.setItem('userLoggedIn', 'true'); localStorage.setItem('userEmail', user.email.toLowerCase());
+        localStorage.setItem('userName', user.name); localStorage.setItem('userNameFromSheet', currentUserNameFromSheet || user.name);
+        localStorage.setItem('userPic', user.picture);
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('main-content').style.display = 'flex';
+        setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 300);
+        initializeTableApp();
+    }
+    async function initAndCheckEmail(email) {
+        await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+        await checkEmailInSheet(email);
+    }
+    function handleCredentialResponse(response) {
+        const payload = parseJwt(response.credential);
+        currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture };
+        showLoaderUI(true); initAndCheckEmail(currentUser.email).catch(e => { alert('Ошибка'); showLoaderUI(false); });
+    }
+    function signOut() { localStorage.clear(); if (google?.accounts?.id) google.accounts.id.disableAutoSelect(); location.reload(); }
+
+    // ========== ТАБЛИЦА (полная, стабильная) ==========
+    function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
+    function toggleGroup(idxs) {
+        idxs.forEach(i => {
+            [timeRow, letterRow].forEach(row => { if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column'); });
+            tableBody.querySelectorAll('tr').forEach(tr => { if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column'); });
+        });
+    }
+    function areAllHidden() { return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); }
+    function toggleAll(forceHide = null) {
+        const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
+        allGroups.forEach(g => { const el = timeRow.children[g[0]+2]; if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); });
+        document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
+    }
+    function makeBtn(idxs) {
+        const btn = document.createElement('div'); btn.className = 'toggle-btn'; btn.textContent = '+';
+        let last = 0;
+        btn.onclick = (e) => {
+            e.stopPropagation(); const now = Date.now();
+            if(now - last < 300) toggleAll(!areAllHidden());
+            else { toggleGroup(idxs); btn.textContent = timeRow.children[idxs[0]+2].classList.contains('hidden-column') ? '+' : '–'; }
+            last = now;
+        };
+        return btn;
+    }
+    function buildHeaders() {
+        const fragL = document.createDocumentFragment(), fragT = document.createDocumentFragment();
+        for (let i = 1; i <= totalMinutes; i++) {
+            const thL = document.createElement('th'); fragL.appendChild(thL);
+            const h = Math.floor((i-1)/60), m = (i-1)%60;
+            const thT = document.createElement('th');
+            thT.innerHTML = `<div><span class="hour">${String(h).padStart(2,'0')}</span><span class="minute">${String(m).padStart(2,'0')}</span></div>`;
+            fragT.appendChild(thT);
+            if ((h*60+m) % groupInterval === 0) {
+                const start = (h*60+m)===0 ? 1 : (h*60+m)+1;
+                const end = Math.min(start+groupSize-1, totalMinutes-1);
+                const idxs = []; for (let j=start; j<=end; j++) idxs.push(j);
+                if (idxs.length) { fragL.lastChild.appendChild(makeBtn(idxs)); allGroups.push(idxs); }
+            }
+        }
+        letterRow.appendChild(fragL); timeRow.appendChild(fragT);
+    }
+    function buildBody() {
+        const frag = document.createDocumentFragment();
+        for (let lane=0; lane<16; lane++) {
+            const tr = document.createElement('tr');
+            const thLane = document.createElement('th'); thLane.textContent = lane+1; tr.appendChild(thLane);
+            const thCount = document.createElement('th'); tr.appendChild(thCount);
+            const cells = [];
+            for (let i=0; i<totalMinutes; i++) { const td = document.createElement('td'); tr.appendChild(td); cells.push(td); }
+            frag.appendChild(tr);
+            allDataCells.push({ header: thCount, cells });
+        }
+        tableBody.appendChild(frag);
+    }
+    function clearRows() {
+        fetchControllers.forEach(c => c.abort()); fetchControllers.clear();
+        overallTotal.textContent = '0ч 0м';
+        allDataCells.forEach(r => { r.header.textContent = ''; r.cells.forEach(c => { c.classList.remove('active-cell'); c.textContent = ''; c.style.color = ''; }); });
+    }
+    async function loadLaneData(idx, date) {
+        const controller = new AbortController(); fetchControllers.set(idx, controller);
+        try {
+            const res = await fetch(`${BACKEND_URL}?action=getData&index=${idx}&date=${date}&t=${Date.now()}`, { signal: controller.signal });
+            return await res.json();
+        } finally { fetchControllers.delete(idx); }
+    }
+    async function loadData() {
+        if (!datePicker.value || isLoadingData) return;
+        isLoadingData = true; clearRows();
+        const selectedDate = datePicker.value;
+        let sumAll = 0, done = 0;
+        const promises = [];
+        for (let idx=0; idx<allDataCells.length; idx++) {
+            promises.push(loadLaneData(idx, selectedDate).then(data => {
+                const row = allDataCells[idx]; let sum=0;
+                row.cells.forEach((cell,i) => {
+                    const time = `${String(Math.floor(i/60)).padStart(2,'0')}:${String(i%60).padStart(2,'0')}`;
+                    cell.classList.remove('active-cell');
+                    if (data.c && data.c.includes(time)) { cell.classList.add('active-cell'); cell.textContent = '🎳'; sum++; }
+                    else if (data.b && data.b.includes(time)) { cell.textContent = ''; cell.style.color = '#334155'; }
+                    else { cell.textContent = '⚡'; cell.style.color = '#dc143c'; }
+                });
+                row.header.textContent = formatMinutes(sum);
+                sumAll += sum; done++;
+            }).catch(err => { console.warn(`Лейн ${idx+1} ошибка`); done++; }));
+        }
+        await Promise.allSettled(promises);
+        overallTotal.textContent = formatMinutes(sumAll);
+        isLoadingData = false;
+    }
+    function initTableEvents() {
+        datePicker.addEventListener('change', loadData);
+        document.addEventListener('mouseover', e => {
+            if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
+                const ci = e.target.cellIndex, row = e.target.parentElement;
+                if (row && row.tagName === 'TR') row.querySelectorAll('td,th').forEach(c => c.classList.add('hover-row'));
+                if (ci >= 0) document.querySelectorAll('#main-table tr').forEach(r => { if(r.children[ci]) r.children[ci].classList.add('hover-col'); });
+            }
+        });
+        document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
+        document.querySelector('.logo-cell')?.addEventListener('click', () => datePicker.click());
+        let lastTouch = 0;
+        document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
+        const today = new Date(); datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        setTimeout(() => { toggleAll(true); loadData(); }, 150);
+    }
+    function initializeTableApp() { buildHeaders(); buildBody(); initTableEvents(); }
+
+    // Старт приложения
+    window.addEventListener('load', () => {
+        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+        const email = localStorage.getItem('userEmail'), name = localStorage.getItem('userName'), nameFromSheet = localStorage.getItem('userNameFromSheet'), pic = localStorage.getItem('userPic');
+        if (isLoggedIn && email) {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('main-content').style.display = 'flex';
+            currentUser = { email, name, picture: pic };
+            currentUserNameFromSheet = nameFromSheet || name;
+            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 200);
+            initializeTableApp();
+        } else {
+            document.getElementById('login-section').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 500);
+        }
+    });
+    window.handleCredentialResponse = handleCredentialResponse;
+    window.signOut = signOut;
 </script>
 </body>
 </html>
