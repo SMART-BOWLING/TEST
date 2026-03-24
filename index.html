@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>LUCKY STRIKE KH – Данные по дорожкам</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,22 +171,22 @@
             flex: 1;
             min-height: 0;
             width: 100%;
-            overflow: auto;
+            overflow-x: auto;
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
             background: var(--white);
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             border: 1px solid var(--border-light);
-            /* Автоматический скролл только если нужно, но в идеале его не будет */
         }
 
-        /* ТАБЛИЦА — ДИНАМИЧЕСКИЙ МАСШТАБ */
+        /* ТАБЛИЦА — ФИКСИРОВАННАЯ ВЫСОТА, ШИРИНА АВТО */
         #main-table {
             border-collapse: collapse;
-            table-layout: fixed;
-            width: 100%;
-            font-size: 12px;
-            transition: all 0.1s ease;
+            table-layout: auto;
+            width: auto;
+            min-width: 100%;
+            font-size: 11px;
         }
 
         td, th {
@@ -194,7 +194,7 @@
             border: 1px solid var(--border-light);
             white-space: nowrap;
             vertical-align: middle;
-            padding: 0 4px;
+            padding: 0 6px;
             height: 32px;
         }
 
@@ -204,12 +204,13 @@
             color: #1e293b;
         }
 
-        /* ФИКСАЦИЯ ПЕРВЫХ ДВУХ КОЛОНОК */
+        /* ФИКСАЦИЯ ПЕРВЫХ ДВУХ КОЛОНОК (горизонтальный скролл) */
         #main-table th:nth-child(1),
         #main-table td:nth-child(1),
         #main-table th:nth-child(2),
         #main-table td:nth-child(2) {
             position: sticky;
+            background-clip: padding-box;
         }
         #main-table th:nth-child(1),
         #main-table td:nth-child(1) {
@@ -218,19 +219,18 @@
             background-color: var(--accent);
             color: white;
             font-weight: 700;
+            width: 45px;
+            min-width: 45px;
         }
         #main-table th:nth-child(2),
         #main-table td:nth-child(2) {
-            left: 0;
+            left: 45px;
             z-index: 11;
             background-color: var(--secondary-dark);
             color: white;
             font-weight: 600;
-        }
-        /* ВТОРАЯ КОЛОНКА ИДЁТ СЛЕВА ОТ ПЕРВОЙ — НУЖНО УЧЕСТЬ СДВИГ */
-        #main-table th:nth-child(2),
-        #main-table td:nth-child(2) {
-            left: var(--col1-width, 50px);
+            width: 85px;
+            min-width: 85px;
         }
 
         #letter-row th:nth-child(1),
@@ -246,6 +246,8 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            width: 26px;
+            min-width: 26px;
         }
 
         #time-row th:nth-child(n+3) {
@@ -254,6 +256,8 @@
             z-index: 9;
             background: #f1f5f9;
             padding: 2px 1px;
+            width: 26px;
+            min-width: 26px;
         }
         #time-row th div {
             display: flex;
@@ -261,23 +265,25 @@
             align-items: center;
             line-height: 1.15;
         }
+        #time-row th .hour { font-size: 9px; font-weight: 700; }
+        #time-row th .minute { font-size: 8px; opacity: 0.8; }
 
         .toggle-btn {
             cursor: pointer;
             background-color: #475569;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 9px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             color: white;
             margin-left: 4px;
             transition: 0.1s;
         }
-        .toggle-btn:active { background-color: var(--accent); }
+        .toggle-btn:active { background-color: var(--accent); transform: scale(0.95); }
         .hidden-column { display: none !important; }
 
         .active-cell {
@@ -286,10 +292,15 @@
             font-weight: 700;
         }
 
+        td.hover-row, th.hover-row,
+        td.hover-col, th.hover-col {
+            background-color: #fecdd3 !important;
+        }
+
         #date-picker {
             width: 100%;
             padding: 6px 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             border: 1px solid #cbd5e1;
             border-radius: 30px;
@@ -299,22 +310,77 @@
             text-align: center;
         }
         .logo-cell img {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             object-fit: contain;
             cursor: pointer;
         }
         #overall-total {
             font-weight: 800;
-            font-size: 12px;
+            font-size: 11px;
         }
 
-        /* АДАПТАЦИЯ ПОД ЭКРАН — ДИНАМИЧЕСКИЙ МАСШТАБ ЧЕРЕЗ JS */
+        /* АДАПТАЦИЯ ВЫСОТЫ ПОД ЭКРАН — динамическая настройка размеров ячеек */
         @media (orientation: landscape) {
             .table-container {
                 padding: 8px;
             }
+            td, th {
+                height: 28px;
+                padding: 0 4px;
+            }
+            #time-row th {
+                top: 28px;
+            }
+            #letter-row th:nth-child(n+3),
+            #time-row th:nth-child(n+3) {
+                width: 24px;
+                min-width: 24px;
+            }
+            #main-table th:nth-child(1),
+            #main-table td:nth-child(1) {
+                width: 42px;
+                min-width: 42px;
+            }
+            #main-table th:nth-child(2),
+            #main-table td:nth-child(2) {
+                left: 42px;
+                width: 78px;
+                min-width: 78px;
+            }
         }
+
+        @media (max-width: 600px) and (orientation: landscape) {
+            td, th {
+                height: 26px;
+                font-size: 10px;
+            }
+            #time-row th {
+                top: 26px;
+            }
+            #letter-row th:nth-child(n+3),
+            #time-row th:nth-child(n+3) {
+                width: 22px;
+                min-width: 22px;
+            }
+        }
+
+        /* Динамическая настройка высоты таблицы под экран */
+        .table-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #main-table {
+            display: table;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .table-wrapper::-webkit-scrollbar-track { background: #eef2ff; border-radius: 8px; }
+        .table-wrapper::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -369,45 +435,37 @@
     let allGroups = [], allDataCells = [];
     const letterRow = document.getElementById('letter-row'), timeRow = document.getElementById('time-row');
     const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body'), datePicker = document.getElementById('date-picker');
-    const mainTable = document.getElementById('main-table');
+    const tableWrapper = document.querySelector('.table-wrapper');
 
-    // ========== ДИНАМИЧЕСКАЯ АДАПТАЦИЯ МАСШТАБА ==========
-    function fitTableToScreen() {
-        const wrapper = document.querySelector('.table-wrapper');
-        const table = mainTable;
-        if (!wrapper || !table) return;
+    // ========== ДИНАМИЧЕСКАЯ НАСТРОЙКА ВЫСОТЫ ==========
+    function fitHeightToScreen() {
+        if (!tableWrapper) return;
+        // Получаем доступную высоту контейнера
+        const container = document.querySelector('.table-container');
+        if (!container) return;
         
-        // Получаем доступную ширину контейнера
-        const containerWidth = wrapper.clientWidth;
-        // Получаем естественную ширину таблицы (без масштабирования)
-        const tableNaturalWidth = table.scrollWidth;
+        const availableHeight = container.clientHeight;
+        // Получаем количество строк в таблице (16 дорожек + 2 строки заголовка = 18)
+        const rows = document.querySelectorAll('#main-table tbody tr').length;
+        const headerRows = 2;
+        const totalRows = rows + headerRows;
         
-        if (tableNaturalWidth > containerWidth) {
-            // Если таблица шире контейнера, масштабируем
-            const scale = containerWidth / tableNaturalWidth;
-            // Применяем масштаб к таблице
-            table.style.transformOrigin = 'top left';
-            table.style.transform = `scale(${scale})`;
-            // Увеличиваем высоту wrapper'а, чтобы вместить масштабированную таблицу
-            const newHeight = table.offsetHeight * scale;
-            wrapper.style.height = `${newHeight}px`;
-        } else {
-            // Если помещается — сбрасываем масштаб
-            table.style.transform = '';
-            wrapper.style.height = 'auto';
-        }
+        // Вычисляем оптимальную высоту ячейки
+        let optimalCellHeight = Math.floor(availableHeight / totalRows);
+        // Ограничиваем минимальную и максимальную высоту
+        optimalCellHeight = Math.min(Math.max(optimalCellHeight, 24), 38);
         
-        // Корректируем позиционирование фиксированных колонок
-        const col1 = document.querySelectorAll('#main-table th:nth-child(1), #main-table td:nth-child(1)');
-        const col2 = document.querySelectorAll('#main-table th:nth-child(2), #main-table td:nth-child(2)');
-        const firstColWidth = col1[0]?.offsetWidth || 45;
+        // Применяем высоту ко всем ячейкам
+        const allCells = document.querySelectorAll('#main-table td, #main-table th');
+        allCells.forEach(cell => {
+            cell.style.height = `${optimalCellHeight}px`;
+        });
         
-        // Устанавливаем CSS переменную для позиции второй колонки
-        document.documentElement.style.setProperty('--col1-width', `${firstColWidth}px`);
-        
-        // Принудительно пересчитываем sticky позиции
-        col2.forEach(el => {
-            el.style.left = `${firstColWidth}px`;
+        // Обновляем sticky позицию для второй строки заголовка
+        const firstRowHeight = document.querySelector('#letter-row th')?.offsetHeight || optimalCellHeight;
+        const timeRowHeaders = document.querySelectorAll('#time-row th');
+        timeRowHeaders.forEach(th => {
+            th.style.top = `${firstRowHeight}px`;
         });
     }
 
@@ -416,18 +474,10 @@
     function handleResize() {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            fitTableToScreen();
-        }, 100);
+            fitHeightToScreen();
+        }, 50);
     }
 
-    // Наблюдатель за появлением таблицы
-    const observer = new MutationObserver(() => {
-        if (mainTable && mainTable.offsetHeight > 0) {
-            setTimeout(fitTableToScreen, 50);
-            observer.disconnect();
-        }
-    });
-    
     // ========== ФУНКЦИИ ТАБЛИЦЫ ==========
     function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
     function toggleGroup(idxs) {
@@ -435,14 +485,14 @@
             [timeRow, letterRow].forEach(row => { if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column'); });
             tableBody.querySelectorAll('tr').forEach(tr => { if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column'); });
         });
-        setTimeout(fitTableToScreen, 50);
+        setTimeout(fitHeightToScreen, 50);
     }
     function areAllHidden() { return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); }
     function toggleAll(forceHide = null) {
         const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
         allGroups.forEach(g => { const el = timeRow.children[g[0]+2]; if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); });
         document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
-        setTimeout(fitTableToScreen, 50);
+        setTimeout(fitHeightToScreen, 50);
     }
     function makeBtn(idxs) {
         const btn = document.createElement('div'); btn.className = 'toggle-btn'; btn.textContent = '+';
@@ -520,17 +570,24 @@
         await Promise.allSettled(promises);
         overallTotal.textContent = formatMinutes(sumAll);
         isLoadingData = false;
-        setTimeout(fitTableToScreen, 100);
+        setTimeout(fitHeightToScreen, 100);
     }
     function initTableEvents() {
         datePicker.addEventListener('change', loadData);
+        document.addEventListener('mouseover', e => {
+            if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
+                const ci = e.target.cellIndex, row = e.target.parentElement;
+                if (row && row.tagName === 'TR') row.querySelectorAll('td,th').forEach(c => c.classList.add('hover-row'));
+                if (ci >= 0) document.querySelectorAll('#main-table tr').forEach(r => { if(r.children[ci]) r.children[ci].classList.add('hover-col'); });
+            }
+        });
+        document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
         document.querySelector('.logo-cell')?.addEventListener('click', () => datePicker.click());
         let lastTouch = 0;
         document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
         const today = new Date(); datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
         setTimeout(() => { toggleAll(true); loadData(); }, 150);
         
-        // Слушаем изменения размера
         window.addEventListener('resize', handleResize);
         window.addEventListener('orientationchange', handleResize);
     }
@@ -538,9 +595,10 @@
         buildHeaders();
         buildBody();
         initTableEvents();
-        // Запускаем адаптацию после отрисовки
-        setTimeout(fitTableToScreen, 200);
-        observer.observe(mainTable, { childList: true, subtree: true, attributes: true });
+        setTimeout(fitHeightToScreen, 200);
+        // Наблюдатель за изменением содержимого
+        const observer = new MutationObserver(() => setTimeout(fitHeightToScreen, 50));
+        observer.observe(tableBody, { childList: true, subtree: true, attributes: true });
     }
 
     // ========== АВТОРИЗАЦИЯ (сокращённая версия) ==========
