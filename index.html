@@ -3,14 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>LUCKY STRIKE KH – Данные по дорожкам</title>
+    <title>LUCKY STRIKE KH – Lane Data</title>
+    
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
+
     <style>
-        /* ===== RESET & БАЗА ===== */
+        :root {
+            --apple-blue: #007AFF;
+            --apple-green: #34C759;
+            --apple-red: #FF3B30;
+            --bg-main: #F5F5F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --border: #D2D2D7;
+            --lane-bg: #F2F2F7;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,420 +30,221 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        :root {
-            --accent: #dc143c;
-            --primary-dark: #1f2937;
-            --secondary-dark: #2c3e50;
-            --bg-light: #f4f6fa;
-            --border-light: #e2e8f0;
-            --text-main: #1e293b;
-            --text-muted: #475569;
-            --white: #ffffff;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-            --radius-md: 12px;
-            --radius-sm: 8px;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            position: fixed;
-            background-color: var(--bg-light);
-            font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            font-weight: 500;
-        }
-
         body {
-            position: relative;
-            height: 100%;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* ===== ЭКРАНЫ ЗАГРУЗКИ ===== */
+        /* ЭКРАН ЗАГРУЗКИ */
         .loading-screen, .loader-container {
             position: fixed;
             inset: 0;
-            background: var(--primary-dark);
+            background: #1D1D1F;
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            transition: opacity 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: opacity 0.5s ease;
         }
-        .loader-container {
-            z-index: 100000;
-            display: none;
-            background: rgba(31, 41, 55, 0.96);
-            backdrop-filter: blur(4px);
-        }
+        .loader-container { z-index: 100000; display: none; }
         .loader-container.active { display: flex; }
-        .loading-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
+        .loading-screen.fade-out { opacity: 0; pointer-events: none; }
+
         .logo-wrapper {
             position: relative;
-            width: 140px;
-            height: 140px;
+            width: 120px;
+            height: 120px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .glow-ring {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            background: conic-gradient(var(--accent), transparent 70%);
-            animation: spin 4s linear infinite;
-            filter: blur(18px);
-        }
-        .logo-wrapper img {
-            width: 100px;
-            z-index: 2;
-            object-fit: contain;
+            border: 2px solid transparent;
+            border-top-color: var(--apple-blue);
+            animation: spin 1s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* ===== АВТОРИЗАЦИЯ ===== */
+        /* АВТОРИЗАЦИЯ */
         #login-section {
             display: none;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100%;
-            width: 100%;
-            padding: 24px;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            height: 100vh;
+            background: var(--bg-main);
         }
         #login-container {
-            background: var(--white);
-            padding: 32px 28px;
-            border-radius: 32px;
-            box-shadow: var(--shadow-md), 0 20px 35px -12px rgba(0,0,0,0.15);
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             text-align: center;
-            max-width: 420px;
-            width: 100%;
-            transition: transform 0.2s;
+            width: 90%;
+            max-width: 400px;
         }
-        #login-container h2 {
-            color: var(--primary-dark);
-            margin: 16px 0 8px;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
-        .login-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 28px;
-            font-weight: 500;
-        }
-        .login-icon {
-            width: 64px;
-            height: 64px;
-            background: #fff0f2;
-            border-radius: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-        }
-        .login-icon i { font-size: 32px; color: var(--accent); }
-        .loading-spinner {
-            width: 44px;
-            height: 44px;
-            border: 4px solid rgba(220,20,60,0.2);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
+        #login-container h2 { font-weight: 700; margin-bottom: 8px; }
+        .login-subtitle { color: var(--text-secondary); margin-bottom: 30px; font-size: 14px; }
 
-        /* ===== КНОПКА ВЫХОДА ===== */
-        .logout-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--primary-dark);
-            color: white;
-            border: none;
-            border-radius: 60px;
-            padding: 10px 20px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 1100;
-            box-shadow: var(--shadow-md);
-            transition: all 0.2s ease;
-            font-family: inherit;
-            backdrop-filter: blur(2px);
-            background: rgba(31, 41, 55, 0.95);
-        }
-        .logout-btn:hover {
-            background: var(--accent);
-            transform: scale(1.02);
-        }
-
-        /* ===== ОСНОВНОЙ КОНТЕЙНЕР (ГЛАВНЫЙ ЭКРАН) ===== */
+        /* ТАБЛИЦА */
         #main-content {
             display: none;
-            width: 100%;
-            height: 100%;
+            flex: 1;
             flex-direction: column;
             overflow: hidden;
-            background: var(--bg-light);
         }
-
-        /* УНИВЕРСАЛЬНЫЙ КОНТЕЙНЕР ТАБЛИЦЫ С ГАРАНТИЕЙ РАЗМЕРОВ */
         .table-container {
             flex: 1;
-            min-height: 0;  /* критически важно для flex-ребёнка */
-            width: 100%;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
+            padding: 12px;
             overflow: hidden;
         }
-
         .table-wrapper {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
+            height: 100%;
             overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            background: var(--white);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-light);
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             position: relative;
         }
 
-        /* ТАБЛИЦА — фиксированная структура без скачков */
-        #main-table {
-            border-collapse: collapse;
-            table-layout: fixed;
-            width: auto;
-            min-width: 100%;
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        
+        th, td {
+            height: 36px;
+            padding: 0 8px;
             font-size: 11px;
-        }
-
-        td, th {
-            height: 28px;
+            border-bottom: 1px solid #F2F2F7;
+            border-right: 1px solid #F2F2F7;
             text-align: center;
-            border: 1px solid var(--border-light);
             white-space: nowrap;
-            vertical-align: middle;
-            padding: 0 6px;
-            transition: background 0.1s ease;
         }
 
-        th {
-            background-color: #f1f5f9;
+        /* Фиксация колонок */
+        #main-table th:nth-child(1), #main-table td:nth-child(1) {
+            position: sticky; left: 0; z-index: 10;
+            background: var(--lane-bg); font-weight: 700;
+            min-width: 45px; border-right: 2px solid var(--border);
+        }
+        #main-table th:nth-child(2), #main-table td:nth-child(2) {
+            position: sticky; left: 45px; z-index: 9;
+            background: var(--bg-card); font-weight: 600;
+            color: var(--apple-blue); min-width: 75px;
+            border-right: 2px solid var(--border);
+        }
+
+        /* Шапка времени */
+        #time-row th {
+            position: sticky; top: 0; z-index: 8;
+            background: #FBFBFC; height: 44px;
+        }
+        .hour { font-weight: 700; font-size: 12px; }
+        .minute { font-size: 9px; opacity: 0.5; }
+
+        /* Стили ячеек */
+        .active-cell {
+            background-color: var(--apple-green) !important;
+            color: white !important;
+            font-size: 14px;
+        }
+        .inactive-icon { color: var(--apple-red); opacity: 0.2; font-size: 9px; }
+
+        #date-picker {
+            border: none;
+            background: #E5E5EA;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-family: inherit;
             font-weight: 600;
-            color: var(--text-main);
+            width: 100%;
         }
 
-        /* Фиксация первых двух колонок — надёжно */
-        #main-table th:nth-child(1),
-        #main-table td:nth-child(1),
-        #main-table th:nth-child(2),
-        #main-table td:nth-child(2) {
-            position: sticky;
-            background-clip: padding-box;
-        }
-        #main-table th:nth-child(1),
-        #main-table td:nth-child(1) {
-            left: 0;
-            z-index: 12;
-            background-color: var(--accent);
-            color: white;
-            width: 48px;
-            min-width: 48px;
-            max-width: 48px;
-            font-weight: 700;
-        }
-        #main-table th:nth-child(2),
-        #main-table td:nth-child(2) {
-            left: 48px;
-            z-index: 11;
-            background-color: var(--secondary-dark);
-            color: white;
-            width: 90px;
-            min-width: 90px;
-            max-width: 90px;
-            font-weight: 600;
-        }
-
-        /* Заголовки строк (буквы + время) */
-        #letter-row th:nth-child(1),
-        #letter-row th:nth-child(2),
-        #time-row th:nth-child(1),
-        #time-row th:nth-child(2) {
-            background-color: #eef2ff !important;
-            color: var(--secondary-dark) !important;
-            border-bottom: 1px solid #cbd5e1 !important;
-        }
-
-        #letter-row th:nth-child(n+3) {
-            background: #f8fafc;
-            width: 26px;
-            min-width: 26px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            font-weight: 500;
-        }
-
-        #time-row th:nth-child(n+3) {
-            width: 26px;
-            min-width: 26px;
-            position: sticky;
-            top: 28px; /* высота первой строки заголовка */
-            z-index: 9;
-            background: #f1f5f9;
-            padding: 2px 2px;
-        }
-        #time-row th div {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1.2;
-        }
-        #time-row th .hour { font-size: 10px; font-weight: 700; }
-        #time-row th .minute { font-size: 9px; opacity: 0.8; }
-
-        /* Группировка + кнопки */
         .toggle-btn {
-            cursor: pointer;
-            background-color: #334155;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--apple-blue);
+            color: white;
             width: 18px;
             height: 18px;
-            color: white;
-            margin-left: 6px;
-            transition: 0.1s;
-            box-shadow: var(--shadow-sm);
-        }
-        .toggle-btn:hover { background-color: var(--accent); transform: scale(1.05); }
-        .hidden-column { display: none !important; }
-
-        /* Активные ячейки (страйки) */
-        .active-cell {
-            background-color: var(--secondary-dark);
-            color: white;
-            font-weight: 700;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
-        }
-        td.hover-row, th.hover-row,
-        td.hover-col, th.hover-col {
-            background-color: #fecdd3 !important;
+            border-radius: 4px;
+            display: inline-block;
+            line-height: 18px;
+            cursor: pointer;
         }
 
-        /* Элементы управления */
-        #date-picker {
-            width: 100%;
-            padding: 8px 10px;
-            font-size: 13px;
+        .logout-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 99px;
             font-weight: 600;
-            border: 1px solid #cbd5e1;
-            border-radius: 40px;
-            background: white;
-            cursor: pointer;
-            font-family: inherit;
-            transition: 0.2s;
-            text-align: center;
-        }
-        #date-picker:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(220,20,60,0.2); }
-        .logo-cell img {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        .logo-cell img:active { transform: scale(0.96); }
-
-        /* Общий итог */
-        #overall-total {
-            font-weight: 800;
-            font-size: 13px;
-            letter-spacing: 0.3px;
+            color: var(--apple-red);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
 
-        /* ===== АДАПТИВНОСТЬ: ГАРАНТИЯ ЧТО НИЧЕГО НЕ ЛОМАЕТСЯ ===== */
+        /* Hover эффекты */
+        .hover-row { background-color: #FBFBFC !important; }
+        .hover-col { background-color: rgba(0, 122, 255, 0.04) !important; }
+
         @media (max-width: 768px) {
-            .table-container { padding: 12px; }
-            #main-table th:nth-child(1), #main-table td:nth-child(1) { width: 42px; min-width: 42px; }
-            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 42px; width: 78px; min-width: 78px; }
-            td, th { height: 26px; padding: 0 4px; font-size: 10px; }
-            #letter-row th:nth-child(n+3), #time-row th:nth-child(n+3) { width: 24px; min-width: 24px; }
-            #time-row th { top: 26px; }
-            .toggle-btn { width: 16px; height: 16px; font-size: 9px; margin-left: 4px; }
-        }
-
-        @media (max-width: 480px) {
             .table-container { padding: 8px; }
-            #main-table th:nth-child(1), #main-table td:nth-child(1) { width: 38px; min-width: 38px; }
-            #main-table th:nth-child(2), #main-table td:nth-child(2) { left: 38px; width: 70px; min-width: 70px; }
-            td, th { height: 24px; font-size: 9px; padding: 0 3px; }
-            #letter-row th:nth-child(n+3), #time-row th:nth-child(n+3) { width: 22px; min-width: 22px; }
-            #time-row th { top: 24px; }
-            .logout-btn { padding: 8px 16px; font-size: 12px; bottom: 14px; right: 14px; }
+            th, td { height: 32px; font-size: 10px; }
         }
-
-        /* Скроллбары всегда аккуратные */
-        .table-wrapper::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .table-wrapper::-webkit-scrollbar-track { background: #eef2ff; border-radius: 10px; }
-        .table-wrapper::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        .table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--accent); }
     </style>
 </head>
 <body>
 
-<!-- ЭКРАН ЗАГРУЗКИ -->
 <div class="loading-screen" id="loadingScreen">
-    <div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo"></div>
+    <div class="logo-wrapper">
+        <div class="glow-ring"></div>
+        <img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Logo" style="width: 60px;">
+    </div>
 </div>
-<div class="loader-container" id="loader"><div class="logo-wrapper"><div class="glow-ring"></div><img src="https://i.postimg.cc/wjGzSY92/1.png" alt="Loading"></div></div>
 
-<!-- АВТОРИЗАЦИЯ -->
+<div class="loader-container" id="loader">
+    <div class="logo-wrapper"><div class="glow-ring"></div></div>
+</div>
+
 <div id="login-section">
     <div id="login-container">
-        <div class="login-icon"><i class="fas fa-bowling-ball"></i></div>
+        <i class="fas fa-fingerprint" style="font-size: 40px; color: var(--apple-blue); margin-bottom: 20px;"></i>
         <h2>LUCKY STRIKE KH</h2>
-        <div class="login-subtitle">Войдите через Google для доступа</div>
+        <div class="login-subtitle">Система мониторинга дорожек</div>
         <div id="g_id_onload" data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
     </div>
 </div>
 
-<!-- ОСНОВНОЙ КОНТЕНТ (только таблица, без шапки) -->
 <div id="main-content">
-    <button class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+    <button class="logout-btn" onclick="signOut()">
+        <i class="fas fa-power-off"></i> &nbsp;Выйти
+    </button>
+    
     <div class="table-container">
         <div class="table-wrapper">
             <table id="main-table">
                 <thead>
                     <tr id="letter-row">
-                        <th class="logo-cell"><img src="https://i.postimg.cc/SQ3RgNsQ/image.png" alt="logo"></th>
-                        <th><input type="date" id="date-picker" /></th>
+                        <th style="cursor:pointer;"><i class="fas fa-calendar-alt" style="color:var(--apple-blue)"></i></th>
+                        <th><input type="date" id="date-picker"></th>
                     </tr>
                     <tr id="time-row">
                         <th>LANE</th>
-                        <th id="overall-total">0ч 0м</th>
+                        <th id="overall-total">0h 0m</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
@@ -441,191 +254,175 @@
 </div>
 
 <script>
-    // ========== АВТОРИЗАЦИЯ (полная копия логики) ==========
     const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
     const AUTH_SHEET_NAME = '1';
     const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
     const CURRENT_SITE = window.location.href.split('?')[0].split('#')[0];
     const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwJcg8Ov4_-ijxTLQxJDjm2-IKCmI8l0AAsDo4sMeU-avSQp3F_E54gyB7f26z_KaE0FA/exec';
 
-    let currentUser = null, currentUserNameFromSheet = null, isLoadingData = false;
+    let currentUser = null;
+    let isLoadingData = false;
     let fetchControllers = new Map();
+
     const totalMinutes = 1440, groupInterval = 15, groupSize = 14;
     let allGroups = [], allDataCells = [];
-    const letterRow = document.getElementById('letter-row'), timeRow = document.getElementById('time-row');
-    const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body'), datePicker = document.getElementById('date-picker');
 
-    function showLoaderUI(show) { document.getElementById('loader').classList.toggle('active', show); }
-    function parseJwt(t) { try { const b = t.split('.')[1]; return JSON.parse(atob(b.replace(/-/g, '+').replace(/_/g, '/'))); } catch(e) { return {}; } }
-    function loadSheetsAPI() { return new Promise((res, rej) => gapi.load('client', { callback: res, onerror: rej, timeout: 10000 })); }
+    const letterRow = document.getElementById('letter-row');
+    const timeRow = document.getElementById('time-row');
+    const overallTotal = document.getElementById('overall-total');
+    const tableBody = document.getElementById('table-body');
+    const datePicker = document.getElementById('date-picker');
+
+    // --- AUTH LOGIC ---
+    function showLoaderUI(show) {
+        document.getElementById('loader').classList.toggle('active', show);
+    }
+
+    function parseJwt(token) {
+        try {
+            return JSON.parse(decodeURIComponent(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+        } catch(e) { return {}; }
+    }
+
     async function checkEmailInSheet(email) {
         try {
-            const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` });
-            const rows = resp.result.values;
-            let hasAccess = false, foundName = null;
-            for (let i = 0; i < rows.length; i++) {
-                if (!rows[i]?.[0]) continue;
-                if (rows[i][0].toLowerCase().trim() === email) {
-                    for (let j = 1; j < rows[i].length; j++) {
-                        const siteUrl = rows[i][j]?.trim().split('?')[0].split('#')[0] || '';
-                        if (siteUrl === CURRENT_SITE || siteUrl.includes('SMB-LS-KH') || siteUrl.includes('smart-bowling')) { hasAccess = true; break; }
-                    }
-                    if (rows[i].length > 1 && rows[i][1]) foundName = rows[i][1].trim();
-                    break;
-                }
-            }
-            if (hasAccess) { currentUserNameFromSheet = foundName || currentUser.name; loginUser(currentUser); }
-            else { alert('Доступ запрещён'); showLoaderUI(false); }
-        } catch(e) { alert('Ошибка проверки доступа'); showLoaderUI(false); }
+            await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+            const response = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` });
+            const rows = response.result.values;
+            let hasAccess = rows?.some(row => row[0]?.toLowerCase().trim() === email && row.some(cell => cell?.includes(CURRENT_SITE) || cell?.includes('SMB-LS-KH')));
+            
+            if (hasAccess) loginUser(currentUser);
+            else { alert('Доступ ограничен'); showLoaderUI(false); }
+        } catch(e) { alert('Ошибка проверки прав'); showLoaderUI(false); }
     }
+
     function loginUser(user) {
-        localStorage.setItem('userLoggedIn', 'true'); localStorage.setItem('userEmail', user.email.toLowerCase());
-        localStorage.setItem('userName', user.name); localStorage.setItem('userNameFromSheet', currentUserNameFromSheet || user.name);
-        localStorage.setItem('userPic', user.picture);
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userEmail', user.email);
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('main-content').style.display = 'flex';
-        setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 300);
+        document.getElementById('loadingScreen').classList.add('fade-out');
         initializeTableApp();
     }
-    async function initAndCheckEmail(email) {
-        await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
-        await checkEmailInSheet(email);
-    }
+
     function handleCredentialResponse(response) {
         const payload = parseJwt(response.credential);
-        currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture };
-        showLoaderUI(true); initAndCheckEmail(currentUser.email).catch(e => { alert('Ошибка'); showLoaderUI(false); });
+        currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name };
+        showLoaderUI(true);
+        gapi.load('client', () => checkEmailInSheet(currentUser.email));
     }
-    function signOut() { localStorage.clear(); if (google?.accounts?.id) google.accounts.id.disableAutoSelect(); location.reload(); }
 
-    // ========== ТАБЛИЦА (полная, стабильная) ==========
+    function signOut() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    // --- TABLE LOGIC ---
     function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
+
     function toggleGroup(idxs) {
         idxs.forEach(i => {
-            [timeRow, letterRow].forEach(row => { if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column'); });
-            tableBody.querySelectorAll('tr').forEach(tr => { if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column'); });
+            [timeRow, letterRow].forEach(row => row.children[i+2]?.classList.toggle('hidden-column'));
+            tableBody.querySelectorAll('tr').forEach(tr => tr.children[i+2]?.classList.toggle('hidden-column'));
         });
     }
-    function areAllHidden() { return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); }
-    function toggleAll(forceHide = null) {
-        const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
-        allGroups.forEach(g => { const el = timeRow.children[g[0]+2]; if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); });
-        document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
-    }
-    function makeBtn(idxs) {
-        const btn = document.createElement('div'); btn.className = 'toggle-btn'; btn.textContent = '+';
-        let last = 0;
-        btn.onclick = (e) => {
-            e.stopPropagation(); const now = Date.now();
-            if(now - last < 300) toggleAll(!areAllHidden());
-            else { toggleGroup(idxs); btn.textContent = timeRow.children[idxs[0]+2].classList.contains('hidden-column') ? '+' : '–'; }
-            last = now;
-        };
-        return btn;
-    }
+
     function buildHeaders() {
         const fragL = document.createDocumentFragment(), fragT = document.createDocumentFragment();
-        for (let i = 1; i <= totalMinutes; i++) {
+        for(let i=0; i<totalMinutes; i++) {
             const thL = document.createElement('th'); fragL.appendChild(thL);
-            const h = Math.floor((i-1)/60), m = (i-1)%60;
+            const h = Math.floor(i/60), m = i%60;
             const thT = document.createElement('th');
-            thT.innerHTML = `<div><span class="hour">${String(h).padStart(2,'0')}</span><span class="minute">${String(m).padStart(2,'0')}</span></div>`;
+            thT.innerHTML = `<div><div class="hour">${String(h).padStart(2,'0')}</div><div class="minute">${String(m).padStart(2,'0')}</div></div>`;
             fragT.appendChild(thT);
-            if ((h*60+m) % groupInterval === 0) {
-                const start = (h*60+m)===0 ? 1 : (h*60+m)+1;
-                const end = Math.min(start+groupSize-1, totalMinutes-1);
-                const idxs = []; for (let j=start; j<=end; j++) idxs.push(j);
-                if (idxs.length) { fragL.lastChild.appendChild(makeBtn(idxs)); allGroups.push(idxs); }
+
+            if(i % groupInterval === 0) {
+                const idxs = Array.from({length: groupSize}, (_, j) => i + j + 1).filter(j => j < totalMinutes);
+                const btn = document.createElement('div');
+                btn.className = 'toggle-btn'; btn.textContent = '+';
+                btn.onclick = (e) => {
+                    toggleGroup(idxs);
+                    btn.textContent = timeRow.children[idxs[0]+2].classList.contains('hidden-column') ? '+' : '–';
+                };
+                thL.appendChild(btn);
             }
         }
-        letterRow.appendChild(fragL); timeRow.appendChild(fragT);
+        letterRow.appendChild(fragL);
+        timeRow.appendChild(fragT);
     }
+
     function buildBody() {
         const frag = document.createDocumentFragment();
-        for (let lane=0; lane<16; lane++) {
+        for(let lane=0; lane<16; lane++) {
             const tr = document.createElement('tr');
             const thLane = document.createElement('th'); thLane.textContent = lane+1; tr.appendChild(thLane);
             const thCount = document.createElement('th'); tr.appendChild(thCount);
             const cells = [];
-            for (let i=0; i<totalMinutes; i++) { const td = document.createElement('td'); tr.appendChild(td); cells.push(td); }
+            for(let i=0; i<totalMinutes; i++) { 
+                const td = document.createElement('td'); 
+                tr.appendChild(td); 
+                cells.push(td); 
+            }
             frag.appendChild(tr);
             allDataCells.push({ header: thCount, cells });
         }
         tableBody.appendChild(frag);
     }
-    function clearRows() {
-        fetchControllers.forEach(c => c.abort()); fetchControllers.clear();
-        overallTotal.textContent = '0ч 0м';
-        allDataCells.forEach(r => { r.header.textContent = ''; r.cells.forEach(c => { c.classList.remove('active-cell'); c.textContent = ''; c.style.color = ''; }); });
-    }
-    async function loadLaneData(idx, date) {
-        const controller = new AbortController(); fetchControllers.set(idx, controller);
-        try {
-            const res = await fetch(`${BACKEND_URL}?action=getData&index=${idx}&date=${date}&t=${Date.now()}`, { signal: controller.signal });
-            return await res.json();
-        } finally { fetchControllers.delete(idx); }
-    }
+
     async function loadData() {
-        if (!datePicker.value || isLoadingData) return;
-        isLoadingData = true; clearRows();
+        if(!datePicker.value || isLoadingData) return;
+        isLoadingData = true;
+        let sumAll = 0;
         const selectedDate = datePicker.value;
-        let sumAll = 0, done = 0;
-        const promises = [];
-        for (let idx=0; idx<allDataCells.length; idx++) {
-            promises.push(loadLaneData(idx, selectedDate).then(data => {
-                const row = allDataCells[idx]; let sum=0;
-                row.cells.forEach((cell,i) => {
+
+        const promises = allDataCells.map(async (row, idx) => {
+            try {
+                const resp = await fetch(`${BACKEND_URL}?action=getData&index=${idx}&date=${selectedDate}&t=${Date.now()}`);
+                const data = await resp.json();
+                let sum = 0;
+                row.cells.forEach((cell, i) => {
                     const time = `${String(Math.floor(i/60)).padStart(2,'0')}:${String(i%60).padStart(2,'0')}`;
-                    cell.classList.remove('active-cell');
-                    if (data.c && data.c.includes(time)) { cell.classList.add('active-cell'); cell.textContent = '🎳'; sum++; }
-                    else if (data.b && data.b.includes(time)) { cell.textContent = ''; cell.style.color = '#334155'; }
-                    else { cell.textContent = '⚡'; cell.style.color = '#dc143c'; }
+                    cell.className = '';
+                    if(data.c?.includes(time)) { 
+                        cell.classList.add('active-cell'); cell.innerHTML = '●'; sum++; 
+                    } else if(data.b?.includes(time)) {
+                        cell.innerHTML = '';
+                    } else {
+                        cell.innerHTML = '<span class="inactive-icon">✕</span>';
+                    }
                 });
                 row.header.textContent = formatMinutes(sum);
-                sumAll += sum; done++;
-            }).catch(err => { console.warn(`Лейн ${idx+1} ошибка`); done++; }));
-        }
-        await Promise.allSettled(promises);
+                sumAll += sum;
+            } catch(e) { console.error(e); }
+        });
+
+        await Promise.all(promises);
         overallTotal.textContent = formatMinutes(sumAll);
         isLoadingData = false;
     }
-    function initTableEvents() {
-        datePicker.addEventListener('change', loadData);
-        document.addEventListener('mouseover', e => {
-            if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
-                const ci = e.target.cellIndex, row = e.target.parentElement;
-                if (row && row.tagName === 'TR') row.querySelectorAll('td,th').forEach(c => c.classList.add('hover-row'));
-                if (ci >= 0) document.querySelectorAll('#main-table tr').forEach(r => { if(r.children[ci]) r.children[ci].classList.add('hover-col'); });
-            }
-        });
-        document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
-        document.querySelector('.logo-cell')?.addEventListener('click', () => datePicker.click());
-        let lastTouch = 0;
-        document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
-        const today = new Date(); datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-        setTimeout(() => { toggleAll(true); loadData(); }, 150);
-    }
-    function initializeTableApp() { buildHeaders(); buildBody(); initTableEvents(); }
 
-    // Старт приложения
-    window.addEventListener('load', () => {
-        const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-        const email = localStorage.getItem('userEmail'), name = localStorage.getItem('userName'), nameFromSheet = localStorage.getItem('userNameFromSheet'), pic = localStorage.getItem('userPic');
-        if (isLoggedIn && email) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('main-content').style.display = 'flex';
-            currentUser = { email, name, picture: pic };
-            currentUserNameFromSheet = nameFromSheet || name;
-            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 200);
-            initializeTableApp();
+    function initializeTableApp() {
+        buildHeaders();
+        buildBody();
+        datePicker.valueAsDate = new Date();
+        datePicker.onchange = loadData;
+        
+        // Эмуляция скрытия групп для компактности при старте
+        setTimeout(() => {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.click());
+            loadData();
+        }, 300);
+    }
+
+    window.onload = () => {
+        if(localStorage.getItem('userLoggedIn')) {
+            currentUser = { email: localStorage.getItem('userEmail') };
+            loginUser(currentUser);
         } else {
             document.getElementById('login-section').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
-            setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 500);
+            document.getElementById('loadingScreen').classList.add('fade-out');
         }
-    });
-    window.handleCredentialResponse = handleCredentialResponse;
-    window.signOut = signOut;
+    };
 </script>
 </body>
 </html>
