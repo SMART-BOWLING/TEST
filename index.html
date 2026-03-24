@@ -171,8 +171,7 @@
             flex: 1;
             min-height: 0;
             width: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
+            overflow: auto;
             -webkit-overflow-scrolling: touch;
             background: var(--white);
             border-radius: 12px;
@@ -180,7 +179,7 @@
             border: 1px solid var(--border-light);
         }
 
-        /* ТАБЛИЦА — ФИКСИРОВАННАЯ ВЫСОТА, ШИРИНА АВТО */
+        /* ТАБЛИЦА */
         #main-table {
             border-collapse: collapse;
             table-layout: auto;
@@ -195,7 +194,7 @@
             white-space: nowrap;
             vertical-align: middle;
             padding: 0 6px;
-            height: 32px;
+            height: 34px;
         }
 
         th {
@@ -204,7 +203,7 @@
             color: #1e293b;
         }
 
-        /* ФИКСАЦИЯ ПЕРВЫХ ДВУХ КОЛОНОК (горизонтальный скролл) */
+        /* ФИКСАЦИЯ ПЕРВЫХ ДВУХ КОЛОНОК */
         #main-table th:nth-child(1),
         #main-table td:nth-child(1),
         #main-table th:nth-child(2),
@@ -219,18 +218,18 @@
             background-color: var(--accent);
             color: white;
             font-weight: 700;
-            width: 45px;
-            min-width: 45px;
+            width: 48px;
+            min-width: 48px;
         }
         #main-table th:nth-child(2),
         #main-table td:nth-child(2) {
-            left: 45px;
+            left: 48px;
             z-index: 11;
             background-color: var(--secondary-dark);
             color: white;
             font-weight: 600;
-            width: 85px;
-            min-width: 85px;
+            width: 88px;
+            min-width: 88px;
         }
 
         #letter-row th:nth-child(1),
@@ -246,18 +245,18 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            width: 26px;
-            min-width: 26px;
+            width: 28px;
+            min-width: 28px;
         }
 
         #time-row th:nth-child(n+3) {
             position: sticky;
-            top: 32px;
+            top: 34px;
             z-index: 9;
             background: #f1f5f9;
             padding: 2px 1px;
-            width: 26px;
-            min-width: 26px;
+            width: 28px;
+            min-width: 28px;
         }
         #time-row th div {
             display: flex;
@@ -320,59 +319,73 @@
             font-size: 11px;
         }
 
-        /* АДАПТАЦИЯ ВЫСОТЫ ПОД ЭКРАН — динамическая настройка размеров ячеек */
-        @media (orientation: landscape) {
-            .table-container {
-                padding: 8px;
-            }
+        /* АДАПТАЦИЯ ПОД РАЗНЫЕ ЭКРАНЫ */
+        @media (max-width: 768px) {
             td, th {
-                height: 28px;
+                height: 30px;
                 padding: 0 4px;
             }
             #time-row th {
+                top: 30px;
+            }
+            #main-table th:nth-child(1),
+            #main-table td:nth-child(1) {
+                width: 44px;
+                min-width: 44px;
+            }
+            #main-table th:nth-child(2),
+            #main-table td:nth-child(2) {
+                left: 44px;
+                width: 82px;
+                min-width: 82px;
+            }
+            #letter-row th:nth-child(n+3),
+            #time-row th:nth-child(n+3) {
+                width: 26px;
+                min-width: 26px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            td, th {
+                height: 28px;
+                font-size: 10px;
+                padding: 0 3px;
+            }
+            #time-row th {
                 top: 28px;
+            }
+            #main-table th:nth-child(1),
+            #main-table td:nth-child(1) {
+                width: 40px;
+                min-width: 40px;
+            }
+            #main-table th:nth-child(2),
+            #main-table td:nth-child(2) {
+                left: 40px;
+                width: 76px;
+                min-width: 76px;
             }
             #letter-row th:nth-child(n+3),
             #time-row th:nth-child(n+3) {
                 width: 24px;
                 min-width: 24px;
             }
-            #main-table th:nth-child(1),
-            #main-table td:nth-child(1) {
-                width: 42px;
-                min-width: 42px;
-            }
-            #main-table th:nth-child(2),
-            #main-table td:nth-child(2) {
-                left: 42px;
-                width: 78px;
-                min-width: 78px;
-            }
         }
 
-        @media (max-width: 600px) and (orientation: landscape) {
+        @media (orientation: landscape) and (max-width: 900px) {
             td, th {
                 height: 26px;
-                font-size: 10px;
+                font-size: 9px;
             }
             #time-row th {
                 top: 26px;
             }
-            #letter-row th:nth-child(n+3),
-            #time-row th:nth-child(n+3) {
-                width: 22px;
-                min-width: 22px;
+            .toggle-btn {
+                width: 14px;
+                height: 14px;
+                font-size: 8px;
             }
-        }
-
-        /* Динамическая настройка высоты таблицы под экран */
-        .table-wrapper {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #main-table {
-            display: table;
         }
 
         .table-wrapper::-webkit-scrollbar {
@@ -437,63 +450,24 @@
     const overallTotal = document.getElementById('overall-total'), tableBody = document.getElementById('table-body'), datePicker = document.getElementById('date-picker');
     const tableWrapper = document.querySelector('.table-wrapper');
 
-    // ========== ДИНАМИЧЕСКАЯ НАСТРОЙКА ВЫСОТЫ ==========
-    function fitHeightToScreen() {
-        if (!tableWrapper) return;
-        // Получаем доступную высоту контейнера
-        const container = document.querySelector('.table-container');
-        if (!container) return;
-        
-        const availableHeight = container.clientHeight;
-        // Получаем количество строк в таблице (16 дорожек + 2 строки заголовка = 18)
-        const rows = document.querySelectorAll('#main-table tbody tr').length;
-        const headerRows = 2;
-        const totalRows = rows + headerRows;
-        
-        // Вычисляем оптимальную высоту ячейки
-        let optimalCellHeight = Math.floor(availableHeight / totalRows);
-        // Ограничиваем минимальную и максимальную высоту
-        optimalCellHeight = Math.min(Math.max(optimalCellHeight, 24), 38);
-        
-        // Применяем высоту ко всем ячейкам
-        const allCells = document.querySelectorAll('#main-table td, #main-table th');
-        allCells.forEach(cell => {
-            cell.style.height = `${optimalCellHeight}px`;
-        });
-        
-        // Обновляем sticky позицию для второй строки заголовка
-        const firstRowHeight = document.querySelector('#letter-row th')?.offsetHeight || optimalCellHeight;
-        const timeRowHeaders = document.querySelectorAll('#time-row th');
-        timeRowHeaders.forEach(th => {
-            th.style.top = `${firstRowHeight}px`;
-        });
-    }
-
-    // Наблюдатель за изменением размера и ориентации
-    let resizeTimeout;
-    function handleResize() {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            fitHeightToScreen();
-        }, 50);
-    }
-
     // ========== ФУНКЦИИ ТАБЛИЦЫ ==========
     function formatMinutes(mins) { return `${Math.floor(mins/60)}ч ${mins%60}м`; }
+    
     function toggleGroup(idxs) {
         idxs.forEach(i => {
             [timeRow, letterRow].forEach(row => { if(row.children[i+2]) row.children[i+2].classList.toggle('hidden-column'); });
             tableBody.querySelectorAll('tr').forEach(tr => { if(tr.children[i+2]) tr.children[i+2].classList.toggle('hidden-column'); });
         });
-        setTimeout(fitHeightToScreen, 50);
     }
+    
     function areAllHidden() { return allGroups.every(g => timeRow.children[g[0]+2]?.classList.contains('hidden-column')); }
+    
     function toggleAll(forceHide = null) {
         const shouldHide = forceHide !== null ? forceHide : !areAllHidden();
         allGroups.forEach(g => { const el = timeRow.children[g[0]+2]; if(el && el.classList.contains('hidden-column') !== shouldHide) toggleGroup(g); });
         document.querySelectorAll('.toggle-btn').forEach(b => b.textContent = shouldHide ? '+' : '–');
-        setTimeout(fitHeightToScreen, 50);
     }
+    
     function makeBtn(idxs) {
         const btn = document.createElement('div'); btn.className = 'toggle-btn'; btn.textContent = '+';
         let last = 0;
@@ -505,6 +479,7 @@
         };
         return btn;
     }
+    
     function buildHeaders() {
         const fragL = document.createDocumentFragment(), fragT = document.createDocumentFragment();
         for (let i = 1; i <= totalMinutes; i++) {
@@ -522,6 +497,7 @@
         }
         letterRow.appendChild(fragL); timeRow.appendChild(fragT);
     }
+    
     function buildBody() {
         const frag = document.createDocumentFragment();
         for (let lane=0; lane<16; lane++) {
@@ -535,11 +511,13 @@
         }
         tableBody.appendChild(frag);
     }
+    
     function clearRows() {
         fetchControllers.forEach(c => c.abort()); fetchControllers.clear();
         overallTotal.textContent = '0ч 0м';
         allDataCells.forEach(r => { r.header.textContent = ''; r.cells.forEach(c => { c.classList.remove('active-cell'); c.textContent = ''; c.style.color = ''; }); });
     }
+    
     async function loadLaneData(idx, date) {
         const controller = new AbortController(); fetchControllers.set(idx, controller);
         try {
@@ -547,6 +525,7 @@
             return await res.json();
         } finally { fetchControllers.delete(idx); }
     }
+    
     async function loadData() {
         if (!datePicker.value || isLoadingData) return;
         isLoadingData = true; clearRows();
@@ -570,10 +549,11 @@
         await Promise.allSettled(promises);
         overallTotal.textContent = formatMinutes(sumAll);
         isLoadingData = false;
-        setTimeout(fitHeightToScreen, 100);
     }
+    
     function initTableEvents() {
         datePicker.addEventListener('change', loadData);
+        
         document.addEventListener('mouseover', e => {
             if (e.target.tagName === 'TD' || e.target.tagName === 'TH') {
                 const ci = e.target.cellIndex, row = e.target.parentElement;
@@ -581,30 +561,29 @@
                 if (ci >= 0) document.querySelectorAll('#main-table tr').forEach(r => { if(r.children[ci]) r.children[ci].classList.add('hover-col'); });
             }
         });
+        
         document.addEventListener('mouseout', () => document.querySelectorAll('.hover-row, .hover-col').forEach(el => el.classList.remove('hover-row','hover-col')));
         document.querySelector('.logo-cell')?.addEventListener('click', () => datePicker.click());
+        
         let lastTouch = 0;
         document.addEventListener('touchend', e => { const now = Date.now(); if(now - lastTouch <= 300) e.preventDefault(); lastTouch = now; }, false);
-        const today = new Date(); datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-        setTimeout(() => { toggleAll(true); loadData(); }, 150);
         
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleResize);
+        const today = new Date(); 
+        datePicker.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        setTimeout(() => { toggleAll(true); loadData(); }, 150);
     }
+    
     function initializeTableApp() {
         buildHeaders();
         buildBody();
         initTableEvents();
-        setTimeout(fitHeightToScreen, 200);
-        // Наблюдатель за изменением содержимого
-        const observer = new MutationObserver(() => setTimeout(fitHeightToScreen, 50));
-        observer.observe(tableBody, { childList: true, subtree: true, attributes: true });
     }
 
-    // ========== АВТОРИЗАЦИЯ (сокращённая версия) ==========
+    // ========== АВТОРИЗАЦИЯ ==========
     function showLoaderUI(show) { document.getElementById('loader').classList.toggle('active', show); }
     function parseJwt(t) { try { const b = t.split('.')[1]; return JSON.parse(atob(b.replace(/-/g, '+').replace(/_/g, '/'))); } catch(e) { return {}; } }
     function loadSheetsAPI() { return new Promise((res, rej) => gapi.load('client', { callback: res, onerror: rej, timeout: 10000 })); }
+    
     async function checkEmailInSheet(email) {
         try {
             const resp = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` });
@@ -625,6 +604,7 @@
             else { alert('Доступ запрещён'); showLoaderUI(false); }
         } catch(e) { alert('Ошибка проверки доступа'); showLoaderUI(false); }
     }
+    
     function loginUser(user) {
         localStorage.setItem('userLoggedIn', 'true'); localStorage.setItem('userEmail', user.email.toLowerCase());
         localStorage.setItem('userName', user.name); localStorage.setItem('userNameFromSheet', currentUserNameFromSheet || user.name);
@@ -634,15 +614,20 @@
         setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 300);
         initializeTableApp();
     }
+    
     async function initAndCheckEmail(email) {
-        await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
+        await loadSheetsAPI(); 
+        await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] });
         await checkEmailInSheet(email);
     }
+    
     function handleCredentialResponse(response) {
         const payload = parseJwt(response.credential);
         currentUser = { email: payload.email.toLowerCase().trim(), name: payload.name, picture: payload.picture };
-        showLoaderUI(true); initAndCheckEmail(currentUser.email).catch(e => { alert('Ошибка'); showLoaderUI(false); });
+        showLoaderUI(true); 
+        initAndCheckEmail(currentUser.email).catch(e => { alert('Ошибка'); showLoaderUI(false); });
     }
+    
     function signOut() { localStorage.clear(); if (google?.accounts?.id) google.accounts.id.disableAutoSelect(); location.reload(); }
 
     window.addEventListener('load', () => {
@@ -661,6 +646,7 @@
             setTimeout(() => document.getElementById('loadingScreen').classList.add('fade-out'), 500);
         }
     });
+    
     window.handleCredentialResponse = handleCredentialResponse;
     window.signOut = signOut;
 </script>
