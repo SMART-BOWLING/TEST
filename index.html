@@ -432,7 +432,6 @@
             }
         }
 
-        /* НОВОЕ ПОЛЕ ВЫБОРА ДАТЫ — без фона, без надписи, только иконка и инпут */
         .date-picker-field {
             padding: 16px 0 8px 0;
             display: flex;
@@ -480,7 +479,6 @@
             font-size: 16px;
         }
 
-        /* Адаптация поля даты на мобильных */
         @media (max-width: 767px) {
             .date-picker-field {
                 padding: 12px 0 8px 0;
@@ -561,72 +559,6 @@
             display: flex;
         }
 
-        /* Массовая панель действий */
-        .batch-actions-bar {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin: 8px 16px 0 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .batch-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1a2f40;
-        }
-
-        .batch-info span {
-            background: #dc143c;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-
-        .batch-execute-btn {
-            background-color: #dc143c;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .batch-execute-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .batch-clear-btn {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -650,8 +582,6 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            cursor: pointer;
-            user-select: none;
             width: 100%;
             min-height: 280px;
         }
@@ -661,12 +591,6 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
 
-        .task-card.selected {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15), 0 0 0 2px #dc143c;
-        }
-
-        /* Чекбокс выбора */
         .card-checkbox {
             position: absolute;
             top: 12px;
@@ -1030,10 +954,6 @@
             .row-value {
                 font-size: 13px;
             }
-            .batch-actions-bar {
-                margin: 8px 12px 0 12px;
-                padding: 10px 12px;
-            }
         }
     </style>
 </head>
@@ -1088,7 +1008,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script>
-        // Полностью рабочая логика + МАССОВОЕ ВЫПОЛНЕНИЕ
+        // ОСТАВЛЕН ПОЛНОСТЬЮ ФУНКЦИОНАЛ + МАССОВОЕ ВЫПОЛНЕНИЕ ЧЕРЕЗ ОБЫЧНЫЕ КНОПКИ
         const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -1101,9 +1021,7 @@
         let totalJournalPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
         let isFilterActive = false, currentFilterDate = '', filterType = 'journal';
         let datePicker = null, isInitialLoad = true;
-        
-        // Массовый выбор: храним Set выбранных ID (taskId + rowIndex)
-        let selectedTasksMap = new Map(); // ключ: `${rowIndex}_${taskId}`, значение: {rowIndex, taskId}
+        let selectedTasksMap = new Map(); // ключ: `${rowIndex}_${taskId}`
         
         const loadingScreen = document.getElementById("loadingScreen"), loginSection = document.getElementById("login-section"), mainContent = document.getElementById("main-content"), loader = document.getElementById("loader");
         
@@ -1153,7 +1071,16 @@
         
         async function completeTask(taskId, executorName, rowIndex) { showLoader(); try { const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executorName)}`; const result = await makeRequest(updateUrl); if(result.success) { await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`); journalData=null; instructorData=null; engineerData=null; originalJournalData=null; const wasFilter=isFilterActive, savedDate=currentFilterDate, savedType=filterType; await Promise.all([loadJournal(), loadInstructorTasks(), loadEngineerTasks()]); if(wasFilter && savedDate) { if(savedType==='journal') filterJournalByDate(savedDate); else if(savedType==='instructor') filterInstructorByDate(savedDate); else if(savedType==='engineer') filterEngineerByDate(savedDate); } hideLoader(); } else hideLoader(); } catch(e) { hideLoader(); } }
         
-        // Массовое выполнение
+        // МАССОВОЕ ВЫПОЛНЕНИЕ: если есть выбранные - выполняем их все, иначе - только текущую
+        async function handleSubmitWithBatch(currentRowIndex, currentTaskId) {
+            if(selectedTasksMap.size > 0) {
+                const items = Array.from(selectedTasksMap.values());
+                showConfirmModalBatch(items);
+            } else {
+                showConfirmModal(currentTaskId, currentRowIndex);
+            }
+        }
+        
         async function batchCompleteTasks(selectedItems) { 
             if(selectedItems.length === 0) return;
             showLoader(); 
@@ -1162,7 +1089,6 @@
                     await completeTask(item.taskId, currentUserNameFromSheet, item.rowIndex); 
                 } 
                 selectedTasksMap.clear(); 
-                // Перерисовка активной вкладки
                 const activeTab = document.querySelector('.tab-content.active').id;
                 if(activeTab === 'tab1') renderJournalCards(journalData);
                 else if(activeTab === 'tab2') renderInstructorCards(instructorData);
@@ -1185,50 +1111,30 @@
             const key = `${rowIndex}_${taskId}`;
             if(isChecked) selectedTasksMap.set(key, { rowIndex, taskId });
             else selectedTasksMap.delete(key);
-            updateBatchUI();
         }
         
-        function clearAllSelections() { selectedTasksMap.clear(); updateBatchUI(); const activeTab = document.querySelector('.tab-content.active').id; if(activeTab === 'tab1') renderJournalCards(journalData); else if(activeTab === 'tab2') renderInstructorCards(instructorData); else renderEngineerCards(engineerData); }
+        function showConfirmModal(taskId, rowIndex) { const modal = document.createElement('div'); modal.className = 'confirm-modal'; modal.innerHTML = `<div class="confirm-modal-content"><div class="confirm-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-modal-title">Подтверждение</div><div class="confirm-modal-message">Вы уверены, что нажатие было не случайным?</div><div class="confirm-modal-buttons"><button class="confirm-modal-btn confirm" id="confirmYesBtn">Да, выполнить</button><button class="confirm-modal-btn cancel" id="confirmNoBtn">Отмена</button></div></div>`; document.body.appendChild(modal); modal.querySelector('#confirmYesBtn').onclick = () => { modal.remove(); if(!currentUserNameFromSheet) return alert('Ошибка: имя не найдено'); completeTask(taskId, currentUserNameFromSheet, rowIndex); }; modal.querySelector('#confirmNoBtn').onclick = () => modal.remove(); modal.onclick = (e) => { if(e.target === modal) modal.remove(); }; }
         
-        function updateBatchUI() { 
-            const count = selectedTasksMap.size;
-            const existingBar = document.getElementById('batch-actions-bar');
-            if(count > 0) { 
-                if(!existingBar) { 
-                    const bar = document.createElement('div'); bar.id = 'batch-actions-bar'; bar.className = 'batch-actions-bar';
-                    bar.innerHTML = `<div class="batch-info">✅ Выбрано: <span id="batch-count">${count}</span></div><div><button class="batch-clear-btn" id="batch-clear-btn"><i class="fas fa-times"></i> Очистить</button><button class="batch-execute-btn" id="batch-execute-btn"><i class="fas fa-play"></i> Выполнить отмеченные</button></div>`;
-                    const activeContent = document.querySelector('.tab-content.active');
-                    if(activeContent) activeContent.insertBefore(bar, activeContent.firstChild);
-                    document.getElementById('batch-clear-btn')?.addEventListener('click', clearAllSelections);
-                    document.getElementById('batch-execute-btn')?.addEventListener('click', () => { const items = Array.from(selectedTasksMap.values()); if(items.length) showConfirmModalBatch(items); });
-                } else { const span = existingBar.querySelector('#batch-count'); if(span) span.textContent = count; }
-            } else { if(existingBar) existingBar.remove(); }
-        }
-        
-        // Рендер с чекбоксами
-        function renderCardWithCheckbox(t, row, hasLink, tid, isCompleted, tabType) {
+        function renderCardWithCheckbox(t, row, hasLink, tid, isCompleted) {
             const isSelected = selectedTasksMap.has(`${row}_${tid}`);
             const checkboxHtml = `<div class="card-checkbox" onclick="event.stopPropagation()"><input type="checkbox" ${isCompleted ? 'disabled' : ''} ${!isCompleted && isSelected ? 'checked' : ''} onchange="toggleTaskSelection(${row},'${tid}',this.checked)"></div>`;
             let buttonsHtml = '';
             if(!isCompleted) {
-                buttonsHtml = `<div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div>`;
+                buttonsHtml = `<div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="handleSubmitWithBatch(${row},'${tid}')"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div>`;
             } else {
                 buttonsHtml = `<div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div>`;
             }
             return `<div class="task-card ${isCompleted ? 'completed' : 'pending'}">${!isCompleted ? checkboxHtml : ''}<div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">${!isCompleted ? '-' : `<span class="executor-name">${t.executor}</span>`}</span></div></div>${buttonsHtml}</div>`;
         }
         
-        function renderJournalCards(data) { const cont = document.getElementById('journal-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalJournalPages=1; currentJournalPage=1; updatePagination('journal'); updateBatchUI(); return; } const sorted = [...data]; totalJournalPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentJournalPage>totalJournalPages) currentJournalPage=1; const current = getCurrentPageData(sorted, currentJournalPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted, 'journal'); }); cont.innerHTML = html; updatePagination('journal'); updateBatchUI(); }
-        function renderInstructorCards(data) { const cont = document.getElementById('instructor-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalInstructorPages=1; currentInstructorPage=1; updatePagination('instructor'); updateBatchUI(); return; } const sorted = [...data]; totalInstructorPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentInstructorPage>totalInstructorPages) currentInstructorPage=1; const current = getCurrentPageData(sorted, currentInstructorPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted, 'instructor'); }); cont.innerHTML = html; updatePagination('instructor'); updateBatchUI(); }
-        function renderEngineerCards(data) { const cont = document.getElementById('engineer-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalEngineerPages=1; currentEngineerPage=1; updatePagination('engineer'); updateBatchUI(); return; } const sorted = [...data]; totalEngineerPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentEngineerPage>totalEngineerPages) currentEngineerPage=1; const current = getCurrentPageData(sorted, currentEngineerPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted, 'engineer'); }); cont.innerHTML = html; updatePagination('engineer'); updateBatchUI(); }
-        
-        function showConfirmModal(taskId, rowIndex) { const modal = document.createElement('div'); modal.className = 'confirm-modal'; modal.innerHTML = `<div class="confirm-modal-content"><div class="confirm-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-modal-title">Подтверждение</div><div class="confirm-modal-message">Вы уверены, что нажатие было не случайным?</div><div class="confirm-modal-buttons"><button class="confirm-modal-btn confirm" id="confirmYesBtn">Да, выполнить</button><button class="confirm-modal-btn cancel" id="confirmNoBtn">Отмена</button></div></div>`; document.body.appendChild(modal); modal.querySelector('#confirmYesBtn').onclick = () => { modal.remove(); if(!currentUserNameFromSheet) return alert('Ошибка: имя не найдено'); completeTask(taskId, currentUserNameFromSheet, rowIndex); }; modal.querySelector('#confirmNoBtn').onclick = () => modal.remove(); modal.onclick = (e) => { if(e.target === modal) modal.remove(); }; }
-        function submitTaskWithConfirm(event, taskId, rowIndex) { event.preventDefault(); event.stopPropagation(); showConfirmModal(taskId, rowIndex); }
+        function renderJournalCards(data) { const cont = document.getElementById('journal-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalJournalPages=1; currentJournalPage=1; updatePagination('journal'); return; } const sorted = [...data]; totalJournalPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentJournalPage>totalJournalPages) currentJournalPage=1; const current = getCurrentPageData(sorted, currentJournalPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted); }); cont.innerHTML = html; updatePagination('journal'); }
+        function renderInstructorCards(data) { const cont = document.getElementById('instructor-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalInstructorPages=1; currentInstructorPage=1; updatePagination('instructor'); return; } const sorted = [...data]; totalInstructorPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentInstructorPage>totalInstructorPages) currentInstructorPage=1; const current = getCurrentPageData(sorted, currentInstructorPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted); }); cont.innerHTML = html; updatePagination('instructor'); }
+        function renderEngineerCards(data) { const cont = document.getElementById('engineer-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalEngineerPages=1; currentEngineerPage=1; updatePagination('engineer'); return; } const sorted = [...data]; totalEngineerPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentEngineerPage>totalEngineerPages) currentEngineerPage=1; const current = getCurrentPageData(sorted, currentEngineerPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; html+=renderCardWithCheckbox(t, row, hasLink, tid, t.isCompleted); }); cont.innerHTML = html; updatePagination('engineer'); }
         
         function initializeApp() { showLoader(); document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); const id=btn.getAttribute('data-tab'); document.getElementById(id).classList.add('active'); selectedTasksMap.clear(); if(id==='tab2'){ currentInstructorPage=1; loadInstructorTasks(); } else if(id==='tab1'){ currentJournalPage=1; loadJournal(); } else { currentEngineerPage=1; loadEngineerTasks(); } if(isFilterActive && currentFilterDate) { if(id==='tab1') filterJournalByDate(currentFilterDate); else if(id==='tab2') filterInstructorByDate(currentFilterDate); else filterEngineerByDate(currentFilterDate); } scrollToTop(); })); initDatePicker(); Promise.all([loadJournal(), loadInstructorTasks(), loadEngineerTasks()]).then(()=>setTimeout(()=>hideLoader(),100)).catch(()=>hideLoader()); setInterval(()=>{ const active = document.querySelector('.tab-content.active'); if(active?.id==='tab2') loadInstructorTasks(); else if(active?.id==='tab1') loadJournal(); else if(active?.id==='tab3') loadEngineerTasks(); }, 30000); setTimeout(()=>isInitialLoad=false,1000); }
         
         window.addEventListener('load',()=>{ const logged = localStorage.getItem('userLoggedIn')==='true', email=localStorage.getItem('userEmail'), name=localStorage.getItem('userName'), nameSheet=localStorage.getItem('userNameFromSheet'), pic=localStorage.getItem('userPic'); if(logged && email) { loginSection.style.display='none'; mainContent.style.display='block'; currentUser={ email, name, picture:pic }; currentUserNameFromSheet = nameSheet || name; updateUserAvatar(currentUser); showLoading(true); loadSheetsAPI().then(()=>gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4'] })).then(()=>checkEmailInSheet(email)).catch(()=>signOut()); } else { loginSection.style.display='flex'; mainContent.style.display='none'; setTimeout(()=>loadingScreen.classList.add('fade-out'),500); } });
-        window.openDriveLink = openDriveLink; window.submitTaskWithConfirm = submitTaskWithConfirm; window.goToPage = goToPage; window.changePage = changePage; window.toggleUserDropdown = toggleUserDropdown; window.signOut = signOut; window.toggleTaskSelection = toggleTaskSelection; window.clearAllSelections = clearAllSelections;
+        window.openDriveLink = openDriveLink; window.goToPage = goToPage; window.changePage = changePage; window.toggleUserDropdown = toggleUserDropdown; window.signOut = signOut; window.toggleTaskSelection = toggleTaskSelection; window.handleSubmitWithBatch = handleSubmitWithBatch;
     </script>
 </body>
 </html>
