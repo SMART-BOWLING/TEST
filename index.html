@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>SMB-SKYMALL | Полная ширина даты</title>
+    <title>SMB-SKYMALL | Управление задачами</title>
     <!-- Preload и асинхронная загрузка шрифтов/иконок -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -303,7 +303,7 @@
             padding-right: env(safe-area-inset-right);
         }
 
-        /* ОБНОВЛЕННАЯ СЕКЦИЯ ХЕДЕРА: контейнер под табы + дата на всю ширину карточек */
+        /* ОБНОВЛЕННЫЙ header-section - теперь поле даты на всю ширину карточек (контейнер 1200px) */
         .header-section {
             display: flex;
             flex-direction: column;
@@ -400,7 +400,40 @@
             display: none;
         }
 
-        /* ГЛАВНОЕ ИЗМЕНЕНИЕ: поле даты теперь занимает всю ширину карточек (1200px максимум) */
+        @media (max-width: 767px) {
+            .tab-badge {
+                top: -8px;
+                right: -8px;
+                font-size: 11px;
+                min-width: 22px;
+                height: 22px;
+                border-width: 1.5px;
+            }
+            .tab-btn {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            .tab-btn i {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-badge {
+                top: -6px;
+                right: -6px;
+                font-size: 10px;
+                min-width: 20px;
+                height: 20px;
+                border-width: 1px;
+            }
+            .tab-btn {
+                padding: 8px 6px;
+                font-size: 11px;
+            }
+        }
+
+        /* НОВОЕ ПОЛЕ ВЫБОРА ДАТЫ — РАСТЯНУТО НА ВСЮ ШИРИНУ КОНТЕЙНЕРА (1200px) */
         .date-picker-field {
             padding: 16px 0 8px 0;
             display: flex;
@@ -412,8 +445,8 @@
 
         .date-input-wrapper {
             position: relative;
-            width: 100%;
-            flex: 1;
+            width: 100%;          /* ключевое изменение: теперь занимает всю ширину родителя */
+            max-width: 100%;
         }
 
         .date-filter-input {
@@ -428,15 +461,15 @@
             width: 100%;
             -webkit-appearance: none;
             appearance: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            letter-spacing: 0.3px;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            height: 48px;
         }
 
         .date-filter-input:focus {
             outline: none;
             border-color: #dc143c;
-            box-shadow: 0 0 0 3px rgba(220,20,60,0.15);
+            box-shadow: 0 0 0 3px rgba(220,20,60,0.2);
         }
 
         .calendar-icon {
@@ -447,19 +480,17 @@
             color: #dc143c;
             pointer-events: none;
             font-size: 18px;
-            opacity: 0.9;
         }
 
-        /* Адаптация для мобильных — всё так же удобно, на всю ширину */
+        /* Адаптация поля даты на мобильных: остаётся широким */
         @media (max-width: 767px) {
             .date-picker-field {
                 padding: 12px 0 8px 0;
-                justify-content: stretch;
             }
             .date-filter-input {
-                height: 48px;
+                height: 44px;
                 font-size: 16px;
-                padding: 12px 14px 12px 44px;
+                padding: 10px 12px 10px 40px;
             }
             .calendar-icon {
                 left: 14px;
@@ -472,17 +503,16 @@
                 padding: 10px 0 6px 0;
             }
             .date-filter-input {
-                height: 46px;
+                height: 42px;
                 font-size: 14px;
-                padding: 10px 12px 10px 42px;
             }
         }
 
-        /* Стили flatpickr (календарь) */
+        /* Стили flatpickr */
         .flatpickr-calendar {
             font-family: "Poppins", sans-serif;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid #e0e0e0;
             width: auto !important;
         }
@@ -524,7 +554,6 @@
             color: white;
         }
 
-        /* Контент и карточки */
         .tab-content {
             display: none;
             padding: 0;
@@ -953,7 +982,7 @@
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab2"><i class="fas fa-user-tie"></i> ИНСТРУКТОР</button><span class="tab-badge" id="instructor-badge" data-count="0">0</span></div>
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab3"><i class="fas fa-bowling-ball"></i> КЛУБ</button><span class="tab-badge" id="club-badge" data-count="0">0</span></div>
                 </div>
-                <!-- ПОЛЕ ВЫБОРА ДАТЫ НА ВСЮ ШИРИНУ КАРТОЧЕК (без фона, без лишних надписей) -->
+                <!-- ПОЛЕ ВЫБОРА ДАТЫ НА ВСЮ ШИРИНУ (растянуто по контейнеру) -->
                 <div class="date-picker-field">
                     <div class="date-input-wrapper">
                         <i class="fas fa-calendar-alt calendar-icon"></i>
@@ -969,13 +998,13 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script>
-        // ПОЛНОСТЬЮ СОХРАНЕНА ОРИГИНАЛЬНАЯ ЛОГИКА, ИЗМЕНЕНИЕ ТОЛЬКО В СТИЛЯХ (ДАЛЕЕ ВЕСЬ СКРИПТ БЕЗ ПРАВОК)
+        // Полностью рабочая логика (без изменений функционала)
         const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
         const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbx2OxuFFUGt2uq9bmZq121_S7bzIMVLEBgH9fKJ_5X0PlIhVolstLFC-IwkpCfYjtBk/exec';
-        const CARDS_PER_PAGE = 200;
+        const CARDS_PER_PAGE = 50;
         let currentUser = null, currentUserNameFromSheet = null;
         let journalData = null, instructorData = null, engineerData = null, originalJournalData = null;
         let currentJournalPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
