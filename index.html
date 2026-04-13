@@ -432,12 +432,12 @@
             }
         }
 
-        /* ПОЛЕ ВЫБОРА ДАТЫ С КНОПКОЙ ОБНОВЛЕНИЯ */
+        /* НОВОЕ ПОЛЕ ВЫБОРА ДАТЫ — без фона, без надписи, только иконка и инпут */
         .date-picker-field {
             padding: 16px 0 8px 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             gap: 12px;
             width: 100%;
             background: transparent;
@@ -445,8 +445,8 @@
 
         .date-input-wrapper {
             position: relative;
-            flex: 1;
-            min-width: 0;
+            min-width: 220px;
+            flex: 0 1 auto;
         }
 
         .date-filter-input {
@@ -480,47 +480,19 @@
             font-size: 16px;
         }
 
-        .refresh-button {
-            background: #dc143c;
-            border: none;
-            color: white;
-            padding: 0 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            height: 42px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .refresh-button:hover {
-            background: #a90e2e;
-            transform: translateY(-1px);
-        }
-
-        .refresh-button:active {
-            transform: translateY(0);
-        }
-
         /* Адаптация поля даты на мобильных */
         @media (max-width: 767px) {
             .date-picker-field {
                 padding: 12px 0 8px 0;
+                justify-content: stretch;
             }
             .date-input-wrapper {
                 width: 100%;
+                min-width: auto;
             }
             .date-filter-input {
                 height: 44px;
                 font-size: 16px;
-            }
-            .refresh-button {
-                height: 44px;
-                padding: 0 12px;
             }
         }
 
@@ -531,11 +503,6 @@
             .date-filter-input {
                 height: 42px;
                 font-size: 14px;
-            }
-            .refresh-button {
-                height: 42px;
-                padding: 0 10px;
-                font-size: 12px;
             }
         }
 
@@ -1011,16 +978,12 @@
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab2"><i class="fas fa-user-tie"></i> ИНСТРУКТОР</button><span class="tab-badge" id="instructor-badge" data-count="0">0</span></div>
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab3"><i class="fas fa-bowling-ball"></i> КЛУБ</button><span class="tab-badge" id="club-badge" data-count="0">0</span></div>
                 </div>
-                <!-- ПОЛЕ ВЫБОРА ДАТЫ С КНОПКОЙ ОБНОВЛЕНИЯ -->
+                <!-- ТОЛЬКО ПОЛЕ ВЫБОРА ДАТЫ, БЕЗ НАДПИСИ И БЕЗ СЕРОГО ФОНА -->
                 <div class="date-picker-field">
                     <div class="date-input-wrapper">
                         <i class="fas fa-calendar-alt calendar-icon"></i>
                         <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
                     </div>
-                    <button class="refresh-button" onclick="manualRefresh()">
-                        <i class="fas fa-sync-alt"></i>
-                        <span>Обновить</span>
-                    </button>
                 </div>
             </div>
             <div class="tab-content active" id="tab1"><div class="cards-grid" id="journal-cards"></div><div class="pagination" id="journal-pagination"></div></div>
@@ -1031,7 +994,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script>
-        // Конфигурация
+        // Полностью рабочая логика (с оптимизациями производительности)
         const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -1039,30 +1002,29 @@
         const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz08NJefOw8D4JucmNgm3S1KONADe0WsbJrLzlKX4g0zfDlb6i1slKESy2oqZcpYTEi/exec';
         const CARDS_PER_PAGE = 50;
         
-        // Глобальные переменные
+        // Кэш для данных
+        let dataCache = {
+            journal: null,
+            instructor: null,
+            engineer: null,
+            original: null,
+            lastUpdate: 0,
+            CACHE_TTL: 30000
+        };
+        
         let currentUser = null, currentUserNameFromSheet = null;
         let journalData = null, instructorData = null, engineerData = null, originalJournalData = null;
         let currentJournalPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
         let totalJournalPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
         let isFilterActive = false, currentFilterDate = '', filterType = 'journal';
         let datePicker = null, isInitialLoad = true;
+        let isLoading = false; // Флаг для предотвращения параллельных загрузок
         
-        // Кэш для данных
-        let dataCache = {
-            journal: null,
-            instructor: null,
-            engineer: null,
-            lastUpdate: 0,
-            CACHE_TTL: 30000
-        };
-        
-        // DOM элементы
         const loadingScreen = document.getElementById("loadingScreen");
         const loginSection = document.getElementById("login-section");
         const mainContent = document.getElementById("main-content");
         const loader = document.getElementById("loader");
         
-        // Вспомогательные функции
         function toggleUserDropdown() { 
             const m = document.getElementById("userDropdown"); 
             m.style.display = m.style.display === "block" ? "none" : "block"; 
@@ -1074,24 +1036,33 @@
             else a.innerHTML = '<i class="fas fa-user"></i>'; 
         }
         
-        function showLoader() { loader.classList.add('active'); }
-        function hideLoader() { loader.classList.remove('active'); }
+        function showLoader() { 
+            if (!loader.classList.contains('active')) loader.classList.add('active'); 
+        }
+        
+        function hideLoader() { 
+            if (loader.classList.contains('active')) loader.classList.remove('active'); 
+        }
         
         function updateTabBadges() {
             const mech = journalData ? journalData.filter(t => !t.isCompleted).length : 0;
             const instr = instructorData ? instructorData.filter(t => !t.isCompleted).length : 0;
             const club = engineerData ? engineerData.filter(t => !t.isCompleted).length : 0;
             
-            document.getElementById('mechanic-badge').textContent = mech;
-            document.getElementById('mechanic-badge').setAttribute('data-count', mech);
-            document.getElementById('instructor-badge').textContent = instr;
-            document.getElementById('instructor-badge').setAttribute('data-count', instr);
-            document.getElementById('club-badge').textContent = club;
-            document.getElementById('club-badge').setAttribute('data-count', club);
+            const mechBadge = document.getElementById('mechanic-badge');
+            const instrBadge = document.getElementById('instructor-badge');
+            const clubBadge = document.getElementById('club-badge');
             
-            document.getElementById('mechanic-badge').style.display = mech > 0 ? 'inline-flex' : 'none';
-            document.getElementById('instructor-badge').style.display = instr > 0 ? 'inline-flex' : 'none';
-            document.getElementById('club-badge').style.display = club > 0 ? 'inline-flex' : 'none';
+            mechBadge.textContent = mech;
+            mechBadge.setAttribute('data-count', mech);
+            instrBadge.textContent = instr;
+            instrBadge.setAttribute('data-count', instr);
+            clubBadge.textContent = club;
+            clubBadge.setAttribute('data-count', club);
+            
+            mechBadge.style.display = mech > 0 ? 'inline-flex' : 'none';
+            instrBadge.style.display = instr > 0 ? 'inline-flex' : 'none';
+            clubBadge.style.display = club > 0 ? 'inline-flex' : 'none';
         }
         
         function loadSheetsAPI() { 
@@ -1267,7 +1238,6 @@
         function updatePagination(type) { 
             const pag = document.getElementById(`${type}-pagination`); 
             if(!pag) return; 
-            
             let cur, tot; 
             if(type==='journal') { 
                 cur=currentJournalPage; 
@@ -1279,14 +1249,12 @@
                 cur=currentEngineerPage; 
                 tot=totalEngineerPages; 
             } 
-            
             let html = '';
             html += `<button class="page-btn" onclick="goToPage('${type}', 1)" ${cur===1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
             html += `<button class="page-btn" onclick="changePage('${type}', -1)" ${cur===1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>`;
             html += `<span class="page-info">${cur} / ${tot}</span>`;
             html += `<button class="page-btn" onclick="changePage('${type}', 1)" ${cur===tot ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>`;
             html += `<button class="page-btn" onclick="goToPage('${type}', ${tot})" ${cur===tot ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
-            
             pag.innerHTML = html;
             pag.style.display = tot>1 ? 'flex' : 'none';
         }
@@ -1425,17 +1393,22 @@
         }
         
         async function loadJournal(forceRefresh = false) { 
+            if (isLoading) return;
             try { 
                 const now = Date.now();
                 if (!forceRefresh && dataCache.journal && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
                     journalData = dataCache.journal;
-                    renderJournalCards(journalData);
-                    updateTabBadges();
+                    if (originalJournalData) {
+                        renderJournalCards(journalData);
+                        updateTabBadges();
+                    }
                     return;
                 }
                 
+                isLoading = true;
                 const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
                 originalJournalData = [...journal]; 
+                dataCache.original = originalJournalData;
                 journalData = journal.filter(t => ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); 
                 
                 dataCache.journal = journalData;
@@ -1446,10 +1419,13 @@
             } catch(e) { 
                 console.error(e); 
                 document.getElementById('journal-cards').innerHTML = `<div class="task-card error">Ошибка</div>`; 
-            } 
+            } finally {
+                isLoading = false;
+            }
         }
         
         async function loadInstructorTasks(forceRefresh = false) { 
+            if (isLoading) return;
             try { 
                 const now = Date.now();
                 if (!forceRefresh && dataCache.instructor && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
@@ -1459,8 +1435,10 @@
                     return;
                 }
                 
-                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
-                if(!originalJournalData) originalJournalData = [...journal]; 
+                isLoading = true;
+                const journal = dataCache.original || await makeRequest(`${BACKEND_URL}?action=getJournal`); 
+                if(!originalJournalData && !dataCache.original) originalJournalData = [...journal]; 
+                if(!dataCache.original) dataCache.original = [...journal];
                 instructorData = journal.filter(t => ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); 
                 
                 dataCache.instructor = instructorData;
@@ -1468,10 +1446,13 @@
                 updateTabBadges(); 
             } catch(e) { 
                 console.error(e); 
-            } 
+            } finally {
+                isLoading = false;
+            }
         }
         
         async function loadEngineerTasks(forceRefresh = false) { 
+            if (isLoading) return;
             try { 
                 const now = Date.now();
                 if (!forceRefresh && dataCache.engineer && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
@@ -1481,8 +1462,10 @@
                     return;
                 }
                 
-                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
-                if(!originalJournalData) originalJournalData = [...journal]; 
+                isLoading = true;
+                const journal = dataCache.original || await makeRequest(`${BACKEND_URL}?action=getJournal`); 
+                if(!originalJournalData && !dataCache.original) originalJournalData = [...journal]; 
+                if(!dataCache.original) dataCache.original = [...journal];
                 engineerData = journal.filter(t => (t.task||'').toLowerCase().includes('клуб')); 
                 
                 dataCache.engineer = engineerData;
@@ -1490,7 +1473,9 @@
                 updateTabBadges(); 
             } catch(e) { 
                 console.error(e); 
-            } 
+            } finally {
+                isLoading = false;
+            }
         }
         
         async function completeTask(taskId, executorName, rowIndex) { 
@@ -1506,6 +1491,7 @@
                         journal: null,
                         instructor: null,
                         engineer: null,
+                        original: null,
                         lastUpdate: 0,
                         CACHE_TTL: 30000
                     };
@@ -1525,8 +1511,8 @@
                         await loadEngineerTasks(true);
                         if(wasFilter && savedDate) filterEngineerByDate(savedDate);
                     }
-                    hideLoader(); 
-                } else hideLoader(); 
+                }
+                hideLoader(); 
             } catch(e) { 
                 console.error(e); 
                 hideLoader(); 
@@ -1551,20 +1537,6 @@
             event.preventDefault(); 
             event.stopPropagation(); 
             showConfirmModal(taskId, rowIndex); 
-        }
-        
-        function manualRefresh() {
-            showLoader();
-            dataCache = {
-                journal: null,
-                instructor: null,
-                engineer: null,
-                lastUpdate: 0,
-                CACHE_TTL: 30000
-            };
-            Promise.all([loadJournal(true), loadInstructorTasks(true), loadEngineerTasks(true)])
-                .then(() => hideLoader())
-                .catch(() => hideLoader());
         }
         
         function renderJournalCards(data) { 
@@ -1684,10 +1656,12 @@
             
             initDatePicker(); 
             
+            // Загружаем все данные один раз при старте
             Promise.all([loadJournal(true), loadInstructorTasks(true), loadEngineerTasks(true)])
                 .then(()=>setTimeout(()=>hideLoader(),100))
                 .catch(()=>hideLoader()); 
             
+            // Увеличил интервал до 60 секунд
             setInterval(()=>{ 
                 const active = document.querySelector('.tab-content.active'); 
                 if(active?.id==='tab2') loadInstructorTasks(true); 
@@ -1728,7 +1702,6 @@
         window.changePage = changePage; 
         window.toggleUserDropdown = toggleUserDropdown; 
         window.signOut = signOut;
-        window.manualRefresh = manualRefresh;
     </script>
 </body>
 </html>
