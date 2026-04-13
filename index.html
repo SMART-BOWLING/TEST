@@ -984,18 +984,18 @@
             if(link) window.open(convertGoogleDriveLink(link), '_blank');
         }
         
-        // ГЛАВНОЕ: обновление только конкретной карточки на месте (без пересортировки)
-        function updateSingleCard(taskElement, taskData, rowIndex) {
+        // Функция для обновления конкретной карточки на месте (без пересортировки)
+        function updateSingleCard(cardElement, taskData, rowIndex) {
             const hasLink = taskData.driveLink && taskData.driveLink.trim();
             const executorName = currentUserNameFromSheet || 'Пользователь';
             const completedDate = new Date().toLocaleDateString('ru-RU');
             
-            // Обновляем содержимое карточки на "выполнено"
+            // Обновляем данные в памяти
             taskData.isCompleted = true;
             taskData.executor = executorName;
             taskData.completedDate = completedDate;
             
-            // Перестраиваем HTML карточки
+            // Создаём новую HTML-структуру карточки
             const newHtml = `
                 <div class="task-card completed">
                     <div class="task-header">
@@ -1023,23 +1023,23 @@
             `;
             
             // Заменяем содержимое карточки
-            taskElement.outerHTML = newHtml;
+            cardElement.outerHTML = newHtml;
             
-            // Обновляем счетчики
+            // Обновляем счётчики
             updateTabBadges();
         }
         
-        // Асинхронная отправка на сервер (без ожидания, без перезагрузки данных)
-        function completeTaskAsync(taskId, executorName, rowIndex, taskElement, taskData) {
+        // Асинхронная отправка на сервер (без ожидания, без перезагрузки данных, карточка остаётся на месте)
+        function completeTaskAsync(taskId, executorName, rowIndex, cardElement, taskData) {
             // Мгновенно обновляем UI (карточка на месте становится "выполнено")
-            updateSingleCard(taskElement, taskData, rowIndex);
+            updateSingleCard(cardElement, taskData, rowIndex);
             
             // Отправляем запросы в фоне, не дожидаясь ответа
             const updateUrl1 = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executorName)}`;
             const updateUrl2 = `${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`;
             
-            fetch(updateUrl1).catch(e => console.warn('Фоновая ошибка:', e));
-            fetch(updateUrl2).catch(e => console.warn('Фоновая ошибка:', e));
+            fetch(updateUrl1).catch(e => console.warn('Фоновая ошибка обновления ячейки:', e));
+            fetch(updateUrl2).catch(e => console.warn('Фоновая ошибка обновления строки:', e));
             
             // Также обновляем данные в памяти (чтобы при фильтрации/переключении вкладок всё было синхронно)
             const updateInArray = (arr) => {
@@ -1059,7 +1059,7 @@
             if (originalJournalData) updateInArray(originalJournalData);
         }
         
-        function showConfirmModal(taskId, rowIndex, taskElement, taskData) {
+        function showConfirmModal(taskId, rowIndex, cardElement, taskData) {
             const modal = document.createElement('div');
             modal.className = 'confirm-modal';
             modal.innerHTML = `
@@ -1081,17 +1081,17 @@
                     alert('Ошибка: имя не найдено');
                     return;
                 }
-                completeTaskAsync(taskId, currentUserNameFromSheet, rowIndex, taskElement, taskData);
+                completeTaskAsync(taskId, currentUserNameFromSheet, rowIndex, cardElement, taskData);
             };
             
             modal.querySelector('#confirmNoBtn').onclick = () => modal.remove();
             modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
         }
         
-        function submitTaskWithConfirm(event, taskId, rowIndex, taskElement, taskData) {
+        function submitTaskWithConfirm(event, taskId, rowIndex, cardElement, taskData) {
             event.preventDefault();
             event.stopPropagation();
-            showConfirmModal(taskId, rowIndex, taskElement, taskData);
+            showConfirmModal(taskId, rowIndex, cardElement, taskData);
         }
         
         function escapeHtml(str) {
@@ -1152,11 +1152,11 @@
             else { cur = currentEngineerPage; tot = totalEngineerPages; }
             
             pag.innerHTML = `
-                <button class="page-btn" onclick="changePage('${type}', -1)" ${cur === 1 ? 'disabled' : ''}>«</button>
+                <button class="page-btn" onclick="changePage('${type}', -2)" ${cur === 1 ? 'disabled' : ''}>«</button>
                 <button class="page-btn" onclick="changePage('${type}', -1)" ${cur === 1 ? 'disabled' : ''}>‹</button>
                 <span class="page-info">Страница ${cur} из ${tot}</span>
                 <button class="page-btn" onclick="changePage('${type}', 1)" ${cur === tot ? 'disabled' : ''}>›</button>
-                <button class="page-btn" onclick="changePage('${type}', 1)" ${cur === tot ? 'disabled' : ''}>»</button>
+                <button class="page-btn" onclick="changePage('${type}', 2)" ${cur === tot ? 'disabled' : ''}>»</button>
             `;
             pag.style.display = tot > 1 ? 'flex' : 'none';
         }
@@ -1280,9 +1280,10 @@
                 const hasLink = t.driveLink && t.driveLink.trim();
                 const tid = t.id || t.driveLink || '';
                 const cardId = `card_${Date.now()}_${idx}_${row}`;
+                const taskDataJson = JSON.stringify(t).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
                 
                 if(!t.isCompleted) {
-                    html += `<div id="${cardId}" class="task-card pending" data-row="${row}" data-task-id="${escapeAttr(tid)}" data-task-data='${JSON.stringify(t).replace(/'/g, "&#39;")}'>
+                    html += `<div id="${cardId}" class="task-card pending">
                         <div class="task-header"><div class="task-title">${escapeHtml(t.task)}</div></div>
                         <div class="card-content">
                             <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div>
@@ -1291,7 +1292,7 @@
                         </div>
                         <div class="buttons-container">
                             ${hasLink ? `<a href="#" onclick="openDriveLink('${escapeAttr(t.driveLink)}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${JSON.stringify(t).replace(/'/g, "&#39;")})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${taskDataJson})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                         </div>
                     </div>`;
                 } else {
@@ -1334,9 +1335,10 @@
                 const hasLink = t.driveLink && t.driveLink.trim();
                 const tid = t.id || t.driveLink || '';
                 const cardId = `card_${Date.now()}_${idx}_${row}`;
+                const taskDataJson = JSON.stringify(t).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
                 
                 if(!t.isCompleted) {
-                    html += `<div id="${cardId}" class="task-card pending" data-row="${row}" data-task-id="${escapeAttr(tid)}" data-task-data='${JSON.stringify(t).replace(/'/g, "&#39;")}'>
+                    html += `<div id="${cardId}" class="task-card pending">
                         <div class="task-header"><div class="task-title">${escapeHtml(t.task)}</div></div>
                         <div class="card-content">
                             <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div>
@@ -1345,7 +1347,7 @@
                         </div>
                         <div class="buttons-container">
                             ${hasLink ? `<a href="#" onclick="openDriveLink('${escapeAttr(t.driveLink)}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${JSON.stringify(t).replace(/'/g, "&#39;")})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${taskDataJson})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                         </div>
                     </div>`;
                 } else {
@@ -1388,9 +1390,10 @@
                 const hasLink = t.driveLink && t.driveLink.trim();
                 const tid = t.id || t.driveLink || '';
                 const cardId = `card_${Date.now()}_${idx}_${row}`;
+                const taskDataJson = JSON.stringify(t).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
                 
                 if(!t.isCompleted) {
-                    html += `<div id="${cardId}" class="task-card pending" data-row="${row}" data-task-id="${escapeAttr(tid)}" data-task-data='${JSON.stringify(t).replace(/'/g, "&#39;")}'>
+                    html += `<div id="${cardId}" class="task-card pending">
                         <div class="task-header"><div class="task-title">${escapeHtml(t.task)}</div></div>
                         <div class="card-content">
                             <div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div>
@@ -1399,7 +1402,7 @@
                         </div>
                         <div class="buttons-container">
                             ${hasLink ? `<a href="#" onclick="openDriveLink('${escapeAttr(t.driveLink)}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}
-                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${JSON.stringify(t).replace(/'/g, "&#39;")})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
+                            <button class="submit-btn" onclick="submitTaskWithConfirm(event, '${escapeAttr(tid)}', ${row}, document.getElementById('${cardId}'), ${taskDataJson})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button>
                         </div>
                     </div>`;
                 } else {
