@@ -432,12 +432,12 @@
             }
         }
 
-        /* НОВОЕ ПОЛЕ ВЫБОРА ДАТЫ — без фона, без надписи, только иконка и инпут */
+        /* ПОЛЕ ВЫБОРА ДАТЫ С КНОПКОЙ ОБНОВЛЕНИЯ */
         .date-picker-field {
             padding: 16px 0 8px 0;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
             gap: 12px;
             width: 100%;
             background: transparent;
@@ -445,8 +445,8 @@
 
         .date-input-wrapper {
             position: relative;
-            min-width: 220px;
-            flex: 0 1 auto;
+            flex: 1;
+            min-width: 0;
         }
 
         .date-filter-input {
@@ -480,19 +480,47 @@
             font-size: 16px;
         }
 
+        .refresh-button {
+            background: #dc143c;
+            border: none;
+            color: white;
+            padding: 0 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            height: 42px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .refresh-button:hover {
+            background: #a90e2e;
+            transform: translateY(-1px);
+        }
+
+        .refresh-button:active {
+            transform: translateY(0);
+        }
+
         /* Адаптация поля даты на мобильных */
         @media (max-width: 767px) {
             .date-picker-field {
                 padding: 12px 0 8px 0;
-                justify-content: stretch;
             }
             .date-input-wrapper {
                 width: 100%;
-                min-width: auto;
             }
             .date-filter-input {
                 height: 44px;
                 font-size: 16px;
+            }
+            .refresh-button {
+                height: 44px;
+                padding: 0 12px;
             }
         }
 
@@ -503,6 +531,11 @@
             .date-filter-input {
                 height: 42px;
                 font-size: 14px;
+            }
+            .refresh-button {
+                height: 42px;
+                padding: 0 10px;
+                font-size: 12px;
             }
         }
 
@@ -978,12 +1011,16 @@
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab2"><i class="fas fa-user-tie"></i> ИНСТРУКТОР</button><span class="tab-badge" id="instructor-badge" data-count="0">0</span></div>
                     <div class="tab-btn-wrapper"><button class="tab-btn" data-tab="tab3"><i class="fas fa-bowling-ball"></i> КЛУБ</button><span class="tab-badge" id="club-badge" data-count="0">0</span></div>
                 </div>
-                <!-- ТОЛЬКО ПОЛЕ ВЫБОРА ДАТЫ, БЕЗ НАДПИСИ И БЕЗ СЕРОГО ФОНА -->
+                <!-- ПОЛЕ ВЫБОРА ДАТЫ С КНОПКОЙ ОБНОВЛЕНИЯ -->
                 <div class="date-picker-field">
                     <div class="date-input-wrapper">
                         <i class="fas fa-calendar-alt calendar-icon"></i>
                         <input type="text" class="date-filter-input" id="date-filter-input" placeholder="Выберите дату" readonly>
                     </div>
+                    <button class="refresh-button" onclick="manualRefresh()">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Обновить</span>
+                    </button>
                 </div>
             </div>
             <div class="tab-content active" id="tab1"><div class="cards-grid" id="journal-cards"></div><div class="pagination" id="journal-pagination"></div></div>
@@ -994,23 +1031,49 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
     <script>
-        // Полностью рабочая логика (без изменений функционала)
+        // Конфигурация
         const AUTH_SPREADSHEET_ID = '1-yiVdZYa6wJdupTiuiHvI_ht3Vu73RUjyCehZqs2cJ4';
         const AUTH_SHEET_NAME = '1';
         const AUTH_API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
         const CURRENT_SITE = 'https://smart-bowling.github.io/SMB-LS-KH/';
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxDPjyvbpvCMLUQUUhdnmZUYbd4vQ9aktLop_-faXZTwLYY7hooK1BZUsAgUyvg3F9k/exec';
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz08NJefOw8D4JucmNgm3S1KONADe0WsbJrLzlKX4g0zfDlb6i1slKESy2oqZcpYTEi/exec';
         const CARDS_PER_PAGE = 50;
+        
+        // Глобальные переменные
         let currentUser = null, currentUserNameFromSheet = null;
         let journalData = null, instructorData = null, engineerData = null, originalJournalData = null;
         let currentJournalPage = 1, currentInstructorPage = 1, currentEngineerPage = 1;
         let totalJournalPages = 1, totalInstructorPages = 1, totalEngineerPages = 1;
         let isFilterActive = false, currentFilterDate = '', filterType = 'journal';
         let datePicker = null, isInitialLoad = true;
-        const loadingScreen = document.getElementById("loadingScreen"), loginSection = document.getElementById("login-section"), mainContent = document.getElementById("main-content"), loader = document.getElementById("loader");
         
-        function toggleUserDropdown() { const m = document.getElementById("userDropdown"); m.style.display = m.style.display === "block" ? "none" : "block"; }
-        function updateUserAvatar(user) { const a = document.getElementById('userAvatar'); if (user?.picture) a.innerHTML = `<img src="${user.picture}" alt="Avatar">`; else a.innerHTML = '<i class="fas fa-user"></i>'; }
+        // Кэш для данных
+        let dataCache = {
+            journal: null,
+            instructor: null,
+            engineer: null,
+            lastUpdate: 0,
+            CACHE_TTL: 30000
+        };
+        
+        // DOM элементы
+        const loadingScreen = document.getElementById("loadingScreen");
+        const loginSection = document.getElementById("login-section");
+        const mainContent = document.getElementById("main-content");
+        const loader = document.getElementById("loader");
+        
+        // Вспомогательные функции
+        function toggleUserDropdown() { 
+            const m = document.getElementById("userDropdown"); 
+            m.style.display = m.style.display === "block" ? "none" : "block"; 
+        }
+        
+        function updateUserAvatar(user) { 
+            const a = document.getElementById('userAvatar'); 
+            if (user?.picture) a.innerHTML = `<img src="${user.picture}" alt="Avatar">`; 
+            else a.innerHTML = '<i class="fas fa-user"></i>'; 
+        }
+        
         function showLoader() { loader.classList.add('active'); }
         function hideLoader() { loader.classList.remove('active'); }
         
@@ -1018,53 +1081,654 @@
             const mech = journalData ? journalData.filter(t => !t.isCompleted).length : 0;
             const instr = instructorData ? instructorData.filter(t => !t.isCompleted).length : 0;
             const club = engineerData ? engineerData.filter(t => !t.isCompleted).length : 0;
-            document.getElementById('mechanic-badge').textContent = mech; document.getElementById('mechanic-badge').setAttribute('data-count', mech);
-            document.getElementById('instructor-badge').textContent = instr; document.getElementById('instructor-badge').setAttribute('data-count', instr);
-            document.getElementById('club-badge').textContent = club; document.getElementById('club-badge').setAttribute('data-count', club);
+            
+            document.getElementById('mechanic-badge').textContent = mech;
+            document.getElementById('mechanic-badge').setAttribute('data-count', mech);
+            document.getElementById('instructor-badge').textContent = instr;
+            document.getElementById('instructor-badge').setAttribute('data-count', instr);
+            document.getElementById('club-badge').textContent = club;
+            document.getElementById('club-badge').setAttribute('data-count', club);
+            
             document.getElementById('mechanic-badge').style.display = mech > 0 ? 'inline-flex' : 'none';
             document.getElementById('instructor-badge').style.display = instr > 0 ? 'inline-flex' : 'none';
             document.getElementById('club-badge').style.display = club > 0 ? 'inline-flex' : 'none';
         }
         
-        function loadSheetsAPI() { return new Promise((resolve, reject) => { gapi.load('client', { callback: resolve, onerror: () => reject('Ошибка загрузки API'), timeout: 10000, ontimeout: () => reject('Таймаут') }); }); }
-        function handleCredentialResponse(response) { try { const payload = JSON.parse(atob(response.credential.split('.')[1])); currentUser = { email: payload.email.toLowerCase(), name: payload.name, picture: payload.picture }; showLoading(true); initAndCheckEmail(); } catch(e) { console.error(e); showLoading(false); alert('Ошибка аутентификации'); } }
-        function showLoading(show) { const div = document.getElementById('login-container'); if(show) { if(!div.hasAttribute('data-original')) div.setAttribute('data-original', div.innerHTML); div.innerHTML = '<div style="padding:40px;text-align:center;"><div class="loading-spinner"></div><br><span style="color:#64748b;">Проверка доступа...</span></div>'; } else { if(div.getAttribute('data-original') && loginSection.style.display !== 'none') { div.innerHTML = div.getAttribute('data-original'); if(window.google?.accounts?.id) google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large', logo_alignment:'left' }); } } }
-        async function initAndCheckEmail() { try { await loadSheetsAPI(); await gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] }); await checkEmailInSheet(currentUser.email); } catch(e) { console.error(e); showLoading(false); alert('Ошибка инициализации'); } }
-        async function checkEmailInSheet(email) { try { const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: AUTH_SPREADSHEET_ID, range: `${AUTH_SHEET_NAME}!A:Z` }); const rows = res.result.values; if(!rows) { showLoading(false); alert('Таблица пуста'); return; } let hasAccess = false, foundName = null; for(let i=0;i<rows.length;i++) { if(rows[i]?.[0]?.toLowerCase().trim() === email) { for(let j=1;j<rows[i].length;j++) { const site = rows[i][j]?.trim().split('?')[0]; if(site === CURRENT_SITE || site?.includes('SMB-LS-KH')) hasAccess = true; } if(rows[i][1]) foundName = rows[i][1].trim(); break; } } if(hasAccess) { currentUserNameFromSheet = foundName || currentUser.name; loginUser(currentUser); } else { showLoading(false); alert('Доступ запрещен'); } } catch(e) { console.error(e); showLoading(false); alert('Ошибка доступа'); } }
-        function loginUser(payload) { loginSection.style.display = 'none'; mainContent.style.display = 'block'; updateUserAvatar(payload); localStorage.setItem('userLoggedIn','true'); localStorage.setItem('userEmail',payload.email); localStorage.setItem('userName',payload.name); localStorage.setItem('userNameFromSheet',currentUserNameFromSheet||payload.name); localStorage.setItem('userPic',payload.picture); showLoading(false); setTimeout(()=>loadingScreen.classList.add('fade-out'),500); initializeApp(); }
-        function signOut() { localStorage.clear(); sessionStorage.clear(); if(google?.accounts?.id) google.accounts.id.disableAutoSelect(); mainContent.style.display = 'none'; loginSection.style.display = 'flex'; const div = document.getElementById('login-container'); if(div.getAttribute('data-original')) { div.innerHTML = div.getAttribute('data-original'); if(window.google?.accounts?.id) google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large', logo_alignment:'left' }); } }
-        function convertGoogleDriveLink(link) { if(!link) return null; if(link.includes('drive.google.com/file/d/')) { const m = link.match(/\/d\/([^\/]+)/); if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`; } return link; }
-        function openDriveLink(link) { if(link) window.open(convertGoogleDriveLink(link), '_blank'); }
-        async function makeRequest(url, options={}) { try { if(!options.method || options.method==='GET') url += `${url.includes('?')?'&':'?'}_=${Date.now()}`; const res = await fetch(url,options); return await res.json(); } catch(e) { throw e; } }
-        function scrollToTop() { window.scrollTo({ top:0, behavior:'smooth' }); }
-        function goToPage(type, page) { if(type==='journal' && page>=1 && page<=totalJournalPages && page!==currentJournalPage) { currentJournalPage=page; renderJournalCards(journalData); updatePagination('journal'); scrollToTop(); } else if(type==='instructor' && page>=1 && page<=totalInstructorPages && page!==currentInstructorPage) { currentInstructorPage=page; renderInstructorCards(instructorData); updatePagination('instructor'); scrollToTop(); } else if(type==='engineer' && page>=1 && page<=totalEngineerPages && page!==currentEngineerPage) { currentEngineerPage=page; renderEngineerCards(engineerData); updatePagination('engineer'); scrollToTop(); } }
-        function updatePagination(type) { const pag = document.getElementById(`${type}-pagination`); if(!pag) return; const curSpan = document.getElementById(`${type}-current-page`); const totSpan = document.getElementById(`${type}-total-pages`); let cur, tot; if(type==='journal') { cur=currentJournalPage; tot=totalJournalPages; } else if(type==='instructor') { cur=currentInstructorPage; tot=totalInstructorPages; } else { cur=currentEngineerPage; tot=totalEngineerPages; } if(curSpan) curSpan.textContent=cur; if(totSpan) totSpan.textContent=tot; const btns = pag.querySelectorAll('.page-btn'); if(btns[0]) btns[0].disabled = cur===1; if(btns[1]) btns[1].disabled = cur===1; if(btns[3]) btns[3].disabled = cur===tot; if(btns[4]) btns[4].disabled = cur===tot; pag.style.display = tot>1 ? 'flex' : 'none'; }
-        function changePage(type, dir) { if(type==='journal') goToPage('journal', currentJournalPage+dir); else if(type==='instructor') goToPage('instructor', currentInstructorPage+dir); else goToPage('engineer', currentEngineerPage+dir); }
-        function getCurrentPageData(data, page) { const start = (page-1)*CARDS_PER_PAGE; return data.slice(start, start+CARDS_PER_PAGE); }
+        function loadSheetsAPI() { 
+            return new Promise((resolve, reject) => { 
+                gapi.load('client', { 
+                    callback: resolve, 
+                    onerror: () => reject('Ошибка загрузки API'), 
+                    timeout: 10000, 
+                    ontimeout: () => reject('Таймаут') 
+                }); 
+            }); 
+        }
         
-        function initDatePicker() { if(datePicker) datePicker.destroy(); const input = document.getElementById('date-filter-input'); datePicker = flatpickr(input, { locale:"ru", dateFormat:"d.m.Y", onChange: (dates,dateStr) => { if(dateStr) { const active = document.querySelector('.tab-content.active'); if(active?.id === 'tab1') filterJournalByDate(dateStr); else if(active?.id === 'tab2') filterInstructorByDate(dateStr); else if(active?.id === 'tab3') filterEngineerByDate(dateStr); } else { clearDateFilter(); } }, onOpen: () => { if(/iPhone|iPad|iPod/i.test(navigator.userAgent)) setTimeout(()=>input.blur(),50); } }); input.value = ''; }
+        function handleCredentialResponse(response) { 
+            try { 
+                const payload = JSON.parse(atob(response.credential.split('.')[1])); 
+                currentUser = { 
+                    email: payload.email.toLowerCase(), 
+                    name: payload.name, 
+                    picture: payload.picture 
+                }; 
+                showLoading(true); 
+                initAndCheckEmail(); 
+            } catch(e) { 
+                console.error(e); 
+                showLoading(false); 
+                alert('Ошибка аутентификации'); 
+            } 
+        }
         
-        function filterJournalByDate(date) { if(!date) { isFilterActive=false; currentFilterDate=''; journalData = originalJournalData ? originalJournalData.filter(t => ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))) : []; currentJournalPage=1; renderJournalCards(journalData); updateTabBadges(); return; } isFilterActive=true; currentFilterDate=date; filterType='journal'; journalData = originalJournalData.filter(t => t.completedDate===date && ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); currentJournalPage=1; renderJournalCards(journalData); updateTabBadges(); }
-        function filterInstructorByDate(date) { if(!date) { isFilterActive=false; currentFilterDate=''; instructorData = originalJournalData ? originalJournalData.filter(t => ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))) : []; currentInstructorPage=1; renderInstructorCards(instructorData); updateTabBadges(); return; } isFilterActive=true; currentFilterDate=date; filterType='instructor'; instructorData = originalJournalData.filter(t => t.completedDate===date && ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); currentInstructorPage=1; renderInstructorCards(instructorData); updateTabBadges(); }
-        function filterEngineerByDate(date) { if(!date) { isFilterActive=false; currentFilterDate=''; engineerData = originalJournalData ? originalJournalData.filter(t => (t.task||'').toLowerCase().includes('клуб')) : []; currentEngineerPage=1; renderEngineerCards(engineerData); updateTabBadges(); return; } isFilterActive=true; currentFilterDate=date; filterType='engineer'; engineerData = originalJournalData.filter(t => t.completedDate===date && (t.task||'').toLowerCase().includes('клуб')); currentEngineerPage=1; renderEngineerCards(engineerData); updateTabBadges(); }
-        function clearDateFilter() { const inp = document.getElementById('date-filter-input'); if(inp) inp.value = ''; const active = document.querySelector('.tab-content.active'); if(active?.id === 'tab1') filterJournalByDate(''); else if(active?.id === 'tab2') filterInstructorByDate(''); else if(active?.id === 'tab3') filterEngineerByDate(''); }
+        function showLoading(show) { 
+            const div = document.getElementById('login-container'); 
+            if(show) { 
+                if(!div.hasAttribute('data-original')) div.setAttribute('data-original', div.innerHTML); 
+                div.innerHTML = '<div style="padding:40px;text-align:center;"><div class="loading-spinner"></div><br><span style="color:#64748b;">Проверка доступа...</span></div>'; 
+            } else { 
+                if(div.getAttribute('data-original') && loginSection.style.display !== 'none') { 
+                    div.innerHTML = div.getAttribute('data-original'); 
+                    if(window.google?.accounts?.id) google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { 
+                        type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large', logo_alignment:'left' 
+                    }); 
+                } 
+            } 
+        }
         
-        async function loadJournal() { try { if(journalData && !isInitialLoad) { renderJournalCards(journalData); updateTabBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); originalJournalData = [...journal]; journalData = journal.filter(t => ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); renderJournalCards(journalData); updateTabBadges(); } catch(e) { console.error(e); document.getElementById('journal-cards').innerHTML = `<div class="task-card error">Ошибка</div>`; } }
-        async function loadInstructorTasks() { try { if(instructorData && !isInitialLoad) { renderInstructorCards(instructorData); updateTabBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); if(!originalJournalData) originalJournalData = [...journal]; instructorData = journal.filter(t => ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); renderInstructorCards(instructorData); updateTabBadges(); } catch(e) { console.error(e); } }
-        async function loadEngineerTasks() { try { if(engineerData && !isInitialLoad) { renderEngineerCards(engineerData); updateTabBadges(); return; } const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); if(!originalJournalData) originalJournalData = [...journal]; engineerData = journal.filter(t => (t.task||'').toLowerCase().includes('клуб')); renderEngineerCards(engineerData); updateTabBadges(); } catch(e) { console.error(e); } }
+        async function initAndCheckEmail() { 
+            try { 
+                await loadSheetsAPI(); 
+                await gapi.client.init({ 
+                    apiKey: AUTH_API_KEY, 
+                    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'] 
+                }); 
+                await checkEmailInSheet(currentUser.email); 
+            } catch(e) { 
+                console.error(e); 
+                showLoading(false); 
+                alert('Ошибка инициализации'); 
+            } 
+        }
         
-        async function completeTask(taskId, executorName, rowIndex) { showLoader(); try { const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executorName)}`; const result = await makeRequest(updateUrl); if(result.success) { await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`); journalData=null; instructorData=null; engineerData=null; originalJournalData=null; const wasFilter=isFilterActive, savedDate=currentFilterDate, savedType=filterType; await Promise.all([loadJournal(), loadInstructorTasks(), loadEngineerTasks()]); if(wasFilter && savedDate) { if(savedType==='journal') filterJournalByDate(savedDate); else if(savedType==='instructor') filterInstructorByDate(savedDate); else if(savedType==='engineer') filterEngineerByDate(savedDate); } hideLoader(); } else hideLoader(); } catch(e) { hideLoader(); } }
-        function showConfirmModal(taskId, rowIndex) { const modal = document.createElement('div'); modal.className = 'confirm-modal'; modal.innerHTML = `<div class="confirm-modal-content"><div class="confirm-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-modal-title">Подтверждение</div><div class="confirm-modal-message">Вы уверены, что нажатие было не случайным?</div><div class="confirm-modal-buttons"><button class="confirm-modal-btn confirm" id="confirmYesBtn">Да, выполнить</button><button class="confirm-modal-btn cancel" id="confirmNoBtn">Отмена</button></div></div>`; document.body.appendChild(modal); modal.querySelector('#confirmYesBtn').onclick = () => { modal.remove(); if(!currentUserNameFromSheet) return alert('Ошибка: имя не найдено'); completeTask(taskId, currentUserNameFromSheet, rowIndex); }; modal.querySelector('#confirmNoBtn').onclick = () => modal.remove(); modal.onclick = (e) => { if(e.target === modal) modal.remove(); }; }
-        function submitTaskWithConfirm(event, taskId, rowIndex) { event.preventDefault(); event.stopPropagation(); showConfirmModal(taskId, rowIndex); }
+        async function checkEmailInSheet(email) { 
+            try { 
+                const res = await gapi.client.sheets.spreadsheets.values.get({ 
+                    spreadsheetId: AUTH_SPREADSHEET_ID, 
+                    range: `${AUTH_SHEET_NAME}!A:Z` 
+                }); 
+                const rows = res.result.values; 
+                if(!rows) { 
+                    showLoading(false); 
+                    alert('Таблица пуста'); 
+                    return; 
+                } 
+                let hasAccess = false, foundName = null; 
+                for(let i=0;i<rows.length;i++) { 
+                    if(rows[i]?.[0]?.toLowerCase().trim() === email) { 
+                        for(let j=1;j<rows[i].length;j++) { 
+                            const site = rows[i][j]?.trim().split('?')[0]; 
+                            if(site === CURRENT_SITE || site?.includes('SMB-LS-KH')) hasAccess = true; 
+                        } 
+                        if(rows[i][1]) foundName = rows[i][1].trim(); 
+                        break; 
+                    } 
+                } 
+                if(hasAccess) { 
+                    currentUserNameFromSheet = foundName || currentUser.name; 
+                    loginUser(currentUser); 
+                } else { 
+                    showLoading(false); 
+                    alert('Доступ запрещен'); 
+                } 
+            } catch(e) { 
+                console.error(e); 
+                showLoading(false); 
+                alert('Ошибка доступа'); 
+            } 
+        }
         
-        function renderJournalCards(data) { const cont = document.getElementById('journal-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalJournalPages=1; currentJournalPage=1; updatePagination('journal'); return; } const sorted = [...data]; totalJournalPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentJournalPage>totalJournalPages) currentJournalPage=1; const current = getCurrentPageData(sorted, currentJournalPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; if(!t.isCompleted) { html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; } else { html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; } }); cont.innerHTML = html; updatePagination('journal'); }
-        function renderInstructorCards(data) { const cont = document.getElementById('instructor-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalInstructorPages=1; currentInstructorPage=1; updatePagination('instructor'); return; } const sorted = [...data]; totalInstructorPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentInstructorPage>totalInstructorPages) currentInstructorPage=1; const current = getCurrentPageData(sorted, currentInstructorPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; if(!t.isCompleted) { html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; } else { html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; } }); cont.innerHTML = html; updatePagination('instructor'); }
-        function renderEngineerCards(data) { const cont = document.getElementById('engineer-cards'); if(!data || !data.length) { cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; totalEngineerPages=1; currentEngineerPage=1; updatePagination('engineer'); return; } const sorted = [...data]; totalEngineerPages = Math.ceil(sorted.length/CARDS_PER_PAGE); if(currentEngineerPage>totalEngineerPages) currentEngineerPage=1; const current = getCurrentPageData(sorted, currentEngineerPage); let html=''; current.forEach((t,idx)=>{ const row = t.rowIndex || (idx+2); const hasLink = t.driveLink && t.driveLink.trim(); const tid = t.id || t.driveLink || ''; if(!t.isCompleted) { html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; } else { html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; } }); cont.innerHTML = html; updatePagination('engineer'); }
+        function loginUser(payload) { 
+            loginSection.style.display = 'none'; 
+            mainContent.style.display = 'block'; 
+            updateUserAvatar(payload); 
+            localStorage.setItem('userLoggedIn','true'); 
+            localStorage.setItem('userEmail',payload.email); 
+            localStorage.setItem('userName',payload.name); 
+            localStorage.setItem('userNameFromSheet',currentUserNameFromSheet||payload.name); 
+            localStorage.setItem('userPic',payload.picture); 
+            showLoading(false); 
+            setTimeout(()=>loadingScreen.classList.add('fade-out'),500); 
+            initializeApp(); 
+        }
         
-        function initializeApp() { showLoader(); document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); const id=btn.getAttribute('data-tab'); document.getElementById(id).classList.add('active'); if(id==='tab2'){ currentInstructorPage=1; loadInstructorTasks(); } else if(id==='tab1'){ currentJournalPage=1; loadJournal(); } else { currentEngineerPage=1; loadEngineerTasks(); } if(isFilterActive && currentFilterDate) { if(id==='tab1') filterJournalByDate(currentFilterDate); else if(id==='tab2') filterInstructorByDate(currentFilterDate); else filterEngineerByDate(currentFilterDate); } scrollToTop(); })); initDatePicker(); Promise.all([loadJournal(), loadInstructorTasks(), loadEngineerTasks()]).then(()=>setTimeout(()=>hideLoader(),100)).catch(()=>hideLoader()); setInterval(()=>{ const active = document.querySelector('.tab-content.active'); if(active?.id==='tab2') loadInstructorTasks(); else if(active?.id==='tab1') loadJournal(); else if(active?.id==='tab3') loadEngineerTasks(); }, 30000); setTimeout(()=>isInitialLoad=false,1000); }
+        function signOut() { 
+            localStorage.clear(); 
+            sessionStorage.clear(); 
+            if(google?.accounts?.id) google.accounts.id.disableAutoSelect(); 
+            mainContent.style.display = 'none'; 
+            loginSection.style.display = 'flex'; 
+            const div = document.getElementById('login-container'); 
+            if(div.getAttribute('data-original')) { 
+                div.innerHTML = div.getAttribute('data-original'); 
+                if(window.google?.accounts?.id) google.accounts.id.renderButton(document.querySelector('.g_id_signin'), { 
+                    type:'standard', shape:'pill', theme:'outline', text:'signin_with', size:'large', logo_alignment:'left' 
+                }); 
+            } 
+        }
         
-        window.addEventListener('load',()=>{ const logged = localStorage.getItem('userLoggedIn')==='true', email=localStorage.getItem('userEmail'), name=localStorage.getItem('userName'), nameSheet=localStorage.getItem('userNameFromSheet'), pic=localStorage.getItem('userPic'); if(logged && email) { loginSection.style.display='none'; mainContent.style.display='block'; currentUser={ email, name, picture:pic }; currentUserNameFromSheet = nameSheet || name; updateUserAvatar(currentUser); showLoading(true); loadSheetsAPI().then(()=>gapi.client.init({ apiKey: AUTH_API_KEY, discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4'] })).then(()=>checkEmailInSheet(email)).catch(()=>signOut()); } else { loginSection.style.display='flex'; mainContent.style.display='none'; setTimeout(()=>loadingScreen.classList.add('fade-out'),500); } });
-        window.openDriveLink = openDriveLink; window.submitTaskWithConfirm = submitTaskWithConfirm; window.goToPage = goToPage; window.changePage = changePage; window.toggleUserDropdown = toggleUserDropdown; window.signOut = signOut;
+        function convertGoogleDriveLink(link) { 
+            if(!link) return null; 
+            if(link.includes('drive.google.com/file/d/')) { 
+                const m = link.match(/\/d\/([^\/]+)/); 
+                if(m) return `https://drive.google.com/uc?export=view&id=${m[1]}`; 
+            } 
+            return link; 
+        }
+        
+        function openDriveLink(link) { 
+            if(link) window.open(convertGoogleDriveLink(link), '_blank'); 
+        }
+        
+        async function makeRequest(url, options={}) { 
+            try { 
+                if(!options.method || options.method==='GET') url += `${url.includes('?')?'&':'?'}_=${Date.now()}`; 
+                const res = await fetch(url,options); 
+                return await res.json(); 
+            } catch(e) { 
+                throw e; 
+            } 
+        }
+        
+        function scrollToTop() { 
+            window.scrollTo({ top:0, behavior:'smooth' }); 
+        }
+        
+        function goToPage(type, page) { 
+            if(type==='journal' && page>=1 && page<=totalJournalPages && page!==currentJournalPage) { 
+                currentJournalPage=page; 
+                renderJournalCards(journalData); 
+                updatePagination('journal'); 
+                scrollToTop(); 
+            } else if(type==='instructor' && page>=1 && page<=totalInstructorPages && page!==currentInstructorPage) { 
+                currentInstructorPage=page; 
+                renderInstructorCards(instructorData); 
+                updatePagination('instructor'); 
+                scrollToTop(); 
+            } else if(type==='engineer' && page>=1 && page<=totalEngineerPages && page!==currentEngineerPage) { 
+                currentEngineerPage=page; 
+                renderEngineerCards(engineerData); 
+                updatePagination('engineer'); 
+                scrollToTop(); 
+            } 
+        }
+        
+        function updatePagination(type) { 
+            const pag = document.getElementById(`${type}-pagination`); 
+            if(!pag) return; 
+            
+            let cur, tot; 
+            if(type==='journal') { 
+                cur=currentJournalPage; 
+                tot=totalJournalPages; 
+            } else if(type==='instructor') { 
+                cur=currentInstructorPage; 
+                tot=totalInstructorPages; 
+            } else { 
+                cur=currentEngineerPage; 
+                tot=totalEngineerPages; 
+            } 
+            
+            let html = '';
+            html += `<button class="page-btn" onclick="goToPage('${type}', 1)" ${cur===1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+            html += `<button class="page-btn" onclick="changePage('${type}', -1)" ${cur===1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>`;
+            html += `<span class="page-info">${cur} / ${tot}</span>`;
+            html += `<button class="page-btn" onclick="changePage('${type}', 1)" ${cur===tot ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>`;
+            html += `<button class="page-btn" onclick="goToPage('${type}', ${tot})" ${cur===tot ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+            
+            pag.innerHTML = html;
+            pag.style.display = tot>1 ? 'flex' : 'none';
+        }
+        
+        function changePage(type, dir) { 
+            if(type==='journal') goToPage('journal', currentJournalPage+dir); 
+            else if(type==='instructor') goToPage('instructor', currentInstructorPage+dir); 
+            else goToPage('engineer', currentEngineerPage+dir); 
+        }
+        
+        function getCurrentPageData(data, page) { 
+            const start = (page-1)*CARDS_PER_PAGE; 
+            return data.slice(start, start+CARDS_PER_PAGE); 
+        }
+        
+        function initDatePicker() { 
+            if(datePicker) datePicker.destroy(); 
+            const input = document.getElementById('date-filter-input'); 
+            datePicker = flatpickr(input, { 
+                locale:"ru", 
+                dateFormat:"d.m.Y", 
+                onChange: (dates,dateStr) => { 
+                    if(dateStr) { 
+                        const active = document.querySelector('.tab-content.active'); 
+                        if(active?.id === 'tab1') filterJournalByDate(dateStr); 
+                        else if(active?.id === 'tab2') filterInstructorByDate(dateStr); 
+                        else if(active?.id === 'tab3') filterEngineerByDate(dateStr); 
+                    } else { 
+                        clearDateFilter(); 
+                    } 
+                }, 
+                onOpen: () => { 
+                    if(/iPhone|iPad|iPod/i.test(navigator.userAgent)) setTimeout(()=>input.blur(),50); 
+                } 
+            }); 
+            input.value = ''; 
+        }
+        
+        function normalizeDateForCompare(dateStr) {
+            if(!dateStr) return '';
+            if(dateStr.includes('-')) {
+                let parts = dateStr.split('-');
+                if(parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+            }
+            return dateStr;
+        }
+        
+        function filterJournalByDate(date) { 
+            if(!date) { 
+                isFilterActive=false; 
+                currentFilterDate=''; 
+                journalData = originalJournalData ? originalJournalData.filter(t => 
+                    ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))
+                ) : []; 
+                currentJournalPage=1; 
+                renderJournalCards(journalData); 
+                updateTabBadges(); 
+                return; 
+            } 
+            isFilterActive=true; 
+            currentFilterDate=date; 
+            filterType='journal'; 
+            const normalizedFilterDate = normalizeDateForCompare(date);
+            journalData = originalJournalData.filter(t => {
+                const taskMatch = ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()));
+                const dateMatch = t.completedDate === normalizedFilterDate || 
+                                  normalizeDateForCompare(t.completedDate) === normalizedFilterDate;
+                return taskMatch && dateMatch;
+            }); 
+            currentJournalPage=1; 
+            renderJournalCards(journalData); 
+            updateTabBadges(); 
+        }
+        
+        function filterInstructorByDate(date) { 
+            if(!date) { 
+                isFilterActive=false; 
+                currentFilterDate=''; 
+                instructorData = originalJournalData ? originalJournalData.filter(t => 
+                    ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))
+                ) : []; 
+                currentInstructorPage=1; 
+                renderInstructorCards(instructorData); 
+                updateTabBadges(); 
+                return; 
+            } 
+            isFilterActive=true; 
+            currentFilterDate=date; 
+            filterType='instructor'; 
+            const normalizedFilterDate = normalizeDateForCompare(date);
+            instructorData = originalJournalData.filter(t => {
+                const taskMatch = ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()));
+                const dateMatch = t.completedDate === normalizedFilterDate || 
+                                  normalizeDateForCompare(t.completedDate) === normalizedFilterDate;
+                return taskMatch && dateMatch;
+            }); 
+            currentInstructorPage=1; 
+            renderInstructorCards(instructorData); 
+            updateTabBadges(); 
+        }
+        
+        function filterEngineerByDate(date) { 
+            if(!date) { 
+                isFilterActive=false; 
+                currentFilterDate=''; 
+                engineerData = originalJournalData ? originalJournalData.filter(t => 
+                    (t.task||'').toLowerCase().includes('клуб')
+                ) : []; 
+                currentEngineerPage=1; 
+                renderEngineerCards(engineerData); 
+                updateTabBadges(); 
+                return; 
+            } 
+            isFilterActive=true; 
+            currentFilterDate=date; 
+            filterType='engineer'; 
+            const normalizedFilterDate = normalizeDateForCompare(date);
+            engineerData = originalJournalData.filter(t => {
+                const taskMatch = (t.task||'').toLowerCase().includes('клуб');
+                const dateMatch = t.completedDate === normalizedFilterDate || 
+                                  normalizeDateForCompare(t.completedDate) === normalizedFilterDate;
+                return taskMatch && dateMatch;
+            }); 
+            currentEngineerPage=1; 
+            renderEngineerCards(engineerData); 
+            updateTabBadges(); 
+        }
+        
+        function clearDateFilter() { 
+            const inp = document.getElementById('date-filter-input'); 
+            if(inp) inp.value = ''; 
+            const active = document.querySelector('.tab-content.active'); 
+            if(active?.id === 'tab1') filterJournalByDate(''); 
+            else if(active?.id === 'tab2') filterInstructorByDate(''); 
+            else if(active?.id === 'tab3') filterEngineerByDate(''); 
+        }
+        
+        async function loadJournal(forceRefresh = false) { 
+            try { 
+                const now = Date.now();
+                if (!forceRefresh && dataCache.journal && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
+                    journalData = dataCache.journal;
+                    renderJournalCards(journalData);
+                    updateTabBadges();
+                    return;
+                }
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
+                originalJournalData = [...journal]; 
+                journalData = journal.filter(t => ['PS','МЕХ','ps','мех'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); 
+                
+                dataCache.journal = journalData;
+                dataCache.lastUpdate = now;
+                
+                renderJournalCards(journalData); 
+                updateTabBadges(); 
+            } catch(e) { 
+                console.error(e); 
+                document.getElementById('journal-cards').innerHTML = `<div class="task-card error">Ошибка</div>`; 
+            } 
+        }
+        
+        async function loadInstructorTasks(forceRefresh = false) { 
+            try { 
+                const now = Date.now();
+                if (!forceRefresh && dataCache.instructor && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
+                    instructorData = dataCache.instructor;
+                    renderInstructorCards(instructorData);
+                    updateTabBadges();
+                    return;
+                }
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
+                if(!originalJournalData) originalJournalData = [...journal]; 
+                instructorData = journal.filter(t => ['ИНСТ','инст'].some(k=> (t.task||'').toLowerCase().includes(k.toLowerCase()))); 
+                
+                dataCache.instructor = instructorData;
+                renderInstructorCards(instructorData); 
+                updateTabBadges(); 
+            } catch(e) { 
+                console.error(e); 
+            } 
+        }
+        
+        async function loadEngineerTasks(forceRefresh = false) { 
+            try { 
+                const now = Date.now();
+                if (!forceRefresh && dataCache.engineer && (now - dataCache.lastUpdate) < dataCache.CACHE_TTL) {
+                    engineerData = dataCache.engineer;
+                    renderEngineerCards(engineerData);
+                    updateTabBadges();
+                    return;
+                }
+                
+                const journal = await makeRequest(`${BACKEND_URL}?action=getJournal`); 
+                if(!originalJournalData) originalJournalData = [...journal]; 
+                engineerData = journal.filter(t => (t.task||'').toLowerCase().includes('клуб')); 
+                
+                dataCache.engineer = engineerData;
+                renderEngineerCards(engineerData); 
+                updateTabBadges(); 
+            } catch(e) { 
+                console.error(e); 
+            } 
+        }
+        
+        async function completeTask(taskId, executorName, rowIndex) { 
+            showLoader(); 
+            try { 
+                const updateUrl = `${BACKEND_URL}?action=updateCell&sheetName=B&column=E&row=${rowIndex}&value=${encodeURIComponent(executorName)}`; 
+                const result = await makeRequest(updateUrl); 
+                if(result.success) { 
+                    await makeRequest(`${BACKEND_URL}?action=updateFromRowNumber&rowNumber=${rowIndex}`); 
+                    
+                    // Инвалидируем кэш
+                    dataCache = {
+                        journal: null,
+                        instructor: null,
+                        engineer: null,
+                        lastUpdate: 0,
+                        CACHE_TTL: 30000
+                    };
+                    
+                    const activeTab = document.querySelector('.tab-content.active');
+                    const wasFilter = isFilterActive;
+                    const savedDate = currentFilterDate;
+                    const savedType = filterType;
+                    
+                    if(activeTab?.id === 'tab1') {
+                        await loadJournal(true);
+                        if(wasFilter && savedDate) filterJournalByDate(savedDate);
+                    } else if(activeTab?.id === 'tab2') {
+                        await loadInstructorTasks(true);
+                        if(wasFilter && savedDate) filterInstructorByDate(savedDate);
+                    } else if(activeTab?.id === 'tab3') {
+                        await loadEngineerTasks(true);
+                        if(wasFilter && savedDate) filterEngineerByDate(savedDate);
+                    }
+                    hideLoader(); 
+                } else hideLoader(); 
+            } catch(e) { 
+                console.error(e); 
+                hideLoader(); 
+            } 
+        }
+        
+        function showConfirmModal(taskId, rowIndex) { 
+            const modal = document.createElement('div'); 
+            modal.className = 'confirm-modal'; 
+            modal.innerHTML = `<div class="confirm-modal-content"><div class="confirm-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="confirm-modal-title">Подтверждение</div><div class="confirm-modal-message">Вы уверены, что нажатие было не случайным?</div><div class="confirm-modal-buttons"><button class="confirm-modal-btn confirm" id="confirmYesBtn">Да, выполнить</button><button class="confirm-modal-btn cancel" id="confirmNoBtn">Отмена</button></div></div>`; 
+            document.body.appendChild(modal); 
+            modal.querySelector('#confirmYesBtn').onclick = () => { 
+                modal.remove(); 
+                if(!currentUserNameFromSheet) return alert('Ошибка: имя не найдено'); 
+                completeTask(taskId, currentUserNameFromSheet, rowIndex); 
+            }; 
+            modal.querySelector('#confirmNoBtn').onclick = () => modal.remove(); 
+            modal.onclick = (e) => { if(e.target === modal) modal.remove(); }; 
+        }
+        
+        function submitTaskWithConfirm(event, taskId, rowIndex) { 
+            event.preventDefault(); 
+            event.stopPropagation(); 
+            showConfirmModal(taskId, rowIndex); 
+        }
+        
+        function manualRefresh() {
+            showLoader();
+            dataCache = {
+                journal: null,
+                instructor: null,
+                engineer: null,
+                lastUpdate: 0,
+                CACHE_TTL: 30000
+            };
+            Promise.all([loadJournal(true), loadInstructorTasks(true), loadEngineerTasks(true)])
+                .then(() => hideLoader())
+                .catch(() => hideLoader());
+        }
+        
+        function renderJournalCards(data) { 
+            const cont = document.getElementById('journal-cards'); 
+            if(!data || !data.length) { 
+                cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; 
+                totalJournalPages=1; 
+                currentJournalPage=1; 
+                updatePagination('journal'); 
+                return; 
+            } 
+            const sorted = [...data]; 
+            totalJournalPages = Math.ceil(sorted.length/CARDS_PER_PAGE); 
+            if(currentJournalPage>totalJournalPages) currentJournalPage=1; 
+            const current = getCurrentPageData(sorted, currentJournalPage); 
+            let html=''; 
+            current.forEach((t,idx)=>{ 
+                const row = t.rowIndex || (idx+2); 
+                const hasLink = t.driveLink && t.driveLink.trim(); 
+                const tid = t.id || t.driveLink || ''; 
+                if(!t.isCompleted) { 
+                    html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; 
+                } else { 
+                    html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; 
+                } 
+            }); 
+            cont.innerHTML = html; 
+            updatePagination('journal'); 
+        }
+        
+        function renderInstructorCards(data) { 
+            const cont = document.getElementById('instructor-cards'); 
+            if(!data || !data.length) { 
+                cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; 
+                totalInstructorPages=1; 
+                currentInstructorPage=1; 
+                updatePagination('instructor'); 
+                return; 
+            } 
+            const sorted = [...data]; 
+            totalInstructorPages = Math.ceil(sorted.length/CARDS_PER_PAGE); 
+            if(currentInstructorPage>totalInstructorPages) currentInstructorPage=1; 
+            const current = getCurrentPageData(sorted, currentInstructorPage); 
+            let html=''; 
+            current.forEach((t,idx)=>{ 
+                const row = t.rowIndex || (idx+2); 
+                const hasLink = t.driveLink && t.driveLink.trim(); 
+                const tid = t.id || t.driveLink || ''; 
+                if(!t.isCompleted) { 
+                    html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; 
+                } else { 
+                    html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; 
+                } 
+            }); 
+            cont.innerHTML = html; 
+            updatePagination('instructor'); 
+        }
+        
+        function renderEngineerCards(data) { 
+            const cont = document.getElementById('engineer-cards'); 
+            if(!data || !data.length) { 
+                cont.innerHTML = `<div class="task-card"><div>Нет данных</div></div>`; 
+                totalEngineerPages=1; 
+                currentEngineerPage=1; 
+                updatePagination('engineer'); 
+                return; 
+            } 
+            const sorted = [...data]; 
+            totalEngineerPages = Math.ceil(sorted.length/CARDS_PER_PAGE); 
+            if(currentEngineerPage>totalEngineerPages) currentEngineerPage=1; 
+            const current = getCurrentPageData(sorted, currentEngineerPage); 
+            let html=''; 
+            current.forEach((t,idx)=>{ 
+                const row = t.rowIndex || (idx+2); 
+                const hasLink = t.driveLink && t.driveLink.trim(); 
+                const tid = t.id || t.driveLink || ''; 
+                if(!t.isCompleted) { 
+                    html+=`<div class="task-card pending"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate||'-'}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value">-</span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<button class="submit-btn" onclick="submitTaskWithConfirm(event,'${tid}',${row})"><i class="fas fa-paper-plane"></i>ВЫПОЛНИТЬ</button></div></div>`; 
+                } else { 
+                    html+=`<div class="task-card completed"><div class="task-header"><div class="task-title">${t.task}</div></div><div class="card-content"><div class="content-row"><span class="row-label">Дата появления:</span><span class="row-value">${t.createdDate}</span></div><div class="content-row"><span class="row-label">Дата выполнения:</span><span class="row-value">${t.completedDate}</span></div><div class="content-row"><span class="row-label">Выполнил:</span><span class="row-value"><span class="executor-name">${t.executor}</span></span></div></div><div class="buttons-container">${hasLink ? `<a href="#" onclick="openDriveLink('${t.driveLink}')" class="schema-button"><i class="fas fa-file-alt"></i>ОТКРЫТЬ ЗАДАЧУ</a>` : '<div class="no-open">Недоступно</div>'}<div class="submitted-text"><i class="fas fa-check-circle"></i>ВЫПОЛНЕНО</div></div></div>`; 
+                } 
+            }); 
+            cont.innerHTML = html; 
+            updatePagination('engineer'); 
+        }
+        
+        function initializeApp() { 
+            showLoader(); 
+            
+            document.querySelectorAll('.tab-btn').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); 
+                    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); 
+                    btn.classList.add('active'); 
+                    const id=btn.getAttribute('data-tab'); 
+                    document.getElementById(id).classList.add('active'); 
+                    
+                    if(id==='tab2'){ 
+                        currentInstructorPage=1; 
+                        loadInstructorTasks(); 
+                    } else if(id==='tab1'){ 
+                        currentJournalPage=1; 
+                        loadJournal(); 
+                    } else { 
+                        currentEngineerPage=1; 
+                        loadEngineerTasks(); 
+                    } 
+                    
+                    if(isFilterActive && currentFilterDate) { 
+                        if(id==='tab1') filterJournalByDate(currentFilterDate); 
+                        else if(id==='tab2') filterInstructorByDate(currentFilterDate); 
+                        else filterEngineerByDate(currentFilterDate); 
+                    } 
+                    scrollToTop(); 
+                });
+            }); 
+            
+            initDatePicker(); 
+            
+            Promise.all([loadJournal(true), loadInstructorTasks(true), loadEngineerTasks(true)])
+                .then(()=>setTimeout(()=>hideLoader(),100))
+                .catch(()=>hideLoader()); 
+            
+            setInterval(()=>{ 
+                const active = document.querySelector('.tab-content.active'); 
+                if(active?.id==='tab2') loadInstructorTasks(true); 
+                else if(active?.id==='tab1') loadJournal(true); 
+                else if(active?.id==='tab3') loadEngineerTasks(true); 
+            }, 60000); 
+            
+            setTimeout(()=>isInitialLoad=false,1000); 
+        }
+        
+        window.addEventListener('load',()=>{ 
+            const logged = localStorage.getItem('userLoggedIn')==='true', 
+                  email=localStorage.getItem('userEmail'), 
+                  name=localStorage.getItem('userName'), 
+                  nameSheet=localStorage.getItem('userNameFromSheet'), 
+                  pic=localStorage.getItem('userPic'); 
+            if(logged && email) { 
+                loginSection.style.display='none'; 
+                mainContent.style.display='block'; 
+                currentUser={ email, name, picture:pic }; 
+                currentUserNameFromSheet = nameSheet || name; 
+                updateUserAvatar(currentUser); 
+                showLoading(true); 
+                loadSheetsAPI().then(()=>gapi.client.init({ 
+                    apiKey: AUTH_API_KEY, 
+                    discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4'] 
+                })).then(()=>checkEmailInSheet(email)).catch(()=>signOut()); 
+            } else { 
+                loginSection.style.display='flex'; 
+                mainContent.style.display='none'; 
+                setTimeout(()=>loadingScreen.classList.add('fade-out'),500); 
+            } 
+        });
+        
+        window.openDriveLink = openDriveLink; 
+        window.submitTaskWithConfirm = submitTaskWithConfirm; 
+        window.goToPage = goToPage; 
+        window.changePage = changePage; 
+        window.toggleUserDropdown = toggleUserDropdown; 
+        window.signOut = signOut;
+        window.manualRefresh = manualRefresh;
     </script>
 </body>
 </html>
