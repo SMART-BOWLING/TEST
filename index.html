@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Lucky Strike · Бильярд Бронирование</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
-  <!-- Font Awesome 6 (Free Icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
@@ -15,16 +14,30 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
     }
     
-    /* Глобально убираем обводку у всех элементов */
-    *:focus, *:focus-visible, *:active {
+    /* Жёстко убираем ВСЮ обводку у всех элементов */
+    *:focus, *:focus-visible, *:active, *:focus-within {
       outline: none !important;
       box-shadow: none !important;
+      border-color: transparent !important;
+    }
+    
+    /* Отдельно для ползунков - самый жёсткий сброс */
+    .slider, .slider *, .drag-handle, .drag-handle * {
+      outline: none !important;
+      box-shadow: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+      user-select: none !important;
+    }
+    
+    /* Убираем обводку при любом взаимодействии */
+    .slider:focus, .slider:active, .slider:focus-visible,
+    .slider:hover, .slider:target,
+    .drag-handle:focus, .drag-handle:active, .drag-handle:focus-visible {
+      outline: none !important;
+      box-shadow: none !important;
+      border: 0.5px solid rgba(255,255,255,0.25) !important;
     }
     
     input, textarea, .f-input, .sheet-body .f-input, .info-list strong, .info-list span, .temp-card-inline .temp-time {
@@ -450,7 +463,7 @@
       z-index: 20;
     }
     
-    /* Убираем абсолютно всю обводку у ползунков */
+    /* Полное удаление любой обводки у ползунков */
     .slider {
       position: absolute;
       border-radius: 6px;
@@ -470,20 +483,24 @@
       font-family: var(--font-system);
       overflow: hidden;
       white-space: nowrap;
+      /* Ключевые свойства для удаления обводки */
       outline: none !important;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent !important;
+      text-decoration: none !important;
     }
     
     /* Убираем обводку при любых состояниях */
-    .slider:focus, 
-    .slider:focus-visible,
-    .slider:active,
-    .slider *:focus,
-    .slider *:focus-visible,
-    .slider *:active {
+    .slider:focus, .slider:active, .slider:focus-visible,
+    .slider:focus-within, .slider:hover {
       outline: none !important;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
       border: 0.5px solid rgba(255,255,255,0.25) !important;
+    }
+    
+    /* Для всех дочерних элементов тоже */
+    .slider *, .slider *:focus, .slider *:active, .slider *:focus-visible {
+      outline: none !important;
+      box-shadow: none !important;
     }
     
     .ghost-slider {
@@ -574,9 +591,12 @@
       outline: none !important;
     }
     
-    .drag-handle:focus, .drag-handle:active, .drag-handle:focus-visible {
+    /* Жёстко убираем обводку у ручки перетаскивания */
+    .drag-handle:focus, .drag-handle:active, .drag-handle:focus-visible,
+    .drag-handle:focus-within, .drag-handle:hover {
       outline: none !important;
       box-shadow: none !important;
+      border: none !important;
     }
     
     .slider.drag-mode-enabled .drag-handle { cursor: grab; }
@@ -843,8 +863,6 @@
   
   let currentUser = null;
   
-  // ==================== ФУНКЦИИ АВТОРИЗАЦИИ ====================
-  
   function parseJwt(token) {
     try {
       const base64Url = token.split('.')[1];
@@ -1020,7 +1038,6 @@
       userRoleSpan.style.display = 'none';
     }
     
-    // Access rule: Only "Разработчик" or "Управляющий" can see Admin panel
     const adminPanelBtn = document.querySelector('.nav-btn');
     if (adminPanelBtn) {
       const allowedRoles = ['разработчик', 'управляющий'];
@@ -1028,10 +1045,8 @@
       
       if (allowedRoles.includes(userRole)) {
         adminPanelBtn.style.display = 'flex';
-        console.log('Admin panel доступна для роли:', user.role);
       } else {
         adminPanelBtn.style.display = 'none';
-        console.log('Admin panel НЕ доступна для роли:', user.role || '(не указана)');
       }
     }
     
@@ -1047,8 +1062,6 @@
     localStorage.removeItem('billiardUserLoggedIn');
     location.reload();
   }
-  
-  // ==================== АДМИН-ПАНЕЛЬ ====================
   
   async function openAdminPanel() {
     showLoad();
@@ -1156,16 +1169,12 @@
         url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       }
       
-      console.log("Sending request to:", url);
-      console.log("Role value being sent:", role);
-      
       const response = await fetch(url, {
         method: "GET",
         mode: "cors"
       });
       
       const result = await response.json();
-      console.log("Response:", result);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка сохранения");
