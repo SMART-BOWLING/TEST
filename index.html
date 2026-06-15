@@ -828,42 +828,13 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ ====================
+  // ==================== КОНФИГУРАЦИЯ АВТОРИЗАЦИИ ====================
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzSCz6vtscn6GUjC_L3i6RtS4WOPUVKvhhubvj5FRT-XY7R2_SiVAA-c_weiuSB0auX/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyVH7brTDjP-ori4QFy_wAMkjPkqKYcd8WHtMYFlPH4Kl1wzAYSSWdN-C_CzBucuOhG/exec";
   
   let currentUser = null;
-  
-  // ==================== JSONP ФУНКЦИИ ДЛЯ ОБХОДА CORS ====================
-  
-  function jsonpRequest(url, callbackName = 'jsonpCallback') {
-    return new Promise((resolve, reject) => {
-      const callbackFunction = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const script = document.createElement('script');
-      
-      // Добавляем callback параметр к URL
-      const separator = url.includes('?') ? '&' : '?';
-      const fullUrl = `${url}${separator}callback=${callbackFunction}`;
-      
-      // Глобальная функция для обработки ответа
-      window[callbackFunction] = (data) => {
-        delete window[callbackFunction];
-        document.body.removeChild(script);
-        resolve(data);
-      };
-      
-      script.src = fullUrl;
-      script.onerror = () => {
-        delete window[callbackFunction];
-        document.body.removeChild(script);
-        reject(new Error('JSONP request failed'));
-      };
-      
-      document.body.appendChild(script);
-    });
-  }
   
   // ==================== ФУНКЦИИ АВТОРИЗАЦИИ ====================
   
@@ -1070,7 +1041,7 @@
     location.reload();
   }
   
-  // ==================== АДМИН-ПАНЕЛЬ (JSONP ВЕРСИЯ) ====================
+  // ==================== АДМИН-ПАНЕЛЬ ====================
   
   async function openAdminPanel() {
     showLoad();
@@ -1085,8 +1056,8 @@
   
   async function loadUsersList() {
     try {
-      const url = `${GAS_URL}?action=getUsers&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
+      const response = await fetch(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
+      const data = await response.json();
       
       if (!data.success) {
         throw new Error(data.message);
@@ -1116,12 +1087,12 @@
             <td class="user-actions">
               <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
               <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
+             </td>
+          </td>
         `;
       });
       
-      html += `</tbody></table>`;
+      html += `</tbody>  таблица`;
       container.innerHTML = html;
       
     } catch (error) {
@@ -1172,15 +1143,20 @@
     try {
       let url;
       if (row) {
-        url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+        url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       } else {
-        url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+        url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}`;
       }
       
       console.log("Sending request to:", url);
       console.log("Role value being sent:", role);
       
-      const result = await jsonpRequest(url);
+      const response = await fetch(url, {
+        method: "GET",
+        mode: "cors"
+      });
+      
+      const result = await response.json();
       console.log("Response:", result);
       
       if (result && result.success === false) {
@@ -1207,8 +1183,12 @@
     showLoad();
     
     try {
-      const url = `${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
+      const response = await fetch(`${GAS_URL}?action=deleteUser&row=${row}`, {
+        method: "GET",
+        mode: "cors"
+      });
+      
+      const result = await response.json();
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка удаления");
@@ -1403,112 +1383,37 @@
   function openBookModal(){ if(tempBookings.length===0){ alert("Сначала выделите интервал на столе"); return; } $("nameInput").value=""; $("phoneInput").value=""; $("commentInput").value=""; updatePreviewTimes(); $("bookModal").classList.add("open"); }
   function closeBookModal(){ $("bookModal").classList.remove("open"); }
   
-  // JSONP версия сохранения броней
   async function submitTempBookings(){ 
     let name=$("nameInput").value.trim(); 
     if(!name) return alert("Введите имя"); 
     if(tempBookings.length===0) return; 
     showLoad(); 
     try{ 
-      const bookingsData = tempBookings.map(tb=>({ 
-        date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
-        tableNumber:tb.lane+1, 
-        start:slots[tb.startSlotIdx].key, 
-        end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-        name, 
-        phone:$("phoneInput").value.trim(), 
-        comment:$("commentInput").value.trim() 
-      }));
-      
-      const url = `${GAS_URL}?action=addBookings&data=${encodeURIComponent(JSON.stringify(bookingsData))}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      
-      if(result.success){
-        clearTempSelections(); 
-        await loadFromServer(); 
-        closeBookModal(); 
-      } else {
-        alert("Ошибка: " + (result.message || "Неизвестная ошибка"));
-      }
-    } catch(e){alert("Ошибка при сохранении: " + e.message);} 
+      await fetch(GAS_URL,{ 
+        method:"POST", 
+        headers: {'Content-Type': 'application/json'},
+        body:JSON.stringify({ 
+          bookings:tempBookings.map(tb=>({ 
+            date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
+            tableNumber:tb.lane+1, 
+            start:slots[tb.startSlotIdx].key, 
+            end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
+            name, 
+            phone:$("phoneInput").value.trim(), 
+            comment:$("commentInput").value.trim() 
+          })) 
+        })
+      }); 
+      clearTempSelections(); 
+      await loadFromServer(); 
+      closeBookModal(); 
+    } catch(e){alert("Ошибка при сохранении");} 
     hideLoad(); 
   }
   
-  // JSONP версия загрузки броней
-  async function loadFromServer(){ 
-    showLoad(); 
-    try{ 
-      let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-      const url = `${GAS_URL}?action=get&date=${dateVal}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      
-      bookings = data.bookings?data.bookings.map(b=>{ 
-        let startKey=parseFloat(b.start); 
-        let endKey=parseFloat(b.end); 
-        let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
-        let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
-        if(endSlotIdx<0) endSlotIdx=slots.length-1; 
-        return { 
-          id:b.id, 
-          lane:b.table-1, 
-          start:startKey, 
-          end:endKey, 
-          startSlotIdx, 
-          endSlotIdx, 
-          name:b.name, 
-          phone:b.phone, 
-          comment:b.comment, 
-          confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) 
-        }; 
-      }):[]; 
-      renderAllSliders(); 
-      updateCellsHighlight(); 
-    } catch(e){console.error(e); alert("Ошибка загрузки: " + e.message);} 
-    hideLoad(); 
-  }
+  async function loadFromServer(){ showLoad(); try{ let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; let res=await fetch(GAS_URL+"?action=get&date="+dateVal); let data=await res.json(); bookings=data.bookings?data.bookings.map(b=>{ let startKey=parseFloat(b.start); let endKey=parseFloat(b.end); let startSlotIdx=slots.findIndex(s=>s.key===startKey); let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; if(endSlotIdx<0) endSlotIdx=slots.length-1; return { id:b.id, lane:b.table-1, start:startKey, end:endKey, startSlotIdx, endSlotIdx, name:b.name, phone:b.phone, comment:b.comment, confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) }; }):[]; renderAllSliders(); updateCellsHighlight(); } catch(e){console.error(e);} hideLoad(); }
   
-  // JSONP версия обновления брони
-  async function saveToServer(booking){ 
-    if(!booking.id) return; 
-    try{ 
-      const url = `${GAS_URL}?action=update&id=${booking.id}&table=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name)}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
-      await jsonpRequest(url);
-    } catch(e){console.error("Error updating booking:", e);} 
-  }
-  
-  // JSONP версия подтверждения брони
-  async function confirmBooking(yes){ 
-    if(!currentBooking) return; 
-    showLoad(); 
-    try{ 
-      const url = `${GAS_URL}?action=confirm&id=${currentBooking.id}&confirmed=${yes}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      if(result.success){
-        closeInfoModal(); 
-        await loadFromServer();
-      } else {
-        alert("Ошибка: " + (result.message || "Не удалось обновить статус"));
-      }
-    } catch(e){alert("Ошибка: " + e.message);} 
-    hideLoad(); 
-  }
-  
-  // JSONP версия удаления брони
-  async function deleteBooking(){ 
-    if(!currentBooking||!confirm("Удалить?")) return; 
-    showLoad(); 
-    try{ 
-      const url = `${GAS_URL}?action=delete&id=${currentBooking.id}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      if(result.success){
-        closeInfoModal(); 
-        await loadFromServer();
-      } else {
-        alert("Ошибка: " + (result.message || "Не удалось удалить бронь"));
-      }
-    } catch(e){alert("Ошибка: " + e.message);} 
-    hideLoad(); 
-  }
+  async function saveToServer(booking){ if(!booking.id) return; await fetch(GAS_URL,{ method:"POST", headers: {'Content-Type': 'application/json'}, body:JSON.stringify({ action:"update", id:booking.id, date:window.dateInputForSync?.value, tableNumber:booking.lane+1, start:booking.start, end:booking.end, name:booking.name, phone:booking.phone, comment:booking.comment }) }); }
   
   function renderAllSliders(){ 
     let container=$("slidersLayer"); 
@@ -1640,7 +1545,8 @@
   }
   
   function closeInfoModal(){ $("infoModal").classList.remove("open"); currentBooking=null; }
-  
+  async function confirmBooking(yes){ if(!currentBooking) return; showLoad(); await fetch(GAS_URL,{ method:"POST", headers: {'Content-Type': 'application/json'}, body:JSON.stringify({ action:"confirm", id:currentBooking.id, confirmed:yes }) }); closeInfoModal(); await loadFromServer(); hideLoad(); }
+  async function deleteBooking(){ if(!currentBooking||!confirm("Удалить?")) return; showLoad(); await fetch(GAS_URL,{ method:"POST", headers: {'Content-Type': 'application/json'}, body:JSON.stringify({ action:"delete", id:currentBooking.id }) }); closeInfoModal(); await loadFromServer(); hideLoad(); }
   function showLoad(){ $("loader").style.display="flex"; }
   function hideLoad(){ $("loader").style.display="none"; }
   
