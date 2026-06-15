@@ -776,7 +776,7 @@
       <button id="dragToggleBtn" class="btn-drag-toggle"><i class="fas fa-arrows-alt"></i> Режим перетяжки: ВЫКЛ</button>
       <div id="inlineTempContainer" class="inline-temp-cards"></div>
     </div>
-    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТОЛ</th></thead><tbody id="dtBody"></tbody></table><div id="slidersLayer"></div></div></div>
+    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТОЛ</th></tr></thead><tbody id="dtBody"></tbody>扬<table><div id="slidersLayer"></div></div></div>
   </div>
 </div>
 
@@ -828,13 +828,17 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyCwGy-M7ro_BS8N1R5Sn1nyOxCQNWBNjx_5GqjQ24CGnD-r3B69JxjELGTciyO1OEc/exec";
+  // ==================== КОНФИГУРАЦИЯ АВТОРИЗАЦИИ ====================
+  const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
+  const AUTH_SHEET_NAME = '1';
+  const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
+  const GAS_URL = "https://script.google.com/macros/s/AKfycby1w1aFCae1YDUBunzWI_L9456wrk16izLYgc5RyKvgeR7y3iT0rZWp-yXzQSvHGYCN/exec";
   
   let currentUser = null;
-  let jsonpCounter = 0;
   
   // ==================== JSONP HELPER ====================
+  let jsonpCounter = 0;
+  
   function jsonpRequest(url, timeout = 30000) {
     return new Promise((resolve, reject) => {
       const callback = `jsonp_callback_${++jsonpCounter}_${Date.now()}`;
@@ -859,106 +863,6 @@
       script.src = `${url}${separator}callback=${callback}`;
       document.head.appendChild(script);
     });
-  }
-  
-  // ==================== JSONP API CALLS ====================
-  async function jsonpGetBookings(date) {
-    try {
-      const data = await jsonpRequest(`${GAS_URL}?action=get&date=${date}&_=${Date.now()}`);
-      return data;
-    } catch (error) {
-      console.error('JSONP getBookings error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpGetUsers() {
-    try {
-      const data = await jsonpRequest(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
-      return data;
-    } catch (error) {
-      console.error('JSONP getUsers error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpAddUser(email, name, role) {
-    try {
-      const url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP addUser error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpUpdateUser(row, email, name, role) {
-    try {
-      const url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP updateUser error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpDeleteUser(row) {
-    try {
-      const url = `${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP deleteUser error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpSubmitBookings(bookingsData) {
-    try {
-      const payload = encodeURIComponent(JSON.stringify(bookingsData));
-      const url = `${GAS_URL}?payload=${payload}&_=${Date.now()}`;
-      const data = await jsonpRequest(url, 60000);
-      return data;
-    } catch (error) {
-      console.error('JSONP submitBookings error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpConfirmBooking(id, confirmed) {
-    try {
-      const url = `${GAS_URL}?action=confirm&id=${id}&confirmed=${confirmed}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP confirmBooking error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpDeleteBooking(id) {
-    try {
-      const url = `${GAS_URL}?action=delete&id=${id}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP deleteBooking error:', error);
-      throw error;
-    }
-  }
-  
-  async function jsonpUpdateBooking(bookingData) {
-    try {
-      const payload = encodeURIComponent(JSON.stringify(bookingData));
-      const url = `${GAS_URL}?action=update&payload=${payload}&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      return data;
-    } catch (error) {
-      console.error('JSONP updateBooking error:', error);
-      throw error;
-    }
   }
   
   // ==================== ФУНКЦИИ АВТОРИЗАЦИИ ====================
@@ -1024,13 +928,13 @@
     try {
       await loadSheetsAPI();
       await gapi.client.init({
-        apiKey: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
+        apiKey: API_KEY,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       });
       
       const response = await gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w',
-        range: '1!A:C',
+        spreadsheetId: AUTH_SPREADSHEET_ID,
+        range: `${AUTH_SHEET_NAME}!A:C`,
       });
       
       const rows = response.result.values;
@@ -1181,7 +1085,7 @@
   
   async function loadUsersList() {
     try {
-      const data = await jsonpGetUsers();
+      const data = await jsonpRequest(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
       
       if (!data.success) {
         throw new Error(data.message);
@@ -1211,13 +1115,12 @@
             <td class="user-actions">
               <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
               <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-              </td>
+             </td>
            </tr>
         `;
       });
       
-      html += `</tbody>
-        </table>`;
+      html += `</tbody> </table>`;
       container.innerHTML = html;
       
     } catch (error) {
@@ -1268,9 +1171,9 @@
     try {
       let result;
       if (row) {
-        result = await jsonpUpdateUser(parseInt(row), email, name, role);
+        result = await jsonpRequest(`${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`);
       } else {
-        result = await jsonpAddUser(email, name, role);
+        result = await jsonpRequest(`${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`);
       }
       
       if (result && result.success === false) {
@@ -1297,7 +1200,7 @@
     showLoad();
     
     try {
-      const result = await jsonpDeleteUser(row);
+      const result = await jsonpRequest(`${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка удаления");
@@ -1498,7 +1401,7 @@
     if(tempBookings.length===0) return; 
     showLoad(); 
     try{ 
-      const result = await jsonpSubmitBookings({ 
+      const payload = encodeURIComponent(JSON.stringify({ 
         bookings:tempBookings.map(tb=>({ 
           date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
           tableNumber:tb.lane+1, 
@@ -1508,19 +1411,13 @@
           phone:$("phoneInput").value.trim(), 
           comment:$("commentInput").value.trim() 
         })) 
-      });
+      }));
       
-      if (result && result.success === false) {
-        throw new Error(result.message || "Ошибка при сохранении");
-      }
-      
+      await jsonpRequest(`${GAS_URL}?payload=${payload}&_=${Date.now()}`);
       clearTempSelections(); 
       await loadFromServer(); 
       closeBookModal(); 
-    } catch(e){
-      console.error("Submit error:", e);
-      alert("Ошибка при сохранении: " + e.message);
-    } 
+    } catch(e){alert("Ошибка при сохранении: " + e.message);} 
     hideLoad(); 
   }
   
@@ -1528,54 +1425,48 @@
     showLoad(); 
     try{ 
       let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
-      let data = await jsonpGetBookings(dateVal);
-      
-      bookings = data.bookings ? data.bookings.map(b => { 
-        let startKey = parseFloat(b.start); 
-        let endKey = parseFloat(b.end); 
-        let startSlotIdx = slots.findIndex(s => s.key === startKey); 
-        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1; 
-        if(endSlotIdx < 0) endSlotIdx = slots.length - 1; 
+      let data = await jsonpRequest(`${GAS_URL}?action=get&date=${dateVal}&_=${Date.now()}`);
+      bookings=data.bookings?data.bookings.map(b=>{ 
+        let startKey=parseFloat(b.start); 
+        let endKey=parseFloat(b.end); 
+        let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
+        let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
+        if(endSlotIdx<0) endSlotIdx=slots.length-1; 
         return { 
-          id: b.id, 
-          lane: b.table - 1, 
-          start: startKey, 
-          end: endKey, 
+          id:b.id, 
+          lane:b.table-1, 
+          start:startKey, 
+          end:endKey, 
           startSlotIdx, 
           endSlotIdx, 
-          name: b.name, 
-          phone: b.phone, 
-          comment: b.comment, 
-          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null) 
+          name:b.name, 
+          phone:b.phone, 
+          comment:b.comment, 
+          confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) 
         }; 
-      }) : []; 
-      
+      }):[]; 
       renderAllSliders(); 
       updateCellsHighlight(); 
-    } catch(e){
-      console.error("Load error:", e);
-      alert("Ошибка загрузки данных: " + e.message);
-    } 
+    } catch(e){console.error(e);} 
     hideLoad(); 
   }
   
   async function saveToServer(booking){ 
     if(!booking.id) return; 
     try {
-      await jsonpUpdateBooking({
-        action: "update",
-        id: booking.id,
-        date: window.dateInputForSync?.value,
-        tableNumber: booking.lane + 1,
-        start: booking.start,
-        end: booking.end,
-        name: booking.name,
-        phone: booking.phone,
-        comment: booking.comment
-      });
-    } catch(e) {
-      console.error("Save to server error:", e);
-    }
+      const payload = encodeURIComponent(JSON.stringify({ 
+        action:"update", 
+        id:booking.id, 
+        date:window.dateInputForSync?.value, 
+        tableNumber:booking.lane+1, 
+        start:booking.start, 
+        end:booking.end, 
+        name:booking.name, 
+        phone:booking.phone, 
+        comment:booking.comment 
+      }));
+      await jsonpRequest(`${GAS_URL}?payload=${payload}&_=${Date.now()}`);
+    } catch(e) { console.error(e); }
   }
   
   function renderAllSliders(){ 
@@ -1753,26 +1644,18 @@
   async function confirmBooking(yes){ 
     if(!currentBooking) return; 
     showLoad(); 
-    try {
-      await jsonpConfirmBooking(currentBooking.id, yes);
-      closeInfoModal(); 
-      await loadFromServer(); 
-    } catch(e) {
-      alert("Ошибка: " + e.message);
-    }
+    await jsonpRequest(`${GAS_URL}?action=confirm&id=${currentBooking.id}&confirmed=${yes}&_=${Date.now()}`);
+    closeInfoModal(); 
+    await loadFromServer(); 
     hideLoad(); 
   }
   
   async function deleteBooking(){ 
     if(!currentBooking||!confirm("Удалить?")) return; 
     showLoad(); 
-    try {
-      await jsonpDeleteBooking(currentBooking.id);
-      closeInfoModal(); 
-      await loadFromServer(); 
-    } catch(e) {
-      alert("Ошибка: " + e.message);
-    }
+    await jsonpRequest(`${GAS_URL}?action=delete&id=${currentBooking.id}&_=${Date.now()}`);
+    closeInfoModal(); 
+    await loadFromServer(); 
     hideLoad(); 
   }
   
