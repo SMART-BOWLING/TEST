@@ -87,6 +87,33 @@
       padding: 32px;
     }
     
+    .login-glyph { 
+      font-size: 52px; 
+      font-weight: 500; 
+      letter-spacing: -0.5px; 
+      color: var(--label-secondary); 
+    }
+    
+    .login-title { 
+      font-size: 34px; 
+      font-weight: 600; 
+      letter-spacing: -0.7px; 
+      color: var(--label-dark); 
+    }
+    
+    .login-sub { 
+      font-size: 16px; 
+      color: var(--label-tertiary); 
+      font-weight: 480; 
+    }
+    
+    .login-sep { 
+      width: 32px; 
+      height: 2px; 
+      background: var(--border-strong); 
+      border-radius: 2px; 
+    }
+
     #content { 
       display: none; 
       min-height: 100vh; 
@@ -164,13 +191,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    
-    .nav-logo {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-      border-radius: 6px;
     }
     
     .nav-btn {
@@ -711,6 +731,10 @@
 <body>
 
 <div id="login">
+  <div class="login-glyph"><i class="fas fa-table-tennis"></i> <i class="fas fa-crown"></i></div>
+  <div class="login-title">LUCKY STRIKE</div>
+  <div class="login-sub">Бильярдное ателье</div>
+  <div class="login-sep"></div>
   <div id="g_id_onload" 
        data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
        data-callback="handleCredentialResponse" 
@@ -729,10 +753,7 @@
 
 <div id="content">
   <nav class="nav">
-    <span class="nav-title">
-      <img class="nav-logo" src="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png" alt="Logo">
-      LUCKY STRIKE · Бильярд
-    </span>
+    <span class="nav-title"><i class="fas fa-table-tennis"></i> LUCKY STRIKE · Бильярд</span>
     <div style="display: flex; gap: 12px; align-items: center;">
       <div id="userInfo" class="user-bar" style="display: none;">
         <img id="userPic" class="user-pic" src="" alt="">
@@ -807,12 +828,11 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ ====================
+  // ==================== КОНФИГУРАЦИЯ АВТОРИЗАЦИИ ====================
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  // ВАЖНО: Замените этот URL на URL вашего опубликованного Google Apps Script!
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzGssUCnowZh6OHk5v_7F3ZvxWe71XpkYmz6ZRhwYeJ-RY1cnFZAaA85ynN-CjOl_jo/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyVH7brTDjP-ori4QFy_wAMkjPkqKYcd8WHtMYFlPH4Kl1wzAYSSWdN-C_CzBucuOhG/exec";
   
   let currentUser = null;
   
@@ -1021,19 +1041,9 @@
     location.reload();
   }
   
-  function checkAuthAndExecute(callback) {
-    if (!currentUser) {
-      alert("Пожалуйста, авторизуйтесь");
-      return false;
-    }
-    if (callback) callback();
-    return true;
-  }
-  
   // ==================== АДМИН-ПАНЕЛЬ ====================
   
   async function openAdminPanel() {
-    if (!checkAuthAndExecute()) return;
     showLoad();
     document.getElementById("adminModal").classList.add("open");
     await loadUsersList();
@@ -1077,13 +1087,12 @@
             <td class="user-actions">
               <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
               <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
+             </td>
+          </td>
         `;
       });
       
-      html += `</tbody>
-    </table>`;
+      html += `</tbody>  таблица`;
       container.innerHTML = html;
       
     } catch (error) {
@@ -1371,141 +1380,40 @@
     document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
   }
   
-  function openBookModal(){ 
-    if(tempBookings.length===0){ 
-      alert("Сначала выделите интервал на столе"); 
-      return; 
-    } 
-    $("nameInput").value=""; 
-    $("phoneInput").value=""; 
-    $("commentInput").value=""; 
-    updatePreviewTimes(); 
-    $("bookModal").classList.add("open"); 
-  }
+  function openBookModal(){ if(tempBookings.length===0){ alert("Сначала выделите интервал на столе"); return; } $("nameInput").value=""; $("phoneInput").value=""; $("commentInput").value=""; updatePreviewTimes(); $("bookModal").classList.add("open"); }
+  function closeBookModal(){ $("bookModal").classList.remove("open"); }
   
-  function closeBookModal(){ 
-    $("bookModal").classList.remove("open"); 
-  }
-  
-  async function submitTempBookings() { 
-    if (!checkAuthAndExecute()) return;
-    
-    let name = $("nameInput").value.trim(); 
+  async function submitTempBookings(){ 
+    let name=$("nameInput").value.trim(); 
     if(!name) return alert("Введите имя"); 
-    if(tempBookings.length === 0) return; 
-    
+    if(tempBookings.length===0) return; 
     showLoad(); 
-    try { 
-        const dateValue = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-        
-        const requestData = {
-            action: "createBookings",
-            date: dateValue,
-            bookings: tempBookings.map(tb => ({ 
-                tableNumber: tb.lane + 1, 
-                start: slots[tb.startSlotIdx].key, 
-                end: slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5), 
-                name: name, 
-                phone: $("phoneInput").value.trim(), 
-                comment: $("commentInput").value.trim()
-            }))
-        };
-        
-        console.log("Sending data:", requestData);
-        console.log("GAS_URL:", GAS_URL);
-        
-        const response = await fetch(GAS_URL, { 
-            method: "POST", 
-            mode: "cors",
-            cache: "no-cache",
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log("Response:", result);
-        
-        if (!result.success) {
-            throw new Error(result.message || "Ошибка при сохранении");
-        }
-        
-        clearTempSelections(); 
-        await loadFromServer(); 
-        closeBookModal(); 
-        alert("Бронь успешно создана!");
-        
-    } catch(e) {
-        console.error("Submit error:", e);
-        alert("Ошибка при сохранении: " + e.message + "\n\nПроверьте подключение к интернету и URL Google Apps Script.\n\nТекущий URL: " + GAS_URL);
-    } 
-    hideLoad(); 
-  }
-  
-  async function loadFromServer() { 
-    if (!checkAuthAndExecute()) return;
-    
-    showLoad(); 
-    try { 
-        let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
-        let res=await fetch(GAS_URL+"?action=get&date="+dateVal + "&_=" + Date.now()); 
-        let data=await res.json(); 
-        
-        if (!data.success) {
-            throw new Error(data.message || "Ошибка загрузки данных");
-        }
-        
-        bookings=data.bookings?data.bookings.map(b=>{ 
-            let startKey=parseFloat(b.start); 
-            let endKey=parseFloat(b.end); 
-            let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
-            let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
-            if(endSlotIdx<0) endSlotIdx=slots.length-1; 
-            return { 
-                id:b.id, 
-                lane:b.table-1, 
-                start:startKey, 
-                end:endKey, 
-                startSlotIdx, 
-                endSlotIdx, 
-                name:b.name, 
-                phone:b.phone, 
-                comment:b.comment, 
-                confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) 
-            }; 
-        }):[]; 
-        renderAllSliders(); 
-        updateCellsHighlight(); 
-    } catch(e){
-        console.error("Load error:", e);
-        alert("Ошибка загрузки данных: " + e.message);
-    } 
-    hideLoad(); 
-  }
-  
-  async function saveToServer(booking){ 
-    if(!booking.id) return; 
-    await fetch(GAS_URL,{ 
+    try{ 
+      await fetch(GAS_URL,{ 
         method:"POST", 
-        headers: {'Content-Type': 'application/json'}, 
+        headers: {'Content-Type': 'application/json'},
         body:JSON.stringify({ 
-            action:"update", 
-            id:booking.id, 
-            date:window.dateInputForSync?.value, 
-            tableNumber:booking.lane+1, 
-            start:booking.start, 
-            end:booking.end, 
-            name:booking.name, 
-            phone:booking.phone, 
-            comment:booking.comment 
-        }) 
-    }); 
+          bookings:tempBookings.map(tb=>({ 
+            date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
+            tableNumber:tb.lane+1, 
+            start:slots[tb.startSlotIdx].key, 
+            end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
+            name, 
+            phone:$("phoneInput").value.trim(), 
+            comment:$("commentInput").value.trim() 
+          })) 
+        })
+      }); 
+      clearTempSelections(); 
+      await loadFromServer(); 
+      closeBookModal(); 
+    } catch(e){alert("Ошибка при сохранении");} 
+    hideLoad(); 
   }
+  
+  async function loadFromServer(){ showLoad(); try{ let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; let res=await fetch(GAS_URL+"?action=get&date="+dateVal); let data=await res.json(); bookings=data.bookings?data.bookings.map(b=>{ let startKey=parseFloat(b.start); let endKey=parseFloat(b.end); let startSlotIdx=slots.findIndex(s=>s.key===startKey); let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; if(endSlotIdx<0) endSlotIdx=slots.length-1; return { id:b.id, lane:b.table-1, start:startKey, end:endKey, startSlotIdx, endSlotIdx, name:b.name, phone:b.phone, comment:b.comment, confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) }; }):[]; renderAllSliders(); updateCellsHighlight(); } catch(e){console.error(e);} hideLoad(); }
+  
+  async function saveToServer(booking){ if(!booking.id) return; await fetch(GAS_URL,{ method:"POST", headers: {'Content-Type': 'application/json'}, body:JSON.stringify({ action:"update", id:booking.id, date:window.dateInputForSync?.value, tableNumber:booking.lane+1, start:booking.start, end:booking.end, name:booking.name, phone:booking.phone, comment:booking.comment }) }); }
   
   function renderAllSliders(){ 
     let container=$("slidersLayer"); 
@@ -1652,27 +1560,6 @@
     });
   }
   
-  // Тестовая функция для проверки соединения
-  async function testConnection() {
-    try {
-      console.log("Testing connection to:", GAS_URL);
-      const response = await fetch(`${GAS_URL}?action=test&_=${Date.now()}`, {
-        method: "GET",
-        mode: "cors"
-      });
-      const data = await response.json();
-      console.log("Connection test result:", data);
-      if (data.success) {
-        alert("✅ Соединение с сервером работает!");
-      } else {
-        alert("❌ Сервер вернул ошибку: " + data.message);
-      }
-    } catch(e) {
-      console.error("Connection test failed:", e);
-      alert("❌ Не удалось соединиться с сервером.\n\nПроверьте:\n1. Правильность URL в GAS_URL\n2. Что скрипт опубликован с доступом \"Anyone\"\n3. Интернет соединение\n\nОшибка: " + e.message);
-    }
-  }
-  
   function initApplication() {
     document.addEventListener('dragstart', (e) => {
       if (e.target.closest('.drag-handle') || e.target.closest('.slider')) {
@@ -1711,16 +1598,13 @@
         }
       });
     }
-    
-    // Initialize dateInputForSync
-    const legacyDateInput = document.createElement("input");
+    let legacyDateInput = document.createElement("input");
     legacyDateInput.type = "date";
     legacyDateInput.id = "dateInput";
     legacyDateInput.style.display = "none";
     document.body.appendChild(legacyDateInput);
     window.dateInputForSync = legacyDateInput;
     legacyDateInput.value = currentDate;
-    
     buildDesktopTable();
     legacyDateInput.addEventListener("change", () => { 
       if (hiddenPicker) hiddenPicker.value = legacyDateInput.value;
@@ -1729,7 +1613,6 @@
       clearTempSelections(); 
     });
     loadFromServer();
-    
     const toggleBtn = $("dragToggleBtn");
     toggleBtn.addEventListener("click", () => {
       dragModeEnabled = !dragModeEnabled;
@@ -1748,9 +1631,6 @@
         if(e.target=== $(id)) $(id).classList.remove("open"); 
       }); 
     });
-    
-    // Для отладки - раскомментируйте для теста соединения
-    // setTimeout(() => testConnection(), 2000);
   }
   
   window.addEventListener('load', function() {
