@@ -537,7 +537,7 @@
 
 <script>
 // ==================== КОНФИГУРАЦИЯ ====================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxQw9YFV-SHaXeXne1m4swhcQCcufzLIV_TCNmkeiY_w85u2XeqYMsqIm6qXRW2g7fN/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzGssUCnowZh6OHk5v_7F3ZvxWe71XpkYmz6ZRhwYeJ-RY1cnFZAaA85ynN-CjOl_jo/exec";
 
 let currentUser = null;
 let bookings = [];
@@ -566,44 +566,44 @@ const GRP_CLASS = ['group-blue', 'group-green', 'group-red'];
 
 const $ = id => document.getElementById(id);
 
-// ==================== РАБОТА С GAS ====================
-async function callGAS(params = {}, postData = null) {
-  try {
-    let url = GAS_URL;
-    const queryParams = new URLSearchParams(params);
-    if (queryParams.toString()) {
-      url += '?' + queryParams.toString();
-    }
-    url += '&_=' + Date.now();
-    
-    console.log("Calling:", url);
-    
-    const options = {
-      method: postData ? 'POST' : 'GET',
-      mode: 'cors',
-      cache: 'no-cache',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    };
-    
-    if (postData) {
-      options.body = JSON.stringify(postData);
-    }
-    
-    const response = await fetch(url, options);
-    const text = await response.text();
-    console.log("Response:", text);
-    
-    try {
-      return JSON.parse(text);
-    } catch(e) {
-      return { success: true, raw: text };
-    }
-  } catch(error) {
-    console.error("GAS call error:", error);
-    throw error;
+// ==================== РАБОТА С GAS ЧЕРЕЗ JSONP ====================
+function callGAS(params, callback) {
+  const script = document.createElement('script');
+  const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  
+  window[callbackName] = function(data) {
+    delete window[callbackName];
+    document.body.removeChild(script);
+    callback(data);
+  };
+  
+  let url = GAS_URL + '?callback=' + callbackName;
+  for (let key in params) {
+    url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
   }
+  url += '&_=' + Date.now();
+  
+  script.src = url;
+  document.body.appendChild(script);
+}
+
+function callGASPost(data, callback) {
+  // Для POST используем fetch с режимом no-cors
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    cache: 'no-cache',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data)
+  }).then(() => {
+    // При no-cors мы не можем прочитать ответ, поэтому просто вызываем callback с успехом
+    callback({ success: true });
+  }).catch(error => {
+    console.error('POST error:', error);
+    callback({ success: false, message: error.message });
+  });
 }
 
 // ==================== АВТОРИЗАЦИЯ ====================
@@ -625,7 +625,6 @@ async function handleCredentialResponse(response) {
     
     console.log("User logged in:", email);
     
-    // Упрощенная авторизация - пропускаем всех
     currentUser = {
       email: email,
       name: payload.name,
@@ -633,7 +632,6 @@ async function handleCredentialResponse(response) {
       role: "пользователь"
     };
     
-    // Сохраняем в localStorage
     localStorage.setItem('billiardUser', JSON.stringify(currentUser));
     
     document.getElementById('login').style.display = 'none';
@@ -944,58 +942,64 @@ async function submitTempBookings() {
     };
     
     console.log("Sending:", requestData);
-    const result = await callGAS({}, requestData);
-    console.log("Result:", result);
     
-    if(result && result.success) {
-      clearTempSelections();
-      await loadFromServer();
-      closeBookModal();
-      alert("Бронь успешно создана!");
-    } else {
-      throw new Error(result?.message || "Ошибка при сохранении");
-    }
+    callGASPost(requestData, (result) => {
+      console.log("Result:", result);
+      if(result && result.success !== false) {
+        clearTempSelections();
+        loadFromServer();
+        closeBookModal();
+        alert("Бронь успешно создана!");
+      } else {
+        alert("Ошибка при сохранении: " + (result?.message || "Неизвестная ошибка"));
+      }
+      hideLoad();
+    });
+    
   } catch(e) {
     console.error("Submit error:", e);
     alert("Ошибка: " + e.message);
+    hideLoad();
   }
-  hideLoad();
 }
 
-async function loadFromServer() {
+function loadFromServer() {
   if(!currentUser) return;
   showLoad();
   try {
     const dateVal = new Date().toISOString().split('T')[0];
-    const result = await callGAS({ action: 'get', date: dateVal });
     
-    if(result && result.bookings) {
-      bookings = result.bookings.map(b => {
-        let startKey = parseFloat(b.start);
-        let endKey = parseFloat(b.end);
-        let startSlotIdx = slots.findIndex(s => s.key === startKey);
-        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
-        if(endSlotIdx < 0) endSlotIdx = slots.length - 1;
-        return {
-          id: b.id,
-          lane: b.table - 1,
-          start: startKey,
-          end: endKey,
-          startSlotIdx: startSlotIdx,
-          endSlotIdx: endSlotIdx,
-          name: b.name,
-          phone: b.phone,
-          comment: b.comment,
-          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null)
-        };
-      });
-      renderAllSliders();
-      updateCellsHighlight();
-    }
+    callGAS({ action: 'get', date: dateVal }, (result) => {
+      console.log("Load result:", result);
+      if(result && result.bookings) {
+        bookings = result.bookings.map(b => {
+          let startKey = parseFloat(b.start);
+          let endKey = parseFloat(b.end);
+          let startSlotIdx = slots.findIndex(s => s.key === startKey);
+          let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
+          if(endSlotIdx < 0) endSlotIdx = slots.length - 1;
+          return {
+            id: b.id,
+            lane: b.table - 1,
+            start: startKey,
+            end: endKey,
+            startSlotIdx: startSlotIdx,
+            endSlotIdx: endSlotIdx,
+            name: b.name,
+            phone: b.phone,
+            comment: b.comment,
+            confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null)
+          };
+        });
+        renderAllSliders();
+        updateCellsHighlight();
+      }
+      hideLoad();
+    });
   } catch(e) {
     console.error("Load error:", e);
+    hideLoad();
   }
-  hideLoad();
 }
 
 function showInfoModal(b) {
@@ -1015,40 +1019,40 @@ function closeInfoModal() {
   currentBooking = null;
 }
 
-async function confirmBooking(yes) {
+function confirmBooking(yes) {
   if(!currentBooking) return;
   showLoad();
-  await callGAS({}, { action: "confirm", id: currentBooking.id, confirmed: yes });
-  closeInfoModal();
-  await loadFromServer();
-  hideLoad();
+  callGASPost({ action: "confirm", id: currentBooking.id, confirmed: yes }, () => {
+    closeInfoModal();
+    loadFromServer();
+    hideLoad();
+  });
 }
 
-async function deleteBooking() {
+function deleteBooking() {
   if(!currentBooking || !confirm("Удалить бронь?")) return;
   showLoad();
-  await callGAS({}, { action: "delete", id: currentBooking.id });
-  closeInfoModal();
-  await loadFromServer();
-  hideLoad();
+  callGASPost({ action: "delete", id: currentBooking.id }, () => {
+    closeInfoModal();
+    loadFromServer();
+    hideLoad();
+  });
 }
 
 // ==================== АДМИН-ПАНЕЛЬ ====================
-async function openAdminPanel() {
+function openAdminPanel() {
   if(!currentUser) return;
   showLoad();
   $("adminModal").classList.add("open");
-  await loadUsersList();
-  hideLoad();
+  loadUsersList();
 }
 
 function closeAdminModal() {
   $("adminModal").classList.remove("open");
 }
 
-async function loadUsersList() {
-  try {
-    const result = await callGAS({ action: 'getUsers' });
+function loadUsersList() {
+  callGAS({ action: 'getUsers' }, (result) => {
     const container = document.getElementById("usersList");
     
     if(result && result.users && result.users.length) {
@@ -1069,10 +1073,8 @@ async function loadUsersList() {
     } else {
       container.innerHTML = '<p>Нет пользователей</p>';
     }
-  } catch(e) {
-    console.error("Load users error:", e);
-    document.getElementById("usersList").innerHTML = '<p>Ошибка загрузки</p>';
-  }
+    hideLoad();
+  });
 }
 
 function showAddUserForm() {
@@ -1097,7 +1099,7 @@ function closeUserFormModal() {
   document.getElementById("userFormModal").classList.remove("open");
 }
 
-async function saveUser(event) {
+function saveUser(event) {
   event.preventDefault();
   const row = document.getElementById("editRow").value;
   const email = document.getElementById("userEmailInput").value.trim();
@@ -1107,40 +1109,44 @@ async function saveUser(event) {
   if(!email) return alert("Введите email");
   
   showLoad();
-  try {
-    let result;
-    if(row) {
-      result = await callGAS({ action: 'updateUser', row: row, email: email, name: name, role: role });
-    } else {
-      result = await callGAS({ action: 'addUser', email: email, name: name, role: role });
-    }
-    
-    if(result && result.success) {
-      closeUserFormModal();
-      await loadUsersList();
-      alert(row ? "Пользователь обновлен" : "Пользователь добавлен");
-    } else {
-      throw new Error(result?.message || "Ошибка");
-    }
-  } catch(e) {
-    alert("Ошибка: " + e.message);
+  
+  if(row) {
+    callGAS({ action: 'updateUser', row: row, email: email, name: name, role: role }, (result) => {
+      if(result && result.success) {
+        closeUserFormModal();
+        loadUsersList();
+        alert("Пользователь обновлен");
+      } else {
+        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
+      }
+      hideLoad();
+    });
+  } else {
+    callGAS({ action: 'addUser', email: email, name: name, role: role }, (result) => {
+      if(result && result.success) {
+        closeUserFormModal();
+        loadUsersList();
+        alert("Пользователь добавлен");
+      } else {
+        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
+      }
+      hideLoad();
+    });
   }
-  hideLoad();
 }
 
-async function deleteUser(row) {
+function deleteUser(row) {
   if(!confirm("Удалить пользователя?")) return;
   showLoad();
-  try {
-    const result = await callGAS({ action: 'deleteUser', row: row });
+  callGAS({ action: 'deleteUser', row: row }, (result) => {
     if(result && result.success) {
-      await loadUsersList();
+      loadUsersList();
       alert("Пользователь удален");
+    } else {
+      alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
+      hideLoad();
     }
-  } catch(e) {
-    alert("Ошибка: " + e.message);
-  }
-  hideLoad();
+  });
 }
 
 function escapeHtml(str) {
@@ -1212,7 +1218,6 @@ function initApplication() {
 
 // Запуск
 window.addEventListener('load', () => {
-  // Проверяем кэш
   const cached = localStorage.getItem('billiardUser');
   if(cached) {
     try {
