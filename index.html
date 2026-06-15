@@ -811,7 +811,8 @@
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz3x-epOq-cJZACKiEZxjTCrFq8IrUWWON7muFiUkMFhoAQLEwdYbvO1YYz00k8-KlQ/exec";
+  // ВАЖНО: Замените этот URL на URL вашего опубликованного Google Apps Script!
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzGssUCnowZh6OHk5v_7F3ZvxWe71XpkYmz6ZRhwYeJ-RY1cnFZAaA85ynN-CjOl_jo/exec";
   
   let currentUser = null;
   
@@ -1411,12 +1412,21 @@
         };
         
         console.log("Sending data:", requestData);
+        console.log("GAS_URL:", GAS_URL);
         
         const response = await fetch(GAS_URL, { 
             method: "POST", 
-            headers: {'Content-Type': 'application/json'},
+            mode: "cors",
+            cache: "no-cache",
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify(requestData)
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const result = await response.json();
         console.log("Response:", result);
@@ -1432,7 +1442,7 @@
         
     } catch(e) {
         console.error("Submit error:", e);
-        alert("Ошибка при сохранении: " + e.message);
+        alert("Ошибка при сохранении: " + e.message + "\n\nПроверьте подключение к интернету и URL Google Apps Script.\n\nТекущий URL: " + GAS_URL);
     } 
     hideLoad(); 
   }
@@ -1443,8 +1453,13 @@
     showLoad(); 
     try { 
         let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
-        let res=await fetch(GAS_URL+"?action=get&date="+dateVal); 
+        let res=await fetch(GAS_URL+"?action=get&date="+dateVal + "&_=" + Date.now()); 
         let data=await res.json(); 
+        
+        if (!data.success) {
+            throw new Error(data.message || "Ошибка загрузки данных");
+        }
+        
         bookings=data.bookings?data.bookings.map(b=>{ 
             let startKey=parseFloat(b.start); 
             let endKey=parseFloat(b.end); 
@@ -1467,7 +1482,7 @@
         renderAllSliders(); 
         updateCellsHighlight(); 
     } catch(e){
-        console.error(e);
+        console.error("Load error:", e);
         alert("Ошибка загрузки данных: " + e.message);
     } 
     hideLoad(); 
@@ -1637,6 +1652,27 @@
     });
   }
   
+  // Тестовая функция для проверки соединения
+  async function testConnection() {
+    try {
+      console.log("Testing connection to:", GAS_URL);
+      const response = await fetch(`${GAS_URL}?action=test&_=${Date.now()}`, {
+        method: "GET",
+        mode: "cors"
+      });
+      const data = await response.json();
+      console.log("Connection test result:", data);
+      if (data.success) {
+        alert("✅ Соединение с сервером работает!");
+      } else {
+        alert("❌ Сервер вернул ошибку: " + data.message);
+      }
+    } catch(e) {
+      console.error("Connection test failed:", e);
+      alert("❌ Не удалось соединиться с сервером.\n\nПроверьте:\n1. Правильность URL в GAS_URL\n2. Что скрипт опубликован с доступом \"Anyone\"\n3. Интернет соединение\n\nОшибка: " + e.message);
+    }
+  }
+  
   function initApplication() {
     document.addEventListener('dragstart', (e) => {
       if (e.target.closest('.drag-handle') || e.target.closest('.slider')) {
@@ -1712,6 +1748,9 @@
         if(e.target=== $(id)) $(id).classList.remove("open"); 
       }); 
     });
+    
+    // Для отладки - раскомментируйте для теста соединения
+    // setTimeout(() => testConnection(), 2000);
   }
   
   window.addEventListener('load', function() {
