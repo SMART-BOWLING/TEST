@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -807,11 +807,11 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ АВТОРИЗАЦИИ ====================
+  // ==================== КОНФИГУРАЦИЯ ====================
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyVH7brTDjP-ori4QFy_wAMkjPkqKYcd8WHtMYFlPH4Kl1wzAYSSWdN-C_CzBucuOhG/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz3x-epOq-cJZACKiEZxjTCrFq8IrUWWON7muFiUkMFhoAQLEwdYbvO1YYz00k8-KlQ/exec";
   
   let currentUser = null;
   
@@ -1020,9 +1020,19 @@
     location.reload();
   }
   
+  function checkAuthAndExecute(callback) {
+    if (!currentUser) {
+      alert("Пожалуйста, авторизуйтесь");
+      return false;
+    }
+    if (callback) callback();
+    return true;
+  }
+  
   // ==================== АДМИН-ПАНЕЛЬ ====================
   
   async function openAdminPanel() {
+    if (!checkAuthAndExecute()) return;
     showLoad();
     document.getElementById("adminModal").classList.add("open");
     await loadUsersList();
@@ -1072,7 +1082,7 @@
       });
       
       html += `</tbody>
-     tabke`;
+    </table>`;
       container.innerHTML = html;
       
     } catch (error) {
@@ -1360,40 +1370,127 @@
     document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
   }
   
-  function openBookModal(){ if(tempBookings.length===0){ alert("Сначала выделите интервал на столе"); return; } $("nameInput").value=""; $("phoneInput").value=""; $("commentInput").value=""; updatePreviewTimes(); $("bookModal").classList.add("open"); }
-  function closeBookModal(){ $("bookModal").classList.remove("open"); }
+  function openBookModal(){ 
+    if(tempBookings.length===0){ 
+      alert("Сначала выделите интервал на столе"); 
+      return; 
+    } 
+    $("nameInput").value=""; 
+    $("phoneInput").value=""; 
+    $("commentInput").value=""; 
+    updatePreviewTimes(); 
+    $("bookModal").classList.add("open"); 
+  }
   
-  async function submitTempBookings(){ 
-    let name=$("nameInput").value.trim(); 
+  function closeBookModal(){ 
+    $("bookModal").classList.remove("open"); 
+  }
+  
+  async function submitTempBookings() { 
+    if (!checkAuthAndExecute()) return;
+    
+    let name = $("nameInput").value.trim(); 
     if(!name) return alert("Введите имя"); 
-    if(tempBookings.length===0) return; 
+    if(tempBookings.length === 0) return; 
+    
     showLoad(); 
-    try{ 
-      await fetch(GAS_URL,{ 
-        method:"POST", 
-        headers: {'Content-Type': 'application/json'},
-        body:JSON.stringify({ 
-          bookings:tempBookings.map(tb=>({ 
-            date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
-            tableNumber:tb.lane+1, 
-            start:slots[tb.startSlotIdx].key, 
-            end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-            name, 
-            phone:$("phoneInput").value.trim(), 
-            comment:$("commentInput").value.trim() 
-          })) 
-        })
-      }); 
-      clearTempSelections(); 
-      await loadFromServer(); 
-      closeBookModal(); 
-    } catch(e){alert("Ошибка при сохранении");} 
+    try { 
+        const dateValue = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
+        
+        const requestData = {
+            action: "createBookings",
+            date: dateValue,
+            bookings: tempBookings.map(tb => ({ 
+                tableNumber: tb.lane + 1, 
+                start: slots[tb.startSlotIdx].key, 
+                end: slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5), 
+                name: name, 
+                phone: $("phoneInput").value.trim(), 
+                comment: $("commentInput").value.trim()
+            }))
+        };
+        
+        console.log("Sending data:", requestData);
+        
+        const response = await fetch(GAS_URL, { 
+            method: "POST", 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(requestData)
+        });
+        
+        const result = await response.json();
+        console.log("Response:", result);
+        
+        if (!result.success) {
+            throw new Error(result.message || "Ошибка при сохранении");
+        }
+        
+        clearTempSelections(); 
+        await loadFromServer(); 
+        closeBookModal(); 
+        alert("Бронь успешно создана!");
+        
+    } catch(e) {
+        console.error("Submit error:", e);
+        alert("Ошибка при сохранении: " + e.message);
+    } 
     hideLoad(); 
   }
   
-  async function loadFromServer(){ showLoad(); try{ let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; let res=await fetch(GAS_URL+"?action=get&date="+dateVal); let data=await res.json(); bookings=data.bookings?data.bookings.map(b=>{ let startKey=parseFloat(b.start); let endKey=parseFloat(b.end); let startSlotIdx=slots.findIndex(s=>s.key===startKey); let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; if(endSlotIdx<0) endSlotIdx=slots.length-1; return { id:b.id, lane:b.table-1, start:startKey, end:endKey, startSlotIdx, endSlotIdx, name:b.name, phone:b.phone, comment:b.comment, confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) }; }):[]; renderAllSliders(); updateCellsHighlight(); } catch(e){console.error(e);} hideLoad(); }
+  async function loadFromServer() { 
+    if (!checkAuthAndExecute()) return;
+    
+    showLoad(); 
+    try { 
+        let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
+        let res=await fetch(GAS_URL+"?action=get&date="+dateVal); 
+        let data=await res.json(); 
+        bookings=data.bookings?data.bookings.map(b=>{ 
+            let startKey=parseFloat(b.start); 
+            let endKey=parseFloat(b.end); 
+            let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
+            let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
+            if(endSlotIdx<0) endSlotIdx=slots.length-1; 
+            return { 
+                id:b.id, 
+                lane:b.table-1, 
+                start:startKey, 
+                end:endKey, 
+                startSlotIdx, 
+                endSlotIdx, 
+                name:b.name, 
+                phone:b.phone, 
+                comment:b.comment, 
+                confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) 
+            }; 
+        }):[]; 
+        renderAllSliders(); 
+        updateCellsHighlight(); 
+    } catch(e){
+        console.error(e);
+        alert("Ошибка загрузки данных: " + e.message);
+    } 
+    hideLoad(); 
+  }
   
-  async function saveToServer(booking){ if(!booking.id) return; await fetch(GAS_URL,{ method:"POST", headers: {'Content-Type': 'application/json'}, body:JSON.stringify({ action:"update", id:booking.id, date:window.dateInputForSync?.value, tableNumber:booking.lane+1, start:booking.start, end:booking.end, name:booking.name, phone:booking.phone, comment:booking.comment }) }); }
+  async function saveToServer(booking){ 
+    if(!booking.id) return; 
+    await fetch(GAS_URL,{ 
+        method:"POST", 
+        headers: {'Content-Type': 'application/json'}, 
+        body:JSON.stringify({ 
+            action:"update", 
+            id:booking.id, 
+            date:window.dateInputForSync?.value, 
+            tableNumber:booking.lane+1, 
+            start:booking.start, 
+            end:booking.end, 
+            name:booking.name, 
+            phone:booking.phone, 
+            comment:booking.comment 
+        }) 
+    }); 
+  }
   
   function renderAllSliders(){ 
     let container=$("slidersLayer"); 
@@ -1578,13 +1675,16 @@
         }
       });
     }
-    let legacyDateInput = document.createElement("input");
+    
+    // Initialize dateInputForSync
+    const legacyDateInput = document.createElement("input");
     legacyDateInput.type = "date";
     legacyDateInput.id = "dateInput";
     legacyDateInput.style.display = "none";
     document.body.appendChild(legacyDateInput);
     window.dateInputForSync = legacyDateInput;
     legacyDateInput.value = currentDate;
+    
     buildDesktopTable();
     legacyDateInput.addEventListener("change", () => { 
       if (hiddenPicker) hiddenPicker.value = legacyDateInput.value;
@@ -1593,6 +1693,7 @@
       clearTempSelections(); 
     });
     loadFromServer();
+    
     const toggleBtn = $("dragToggleBtn");
     toggleBtn.addEventListener("click", () => {
       dragModeEnabled = !dragModeEnabled;
