@@ -13,7 +13,6 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
     
     input, textarea, .f-input, .info-list strong, .info-list span {
@@ -88,13 +87,6 @@
       font-weight: 500;
     }
     
-    .user-role {
-      font-size: 11px;
-      background: var(--surface-secondary);
-      padding: 2px 8px;
-      border-radius: 6px;
-    }
-    
     .logout-btn {
       background: none;
       border: none;
@@ -153,10 +145,6 @@
       align-items: center;
       gap: 8px;
     }
-    
-    .nav-btn:hover { 
-      background: rgba(59,110,143,0.12); 
-    }
 
     .page {
       width: 100%;
@@ -202,10 +190,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    
-    .btn-book:hover { 
-      background: var(--accent-blue-hover); 
     }
     
     .btn-drag-toggle {
@@ -324,6 +308,7 @@
       background: #ffffff;
       border-bottom: 0.5px solid var(--border-subtle);
       border-right: 0.5px solid var(--border-subtle);
+      cursor: pointer;
     }
     
     #tableDesktop tbody td.slot.booking-pending { background: #faf2e0 !important; }
@@ -417,7 +402,6 @@
       <div id="userInfo" class="user-bar" style="display: none;">
         <img id="userPic" class="user-pic" src="">
         <span id="userEmail" class="user-email"></span>
-        <span id="userRoleDisplay" class="user-role"></span>
         <button id="logoutButton" class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <button class="nav-btn" onclick="openAdminPanel()"><i class="fas fa-users-cog"></i> Админ панель</button>
@@ -553,8 +537,7 @@
 
 <script>
 // ==================== КОНФИГУРАЦИЯ ====================
-// ВАЖНО: Замените этот URL на ваш URL из Google Apps Script!
-const GAS_URL = "https://script.google.com/macros/s/AKfycby3YVWT7WVmwlVG4ew1V5mFNCbSW_Zu4dR1ApQhi1XZpOwsOtDDjvPtrAuRbjtPvGFu/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxQw9YFV-SHaXeXne1m4swhcQCcufzLIV_TCNmkeiY_w85u2XeqYMsqIm6qXRW2g7fN/exec";
 
 let currentUser = null;
 let bookings = [];
@@ -563,7 +546,7 @@ let nextTempId = 1;
 let dragModeEnabled = false;
 let currentBooking = null;
 
-// Настройки времени
+// Настройки времени (11:00 до 22:00 с интервалом 30 мин)
 const LANES = 12, SH = 11, EH = 22;
 const slots = [];
 for(let h = SH; h <= EH; h++) {
@@ -640,46 +623,30 @@ async function handleCredentialResponse(response) {
     const payload = parseJwt(response.credential);
     const email = payload.email.toLowerCase().trim();
     
-    // Проверяем email через GAS
-    const result = await callGAS({ action: 'checkAuth', email: email });
+    console.log("User logged in:", email);
     
-    if (result && result.success) {
-      currentUser = {
-        email: email,
-        name: result.name || payload.name,
-        role: result.role || '',
-        picture: payload.picture
-      };
-      
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('content').style.display = 'block';
-      
-      const userInfo = document.getElementById('userInfo');
-      userInfo.style.display = 'flex';
-      document.getElementById('userPic').src = currentUser.picture;
-      document.getElementById('userEmail').textContent = currentUser.email;
-      
-      if (currentUser.role) {
-        document.getElementById('userRoleDisplay').textContent = currentUser.role;
-        document.getElementById('userRoleDisplay').style.display = 'inline-block';
-      }
-      
-      // Показываем админку только для определенных ролей
-      const adminBtn = document.querySelector('.nav-btn');
-      if (adminBtn) {
-        const allowedRoles = ['разработчик', 'управляющий'];
-        if (allowedRoles.includes(currentUser.role.toLowerCase())) {
-          adminBtn.style.display = 'flex';
-        } else {
-          adminBtn.style.display = 'none';
-        }
-      }
-      
-      initApplication();
-    } else {
-      alert('Доступ запрещен. Ваш email не найден в списке разрешенных.');
-    }
+    // Упрощенная авторизация - пропускаем всех
+    currentUser = {
+      email: email,
+      name: payload.name,
+      picture: payload.picture,
+      role: "пользователь"
+    };
+    
+    // Сохраняем в localStorage
+    localStorage.setItem('billiardUser', JSON.stringify(currentUser));
+    
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    
+    const userInfo = document.getElementById('userInfo');
+    userInfo.style.display = 'flex';
+    document.getElementById('userPic').src = currentUser.picture;
+    document.getElementById('userEmail').textContent = currentUser.email;
+    
     hideLoad();
+    initApplication();
+    
   } catch(e) {
     console.error("Auth error:", e);
     alert("Ошибка авторизации: " + e.message);
@@ -688,7 +655,7 @@ async function handleCredentialResponse(response) {
 }
 
 function signOut() {
-  localStorage.clear();
+  localStorage.removeItem('billiardUser');
   location.reload();
 }
 
@@ -1031,21 +998,6 @@ async function loadFromServer() {
   hideLoad();
 }
 
-async function saveToServer(booking) {
-  if(!booking.id) return;
-  await callGAS({}, {
-    action: "update",
-    id: booking.id,
-    date: new Date().toISOString().split('T')[0],
-    tableNumber: booking.lane + 1,
-    start: booking.start,
-    end: booking.end,
-    name: booking.name,
-    phone: booking.phone,
-    comment: booking.comment
-  });
-}
-
 function showInfoModal(b) {
   currentBooking = b;
   $("i-table").textContent = "№ " + (b.lane + 1);
@@ -1271,7 +1223,6 @@ window.addEventListener('load', () => {
         document.getElementById('userInfo').style.display = 'flex';
         document.getElementById('userPic').src = currentUser.picture || '';
         document.getElementById('userEmail').textContent = currentUser.email;
-        if(currentUser.role) document.getElementById('userRoleDisplay').textContent = currentUser.role;
         initApplication();
       }
     } catch(e) {}
