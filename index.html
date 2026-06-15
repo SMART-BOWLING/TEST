@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Lucky Strike · Бильярд Бронирование</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
+  <!-- Font Awesome 6 (Free Icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
   <style>
     * {
       margin: 0;
@@ -14,37 +16,62 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
     
-    input, textarea, .f-input, .info-list strong, .info-list span {
+    input, textarea, .f-input, .sheet-body .f-input, .info-list strong, .info-list span, .temp-card-inline .temp-time {
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+    }
+    
+    .info-row strong, .info-row span {
       user-select: text;
       -webkit-user-select: text;
     }
     
+    .nav-title, .login-title, .login-sub, .sheet-title, .f-label, .ctrl button span, .calendar-date-text {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
     :root {
       --bg: #f2f2f2;
       --surface-primary: #ffffff;
+      --surface-glass: rgba(255, 255, 255, 0.85);
       --surface-secondary: #f8f8f8;
       --border-subtle: #e5e5e5;
       --border-strong: #cccccc;
       --label-dark: #1e1e1e;
       --label-secondary: #4a4a4a;
       --label-tertiary: #7c7c7c;
+      --label-quaternary: #9a9a9a;
       --accent-blue: #3b6e8f;
       --accent-blue-hover: #2c5a77;
+      --accent-blue-dim: rgba(59, 110, 143, 0.12);
       --accent-green: #4f6b4e;
+      --accent-green-dim: rgba(79, 107, 78, 0.12);
       --accent-red: #b33f3f;
+      --accent-amber: #b87c2e;
       --radius-card: 8px;
+      --radius-sm: 6px;
+      --radius-pill: 8px;
+      --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
       --cell-height: 58px;
       --cell-width: 74px;
       --lane-width: 104px;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+      font-family: var(--font-system);
       background: var(--bg);
       color: var(--label-dark);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      font-weight: 450;
     }
 
     #login {
@@ -60,6 +87,33 @@
       padding: 32px;
     }
     
+    .login-glyph { 
+      font-size: 52px; 
+      font-weight: 500; 
+      letter-spacing: -0.5px; 
+      color: var(--label-secondary); 
+    }
+    
+    .login-title { 
+      font-size: 34px; 
+      font-weight: 600; 
+      letter-spacing: -0.7px; 
+      color: var(--label-dark); 
+    }
+    
+    .login-sub { 
+      font-size: 16px; 
+      color: var(--label-tertiary); 
+      font-weight: 480; 
+    }
+    
+    .login-sep { 
+      width: 32px; 
+      height: 2px; 
+      background: var(--border-strong); 
+      border-radius: 2px; 
+    }
+
     #content { 
       display: none; 
       min-height: 100vh; 
@@ -69,7 +123,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(255,255,255,0.85);
+      background: var(--surface-glass);
       backdrop-filter: blur(28px);
       padding: 6px 16px 6px 12px;
       border-radius: 8px;
@@ -86,6 +140,17 @@
     .user-email {
       font-size: 13px;
       font-weight: 500;
+      color: var(--label-dark);
+    }
+    
+    .user-role {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--label-tertiary);
+      background: var(--surface-secondary);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 4px;
     }
     
     .logout-btn {
@@ -96,6 +161,7 @@
       color: var(--label-tertiary);
       font-size: 14px;
       border-radius: 8px;
+      transition: all 0.2s ease;
     }
     
     .logout-btn:hover {
@@ -107,8 +173,8 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(28px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(28px) saturate(180%);
       border-bottom: 0.5px solid var(--border-subtle);
       height: 68px;
       display: flex;
@@ -120,17 +186,11 @@
     .nav-title { 
       font-size: 22px; 
       font-weight: 600; 
-      letter-spacing: -0.4px;
+      letter-spacing: -0.4px; 
+      color: var(--label-dark);
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    
-    .nav-logo {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-      border-radius: 6px;
     }
     
     .nav-btn {
@@ -142,13 +202,20 @@
       font-weight: 510;
       color: var(--accent-blue);
       cursor: pointer;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    
+    .nav-btn:hover { 
+      background: var(--accent-blue-dim); 
+      transform: scale(0.97); 
+    }
 
     .page {
       width: 100%;
+      margin: 0;
       padding: 28px 36px 80px;
       display: flex;
       flex-direction: column;
@@ -176,8 +243,43 @@
       padding: 0 20px 0 16px;
       height: 54px;
       cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-system);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
     
+    .google-calendar-btn:hover {
+      background: #ffffff;
+      border-color: var(--accent-blue);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transform: scale(0.98);
+    }
+    
+    .calendar-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+    }
+    
+    .calendar-date-text {
+      font-size: 16px;
+      font-weight: 550;
+      color: var(--label-dark);
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    
+    .chevron-icon {
+      margin-left: 4px;
+      opacity: 0.6;
+      transition: transform 0.2s;
+    }
+    
+    .google-calendar-btn:hover .chevron-icon {
+      transform: translateY(2px);
+    }
+
     .btn-book {
       height: 54px;
       padding: 0 38px;
@@ -188,9 +290,15 @@
       font-size: 17px;
       font-weight: 590;
       cursor: pointer;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    
+    .btn-book:hover { 
+      background: var(--accent-blue-hover); 
+      transform: scale(0.98); 
     }
     
     .btn-drag-toggle {
@@ -203,6 +311,7 @@
       font-size: 16px;
       font-weight: 500;
       cursor: pointer;
+      white-space: nowrap;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -211,6 +320,11 @@
     .btn-drag-toggle.active { 
       background: var(--accent-blue); 
       color: white; 
+      border-color: var(--accent-blue); 
+    }
+    
+    .btn-drag-toggle.active:hover { 
+      background: var(--accent-blue-hover); 
     }
 
     .inline-temp-cards { 
@@ -230,6 +344,20 @@
       border-radius: 8px;
       padding: 6px 16px 6px 22px;
       font-size: 13px;
+    }
+    
+    .temp-card-inline strong { 
+      font-size: 14px; 
+      font-weight: 590; 
+      margin-right: 4px; 
+    }
+    
+    .temp-card-inline .temp-time { 
+      font-family: monospace; 
+      font-size: 12px; 
+      background: #efefef; 
+      padding: 4px 12px; 
+      border-radius: 6px; 
     }
     
     .temp-card-inline .temp-rm { 
@@ -252,6 +380,7 @@
     
     .grid-scroll { 
       overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; 
       position: relative; 
     }
     
@@ -282,7 +411,13 @@
       z-index: 5;
       font-size: 15px;
       font-weight: 620;
+      color: var(--label-dark);
       background: #efefef;
+    }
+    
+    #tableDesktop thead th.th-time { 
+      cursor: pointer; 
+      width: var(--cell-width); 
     }
     
     #tableDesktop tbody tr { 
@@ -309,8 +444,10 @@
       background: #ffffff;
       border-bottom: 0.5px solid var(--border-subtle);
       border-right: 0.5px solid var(--border-subtle);
+      transition: background 0.1s;
     }
     
+    #tableDesktop tbody tr:hover td.slot { background: #f6f6f6; }
     #tableDesktop tbody td.slot.booking-pending { background: #faf2e0 !important; }
     #tableDesktop tbody td.slot.booking-confirmed { background: #e3efe2 !important; }
     #tableDesktop tbody td.slot.booking-rejected { background: #f2e0e0 !important; }
@@ -331,19 +468,75 @@
       position: absolute;
       border-radius: 6px;
       pointer-events: auto;
-      cursor: pointer;
+      cursor: default;
       padding: 6px 12px 6px 38px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 4px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(8px);
+      border: 0.5px solid rgba(255,255,255,0.25);
+      will-change: left, top;
+      transition: all 0.12s ease;
       font-weight: 510;
+      font-family: var(--font-system);
       overflow: hidden;
       white-space: nowrap;
-      transition: all 0.12s ease;
     }
+    
+    .ghost-slider {
+      position: absolute;
+      border-radius: 6px;
+      pointer-events: none;
+      padding: 6px 12px 6px 38px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.45) !important;
+      backdrop-filter: blur(12px);
+      border: 2px dashed rgba(255, 215, 0, 0.9) !important;
+      box-shadow: 0 0 0 2px rgba(255,255,200,0.3), 0 8px 20px rgba(0,0,0,0.2);
+      z-index: 999;
+      font-weight: 510;
+      font-family: var(--font-system);
+      overflow: hidden;
+      white-space: nowrap;
+      transition: none;
+      color: #fff;
+      text-shadow: 0 1px 1px black;
+    }
+    
+    .ghost-slider .sl-name, .ghost-slider .sl-time {
+      opacity: 0.85;
+    }
+    
+    .ghost-slider .guest-status-dot {
+      background-color: #ffc107 !important;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+    }
+    
+    .slider.dragging {
+      opacity: 0.4;
+      transition: opacity 0.1s;
+    }
+    
+    .slider[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); color: white; }
+    .slider[data-lane-type="green"] { background: rgba(79, 107, 78, 0.92); color: white; }
+    .slider[data-lane-type="red"] { background: rgba(155, 75, 75, 0.92); color: white; }
+    .slider.pending[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); }
+    .slider.pending[data-lane-type="green"] { background: rgba(79, 107, 78, 0.92); }
+    .slider.pending[data-lane-type="red"] { background: rgba(155, 75, 75, 0.92); }
+    .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; }
+    .slider.confirmed[data-lane-type="green"] { background: #4f6b4e; }
+    .slider.confirmed[data-lane-type="red"] { background: #9b4b4b; }
+    .slider.rejected[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.55); opacity: 0.85; }
+    .slider.rejected[data-lane-type="green"] { background: rgba(79, 107, 78, 0.55); }
+    .slider.rejected[data-lane-type="red"] { background: rgba(155, 75, 75, 0.55); }
+    .slider.temp[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.75); border: 1px solid #c9b16b; }
+    .slider.temp[data-lane-type="green"] { background: rgba(79, 107, 78, 0.75); border: 1px solid #c9b16b; }
+    .slider.temp[data-lane-type="red"] { background: rgba(155, 75, 75, 0.75); border: 1px solid #c9b16b; }
     
     .guest-status-dot {
       position: absolute;
@@ -364,13 +557,8 @@
     .slider.pending .guest-status-dot { background-color: #f5b042; }
     .slider.temp .guest-status-dot { background-color: #aaaaaa; opacity: 0.7; }
     
-    .slider.pending[data-lane-type="blue"] { background: rgba(44,95,122,0.92); color: white; }
-    .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; color: white; }
-    .slider.rejected[data-lane-type="blue"] { background: rgba(44,95,122,0.55); opacity: 0.85; color: white; }
-    .slider.temp[data-lane-type="blue"] { background: rgba(44,95,122,0.75); border: 1px solid #c9b16b; color: white; }
-    
-    .sl-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sl-time { font-size: 10px; opacity: 0.85; }
+    .sl-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+    .sl-time { font-size: 10px; opacity: 0.85; font-weight: 500; padding-right: 8px; }
     
     .drag-handle {
       position: absolute;
@@ -383,11 +571,15 @@
       pointer-events: auto;
     }
     
+    .slider.drag-mode-enabled .drag-handle { cursor: grab; }
+    .slider.drag-mode-enabled .drag-handle:active { cursor: grabbing; }
+    .slider:not(.drag-mode-enabled) .drag-handle { cursor: pointer; }
+    
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); z-index: 2000; justify-content: center; align-items: center; }
     .overlay.open { display: flex; }
     .sheet { background: rgba(255,255,255,0.98); border-radius: 12px; width: 100%; max-width: 540px; box-shadow: 0 32px 56px rgba(0,0,0,0.2); }
     .sheet-head { padding: 24px 28px 12px; display: flex; justify-content: space-between; align-items: center; }
-    .sheet-title { font-size: 28px; font-weight: 640; display: flex; align-items: center; gap: 12px; }
+    .sheet-title { font-size: 28px; font-weight: 640; letter-spacing: -0.6px; display: flex; align-items: center; gap: 12px; }
     .sheet-x { width: 42px; height: 42px; border-radius: 8px; background: #f2f2f5; border: none; font-size: 24px; cursor: pointer; }
     .sheet-body { padding: 16px 28px 34px; }
     .f-group { margin-bottom: 24px; }
@@ -400,40 +592,173 @@
     .del-btn { width:100%; height: 54px; background: #f2eaea; border: none; border-radius: 8px; margin-top: 28px; cursor: pointer; font-weight: 600; color: #b33f3f; }
     .confirm-btns { display: flex; gap: 16px; margin: 20px 0 8px; }
     .cb-yes, .cb-no { flex:1; height: 54px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .cb-yes { background: rgba(79,107,78,0.12); color: #3c5a3b; }
-    .cb-no { background: rgba(179,63,63,0.1); color: #a33a3a; }
+    .cb-yes { background: rgba(79, 107, 78, 0.12); color: #3c5a3b; }
+    .cb-no { background: rgba(179, 63, 63, 0.1); color: #a33a3a; }
     #loader { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); backdrop-filter: blur(20px); z-index:5000; align-items:center; justify-content:center; }
     .loader-box { background: rgba(255,255,255,0.96); border-radius: 12px; padding: 32px 48px; text-align: center; }
     .spin { width: 44px; height: 44px; border: 3px solid #e9e9ef; border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 18px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .drag-mode-indicator { position: fixed; bottom: 28px; right: 28px; background: #2c2c2ecc; backdrop-filter: blur(20px); color: white; padding: 10px 26px; border-radius: 8px; font-size: 14px; z-index: 1000; pointer-events: none; }
     
+    /* Admin panel styles */
+    .admin-panel {
+      max-width: 800px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .admin-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .add-user-btn {
+      background: var(--accent-green);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .users-table th,
+    .users-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .users-table th {
+      background: var(--surface-secondary);
+      font-weight: 600;
+      color: var(--label-secondary);
+    }
+    
+    .user-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .edit-user-btn,
+    .delete-user-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .edit-user-btn {
+      background: var(--accent-blue-dim);
+      color: var(--accent-blue);
+    }
+    
+    .delete-user-btn {
+      background: rgba(179, 63, 63, 0.1);
+      color: var(--accent-red);
+    }
+    
+    .user-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .user-form input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    
+    .form-actions button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .save-btn {
+      background: var(--accent-blue);
+      color: white;
+    }
+    
+    .cancel-btn {
+      background: var(--surface-secondary);
+      color: var(--label-secondary);
+    }
+    
     @media (max-width: 780px) {
       .page { padding: 18px 16px 70px; }
       .ctrl { flex-direction: column; align-items: stretch; }
-      .inline-temp-cards { margin-left: 0; }
+      .inline-temp-cards { margin-left: 0; justify-content: flex-start; }
+      .btn-book, .btn-drag-toggle { width: 100%; justify-content: center; }
+      .google-calendar-btn { justify-content: center; width: 100%; }
       .nav { padding: 0 16px; }
+      .user-bar { padding: 4px 12px 4px 8px; }
+      .user-email { display: none; }
     }
   </style>
 </head>
 <body>
 
 <div id="login">
+  <div class="login-glyph"><i class="fas fa-table-tennis"></i> <i class="fas fa-crown"></i></div>
+  <div class="login-title">LUCKY STRIKE</div>
+  <div class="login-sub">Бильярдное ателье</div>
+  <div class="login-sep"></div>
   <div id="g_id_onload" 
        data-client_id="328749588235-bgfeukqogpoq2ha65j7j0vk840hctiaq.apps.googleusercontent.com" 
        data-callback="handleCredentialResponse" 
-       data-auto_prompt="false">
+       data-auto_prompt="false"
+       data-auto_select="false">
   </div>
-  <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large"></div>
+  <div class="g_id_signin" 
+       data-type="standard" 
+       data-shape="pill" 
+       data-theme="outline" 
+       data-text="signin_with" 
+       data-size="large" 
+       data-logo_alignment="left">
+  </div>
 </div>
 
 <div id="content">
   <nav class="nav">
-    <span class="nav-title">LUCKY STRIKE · Бильярд</span>
+    <span class="nav-title"><i class="fas fa-table-tennis"></i> LUCKY STRIKE · Бильярд</span>
     <div style="display: flex; gap: 12px; align-items: center;">
       <div id="userInfo" class="user-bar" style="display: none;">
-        <img id="userPic" class="user-pic" src="">
+        <img id="userPic" class="user-pic" src="" alt="">
         <span id="userEmail" class="user-email"></span>
+        <span id="userRoleDisplay" class="user-role"></span>
         <button id="logoutButton" class="logout-btn" onclick="signOut()"><i class="fas fa-sign-out-alt"></i></button>
       </div>
       <button class="nav-btn" onclick="openAdminPanel()"><i class="fas fa-users-cog"></i> Админ панель</button>
@@ -451,88 +776,30 @@
       <button id="dragToggleBtn" class="btn-drag-toggle"><i class="fas fa-arrows-alt"></i> Режим перетяжки: ВЫКЛ</button>
       <div id="inlineTempContainer" class="inline-temp-cards"></div>
     </div>
-    <div class="grid-card">
-      <div class="grid-scroll" id="gridScroll">
-        <table id="tableDesktop">
-          <thead id="dtHead">
-            <tr><th class="corner">СТОЛ</th></tr>
-          </thead>
-          <tbody id="dtBody"></tbody>
-        </table>
-        <div id="slidersLayer"></div>
-      </div>
-    </div>
+    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТОЛ</th></thead><tbody id="dtBody"></tbody></table><div id="slidersLayer"></div></div></div>
   </div>
 </div>
 
 <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
 
-<div id="bookModal" class="overlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-check-circle"></i> Подтверждение брони</div>
-      <button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
-        <span>Выбранное время: </span><span id="previewTimes">—</span>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Имя *</label>
-        <input class="f-input" id="nameInput" placeholder="Иван Петров"/>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Телефон</label>
-        <input class="f-input" id="phoneInput" placeholder="+7 123 456-78-90"/>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Комментарий</label>
-        <textarea class="f-input" id="commentInput" rows="2" placeholder="Пожелания"></textarea>
-      </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button>
-        <button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-check-circle"></i> Подтверждение брони</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Имя *</label><input class="f-input" id="nameInput" placeholder="Иван Петров"/></div><div class="f-group"><label class="f-label">Телефон</label><input class="f-input" id="phoneInput" placeholder="+7 123 456-78-90"/></div><div class="f-group"><label class="f-label">Комментарий</label><textarea class="f-input" id="commentInput" rows="2" placeholder="Пожелания"></textarea></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
 
-<div id="infoModal" class="overlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-info-circle"></i> Детали брони</div>
-      <button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div class="info-list">
-        <div class="info-row"><span>Стол</span><strong id="i-table"></strong></div>
-        <div class="info-row"><span>Время</span><strong id="i-time"></strong></div>
-        <div class="info-row"><span>Имя</span><strong id="i-name"></strong></div>
-        <div class="info-row"><span>Телефон</span><strong id="i-phone"></strong></div>
-        <div class="info-row"><span>Комментарий</span><strong id="i-comment"></strong></div>
-        <div class="info-row"><span>Статус</span><strong id="i-status"></strong></div>
-      </div>
-      <div class="confirm-btns">
-        <button class="cb-yes" onclick="confirmBooking(true)"><i class="fas fa-check-circle"></i> Пришла бронь</button>
-        <button class="cb-no" onclick="confirmBooking(false)"><i class="fas fa-times-circle"></i> Не пришли</button>
-      </div>
-      <button class="del-btn" onclick="deleteBooking()"><i class="fas fa-trash-alt"></i> Удалить бронь</button>
-    </div>
-  </div>
-</div>
+<div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали брони</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Стол</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Имя</span><strong id="i-name"></strong></div><div class="info-row"><span>Телефон</span><strong id="i-phone"></strong></div><div class="info-row"><span>Комментарий</span><strong id="i-comment" style="font-weight:normal;"></strong></div><div class="info-row"><span>Статус гостя</span><strong id="i-status"></strong></div></div><div class="confirm-btns"><button class="cb-yes" onclick="confirmBooking(true)"><i class="fas fa-check-circle"></i> Пришла бронь</button><button class="cb-no" onclick="confirmBooking(false)"><i class="fas fa-times-circle"></i> Не пришли</button></div><button class="del-btn" onclick="deleteBooking()"><i class="fas fa-trash-alt"></i> Удалить бронь</button></div></div></div>
 
 <div id="adminModal" class="overlay">
-  <div class="sheet" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+  <div class="sheet admin-panel">
     <div class="sheet-head">
       <div class="sheet-title"><i class="fas fa-shield-alt"></i> Панель управления</div>
       <button class="sheet-x" onclick="closeAdminModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="sheet-body">
-      <div class="admin-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <h3>Список сотрудников</h3>
-        <button class="add-user-btn" onclick="showAddUserForm()" style="background: #4f6b4e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Добавить</button>
+      <div class="admin-header">
+        <span class="admin-title"><i class="fas fa-users"></i> Список сотрудников</span>
+        <button class="add-user-btn" onclick="showAddUserForm()"><i class="fas fa-user-plus"></i> Добавить</button>
       </div>
-      <div id="usersList">Загрузка...</div>
+      <div id="usersList">
+        <div style="text-align: center; padding: 40px;">Загрузка...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -540,27 +807,18 @@
 <div id="userFormModal" class="overlay">
   <div class="sheet" style="max-width: 450px;">
     <div class="sheet-head">
-      <div class="sheet-title" id="userFormTitle">Добавить сотрудника</div>
+      <div class="sheet-title" id="userFormTitle"><i class="fas fa-user-edit"></i> Добавить сотрудника</div>
       <button class="sheet-x" onclick="closeUserFormModal()"><i class="fas fa-times"></i></button>
     </div>
     <div class="sheet-body">
-      <form id="userForm" onsubmit="saveUser(event)">
-        <input type="hidden" id="editRow">
-        <div class="f-group">
-          <label class="f-label">Email *</label>
-          <input class="f-input" id="userEmailInput" required>
-        </div>
-        <div class="f-group">
-          <label class="f-label">Имя</label>
-          <input class="f-input" id="userNameInput">
-        </div>
-        <div class="f-group">
-          <label class="f-label">Должность</label>
-          <input class="f-input" id="userRoleInput">
-        </div>
-        <div class="f-actions">
-          <button type="submit" class="f-btn-ok">Сохранить</button>
-          <button type="button" class="f-btn-cancel" onclick="closeUserFormModal()">Отмена</button>
+      <form id="userForm" class="user-form" onsubmit="saveUser(event)">
+        <input type="hidden" id="editRow" value="">
+        <input type="text" id="userEmailInput" placeholder="Email или логин *" required>
+        <input type="text" id="userNameInput" placeholder="Имя">
+        <input type="text" id="userRoleInput" placeholder="Должность">
+        <div class="form-actions">
+          <button type="submit" class="save-btn"><i class="fas fa-save"></i> Сохранить</button>
+          <button type="button" class="cancel-btn" onclick="closeUserFormModal()">Отмена</button>
         </div>
       </form>
     </div>
@@ -570,714 +828,1047 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-// ==================== КОНФИГУРАЦИЯ ====================
-// ВАЖНО: Замените этот URL на ваш URL из Google Apps Script!
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxzT7oE3lID_tR3HtTAMp64abnDDc7hGKXF3W5Qmyx53bR3Giddmm05QVVvQmlf3Zlu/exec";
-
-let currentUser = null;
-let bookings = [];
-let tempBookings = [];
-let nextTempId = 1;
-let dragModeEnabled = false;
-let currentBooking = null;
-
-// Настройки времени (11:00 до 22:00 с интервалом 30 мин)
-const LANES = 12, SH = 11, EH = 22;
-const slots = [];
-for(let h = SH; h <= EH; h++) {
-  slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 });
-  if(h < EH) slots.push({ label: `${h}:30`, key: h + 0.5, hour: h, minute: 30 });
-}
-
-function getGroupIndex(lane) {
-  let n = lane + 1;
-  if(n <= 3) return 0;
-  if(n === 4) return 1;
-  if(n <= 6) return 0;
-  return 2;
-}
-
-const GRP_CLASS = ['group-blue', 'group-green', 'group-red'];
-const LANE_TYPE_MAP = ['blue', 'green', 'red'];
-
-const $ = id => document.getElementById(id);
-
-// ==================== РАБОТА С GAS ====================
-async function callGASPost(data) {
-  try {
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      cache: 'no-cache',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-    return { success: true };
-  } catch(error) {
-    console.error('POST error:', error);
-    return { success: false, message: error.message };
-  }
-}
-
-function callGASGet(params, callback) {
-  let url = GAS_URL + '?';
-  for (let key in params) {
-    url += encodeURIComponent(key) + '=' + encodeURIComponent(params[key]) + '&';
-  }
-  url += '_=' + Date.now();
+  // ==================== КОНФИГУРАЦИЯ ====================
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyCwGy-M7ro_BS8N1R5Sn1nyOxCQNWBNjx_5GqjQ24CGnD-r3B69JxjELGTciyO1OEc/exec";
   
-  fetch(url, {
-    method: 'GET',
-    mode: 'cors',
-    cache: 'no-cache'
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log("GET response:", data);
-    callback(data);
-  })
-  .catch(error => {
-    console.error('GET error:', error);
-    callback({ success: false, message: error.message });
-  });
-}
-
-// ==================== АВТОРИЗАЦИЯ ====================
-function parseJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(base64));
-  } catch(e) {
-    return {};
+  let currentUser = null;
+  let jsonpCounter = 0;
+  
+  // ==================== JSONP HELPER ====================
+  function jsonpRequest(url, timeout = 30000) {
+    return new Promise((resolve, reject) => {
+      const callback = `jsonp_callback_${++jsonpCounter}_${Date.now()}`;
+      const script = document.createElement('script');
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('JSONP request timeout'));
+      }, timeout);
+      
+      function cleanup() {
+        if (script.parentNode) script.parentNode.removeChild(script);
+        delete window[callback];
+        clearTimeout(timer);
+      }
+      
+      window[callback] = (data) => {
+        cleanup();
+        resolve(data);
+      };
+      
+      const separator = url.includes('?') ? '&' : '?';
+      script.src = `${url}${separator}callback=${callback}`;
+      document.head.appendChild(script);
+    });
   }
-}
-
-async function handleCredentialResponse(response) {
-  try {
-    showLoad();
-    const payload = parseJwt(response.credential);
-    const email = payload.email.toLowerCase().trim();
+  
+  // ==================== JSONP API CALLS ====================
+  async function jsonpGetBookings(date) {
+    try {
+      const data = await jsonpRequest(`${GAS_URL}?action=get&date=${date}&_=${Date.now()}`);
+      return data;
+    } catch (error) {
+      console.error('JSONP getBookings error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpGetUsers() {
+    try {
+      const data = await jsonpRequest(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
+      return data;
+    } catch (error) {
+      console.error('JSONP getUsers error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpAddUser(email, name, role) {
+    try {
+      const url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP addUser error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpUpdateUser(row, email, name, role) {
+    try {
+      const url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP updateUser error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpDeleteUser(row) {
+    try {
+      const url = `${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP deleteUser error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpSubmitBookings(bookingsData) {
+    try {
+      const payload = encodeURIComponent(JSON.stringify(bookingsData));
+      const url = `${GAS_URL}?payload=${payload}&_=${Date.now()}`;
+      const data = await jsonpRequest(url, 60000);
+      return data;
+    } catch (error) {
+      console.error('JSONP submitBookings error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpConfirmBooking(id, confirmed) {
+    try {
+      const url = `${GAS_URL}?action=confirm&id=${id}&confirmed=${confirmed}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP confirmBooking error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpDeleteBooking(id) {
+    try {
+      const url = `${GAS_URL}?action=delete&id=${id}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP deleteBooking error:', error);
+      throw error;
+    }
+  }
+  
+  async function jsonpUpdateBooking(bookingData) {
+    try {
+      const payload = encodeURIComponent(JSON.stringify(bookingData));
+      const url = `${GAS_URL}?action=update&payload=${payload}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      return data;
+    } catch (error) {
+      console.error('JSONP updateBooking error:', error);
+      throw error;
+    }
+  }
+  
+  // ==================== ФУНКЦИИ АВТОРИЗАЦИИ ====================
+  
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error('Error parsing JWT:', e);
+      return {};
+    }
+  }
+  
+  function loadSheetsAPI() {
+    return new Promise((resolve, reject) => {
+      if (window.gapi && gapi.client) {
+        resolve();
+        return;
+      }
+      gapi.load('client', {
+        callback: () => resolve(),
+        onerror: () => reject('Ошибка загрузки Google API'),
+        timeout: 8000,
+        ontimeout: () => reject('Таймаут загрузки Google API')
+      });
+    });
+  }
+  
+  function cacheUser(email, name, role, picture) {
+    try {
+      localStorage.setItem('billiardUserEmail', email);
+      localStorage.setItem('billiardUserName', name);
+      localStorage.setItem('billiardUserRole', role);
+      localStorage.setItem('billiardUserPic', picture);
+      localStorage.setItem('billiardUserLoggedIn', 'true');
+    } catch (e) {
+      console.warn('Failed to cache user:', e);
+    }
+  }
+  
+  function getCachedUser() {
+    try {
+      const isLoggedIn = localStorage.getItem('billiardUserLoggedIn') === 'true';
+      const email = localStorage.getItem('billiardUserEmail');
+      const name = localStorage.getItem('billiardUserName');
+      const role = localStorage.getItem('billiardUserRole');
+      const picture = localStorage.getItem('billiardUserPic');
+      if (isLoggedIn && email) {
+        return { email: email.toLowerCase().trim(), name, role, picture };
+      }
+    } catch (e) {
+      console.warn('Failed to get cached user:', e);
+    }
+    return null;
+  }
+  
+  async function checkEmailInSheet(email) {
+    try {
+      await loadSheetsAPI();
+      await gapi.client.init({
+        apiKey: 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0',
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      });
+      
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w',
+        range: '1!A:C',
+      });
+      
+      const rows = response.result.values;
+      if (!rows || rows.length === 0) {
+        console.log('Sheet is empty');
+        return { found: false };
+      }
+      
+      for (let i = 1; i < rows.length; i++) {
+        if (!rows[i][0]) continue;
+        const rowEmail = rows[i][0].toLowerCase().trim();
+        if (rowEmail === email) {
+          console.log('Email found in sheet:', email);
+          const userName = rows[i][1] ? rows[i][1].trim() : email.split('@')[0];
+          const userRole = rows[i][2] ? rows[i][2].trim() : '';
+          return { found: true, name: userName, role: userRole };
+        }
+      }
+      
+      console.log('Email not found in sheet:', email);
+      return { found: false };
+      
+    } catch (error) {
+      console.error('Sheets API error:', error);
+      return { found: false, error: true };
+    }
+  }
+  
+  function showLoading(show) {
+    const loginDiv = document.getElementById('login');
     
-    console.log("User logged in:", email);
-    
-    currentUser = {
-      email: email,
-      name: payload.name,
-      picture: payload.picture,
-      role: "пользователь"
-    };
-    
-    localStorage.setItem('billiardUser', JSON.stringify(currentUser));
-    
+    if (show) {
+      if (!loginDiv.hasAttribute('data-original')) {
+        loginDiv.setAttribute('data-original', loginDiv.innerHTML);
+      }
+      loginDiv.innerHTML = '<div style="padding: 40px; text-align: center;"><div class="loading-spinner" style="display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(59, 110, 143, 0.2); border-radius: 50%; border-top-color: #3b6e8f; animation: spin 0.8s ease-in-out infinite;"></div><br><span style="color: var(--label-tertiary); margin-top: 15px; display: block;">Проверка доступа...</span></div>';
+    } else {
+      if (loginDiv.getAttribute('data-original') && document.getElementById('login').style.display !== 'none') {
+        loginDiv.innerHTML = loginDiv.getAttribute('data-original');
+        
+        if (window.google && google.accounts && google.accounts.id) {
+          google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            { 
+              type: 'standard', 
+              shape: 'pill', 
+              theme: 'outline', 
+              text: 'signin_with', 
+              size: 'large', 
+              logo_alignment: 'left' 
+            }
+          );
+        }
+      }
+    }
+  }
+  
+  async function handleCredentialResponse(response) {
+    try {
+      const payload = parseJwt(response.credential);
+      const email = payload.email.toLowerCase().trim();
+      
+      showLoading(true);
+      const checkResult = await checkEmailInSheet(email);
+      
+      if (checkResult.found) {
+        currentUser = {
+          email: email,
+          name: checkResult.name || payload.name,
+          role: checkResult.role || '',
+          picture: payload.picture
+        };
+        
+        cacheUser(email, currentUser.name, currentUser.role, currentUser.picture);
+        loginUser(currentUser);
+      } else {
+        showLoading(false);
+        alert('Доступ запрещен: Ваш email не найден в списке разрешенных');
+      }
+      
+    } catch (e) {
+      console.error("Error processing Google response:", e);
+      showLoading(false);
+      alert('Ошибка аутентификации: ' + e.message);
+    }
+  }
+  
+  function loginUser(user) {
     document.getElementById('login').style.display = 'none';
     document.getElementById('content').style.display = 'block';
     
     const userInfo = document.getElementById('userInfo');
+    const userPic = document.getElementById('userPic');
+    const userEmailSpan = document.getElementById('userEmail');
+    const userRoleSpan = document.getElementById('userRoleDisplay');
+    
     userInfo.style.display = 'flex';
-    document.getElementById('userPic').src = currentUser.picture;
-    document.getElementById('userEmail').textContent = currentUser.email;
+    userPic.src = user.picture || 'https://via.placeholder.com/32';
+    userEmailSpan.textContent = user.email;
     
-    hideLoad();
-    initApplication();
-    
-  } catch(e) {
-    console.error("Auth error:", e);
-    alert("Ошибка авторизации: " + e.message);
-    hideLoad();
-  }
-}
-
-function signOut() {
-  localStorage.removeItem('billiardUser');
-  location.reload();
-}
-
-// ==================== ОСНОВНАЯ ЛОГИКА ====================
-function fmtFromSlotIdx(startSlotIdx, endSlotIdx = null) {
-  let s = slots[startSlotIdx];
-  let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
-  let e = slots[endIdx];
-  if (!e) {
-    let nextHour = Math.floor(s.key) + 1;
-    return `${s.label}–${nextHour}:00`;
-  }
-  return `${s.label}–${e.label}`;
-}
-
-function formatDateForDisplay(dateStr) {
-  if (!dateStr) return "Выбрать дату";
-  const date = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  if (date.getTime() === today.getTime()) return "Сегодня";
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (date.getTime() === tomorrow.getTime()) return "Завтра";
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-}
-
-function buildDesktopTable() {
-  let headRow = document.querySelector("#dtHead tr");
-  slots.forEach(sl => {
-    let th = document.createElement("th");
-    th.className = "th-time";
-    th.textContent = sl.label;
-    headRow.appendChild(th);
-  });
-  
-  let body = $("dtBody");
-  for(let lane = 0; lane < LANES; lane++) {
-    let tr = document.createElement("tr");
-    tr.dataset.lane = lane;
-    let group = getGroupIndex(lane);
-    let lhdr = document.createElement("td");
-    lhdr.className = `lane-hdr ${GRP_CLASS[group]}`;
-    lhdr.textContent = `№ ${lane + 1}`;
-    tr.appendChild(lhdr);
-    slots.forEach((sl, si) => {
-      let td = document.createElement("td");
-      td.className = "slot";
-      td.dataset.lane = lane;
-      td.dataset.slotIdx = si;
-      tr.appendChild(td);
-    });
-    body.appendChild(tr);
-  }
-}
-
-function getSlotCell(lane, slotIdx) {
-  return $("dtBody")?.rows[lane]?.cells[slotIdx + 1];
-}
-
-function updateCellsHighlight() {
-  for(let row of $("dtBody").rows) {
-    for(let i = 1; i < row.cells.length; i++) {
-      row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
-    }
-  }
-  
-  for(let b of bookings) {
-    let si = b.startSlotIdx, ei = b.endSlotIdx;
-    if(si !== undefined && ei !== undefined) {
-      for(let i = si; i <= ei; i++) {
-        let cell = getSlotCell(b.lane, i);
-        if(cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending"));
-      }
-    }
-  }
-  
-  for(let t of tempBookings) {
-    let si = t.startSlotIdx, ei = t.endSlotIdx;
-    if(si !== undefined && ei !== undefined) {
-      for(let i = si; i <= ei; i++) {
-        let cell = getSlotCell(t.lane, i);
-        if(cell) cell.classList.add("temp-highlight");
-      }
-    }
-  }
-}
-
-function renderAllSliders() {
-  let container = $("slidersLayer");
-  if(!container) return;
-  container.innerHTML = "";
-  let rows = Array.from($("dtBody")?.querySelectorAll("tr") || []);
-  if(rows.length === 0) return;
-  
-  [...bookings, ...tempBookings.map(t => ({...t, isTemp: true}))].forEach(item => {
-    let startIdx = item.startSlotIdx, endIdx = item.endSlotIdx;
-    if(startIdx === undefined || endIdx === undefined) return;
-    let row = rows[item.lane];
-    if(!row) return;
-    let sc = row.cells[startIdx + 1], ec = row.cells[endIdx + 1];
-    if(!sc || !ec) return;
-    
-    let left = sc.offsetLeft + 1;
-    let top = row.offsetTop + 1;
-    let width = (ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2;
-    let height = row.offsetHeight - 2;
-    
-    let slider = document.createElement("div");
-    let status = item.isTemp ? "temp" : (item.confirmed === true ? "confirmed" : (item.confirmed === false ? "rejected" : "pending"));
-    let laneType = LANE_TYPE_MAP[getGroupIndex(item.lane)];
-    
-    slider.className = `slider ${status}`;
-    slider.setAttribute("data-lane-type", laneType);
-    slider.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
-    
-    let dot = document.createElement("div");
-    dot.className = "guest-status-dot";
-    slider.appendChild(dot);
-    
-    let nameDiv = document.createElement("div");
-    nameDiv.className = "sl-name";
-    nameDiv.textContent = item.isTemp ? "Ожидает брони" : (item.name || "Бронь");
-    let timeDiv = document.createElement("div");
-    timeDiv.className = "sl-time";
-    timeDiv.textContent = fmtFromSlotIdx(startIdx, endIdx);
-    slider.append(nameDiv, timeDiv);
-    
-    let dragHandle = document.createElement("div");
-    dragHandle.className = "drag-handle";
-    dragHandle.onclick = (e) => {
-      e.stopPropagation();
-      if(!item.isTemp && item.id) showInfoModal(item);
-      else if(!item.isTemp && !item.id) alert("Загрузка данных...");
-      else alert("Временная бронь — сохраните для просмотра.");
-    };
-    slider.appendChild(dragHandle);
-    
-    container.appendChild(slider);
-  });
-}
-
-function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
-  let startTime = slots[startSlotIdx].key;
-  let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
-  return bookings.some(b => {
-    if(excludeId !== null && b.id === excludeId) return false;
-    if(b.lane !== lane) return false;
-    let bStart = b.start, bEnd = b.end;
-    return !(endTime <= bStart || startTime >= bEnd);
-  });
-}
-
-// Drag and drop для выбора времени
-let isDragging = false, dragStartCell = null, dragInterval = null;
-
-function onMouseDown(e) {
-  if(dragModeEnabled) return;
-  let t = e.target;
-  if(t.classList?.contains("slot")) {
-    e.preventDefault();
-    let lane = parseInt(t.dataset.lane), si = parseInt(t.dataset.slotIdx);
-    isDragging = true;
-    dragStartCell = { lane, si };
-    dragInterval = { lane, startIdx: si, endIdx: si };
-    highlightDragInterval(lane, si, si);
-  }
-}
-
-function onMouseMove(e) {
-  if(!dragModeEnabled && isDragging && dragStartCell) {
-    let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
-    if(el) {
-      let lane = parseInt(el.dataset.lane), idx = parseInt(el.dataset.slotIdx);
-      if(lane === dragStartCell.lane) {
-        let ns = Math.min(dragStartCell.si, idx), ne = Math.max(dragStartCell.si, idx);
-        dragInterval = { lane, startIdx: ns, endIdx: ne };
-        highlightDragInterval(lane, ns, ne);
-      }
-    }
-  }
-}
-
-function highlightDragInterval(lane, si, ei) {
-  document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
-  for(let i = si; i <= ei; i++) {
-    let cell = getSlotCell(lane, i);
-    if(cell) cell.classList.add("drag-over");
-  }
-}
-
-function onMouseUp() {
-  if(!dragModeEnabled && isDragging && dragInterval) {
-    let { lane, startIdx, endIdx } = dragInterval;
-    if(hasConflict(lane, startIdx, endIdx)) {
-      alert("Это время уже занято другой броней");
+    if (user.role) {
+      userRoleSpan.textContent = user.role;
+      userRoleSpan.style.display = 'inline-block';
     } else {
-      tempBookings.push({
-        id: nextTempId++,
-        lane,
-        startSlotIdx: startIdx,
-        endSlotIdx: endIdx
-      });
-      renderInlineTempCards();
-      renderAllSliders();
-      updateCellsHighlight();
+      userRoleSpan.style.display = 'none';
     }
-  }
-  isDragging = false;
-  dragInterval = null;
-  dragStartCell = null;
-  document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
-}
-
-function renderInlineTempCards() {
-  const container = $("inlineTempContainer");
-  if(!container) return;
-  if(tempBookings.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
-  container.innerHTML = "";
-  tempBookings.forEach((tb, idx) => {
-    let card = document.createElement("div");
-    card.className = "temp-card-inline";
-    let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
-    card.innerHTML = `<strong>Стол ${tb.lane+1}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`;
-    card.querySelector(".temp-rm").onclick = () => {
-      tempBookings.splice(idx, 1);
-      renderInlineTempCards();
-      renderAllSliders();
-      updateCellsHighlight();
-      updatePreviewTimes();
-    };
-    container.appendChild(card);
-  });
-  updatePreviewTimes();
-}
-
-function updatePreviewTimes() {
-  const span = document.getElementById("previewTimes");
-  if(span) {
-    span.innerText = tempBookings.length ? tempBookings.map(tb => {
-      return `Стол ${tb.lane+1} (${fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx)})`;
-    }).join("; ") : "—";
-  }
-}
-
-function openBookModal() {
-  if(tempBookings.length === 0) {
-    alert("Сначала выделите интервал на столе");
-    return;
-  }
-  $("nameInput").value = "";
-  $("phoneInput").value = "";
-  $("commentInput").value = "";
-  updatePreviewTimes();
-  $("bookModal").classList.add("open");
-}
-
-function closeBookModal() {
-  $("bookModal").classList.remove("open");
-}
-
-function clearTempSelections() {
-  tempBookings = [];
-  renderInlineTempCards();
-  renderAllSliders();
-  updateCellsHighlight();
-}
-
-async function submitTempBookings() {
-  if(!currentUser) {
-    alert("Пожалуйста, авторизуйтесь");
-    return;
-  }
-  
-  let name = $("nameInput").value.trim();
-  if(!name) return alert("Введите имя");
-  if(tempBookings.length === 0) return;
-  
-  showLoad();
-  try {
-    const dateValue = new Date().toISOString().split('T')[0];
     
-    for (let tb of tempBookings) {
-      const requestData = {
-        action: "createBookings",
-        date: dateValue,
-        bookings: [{
-          tableNumber: tb.lane + 1,
-          start: slots[tb.startSlotIdx].key,
-          end: slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5),
-          name: name,
-          phone: $("phoneInput").value.trim(),
-          comment: $("commentInput").value.trim()
-        }]
-      };
+    // Access rule: Only "Разработчик" or "Управляющий" can see Admin panel
+    const adminPanelBtn = document.querySelector('.nav-btn');
+    if (adminPanelBtn) {
+      const allowedRoles = ['разработчик', 'управляющий'];
+      const userRole = (user.role || '').toLowerCase().trim();
       
-      console.log("Sending booking:", requestData);
-      await callGASPost(requestData);
-    }
-    
-    // Очищаем временные брони
-    clearTempSelections();
-    
-    // Ждем немного перед загрузкой
-    setTimeout(() => {
-      loadFromServer();
-    }, 500);
-    
-    closeBookModal();
-    alert("Бронь успешно создана!");
-    
-  } catch(e) {
-    console.error("Submit error:", e);
-    alert("Ошибка: " + e.message);
-  }
-  hideLoad();
-}
-
-function loadFromServer() {
-  if(!currentUser) return;
-  showLoad();
-  
-  const dateVal = new Date().toISOString().split('T')[0];
-  
-  callGASGet({ action: 'get', date: dateVal }, (result) => {
-    console.log("Load result:", result);
-    if(result && result.bookings) {
-      bookings = result.bookings.map(b => {
-        let startKey = parseFloat(b.start);
-        let endKey = parseFloat(b.end);
-        let startSlotIdx = slots.findIndex(s => s.key === startKey);
-        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
-        if(endSlotIdx < 0) endSlotIdx = slots.length - 1;
-        return {
-          id: b.id,
-          lane: b.table - 1,
-          start: startKey,
-          end: endKey,
-          startSlotIdx: startSlotIdx,
-          endSlotIdx: endSlotIdx,
-          name: b.name,
-          phone: b.phone,
-          comment: b.comment,
-          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null)
-        };
-      });
-      renderAllSliders();
-      updateCellsHighlight();
-    }
-    hideLoad();
-  });
-}
-
-function showInfoModal(b) {
-  currentBooking = b;
-  $("i-table").textContent = "№ " + (b.lane + 1);
-  $("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
-  $("i-name").textContent = b.name;
-  $("i-phone").textContent = b.phone || "—";
-  $("i-comment").textContent = b.comment || "—";
-  let statusText = b.confirmed === true ? "✅ Пришли" : (b.confirmed === false ? "❌ Не пришли" : "⏳ Ожидание");
-  $("i-status").textContent = statusText;
-  $("infoModal").classList.add("open");
-}
-
-function closeInfoModal() {
-  $("infoModal").classList.remove("open");
-  currentBooking = null;
-}
-
-async function confirmBooking(yes) {
-  if(!currentBooking) return;
-  showLoad();
-  await callGASPost({ action: "confirm", id: currentBooking.id, confirmed: yes });
-  closeInfoModal();
-  loadFromServer();
-  hideLoad();
-}
-
-async function deleteBooking() {
-  if(!currentBooking || !confirm("Удалить бронь?")) return;
-  showLoad();
-  await callGASPost({ action: "delete", id: currentBooking.id });
-  closeInfoModal();
-  loadFromServer();
-  hideLoad();
-}
-
-// ==================== АДМИН-ПАНЕЛЬ ====================
-function openAdminPanel() {
-  if(!currentUser) return;
-  showLoad();
-  $("adminModal").classList.add("open");
-  loadUsersList();
-}
-
-function closeAdminModal() {
-  $("adminModal").classList.remove("open");
-}
-
-function loadUsersList() {
-  callGASGet({ action: 'getUsers' }, (result) => {
-    const container = document.getElementById("usersList");
-    
-    if(result && result.users && result.users.length) {
-      let html = '<table style="width:100%; border-collapse: collapse;"><tr><th>Email</th><th>Имя</th><th>Должность</th><th>Действия</th></tr>';
-      result.users.forEach(user => {
-        html += `<tr>
-          <td>${escapeHtml(user.email)}</td>
-          <td>${escapeHtml(user.name || '-')}</td>
-          <td>${escapeHtml(user.role || '-')}</td>
-          <td>
-            <button onclick="editUser(${user.row}, '${escapeHtml(user.email)}', '${escapeHtml(user.name || '')}', '${escapeHtml(user.role || '')}')">✏️</button>
-            <button onclick="deleteUser(${user.row})">🗑️</button>
-          </td>
-        </tr>`;
-      });
-      html += '</table>';
-      container.innerHTML = html;
-    } else {
-      container.innerHTML = '<p>Нет пользователей</p>';
-    }
-    hideLoad();
-  });
-}
-
-function showAddUserForm() {
-  document.getElementById("userFormTitle").innerHTML = "Добавить сотрудника";
-  document.getElementById("editRow").value = "";
-  document.getElementById("userEmailInput").value = "";
-  document.getElementById("userNameInput").value = "";
-  document.getElementById("userRoleInput").value = "";
-  document.getElementById("userFormModal").classList.add("open");
-}
-
-function editUser(row, email, name, role) {
-  document.getElementById("userFormTitle").innerHTML = "Редактировать сотрудника";
-  document.getElementById("editRow").value = row;
-  document.getElementById("userEmailInput").value = email;
-  document.getElementById("userNameInput").value = name;
-  document.getElementById("userRoleInput").value = role;
-  document.getElementById("userFormModal").classList.add("open");
-}
-
-function closeUserFormModal() {
-  document.getElementById("userFormModal").classList.remove("open");
-}
-
-function saveUser(event) {
-  event.preventDefault();
-  const row = document.getElementById("editRow").value;
-  const email = document.getElementById("userEmailInput").value.trim();
-  const name = document.getElementById("userNameInput").value.trim();
-  const role = document.getElementById("userRoleInput").value.trim();
-  
-  if(!email) return alert("Введите email");
-  
-  showLoad();
-  
-  if(row) {
-    callGASGet({ action: 'updateUser', row: row, email: email, name: name, role: role }, (result) => {
-      if(result && result.success) {
-        closeUserFormModal();
-        loadUsersList();
-        alert("Пользователь обновлен");
+      if (allowedRoles.includes(userRole)) {
+        adminPanelBtn.style.display = 'flex';
+        console.log('Admin panel доступна для роли:', user.role);
       } else {
-        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
+        adminPanelBtn.style.display = 'none';
+        console.log('Admin panel НЕ доступна для роли:', user.role || '(не указана)');
       }
-      hideLoad();
-    });
-  } else {
-    callGASGet({ action: 'addUser', email: email, name: name, role: role }, (result) => {
-      if(result && result.success) {
-        closeUserFormModal();
-        loadUsersList();
-        alert("Пользователь добавлен");
-      } else {
-        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
-      }
-      hideLoad();
-    });
-  }
-}
-
-function deleteUser(row) {
-  if(!confirm("Удалить пользователя?")) return;
-  showLoad();
-  callGASGet({ action: 'deleteUser', row: row }, (result) => {
-    if(result && result.success) {
-      loadUsersList();
-      alert("Пользователь удален");
-    } else {
-      alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
-      hideLoad();
     }
-  });
-}
-
-function escapeHtml(str) {
-  if(!str) return '';
-  return str.replace(/[&<>]/g, function(m) {
-    if(m === '&') return '&amp;';
-    if(m === '<') return '&lt;';
-    if(m === '>') return '&gt;';
-    return m;
-  });
-}
-
-function showLoad() {
-  $("loader").style.display = "flex";
-}
-
-function hideLoad() {
-  $("loader").style.display = "none";
-}
-
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
-function initApplication() {
-  buildDesktopTable();
-  
-  // Календарь
-  const calendarBtn = document.getElementById("calendarButton");
-  const hiddenPicker = document.getElementById("hiddenDatePicker");
-  const displaySpan = document.getElementById("displayDateText");
-  const todayStr = new Date().toISOString().split('T')[0];
-  
-  if(hiddenPicker) {
-    hiddenPicker.value = todayStr;
-    displaySpan.innerText = formatDateForDisplay(todayStr);
+    
+    showLoading(false);
+    initApplication();
   }
   
-  if(calendarBtn && hiddenPicker) {
-    calendarBtn.addEventListener("click", () => {
-      if(hiddenPicker.showPicker) hiddenPicker.showPicker();
-      else hiddenPicker.click();
-    });
-    hiddenPicker.addEventListener("change", (e) => {
-      displaySpan.innerText = formatDateForDisplay(e.target.value);
-      loadFromServer();
-      clearTempSelections();
-    });
+  function signOut() {
+    localStorage.removeItem('billiardUserEmail');
+    localStorage.removeItem('billiardUserName');
+    localStorage.removeItem('billiardUserRole');
+    localStorage.removeItem('billiardUserPic');
+    localStorage.removeItem('billiardUserLoggedIn');
+    location.reload();
   }
   
-  loadFromServer();
+  // ==================== АДМИН-ПАНЕЛЬ ====================
   
-  const toggleBtn = $("dragToggleBtn");
-  toggleBtn.addEventListener("click", () => {
-    dragModeEnabled = !dragModeEnabled;
-    toggleBtn.innerHTML = dragModeEnabled ? '<i class="fas fa-arrows-alt"></i> Режим перетяжки: ВКЛ' : '<i class="fas fa-arrows-alt"></i> Режим перетяжки: ВЫКЛ';
-    toggleBtn.classList.toggle("active", dragModeEnabled);
-    $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
-    renderAllSliders();
-  });
+  async function openAdminPanel() {
+    showLoad();
+    document.getElementById("adminModal").classList.add("open");
+    await loadUsersList();
+    hideLoad();
+  }
   
-  $("tableDesktop").addEventListener("mousedown", onMouseDown);
-  document.body.addEventListener("mousemove", onMouseMove);
-  document.body.addEventListener("mouseup", onMouseUp);
+  function closeAdminModal() {
+    document.getElementById("adminModal").classList.remove("open");
+  }
   
-  // Закрытие модалок по клику на оверлей
-  ["bookModal","infoModal","adminModal","userFormModal"].forEach(id => {
-    $(id)?.addEventListener("click", e => {
-      if(e.target === $(id)) $(id).classList.remove("open");
-    });
-  });
-}
-
-// Запуск
-window.addEventListener('load', () => {
-  const cached = localStorage.getItem('billiardUser');
-  if(cached) {
+  async function loadUsersList() {
     try {
-      currentUser = JSON.parse(cached);
-      if(currentUser && currentUser.email) {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-        document.getElementById('userInfo').style.display = 'flex';
-        document.getElementById('userPic').src = currentUser.picture || '';
-        document.getElementById('userEmail').textContent = currentUser.email;
-        initApplication();
+      const data = await jsonpGetUsers();
+      
+      if (!data.success) {
+        throw new Error(data.message);
       }
-    } catch(e) {}
+      
+      const container = document.getElementById("usersList");
+      
+      if (!data.users || data.users.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--label-tertiary);">Нет добавленных сотрудников</div>';
+        return;
+      }
+      
+      let html = `
+        <table class="users-table">
+          <thead>
+            <tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr>
+          </thead>
+          <tbody>
+      `;
+      
+      data.users.forEach(user => {
+        html += `
+          <tr>
+            <td>${escapeHtml(user.email)}</td>
+            <td>${escapeHtml(user.name || '-')}</td>
+            <td>${escapeHtml(user.role || '-')}</td>
+            <td class="user-actions">
+              <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
+              <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
+              </td>
+           </tr>
+        `;
+      });
+      
+      html += `</tbody>
+        </table>`;
+      container.innerHTML = html;
+      
+    } catch (error) {
+      console.error("Error loading users:", error);
+      document.getElementById("usersList").innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Ошибка загрузки списка пользователей</div>';
+    }
   }
-});
+  
+  function showAddUserForm() {
+    document.getElementById("userFormTitle").innerHTML = '<i class="fas fa-user-plus"></i> Добавить сотрудника';
+    document.getElementById("editRow").value = "";
+    document.getElementById("userEmailInput").value = "";
+    document.getElementById("userNameInput").value = "";
+    document.getElementById("userRoleInput").value = "";
+    document.getElementById("userEmailInput").disabled = false;
+    document.getElementById("userFormModal").classList.add("open");
+  }
+  
+  function editUser(row, email, name, role) {
+    document.getElementById("userFormTitle").innerHTML = '<i class="fas fa-user-edit"></i> Редактировать сотрудника';
+    document.getElementById("editRow").value = row;
+    document.getElementById("userEmailInput").value = email;
+    document.getElementById("userNameInput").value = name;
+    document.getElementById("userRoleInput").value = role;
+    document.getElementById("userEmailInput").disabled = true;
+    document.getElementById("userFormModal").classList.add("open");
+  }
+  
+  function closeUserFormModal() {
+    document.getElementById("userFormModal").classList.remove("open");
+  }
+  
+  async function saveUser(event) {
+    event.preventDefault();
+    
+    const row = document.getElementById("editRow").value;
+    const email = document.getElementById("userEmailInput").value.trim();
+    const name = document.getElementById("userNameInput").value.trim();
+    const role = document.getElementById("userRoleInput").value.trim();
+    
+    if (!email) {
+      alert("Введите email или логин");
+      return;
+    }
+    
+    showLoad();
+    
+    try {
+      let result;
+      if (row) {
+        result = await jsonpUpdateUser(parseInt(row), email, name, role);
+      } else {
+        result = await jsonpAddUser(email, name, role);
+      }
+      
+      if (result && result.success === false) {
+        throw new Error(result.message || "Ошибка сохранения");
+      }
+      
+      closeUserFormModal();
+      await loadUsersList();
+      alert(row ? "Пользователь обновлён" : "Пользователь добавлен");
+      
+    } catch (error) {
+      console.error("Error saving user:", error);
+      alert("Ошибка: " + error.message);
+    } finally {
+      hideLoad();
+    }
+  }
+  
+  async function deleteUser(row, email) {
+    if (!confirm(`Удалить пользователя ${email}? Он потеряет доступ к сайту.`)) {
+      return;
+    }
+    
+    showLoad();
+    
+    try {
+      const result = await jsonpDeleteUser(row);
+      
+      if (result && result.success === false) {
+        throw new Error(result.message || "Ошибка удаления");
+      }
+      
+      await loadUsersList();
+      alert("Пользователь удалён");
+      
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Ошибка: " + error.message);
+    } finally {
+      hideLoad();
+    }
+  }
+  
+  // ==================== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ====================
+  
+  const LANES = 12, SH = 11, EH = 22;
+  const slots = []; 
+  for(let h=SH; h<=EH; h++) { 
+    slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
+    if(h<EH) slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
+  }
+  
+  function getGroupIndex(lane) { 
+    let n = lane+1; 
+    if(n<=3) return 0; 
+    if(n===4) return 1; 
+    if(n<=6) return 0; 
+    return 2; 
+  }
+  const GRP_CLASS = ['group-blue', 'group-green', 'group-red'];
+  const LANE_TYPE_MAP = ['blue', 'green', 'red'];
+  
+  let bookings = [], tempBookings = [], nextTempId = 1;
+  let dragModeEnabled = false;
+  let currentBooking = null;
+  const $ = id => document.getElementById(id);
+  
+  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
+    let startTime = slots[startSlotIdx].key;
+    let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
+    return bookings.some(b => {
+      if (excludeId !== null && b.id === excludeId) return false;
+      if (b.lane !== lane) return false;
+      let bStart = b.start, bEnd = b.end;
+      return !(endTime <= bStart || startTime >= bEnd);
+    });
+  }
+  
+  function fmtFromSlotIdx(startSlotIdx, endSlotIdx = null){ 
+    let s = slots[startSlotIdx];
+    let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
+    let e = slots[endIdx];
+    if (!e) {
+      let nextHour = Math.floor(s.key) + 1;
+      return `${s.label}–${nextHour}:00`;
+    }
+    return `${s.label}–${e.label}`;
+  }
+  
+  function formatDateForDisplay(dateStr) {
+    if (!dateStr) return "Выбрать дату";
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (date.getTime() === today.getTime()) return "Сегодня";
+    if (date.getTime() === tomorrow.getTime()) return "Завтра";
+    const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  }
+  
+  function buildDesktopTable(){
+    let headRow = document.querySelector("#dtHead tr");
+    slots.forEach(sl=>{ let th=document.createElement("th"); th.className="th-time"; th.textContent=sl.label; headRow.appendChild(th); });
+    let body=$("dtBody");
+    for(let lane=0; lane<LANES; lane++){
+      let tr=document.createElement("tr"); tr.dataset.lane=lane;
+      let group=getGroupIndex(lane);
+      let lhdr=document.createElement("td"); lhdr.className=`lane-hdr ${GRP_CLASS[group]}`; lhdr.textContent=`№ ${lane+1}`; tr.appendChild(lhdr);
+      slots.forEach((sl,si)=>{ let td=document.createElement("td"); td.className="slot"; td.dataset.lane=lane; td.dataset.slotIdx=si; tr.appendChild(td); });
+      body.appendChild(tr);
+    }
+  }
+  
+  function getSlotCell(lane, slotIdx){ return $("dtBody")?.rows[lane]?.cells[slotIdx+1]; }
+  
+  function updateCellsHighlight(){
+    for(let row of $("dtBody").rows) for(let i=1;i<row.cells.length;i++) row.cells[i].classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight");
+    for(let b of bookings){ let si=b.startSlotIdx, ei=b.endSlotIdx; if(si!==undefined && ei!==undefined) for(let i=si;i<=ei;i++){ let cell=getSlotCell(b.lane,i); if(cell) cell.classList.add(b.confirmed===true?"booking-confirmed":(b.confirmed===false?"booking-rejected":"booking-pending")); } }
+    for(let t of tempBookings){ let si=t.startSlotIdx, ei=t.endSlotIdx; if(si!==undefined && ei!==undefined) for(let i=si;i<=ei;i++){ let cell=getSlotCell(t.lane,i); if(cell) cell.classList.add("temp-highlight"); } }
+  }
+  
+  function clearTempSelections(){ tempBookings = []; renderInlineTempCards(); renderAllSliders(); updateCellsHighlight(); }
+  
+  function renderInlineTempCards(){ 
+    const container=$("inlineTempContainer"); 
+    if(!container) return; 
+    if(tempBookings.length===0){ 
+      container.innerHTML=""; 
+      return; 
+    } 
+    container.innerHTML=""; 
+    tempBookings.forEach((tb,idx)=>{ 
+      let card=document.createElement("div"); 
+      card.className="temp-card-inline"; 
+      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+      card.innerHTML=`<strong>Стол ${tb.lane+1}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`; 
+      card.querySelector(".temp-rm").onclick=()=>{ 
+        tempBookings.splice(idx,1); 
+        renderInlineTempCards(); 
+        renderAllSliders(); 
+        updateCellsHighlight(); 
+        updatePreviewTimes(); 
+      }; 
+      container.appendChild(card); 
+    }); 
+    updatePreviewTimes(); 
+  }
+  
+  function updatePreviewTimes() { 
+    const span=document.getElementById("previewTimes"); 
+    if(span) span.innerText = tempBookings.length ? tempBookings.map(tb=>{
+      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+      return `Стол ${tb.lane+1} (${timeStr})`;
+    }).join("; ") : "—"; 
+  }
+  
+  let isDragging=false, dragStartCell=null, dragInterval=null;
+  function onMouseDown(e){ 
+    if(dragModeEnabled) return; 
+    let t=e.target; 
+    if(t.classList?.contains("slot")){ 
+      e.preventDefault(); 
+      let lane=parseInt(t.dataset.lane), si=parseInt(t.dataset.slotIdx); 
+      isDragging=true; 
+      dragStartCell={lane,si}; 
+      dragInterval={lane,startIdx:si,endIdx:si}; 
+      highlightDragInterval(lane,si,si); 
+    } 
+  }
+  
+  function onMouseMove(e){ 
+    if(!dragModeEnabled && isDragging && dragStartCell){ 
+      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains("slot")); 
+      if(el){ 
+        let lane=parseInt(el.dataset.lane), idx=parseInt(el.dataset.slotIdx); 
+        if(lane===dragStartCell.lane){ 
+          let ns=Math.min(dragStartCell.si,idx), ne=Math.max(dragStartCell.si,idx); 
+          dragInterval={lane,startIdx:ns,endIdx:ne}; 
+          highlightDragInterval(lane,ns,ne); 
+        } 
+      } 
+    } 
+  }
+  
+  function highlightDragInterval(lane,si,ei){ 
+    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
+    for(let i=si;i<=ei;i++){ 
+      let cell=getSlotCell(lane,i); 
+      if(cell) cell.classList.add("drag-over"); 
+    } 
+  }
+  
+  function onMouseUp(){ 
+    if(!dragModeEnabled && isDragging && dragInterval){ 
+      let {lane,startIdx,endIdx}=dragInterval; 
+      if(hasConflict(lane, startIdx, endIdx)){ 
+        alert("Это время уже занято другой броней"); 
+      } else { 
+        tempBookings.push({ 
+          id:nextTempId++, 
+          lane, 
+          startSlotIdx: startIdx, 
+          endSlotIdx: endIdx
+        }); 
+      } 
+      renderInlineTempCards(); 
+      renderAllSliders(); 
+      updateCellsHighlight(); 
+    } 
+    isDragging=false; 
+    dragInterval=null; 
+    dragStartCell=null; 
+    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
+  }
+  
+  function openBookModal(){ if(tempBookings.length===0){ alert("Сначала выделите интервал на столе"); return; } $("nameInput").value=""; $("phoneInput").value=""; $("commentInput").value=""; updatePreviewTimes(); $("bookModal").classList.add("open"); }
+  function closeBookModal(){ $("bookModal").classList.remove("open"); }
+  
+  async function submitTempBookings(){ 
+    let name=$("nameInput").value.trim(); 
+    if(!name) return alert("Введите имя"); 
+    if(tempBookings.length===0) return; 
+    showLoad(); 
+    try{ 
+      const result = await jsonpSubmitBookings({ 
+        bookings:tempBookings.map(tb=>({ 
+          date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
+          tableNumber:tb.lane+1, 
+          start:slots[tb.startSlotIdx].key, 
+          end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
+          name, 
+          phone:$("phoneInput").value.trim(), 
+          comment:$("commentInput").value.trim() 
+        })) 
+      });
+      
+      if (result && result.success === false) {
+        throw new Error(result.message || "Ошибка при сохранении");
+      }
+      
+      clearTempSelections(); 
+      await loadFromServer(); 
+      closeBookModal(); 
+    } catch(e){
+      console.error("Submit error:", e);
+      alert("Ошибка при сохранении: " + e.message);
+    } 
+    hideLoad(); 
+  }
+  
+  async function loadFromServer(){ 
+    showLoad(); 
+    try{ 
+      let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
+      let data = await jsonpGetBookings(dateVal);
+      
+      bookings = data.bookings ? data.bookings.map(b => { 
+        let startKey = parseFloat(b.start); 
+        let endKey = parseFloat(b.end); 
+        let startSlotIdx = slots.findIndex(s => s.key === startKey); 
+        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1; 
+        if(endSlotIdx < 0) endSlotIdx = slots.length - 1; 
+        return { 
+          id: b.id, 
+          lane: b.table - 1, 
+          start: startKey, 
+          end: endKey, 
+          startSlotIdx, 
+          endSlotIdx, 
+          name: b.name, 
+          phone: b.phone, 
+          comment: b.comment, 
+          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null) 
+        }; 
+      }) : []; 
+      
+      renderAllSliders(); 
+      updateCellsHighlight(); 
+    } catch(e){
+      console.error("Load error:", e);
+      alert("Ошибка загрузки данных: " + e.message);
+    } 
+    hideLoad(); 
+  }
+  
+  async function saveToServer(booking){ 
+    if(!booking.id) return; 
+    try {
+      await jsonpUpdateBooking({
+        action: "update",
+        id: booking.id,
+        date: window.dateInputForSync?.value,
+        tableNumber: booking.lane + 1,
+        start: booking.start,
+        end: booking.end,
+        name: booking.name,
+        phone: booking.phone,
+        comment: booking.comment
+      });
+    } catch(e) {
+      console.error("Save to server error:", e);
+    }
+  }
+  
+  function renderAllSliders(){ 
+    let container=$("slidersLayer"); 
+    if(!container) return; 
+    container.innerHTML=""; 
+    let rows=Array.from($("dtBody")?.querySelectorAll("tr")||[]); 
+    if(rows.length===0) return; 
+    [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))].forEach(item=>{ 
+      let startIdx=item.startSlotIdx, endIdx=item.endSlotIdx; 
+      if(startIdx===undefined || endIdx===undefined) return; 
+      let row=rows[item.lane]; 
+      if(!row) return; 
+      let sc=row.cells[startIdx+1], ec=row.cells[endIdx+1]; 
+      if(!sc||!ec) return; 
+      let left=sc.offsetLeft+1, top=row.offsetTop+1, width=(ec.offsetLeft+ec.offsetWidth)-sc.offsetLeft-2, height=row.offsetHeight-2; 
+      let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending")); 
+      let laneType=LANE_TYPE_MAP[getGroupIndex(item.lane)]; 
+      let slider=document.createElement("div"); 
+      slider.className=`slider ${status}`; 
+      if(dragModeEnabled) slider.classList.add("drag-mode-enabled"); 
+      slider.setAttribute("data-lane-type",laneType); 
+      slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
+      let dot=document.createElement("div"); 
+      dot.className="guest-status-dot"; 
+      slider.appendChild(dot); 
+      let nameDiv=document.createElement("div"); 
+      nameDiv.className="sl-name"; 
+      nameDiv.textContent=item.isTemp?"Ожидает брони":(item.name||"Бронь"); 
+      let timeDiv=document.createElement("div"); 
+      timeDiv.className="sl-time"; 
+      timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
+      slider.append(nameDiv,timeDiv); 
+      let dragHandle=document.createElement("div"); 
+      dragHandle.className="drag-handle"; 
+      if(dragModeEnabled && !item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
+        e.stopPropagation(); 
+        startMoveDrag(item, e, rows, slots); 
+      }); 
+      else if(dragModeEnabled && item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
+        e.stopPropagation(); 
+        startMoveTempDrag(item, e, rows, slots); 
+      }); 
+      else dragHandle.addEventListener("click",(e)=>{ 
+        e.stopPropagation(); 
+        if(!item.isTemp && item.id) showInfoModal(item); 
+        else if(!item.isTemp && !item.id) alert("Загрузка данных..."); 
+        else alert("Временная бронь — сохраните для просмотра."); 
+      }); 
+      slider.appendChild(dragHandle); 
+      container.appendChild(slider); 
+    }); 
+  }
+  
+  async function startMoveDrag(booking, e, rows, slotsArr){ 
+    e.stopPropagation(); 
+    const slider=e.currentTarget.closest('.slider'); 
+    if(!slider) return; 
+    let durationCells = booking.endSlotIdx - booking.startSlotIdx; 
+    let ghost=createGhost(slider); 
+    let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; 
+    moveLogic(ghost,slider,rows,slotsArr, durationCells, async (finalLane,finalStartIdx)=>{ 
+      let newStartIdx = finalStartIdx; 
+      let newEndIdx = finalStartIdx + durationCells; 
+      if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ 
+        booking.lane = finalLane; 
+        booking.startSlotIdx = newStartIdx; 
+        booking.endSlotIdx = newEndIdx; 
+        booking.start = slotsArr[newStartIdx].key; 
+        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
+        await saveToServer(booking); 
+        renderAllSliders(); 
+        updateCellsHighlight(); 
+      } else alert("Конфликт с другой броней"); 
+    }, currentLane,currentStartIdx); 
+  }
+  
+  async function startMoveTempDrag(temp, e, rows, slotsArr){ 
+    e.stopPropagation(); 
+    const slider=e.currentTarget.closest('.slider'); 
+    if(!slider) return; 
+    let durationCells = temp.endSlotIdx - temp.startSlotIdx; 
+    let ghost=createGhost(slider); 
+    let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; 
+    moveLogic(ghost,slider,rows,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
+      let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; 
+      if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ 
+        temp.lane=finalLane; 
+        temp.startSlotIdx=newStartIdx; 
+        temp.endSlotIdx=newEndIdx; 
+        renderInlineTempCards(); 
+        renderAllSliders(); 
+        updateCellsHighlight(); 
+      } else alert("Конфликт с другой броней"); 
+    }, currentLane,currentStartIdx); 
+  }
+  
+  function createGhost(slider){ 
+    let ghost=document.createElement('div'); 
+    ghost.className='ghost-slider'; 
+    let nameClone = slider.querySelector('.sl-name')?.cloneNode(true);
+    let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
+    let dotClone = slider.querySelector('.guest-status-dot')?.cloneNode(true);
+    if(dotClone) ghost.appendChild(dotClone);
+    if(nameClone) ghost.appendChild(nameClone);
+    if(timeClone) ghost.appendChild(timeClone);
+    ghost.style.cssText=slider.style.cssText; 
+    ghost.style.opacity='0.85'; ghost.style.transition='none';
+    $('slidersLayer').appendChild(ghost); 
+    slider.classList.add('dragging');
+    return ghost;
+  }
+  
+  function moveLogic(ghost,slider,rows,slotsArr,durationCells, onDrop, initialLane, initialStartIdx){
+    let currentLane=initialLane, currentStartIdx=initialStartIdx;
+    function updateGhostPos(lane,startIdx){
+      let row=rows[lane];
+      if(!row) return;
+      let sc=row.cells[startIdx+1], ec=row.cells[startIdx+durationCells+1];
+      if(sc&&ec){
+        ghost.style.left=(sc.offsetLeft+1)+'px';
+        ghost.style.top=(row.offsetTop+1)+'px';
+        ghost.style.width=(ec.offsetLeft+ec.offsetWidth-sc.offsetLeft-2)+'px';
+        ghost.style.height=(row.offsetHeight-2)+'px';
+      }
+    }
+    function getTargetCoords(e){
+      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains('slot'));
+      if(!el) return null;
+      return {lane:parseInt(el.dataset.lane), idx:parseInt(el.dataset.slotIdx)};
+    }
+    function onDragMove(ev){
+      let tgt=getTargetCoords(ev);
+      if(tgt){
+        let nl=tgt.lane, nsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
+        if(nl!==currentLane||nsi!==currentStartIdx){
+          currentLane=nl; currentStartIdx=nsi;
+          updateGhostPos(currentLane,currentStartIdx);
+        }
+      }
+    }
+    function onDragEnd(ev){
+      let tgt=getTargetCoords(ev);
+      if(tgt){
+        let fl=tgt.lane, fsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
+        onDrop(fl,fsi);
+      }
+      if(ghost && ghost.parentNode) ghost.remove();
+      if(slider) slider.classList.remove('dragging');
+      document.body.style.cursor='';
+      document.removeEventListener('mousemove',onDragMove);
+      document.removeEventListener('mouseup',onDragEnd);
+      renderAllSliders();
+    }
+    document.body.style.cursor='grabbing';
+    document.addEventListener('mousemove',onDragMove);
+    document.addEventListener('mouseup',onDragEnd);
+    updateGhostPos(currentLane,currentStartIdx);
+  }
+  
+  function showInfoModal(b){ 
+    currentBooking=b; 
+    $("i-table").textContent="№ "+(b.lane+1); 
+    $("i-time").textContent=fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
+    $("i-name").textContent=b.name; 
+    $("i-phone").textContent=b.phone||"—"; 
+    $("i-comment").textContent=b.comment||"—"; 
+    let statusText=b.confirmed===true?"✅ Пришли":(b.confirmed===false?"❌ Не пришли":"⏳ Ожидание"); 
+    $("i-status").textContent=statusText; 
+    $("infoModal").classList.add("open"); 
+  }
+  
+  function closeInfoModal(){ $("infoModal").classList.remove("open"); currentBooking=null; }
+  
+  async function confirmBooking(yes){ 
+    if(!currentBooking) return; 
+    showLoad(); 
+    try {
+      await jsonpConfirmBooking(currentBooking.id, yes);
+      closeInfoModal(); 
+      await loadFromServer(); 
+    } catch(e) {
+      alert("Ошибка: " + e.message);
+    }
+    hideLoad(); 
+  }
+  
+  async function deleteBooking(){ 
+    if(!currentBooking||!confirm("Удалить?")) return; 
+    showLoad(); 
+    try {
+      await jsonpDeleteBooking(currentBooking.id);
+      closeInfoModal(); 
+      await loadFromServer(); 
+    } catch(e) {
+      alert("Ошибка: " + e.message);
+    }
+    hideLoad(); 
+  }
+  
+  function showLoad(){ $("loader").style.display="flex"; }
+  function hideLoad(){ $("loader").style.display="none"; }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  function initApplication() {
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.closest('.drag-handle') || e.target.closest('.slider')) {
+        e.preventDefault();
+        return false;
+      }
+    });
+    
+    const calendarBtn = document.getElementById("calendarButton");
+    const hiddenPicker = document.getElementById("hiddenDatePicker");
+    const displaySpan = document.getElementById("displayDateText");
+    const todayStr = new Date().toISOString().split('T')[0];
+    let currentDate = todayStr;
+    if (hiddenPicker) {
+      hiddenPicker.value = currentDate;
+      displaySpan.innerText = formatDateForDisplay(currentDate);
+    }
+    if (calendarBtn && hiddenPicker) {
+      calendarBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (hiddenPicker.showPicker) hiddenPicker.showPicker();
+        else { hiddenPicker.click(); hiddenPicker.focus(); }
+      });
+      hiddenPicker.addEventListener("change", (e) => {
+        const newDate = e.target.value;
+        if (newDate) {
+          currentDate = newDate;
+          displaySpan.innerText = formatDateForDisplay(newDate);
+          if (window.dateInputForSync) {
+            window.dateInputForSync.value = newDate;
+            const changeEvent = new Event('change');
+            window.dateInputForSync.dispatchEvent(changeEvent);
+          }
+          loadFromServer();
+          clearTempSelections();
+        }
+      });
+    }
+    let legacyDateInput = document.createElement("input");
+    legacyDateInput.type = "date";
+    legacyDateInput.id = "dateInput";
+    legacyDateInput.style.display = "none";
+    document.body.appendChild(legacyDateInput);
+    window.dateInputForSync = legacyDateInput;
+    legacyDateInput.value = currentDate;
+    buildDesktopTable();
+    legacyDateInput.addEventListener("change", () => { 
+      if (hiddenPicker) hiddenPicker.value = legacyDateInput.value;
+      if (displaySpan) displaySpan.innerText = formatDateForDisplay(legacyDateInput.value);
+      loadFromServer(); 
+      clearTempSelections(); 
+    });
+    loadFromServer();
+    const toggleBtn = $("dragToggleBtn");
+    toggleBtn.addEventListener("click", () => {
+      dragModeEnabled = !dragModeEnabled;
+      toggleBtn.innerHTML = dragModeEnabled ? '<i class="fas fa-arrows-alt"></i> Режим перетяжки: ВКЛ' : '<i class="fas fa-arrows-alt"></i> Режим перетяжки: ВЫКЛ';
+      toggleBtn.classList.toggle("active", dragModeEnabled);
+      $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
+      renderAllSliders();
+    });
+    
+    $("tableDesktop").addEventListener("mousedown", onMouseDown);
+    document.body.addEventListener("mousemove", onMouseMove);
+    document.body.addEventListener("mouseup", onMouseUp);
+    
+    ["bookModal","infoModal","adminModal","userFormModal"].forEach(id=>{ 
+      $(id)?.addEventListener("click",e=>{ 
+        if(e.target=== $(id)) $(id).classList.remove("open"); 
+      }); 
+    });
+  }
+  
+  window.addEventListener('load', function() {
+    const cachedUser = getCachedUser();
+    if (cachedUser && cachedUser.email) {
+      currentUser = cachedUser;
+      loginUser(currentUser);
+    }
+  });
 </script>
 </body>
 </html>
