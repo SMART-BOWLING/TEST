@@ -776,7 +776,7 @@
       <button id="dragToggleBtn" class="btn-drag-toggle"><i class="fas fa-arrows-alt"></i> Режим перетяжки: ВЫКЛ</button>
       <div id="inlineTempContainer" class="inline-temp-cards"></div>
     </div>
-    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТОЛ</th></tr></thead><tbody id="dtBody"></tbody>扬<table><div id="slidersLayer"></div></div></div>
+    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТОЛ</th></tr></thead><tbody id="dtBody"></tbody></table><div id="slidersLayer"></div></div></div>
   </div>
 </div>
 
@@ -828,40 +828,40 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ АВТОРИЗАЦИИ ====================
+  // ==================== КОНФИГУРАЦИЯ ====================
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwQ6jQuBM8E0QqGw34Kp46z2oBqzgNthzLGZpx7N6T_nfonCWyBstdL1npox9dyGqUS/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzSCz6vtscn6GUjC_L3i6RtS4WOPUVKvhhubvj5FRT-XY7R2_SiVAA-c_weiuSB0auX/exec";
   
   let currentUser = null;
   
-  // ==================== JSONP HELPER ====================
-  let jsonpCounter = 0;
+  // ==================== JSONP ФУНКЦИИ ДЛЯ ОБХОДА CORS ====================
   
-  function jsonpRequest(url, timeout = 30000) {
+  function jsonpRequest(url, callbackName = 'jsonpCallback') {
     return new Promise((resolve, reject) => {
-      const callback = `jsonp_callback_${++jsonpCounter}_${Date.now()}`;
+      const callbackFunction = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const script = document.createElement('script');
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error('JSONP request timeout'));
-      }, timeout);
       
-      function cleanup() {
-        if (script.parentNode) script.parentNode.removeChild(script);
-        delete window[callback];
-        clearTimeout(timer);
-      }
+      // Добавляем callback параметр к URL
+      const separator = url.includes('?') ? '&' : '?';
+      const fullUrl = `${url}${separator}callback=${callbackFunction}`;
       
-      window[callback] = (data) => {
-        cleanup();
+      // Глобальная функция для обработки ответа
+      window[callbackFunction] = (data) => {
+        delete window[callbackFunction];
+        document.body.removeChild(script);
         resolve(data);
       };
       
-      const separator = url.includes('?') ? '&' : '?';
-      script.src = `${url}${separator}callback=${callback}`;
-      document.head.appendChild(script);
+      script.src = fullUrl;
+      script.onerror = () => {
+        delete window[callbackFunction];
+        document.body.removeChild(script);
+        reject(new Error('JSONP request failed'));
+      };
+      
+      document.body.appendChild(script);
     });
   }
   
@@ -1070,7 +1070,7 @@
     location.reload();
   }
   
-  // ==================== АДМИН-ПАНЕЛЬ ====================
+  // ==================== АДМИН-ПАНЕЛЬ (JSONP ВЕРСИЯ) ====================
   
   async function openAdminPanel() {
     showLoad();
@@ -1085,7 +1085,8 @@
   
   async function loadUsersList() {
     try {
-      const data = await jsonpRequest(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
+      const url = `${GAS_URL}?action=getUsers&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
       
       if (!data.success) {
         throw new Error(data.message);
@@ -1115,12 +1116,12 @@
             <td class="user-actions">
               <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
               <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-             </td>
-           </tr>
+            </td>
+          </tr>
         `;
       });
       
-      html += `</tbody> </table>`;
+      html += `</tbody></table>`;
       container.innerHTML = html;
       
     } catch (error) {
@@ -1169,12 +1170,18 @@
     showLoad();
     
     try {
-      let result;
+      let url;
       if (row) {
-        result = await jsonpRequest(`${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`);
+        url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
       } else {
-        result = await jsonpRequest(`${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`);
+        url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
       }
+      
+      console.log("Sending request to:", url);
+      console.log("Role value being sent:", role);
+      
+      const result = await jsonpRequest(url);
+      console.log("Response:", result);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка сохранения");
@@ -1200,7 +1207,8 @@
     showLoad();
     
     try {
-      const result = await jsonpRequest(`${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`);
+      const url = `${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка удаления");
@@ -1395,38 +1403,46 @@
   function openBookModal(){ if(tempBookings.length===0){ alert("Сначала выделите интервал на столе"); return; } $("nameInput").value=""; $("phoneInput").value=""; $("commentInput").value=""; updatePreviewTimes(); $("bookModal").classList.add("open"); }
   function closeBookModal(){ $("bookModal").classList.remove("open"); }
   
+  // JSONP версия сохранения броней
   async function submitTempBookings(){ 
     let name=$("nameInput").value.trim(); 
     if(!name) return alert("Введите имя"); 
     if(tempBookings.length===0) return; 
     showLoad(); 
     try{ 
-      const payload = encodeURIComponent(JSON.stringify({ 
-        bookings:tempBookings.map(tb=>({ 
-          date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
-          tableNumber:tb.lane+1, 
-          start:slots[tb.startSlotIdx].key, 
-          end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-          name, 
-          phone:$("phoneInput").value.trim(), 
-          comment:$("commentInput").value.trim() 
-        })) 
+      const bookingsData = tempBookings.map(tb=>({ 
+        date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
+        tableNumber:tb.lane+1, 
+        start:slots[tb.startSlotIdx].key, 
+        end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
+        name, 
+        phone:$("phoneInput").value.trim(), 
+        comment:$("commentInput").value.trim() 
       }));
       
-      await jsonpRequest(`${GAS_URL}?payload=${payload}&_=${Date.now()}`);
-      clearTempSelections(); 
-      await loadFromServer(); 
-      closeBookModal(); 
+      const url = `${GAS_URL}?action=addBookings&data=${encodeURIComponent(JSON.stringify(bookingsData))}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
+      
+      if(result.success){
+        clearTempSelections(); 
+        await loadFromServer(); 
+        closeBookModal(); 
+      } else {
+        alert("Ошибка: " + (result.message || "Неизвестная ошибка"));
+      }
     } catch(e){alert("Ошибка при сохранении: " + e.message);} 
     hideLoad(); 
   }
   
+  // JSONP версия загрузки броней
   async function loadFromServer(){ 
     showLoad(); 
     try{ 
-      let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0]; 
-      let data = await jsonpRequest(`${GAS_URL}?action=get&date=${dateVal}&_=${Date.now()}`);
-      bookings=data.bookings?data.bookings.map(b=>{ 
+      let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
+      const url = `${GAS_URL}?action=get&date=${dateVal}&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      
+      bookings = data.bookings?data.bookings.map(b=>{ 
         let startKey=parseFloat(b.start); 
         let endKey=parseFloat(b.end); 
         let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
@@ -1447,26 +1463,51 @@
       }):[]; 
       renderAllSliders(); 
       updateCellsHighlight(); 
-    } catch(e){console.error(e);} 
+    } catch(e){console.error(e); alert("Ошибка загрузки: " + e.message);} 
     hideLoad(); 
   }
   
+  // JSONP версия обновления брони
   async function saveToServer(booking){ 
     if(!booking.id) return; 
-    try {
-      const payload = encodeURIComponent(JSON.stringify({ 
-        action:"update", 
-        id:booking.id, 
-        date:window.dateInputForSync?.value, 
-        tableNumber:booking.lane+1, 
-        start:booking.start, 
-        end:booking.end, 
-        name:booking.name, 
-        phone:booking.phone, 
-        comment:booking.comment 
-      }));
-      await jsonpRequest(`${GAS_URL}?payload=${payload}&_=${Date.now()}`);
-    } catch(e) { console.error(e); }
+    try{ 
+      const url = `${GAS_URL}?action=update&id=${booking.id}&table=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name)}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
+      await jsonpRequest(url);
+    } catch(e){console.error("Error updating booking:", e);} 
+  }
+  
+  // JSONP версия подтверждения брони
+  async function confirmBooking(yes){ 
+    if(!currentBooking) return; 
+    showLoad(); 
+    try{ 
+      const url = `${GAS_URL}?action=confirm&id=${currentBooking.id}&confirmed=${yes}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
+      if(result.success){
+        closeInfoModal(); 
+        await loadFromServer();
+      } else {
+        alert("Ошибка: " + (result.message || "Не удалось обновить статус"));
+      }
+    } catch(e){alert("Ошибка: " + e.message);} 
+    hideLoad(); 
+  }
+  
+  // JSONP версия удаления брони
+  async function deleteBooking(){ 
+    if(!currentBooking||!confirm("Удалить?")) return; 
+    showLoad(); 
+    try{ 
+      const url = `${GAS_URL}?action=delete&id=${currentBooking.id}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
+      if(result.success){
+        closeInfoModal(); 
+        await loadFromServer();
+      } else {
+        alert("Ошибка: " + (result.message || "Не удалось удалить бронь"));
+      }
+    } catch(e){alert("Ошибка: " + e.message);} 
+    hideLoad(); 
   }
   
   function renderAllSliders(){ 
@@ -1521,52 +1562,11 @@
     }); 
   }
   
-  async function startMoveDrag(booking, e, rows, slotsArr){ 
-    e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
-    if(!slider) return; 
-    let durationCells = booking.endSlotIdx - booking.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; 
-    moveLogic(ghost,slider,rows,slotsArr, durationCells, async (finalLane,finalStartIdx)=>{ 
-      let newStartIdx = finalStartIdx; 
-      let newEndIdx = finalStartIdx + durationCells; 
-      if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ 
-        booking.lane = finalLane; 
-        booking.startSlotIdx = newStartIdx; 
-        booking.endSlotIdx = newEndIdx; 
-        booking.start = slotsArr[newStartIdx].key; 
-        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
-        await saveToServer(booking); 
-        renderAllSliders(); 
-        updateCellsHighlight(); 
-      } else alert("Конфликт с другой броней"); 
-    }, currentLane,currentStartIdx); 
-  }
+  async function startMoveDrag(booking, e, rows, slotsArr){ e.stopPropagation(); const slider=e.currentTarget.closest('.slider'); if(!slider) return; let durationCells = booking.endSlotIdx - booking.startSlotIdx; let ghost=createGhost(slider); let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; moveLogic(ghost,slider,rows,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ let newStartIdx = finalStartIdx; let newEndIdx = finalStartIdx + durationCells; if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ booking.lane = finalLane; booking.startSlotIdx = newStartIdx; booking.endSlotIdx = newEndIdx; booking.start = slotsArr[newStartIdx].key; booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); saveToServer(booking); renderAllSliders(); updateCellsHighlight(); } else alert("Конфликт с другой броней"); }, currentLane,currentStartIdx); }
   
-  async function startMoveTempDrag(temp, e, rows, slotsArr){ 
-    e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
-    if(!slider) return; 
-    let durationCells = temp.endSlotIdx - temp.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; 
-    moveLogic(ghost,slider,rows,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
-      let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; 
-      if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ 
-        temp.lane=finalLane; 
-        temp.startSlotIdx=newStartIdx; 
-        temp.endSlotIdx=newEndIdx; 
-        renderInlineTempCards(); 
-        renderAllSliders(); 
-        updateCellsHighlight(); 
-      } else alert("Конфликт с другой броней"); 
-    }, currentLane,currentStartIdx); 
-  }
+  async function startMoveTempDrag(temp, e, rows, slotsArr){ e.stopPropagation(); const slider=e.currentTarget.closest('.slider'); if(!slider) return; let durationCells = temp.endSlotIdx - temp.startSlotIdx; let ghost=createGhost(slider); let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; moveLogic(ghost,slider,rows,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ temp.lane=finalLane; temp.startSlotIdx=newStartIdx; temp.endSlotIdx=newEndIdx; renderInlineTempCards(); renderAllSliders(); updateCellsHighlight(); } else alert("Конфликт с другой броней"); }, currentLane,currentStartIdx); }
   
-  function createGhost(slider){ 
-    let ghost=document.createElement('div'); 
-    ghost.className='ghost-slider'; 
+  function createGhost(slider){ let ghost=document.createElement('div'); ghost.className='ghost-slider'; 
     let nameClone = slider.querySelector('.sl-name')?.cloneNode(true);
     let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
     let dotClone = slider.querySelector('.guest-status-dot')?.cloneNode(true);
@@ -1640,24 +1640,6 @@
   }
   
   function closeInfoModal(){ $("infoModal").classList.remove("open"); currentBooking=null; }
-  
-  async function confirmBooking(yes){ 
-    if(!currentBooking) return; 
-    showLoad(); 
-    await jsonpRequest(`${GAS_URL}?action=confirm&id=${currentBooking.id}&confirmed=${yes}&_=${Date.now()}`);
-    closeInfoModal(); 
-    await loadFromServer(); 
-    hideLoad(); 
-  }
-  
-  async function deleteBooking(){ 
-    if(!currentBooking||!confirm("Удалить?")) return; 
-    showLoad(); 
-    await jsonpRequest(`${GAS_URL}?action=delete&id=${currentBooking.id}&_=${Date.now()}`);
-    closeInfoModal(); 
-    await loadFromServer(); 
-    hideLoad(); 
-  }
   
   function showLoad(){ $("loader").style.display="flex"; }
   function hideLoad(){ $("loader").style.display="none"; }
