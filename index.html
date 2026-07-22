@@ -607,10 +607,11 @@
       border-radius: 6px;
       pointer-events: auto;
       cursor: default;
-      padding: 4px 12px 4px 34px;
+      padding: 4px 12px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
       gap: 2px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(8px);
@@ -627,10 +628,11 @@
       position: absolute;
       border-radius: 6px;
       pointer-events: none;
-      padding: 4px 12px 4px 34px;
+      padding: 4px 12px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
       gap: 2px;
       background: rgba(0, 0, 0, 0.45) !important;
       backdrop-filter: blur(12px);
@@ -646,7 +648,7 @@
       text-shadow: 0 1px 1px black;
     }
     
-    .ghost-slider .sl-name, .ghost-slider .sl-time {
+    .ghost-slider .sl-time {
       opacity: 0.85;
     }
     
@@ -658,21 +660,22 @@
     
     /* Стиль для ползунка с событием "День рождения" */
     .slider.birthday[data-lane-type="blue"] { 
-      background: #c97b2e; 
-      border: 2px solid #ffd700; 
+      background: #c97b2e !important; 
+      border: 2px solid #ffd700 !important;
     }
-    .slider.birthday .sl-name::after {
+    
+    .slider.birthday .sl-time::after {
       content: " 🎂";
       font-size: 14px;
     }
     
-    /* Точка статуса убрана */
-    .guest-status-dot {
-      display: none;
+    .sl-time { 
+      font-size: 13px; 
+      font-weight: 600; 
+      opacity: 0.95; 
+      text-align: center;
+      letter-spacing: 0.5px;
     }
-    
-    .sl-name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
-    .sl-time { font-size: 10px; opacity: 0.85; font-weight: 500; padding-right: 6px; }
     
     .drag-handle {
       position: absolute;
@@ -829,6 +832,53 @@
       color: var(--label-secondary);
     }
     
+    /* Стили для модалки редактирования типа события */
+    .event-type-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    
+    .event-type-btn {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--surface-secondary);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    
+    .event-type-btn:hover {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-dim);
+    }
+    
+    .event-type-btn.active {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-dim);
+    }
+    
+    .event-type-btn.birthday {
+      background: #fdf0da;
+      border-color: #c97b2e;
+    }
+    
+    .event-type-btn.birthday.active {
+      background: #c97b2e;
+      color: white;
+      border-color: #ffd700;
+    }
+    
+    .event-type-btn.regular.active {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+    
     @media (max-width: 780px) {
       .page { padding: 18px 16px 70px; }
       .ctrl { flex-direction: column; align-items: stretch; }
@@ -904,11 +954,14 @@
 
 <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
 
-<!-- Модалка создания записи - теперь только выбор типа события -->
+<!-- Модалка создания записи -->
 <div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Тип события</label><select class="f-input" id="eventTypeSelect"><option value="regular">Обычная запись</option><option value="birthday">🎂 День рождения</option></select></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
 
+<!-- Модалка редактирования типа события -->
+<div id="editEventModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-edit"></i> Редактировать событие</div><button class="sheet-x" onclick="closeEditEventModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="editEventInfo" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Станция: </span><strong id="editStationName"></strong><br><span>Время: </span><strong id="editTimeRange"></strong></div><label class="f-label">Тип события</label><div class="event-type-buttons"><button class="event-type-btn regular" data-type="regular" onclick="selectEventType('regular')"><i class="fas fa-clock"></i> Обычная</button><button class="event-type-btn birthday" data-type="birthday" onclick="selectEventType('birthday')"><i class="fas fa-birthday-cake"></i> День рождения</button></div><div class="f-actions"><button class="f-btn-ok" onclick="saveEventType()">Сохранить</button><button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button></div></div></div></div>
+
 <!-- Модалка просмотра события -->
-<div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div><div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div></div><button class="del-btn" onclick="deleteBooking()"><i class="fas fa-trash-alt"></i> Удалить запись</button></div></div></div>
+<div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div></div><div class="f-actions" style="margin-top: 20px;"><button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button><button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;"><i class="fas fa-trash"></i> Удалить</button></div></div></div></div>
 
 <div id="saveScheduleModal" class="overlay">
   <div class="sheet" style="max-width: 480px;">
@@ -1429,14 +1482,49 @@
   let bookings = [], tempBookings = [], nextTempId = 1;
   let dragModeEnabled = false;
   let currentBooking = null;
+  let editingBooking = null;
+  let selectedEventType = 'regular';
   const $ = id => document.getElementById(id);
   
   // ==================== ПРИВЯЗКА СОТРУДНИКОВ К СТАНЦИЯМ ====================
-  let employeeGroups = []; // [{ id, name, stations: [laneIndex, ...] }]
+  let employeeGroups = [];
   let nextGroupId = 1;
   let assignModeEnabled = false;
   let selectedLanesForAssign = [];
   const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+  
+  // Сохранение привязок в localStorage
+  function saveEmployeeGroups() {
+    try {
+      const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
+      const key = `employeeGroups_${dateVal}`;
+      localStorage.setItem(key, JSON.stringify(employeeGroups));
+      console.log('Employee groups saved for date:', dateVal);
+    } catch (e) {
+      console.warn('Failed to save employee groups:', e);
+    }
+  }
+  
+  // Загрузка привязок из localStorage
+  function loadEmployeeGroups() {
+    try {
+      const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
+      const key = `employeeGroups_${dateVal}`;
+      const data = localStorage.getItem(key);
+      if (data) {
+        employeeGroups = JSON.parse(data);
+        // Обновляем nextGroupId
+        if (employeeGroups.length > 0) {
+          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+        }
+        console.log('Employee groups loaded for date:', dateVal, employeeGroups);
+        return true;
+      }
+    } catch (e) {
+      console.warn('Failed to load employee groups:', e);
+    }
+    return false;
+  }
   
   function getEmployeeForLane(lane) {
     for (let group of employeeGroups) {
@@ -1652,6 +1740,7 @@
     selectedLanesForAssign = [];
     updateAssignSelectionHighlight();
     hideAssignBar();
+    saveEmployeeGroups();
     refreshGroupHeaders();
   }
   
@@ -1660,6 +1749,7 @@
     if(!group) return;
     if(!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
     employeeGroups = employeeGroups.filter(g => g.id !== groupId);
+    saveEmployeeGroups();
     refreshGroupHeaders();
   }
   
@@ -1667,10 +1757,10 @@
     employeeGroups = [];
     selectedLanesForAssign = [];
     if(assignModeEnabled) toggleAssignMode();
+    saveEmployeeGroups();
     refreshGroupHeaders();
   }
   
-  // Перерисовывает строки-разделители с ФИО сотрудника над закреплёнными за ним станциями.
   function refreshGroupHeaders(){
     const body = $("dtBody");
     if(!body) return;
@@ -1801,7 +1891,7 @@
           lane, 
           startSlotIdx: startIdx, 
           endSlotIdx: endIdx,
-          type: 'regular' // по умолчанию
+          type: 'regular'
         }); 
       } 
       renderInlineTempCards(); 
@@ -1838,10 +1928,10 @@
         stationNumber:tb.lane+1, 
         start:slots[tb.startSlotIdx].key, 
         end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-        name: '', // без имени
-        phone: '', // без телефона
-        comment: eventType === 'birthday' ? 'ДЕНЬ РОЖДЕНИЯ' : '', // комментарий для типа события
-        type: eventType // тип события
+        name: '', 
+        phone: '', 
+        comment: eventType === 'birthday' ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+        type: eventType
       }));
       
       const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(scheduleData))}&_=${Date.now()}`;
@@ -1871,7 +1961,6 @@
         let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
         let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
         if(endSlotIdx<0) endSlotIdx=slots.length-1; 
-        // Определяем тип события по комментарию
         let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
         return { 
           id:b.id, 
@@ -1887,6 +1976,11 @@
           type: isBirthday ? 'birthday' : 'regular'
         }; 
       }) : []; 
+      
+      // Загружаем привязки сотрудников
+      loadEmployeeGroups();
+      refreshGroupHeaders();
+      
       renderAllSliders(); 
       updateCellsHighlight(); 
     } catch(e){console.error(e); alert("Ошибка загрузки: " + e.message);} 
@@ -1899,6 +1993,30 @@
       const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
       await jsonpRequest(url);
     } catch(e){console.error("Error updating booking:", e);} 
+  }
+  
+  async function updateBookingType(bookingId, newType) {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+    
+    booking.type = newType;
+    booking.comment = newType === 'birthday' ? 'ДЕНЬ РОЖДЕНИЯ' : '';
+    
+    showLoad();
+    try {
+      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
+      if(result.success){
+        await loadFromServer();
+        closeEditEventModal();
+        closeInfoModal();
+      } else {
+        alert("Ошибка: " + (result.message || "Не удалось обновить тип события"));
+      }
+    } catch(e) {
+      alert("Ошибка: " + e.message);
+    }
+    hideLoad();
   }
   
   async function deleteBooking(){ 
@@ -1915,6 +2033,42 @@
       }
     } catch(e){alert("Ошибка: " + e.message);} 
     hideLoad(); 
+  }
+  
+  // ==================== МОДАЛКА РЕДАКТИРОВАНИЯ ТИПА СОБЫТИЯ ====================
+  
+  function openEditEventModal() {
+    if (!currentBooking) return;
+    editingBooking = currentBooking;
+    
+    document.getElementById("editStationName").textContent = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
+    document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
+    
+    selectedEventType = currentBooking.type || 'regular';
+    updateEventTypeButtons();
+    
+    document.getElementById("editEventModal").classList.add("open");
+  }
+  
+  function closeEditEventModal() {
+    document.getElementById("editEventModal").classList.remove("open");
+    editingBooking = null;
+  }
+  
+  function selectEventType(type) {
+    selectedEventType = type;
+    updateEventTypeButtons();
+  }
+  
+  function updateEventTypeButtons() {
+    document.querySelectorAll('.event-type-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === selectedEventType);
+    });
+  }
+  
+  function saveEventType() {
+    if (!editingBooking) return;
+    updateBookingType(editingBooking.id, selectedEventType);
   }
   
   // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ В ЛИСТ ====================
@@ -2024,8 +2178,8 @@
       let slider=document.createElement("div"); 
       slider.className=`slider ${status}`;
       
-      // Если это День рождения - добавляем класс birthday
-      if(item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+      let isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      if(isBirthday) {
         slider.classList.add("birthday");
       }
       
@@ -2033,24 +2187,11 @@
       slider.setAttribute("data-lane-type",laneType); 
       slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
       
-      // Точка статуса убрана - не добавляем dot
-      
-      // Название станции + сотрудник (если привязан)
-      let stationName = stations[item.lane]?.name || `Станция ${item.lane+1}`;
-      let employeeName = getEmployeeForLane(item.lane);
-      
-      let nameDiv=document.createElement("div"); 
-      nameDiv.className="sl-name"; 
-      if (employeeName) {
-        nameDiv.textContent = `${stationName} · ${employeeName}`;
-      } else {
-        nameDiv.textContent = stationName;
-      }
-      
+      // Только время на ползунке
       let timeDiv=document.createElement("div"); 
       timeDiv.className="sl-time"; 
       timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
-      slider.append(nameDiv,timeDiv); 
+      slider.appendChild(timeDiv); 
       
       let dragHandle=document.createElement("div"); 
       dragHandle.className="drag-handle"; 
@@ -2119,9 +2260,7 @@
   function createGhost(slider){ 
     let ghost=document.createElement('div'); 
     ghost.className='ghost-slider'; 
-    let nameClone = slider.querySelector('.sl-name')?.cloneNode(true);
     let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-    if(nameClone) ghost.appendChild(nameClone);
     if(timeClone) ghost.appendChild(timeClone);
     ghost.style.cssText=slider.style.cssText; 
     ghost.style.opacity='0.85'; ghost.style.transition='none';
@@ -2180,12 +2319,10 @@
   function showInfoModal(b){ 
     currentBooking=b; 
     let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-    let employeeName = getEmployeeForLane(b.lane);
     let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
     
     $("i-table").textContent=stationName; 
     $("i-time").textContent=fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
-    $("i-employee").textContent=employeeName || 'Не назначен'; 
     $("i-type").textContent=isBirthday ? '🎂 День рождения' : 'Обычная запись';
     $("infoModal").classList.add("open"); 
   }
@@ -2291,7 +2428,7 @@
     document.body.addEventListener("mousemove", onMouseMove);
     document.body.addEventListener("mouseup", onMouseUp);
     
-    ["bookModal","infoModal","adminModal","userFormModal","saveScheduleModal"].forEach(id=>{ 
+    ["bookModal","infoModal","editEventModal","adminModal","userFormModal","saveScheduleModal"].forEach(id=>{ 
       $(id)?.addEventListener("click",e=>{ 
         if(e.target=== $(id)) $(id).classList.remove("open"); 
       }); 
