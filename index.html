@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <title>Lucky Strike · Расписание станций</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
-  <!-- Font Awesome 6 (Free Icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
@@ -62,7 +61,7 @@
       --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
       --cell-height: 58px;
       --cell-width: 74px;
-      --lane-width: 220px; /* Увеличил ширину для названий станций */
+      --lane-width: 220px;
     }
 
     body {
@@ -360,7 +359,6 @@
     .btn-save-schedule:hover { transform: scale(0.98); filter: brightness(0.95); }
     .btn-save-schedule span { display: none; }
     
-    /* ==================== Режим назначения сотрудников на станции ==================== */
     #tableDesktop tbody td.lane-hdr.assign-selectable {
       cursor: pointer;
     }
@@ -439,19 +437,6 @@
     }
     .assign-bar .assign-apply-btn { background: var(--accent-green); color: white; }
     .assign-bar .assign-cancel-btn { background: rgba(255,255,255,0.12); color: white; }
-    
-    .comment-dot.has-comment {
-      background-color: #e55a5a !important;
-      box-shadow: 0 0 6px rgba(229,90,90,0.7), 0 0 0 1px rgba(255,255,255,0.6);
-    }
-    
-    #saveScheduleModal .existing-hint {
-      font-size: 13px;
-      color: var(--accent-amber);
-      margin-top: 8px;
-      display: none;
-    }
-    #saveScheduleModal .existing-hint.show { display: block; }
 
     .inline-temp-cards { 
       display: flex; 
@@ -571,7 +556,7 @@
       align-items: center;
       gap: 10px;
       min-height: var(--cell-height);
-      background: #e8edf2; /* Светло-синий фон для всех станций */
+      background: #e8edf2;
       border-left: 3px solid var(--accent-blue);
     }
     
@@ -665,40 +650,26 @@
       opacity: 0.85;
     }
     
-    .ghost-slider .guest-status-dot {
-      background-color: #ffc107 !important;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
-    }
-    
-    .slider.dragging {
-      opacity: 0.4;
-      transition: opacity 0.1s;
-    }
-    
     .slider[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); color: white; }
     .slider.pending[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); }
     .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; }
     .slider.rejected[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.55); opacity: 0.85; }
     .slider.temp[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.75); border: 1px solid #c9b16b; }
     
-    .guest-status-dot {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
-      border-radius: 5px;
-      background-color: #d4d4d4;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.6);
-      pointer-events: none;
-      z-index: 12;
+    /* Стиль для ползунка с событием "День рождения" */
+    .slider.birthday[data-lane-type="blue"] { 
+      background: #c97b2e; 
+      border: 2px solid #ffd700; 
+    }
+    .slider.birthday .sl-name::after {
+      content: " 🎂";
+      font-size: 14px;
     }
     
-    .slider.confirmed .guest-status-dot { background-color: #3bc43b; }
-    .slider.rejected .guest-status-dot { background-color: #e55a5a; }
-    .slider.pending .guest-status-dot { background-color: #f5b042; }
-    .slider.temp .guest-status-dot { background-color: #aaaaaa; opacity: 0.7; }
+    /* Точка статуса убрана */
+    .guest-status-dot {
+      display: none;
+    }
     
     .sl-name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
     .sl-time { font-size: 10px; opacity: 0.85; font-weight: 500; padding-right: 6px; }
@@ -933,9 +904,11 @@
 
 <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
 
-<div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-check-circle"></i> Подтверждение записи</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Имя *</label><input class="f-input" id="nameInput" placeholder=""/></div><div class="f-group"><label class="f-label">Телефон</label><input class="f-input" id="phoneInput" placeholder=""/></div><div class="f-group"><label class="f-label">Комментарий</label><textarea class="f-input" id="commentInput" rows="2" placeholder=""></textarea></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
+<!-- Модалка создания записи - теперь только выбор типа события -->
+<div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Тип события</label><select class="f-input" id="eventTypeSelect"><option value="regular">Обычная запись</option><option value="birthday">🎂 День рождения</option></select></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
 
-<div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали записи</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Имя</span><strong id="i-name"></strong></div><div class="info-row"><span>Телефон</span><strong id="i-phone"></strong></div><div class="info-row"><span>Комментарий</span><strong id="i-comment" style="font-weight:normal;"></strong></div><div class="info-row"><span>Статус</span><strong id="i-status"></strong></div></div><div class="confirm-btns"><button class="cb-yes" onclick="confirmBooking(true)"><i class="fas fa-check-circle"></i> Подтвердить</button><button class="cb-no" onclick="confirmBooking(false)"><i class="fas fa-times-circle"></i> Отменить</button></div><button class="del-btn" onclick="deleteBooking()"><i class="fas fa-trash-alt"></i> Удалить запись</button></div></div></div>
+<!-- Модалка просмотра события -->
+<div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div><div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div></div><button class="del-btn" onclick="deleteBooking()"><i class="fas fa-trash-alt"></i> Удалить запись</button></div></div></div>
 
 <div id="saveScheduleModal" class="overlay">
   <div class="sheet" style="max-width: 480px;">
@@ -1004,7 +977,7 @@
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzg9ZQu7lJYFCGcddUm7i9SlviFz-dcUisDux9XCKxzrGByTx65SPfEc7v9ZzOISYVK/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwZntn-xgvITXMj6uRsvocFepYIkylKfZ14rfyLJCwQKBo5nrmiICseItDNiRpO4IYa/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
@@ -1453,9 +1426,6 @@
     if(h<EH) slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
   }
   
-  // Простая группировка - все станции синие
-  const LANE_TYPE_MAP = ['blue', 'blue', 'blue']; // Все синие
-  
   let bookings = [], tempBookings = [], nextTempId = 1;
   let dragModeEnabled = false;
   let currentBooking = null;
@@ -1465,8 +1435,17 @@
   let employeeGroups = []; // [{ id, name, stations: [laneIndex, ...] }]
   let nextGroupId = 1;
   let assignModeEnabled = false;
-  let selectedLanesForAssign = []; // порядок клика важен, поэтому массив, а не Set
+  let selectedLanesForAssign = [];
   const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+  
+  function getEmployeeForLane(lane) {
+    for (let group of employeeGroups) {
+      if (group.stations.includes(lane)) {
+        return group.name;
+      }
+    }
+    return null;
+  }
   
   function getRowByLane(lane){
     return document.querySelector(`#dtBody tr[data-lane="${lane}"]`);
@@ -1562,7 +1541,6 @@
   function getSlotCell(lane, slotIdx){ 
     let row = getRowByLane(lane);
     if (!row) return null;
-    // cells[0] всегда lane-hdr, т.к. group-header строки - отдельные <tr> без data-lane
     return row.cells[slotIdx+1]; 
   }
   
@@ -1665,7 +1643,6 @@
     if(!name){ alert("Введите ФИО сотрудника"); return; }
     if(selectedLanesForAssign.length === 0) return;
     
-    // Убираем выбранные станции из других групп (переназначение)
     const lanesSet = new Set(selectedLanesForAssign);
     employeeGroups.forEach(g => { g.stations = g.stations.filter(l => !lanesSet.has(l)); });
     employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
@@ -1694,12 +1671,10 @@
   }
   
   // Перерисовывает строки-разделители с ФИО сотрудника над закреплёнными за ним станциями.
-  // Разделитель ставится перед каждым непрерывным блоком станций одной группы.
   function refreshGroupHeaders(){
     const body = $("dtBody");
     if(!body) return;
     
-    // Удаляем старые строки-заголовки
     body.querySelectorAll("tr.employee-group-header").forEach(tr => tr.remove());
     
     const numStations = stations.length > 0 ? stations.length : 12;
@@ -1734,7 +1709,6 @@
       prevGroupId = groupId;
     }
     
-    // Строки могли сместиться - обновляем позиции ползунков
     renderAllSliders();
   }
   
@@ -1826,7 +1800,8 @@
           id:nextTempId++, 
           lane, 
           startSlotIdx: startIdx, 
-          endSlotIdx: endIdx
+          endSlotIdx: endIdx,
+          type: 'regular' // по умолчанию
         }); 
       } 
       renderInlineTempCards(); 
@@ -1844,9 +1819,6 @@
       alert("Сначала выделите интервал на станции"); 
       return; 
     } 
-    $("nameInput").value=""; 
-    $("phoneInput").value=""; 
-    $("commentInput").value=""; 
     updatePreviewTimes(); 
     $("bookModal").classList.add("open"); 
   }
@@ -1856,9 +1828,9 @@
   }
   
   async function submitTempBookings(){ 
-    let name=$("nameInput").value.trim(); 
-    if(!name) return alert("Введите имя"); 
     if(tempBookings.length===0) return; 
+    const eventType = document.getElementById("eventTypeSelect").value;
+    
     showLoad(); 
     try{ 
       const scheduleData = tempBookings.map(tb=>({ 
@@ -1866,9 +1838,10 @@
         stationNumber:tb.lane+1, 
         start:slots[tb.startSlotIdx].key, 
         end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-        name, 
-        phone:$("phoneInput").value.trim(), 
-        comment:$("commentInput").value.trim() 
+        name: '', // без имени
+        phone: '', // без телефона
+        comment: eventType === 'birthday' ? 'ДЕНЬ РОЖДЕНИЯ' : '', // комментарий для типа события
+        type: eventType // тип события
       }));
       
       const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(scheduleData))}&_=${Date.now()}`;
@@ -1898,6 +1871,8 @@
         let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
         let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
         if(endSlotIdx<0) endSlotIdx=slots.length-1; 
+        // Определяем тип события по комментарию
+        let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
         return { 
           id:b.id, 
           lane:b.station-1, 
@@ -1905,10 +1880,11 @@
           end:endKey, 
           startSlotIdx, 
           endSlotIdx, 
-          name:b.name, 
-          phone:b.phone, 
-          comment:b.comment, 
-          confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null) 
+          name: b.name || '', 
+          phone: b.phone || '', 
+          comment: b.comment || '', 
+          confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null),
+          type: isBirthday ? 'birthday' : 'regular'
         }; 
       }) : []; 
       renderAllSliders(); 
@@ -1920,25 +1896,9 @@
   async function saveToServer(booking){ 
     if(!booking.id) return; 
     try{ 
-      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name)}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
       await jsonpRequest(url);
     } catch(e){console.error("Error updating booking:", e);} 
-  }
-  
-  async function confirmBooking(yes){ 
-    if(!currentBooking) return; 
-    showLoad(); 
-    try{ 
-      const url = `${GAS_URL}?action=confirm&id=${currentBooking.id}&confirmed=${yes}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      if(result.success){
-        closeInfoModal(); 
-        await loadFromServer();
-      } else {
-        alert("Ошибка: " + (result.message || "Не удалось обновить статус"));
-      }
-    } catch(e){alert("Ошибка: " + e.message);} 
-    hideLoad(); 
   }
   
   async function deleteBooking(){ 
@@ -2058,28 +2018,40 @@
       let sc=row.cells[startIdx+1], ec=row.cells[endIdx+1]; 
       if(!sc||!ec) return; 
       let left=sc.offsetLeft+1, top=row.offsetTop+1, width=(ec.offsetLeft+ec.offsetWidth)-sc.offsetLeft-2, height=row.offsetHeight-2; 
-      let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending")); 
-      let laneType='blue'; // Всегда синий
+      
+      let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending"));
+      let laneType='blue';
       let slider=document.createElement("div"); 
-      slider.className=`slider ${status}`; 
+      slider.className=`slider ${status}`;
+      
+      // Если это День рождения - добавляем класс birthday
+      if(item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+        slider.classList.add("birthday");
+      }
+      
       if(dragModeEnabled) slider.classList.add("drag-mode-enabled"); 
       slider.setAttribute("data-lane-type",laneType); 
       slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
-      // Точка теперь показывает наличие комментария (красная = есть комментарий), а не статус гостя
-      let dot=document.createElement("div"); 
-      dot.className="guest-status-dot comment-dot"; 
-      const hasComment = !item.isTemp && item.comment && String(item.comment).trim() !== "";
-      if(hasComment) dot.classList.add("has-comment");
-      slider.appendChild(dot); 
-      // В ползунке показываем только название станции и время работы - без имени/телефона гостя
+      
+      // Точка статуса убрана - не добавляем dot
+      
+      // Название станции + сотрудник (если привязан)
       let stationName = stations[item.lane]?.name || `Станция ${item.lane+1}`;
+      let employeeName = getEmployeeForLane(item.lane);
+      
       let nameDiv=document.createElement("div"); 
       nameDiv.className="sl-name"; 
-      nameDiv.textContent=stationName; 
+      if (employeeName) {
+        nameDiv.textContent = `${stationName} · ${employeeName}`;
+      } else {
+        nameDiv.textContent = stationName;
+      }
+      
       let timeDiv=document.createElement("div"); 
       timeDiv.className="sl-time"; 
       timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
       slider.append(nameDiv,timeDiv); 
+      
       let dragHandle=document.createElement("div"); 
       dragHandle.className="drag-handle"; 
       if(dragModeEnabled && !item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
@@ -2149,8 +2121,6 @@
     ghost.className='ghost-slider'; 
     let nameClone = slider.querySelector('.sl-name')?.cloneNode(true);
     let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-    let dotClone = slider.querySelector('.guest-status-dot')?.cloneNode(true);
-    if(dotClone) ghost.appendChild(dotClone);
     if(nameClone) ghost.appendChild(nameClone);
     if(timeClone) ghost.appendChild(timeClone);
     ghost.style.cssText=slider.style.cssText; 
@@ -2210,13 +2180,13 @@
   function showInfoModal(b){ 
     currentBooking=b; 
     let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
+    let employeeName = getEmployeeForLane(b.lane);
+    let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+    
     $("i-table").textContent=stationName; 
     $("i-time").textContent=fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
-    $("i-name").textContent=b.name; 
-    $("i-phone").textContent=b.phone||"—"; 
-    $("i-comment").textContent=b.comment||"—"; 
-    let statusText=b.confirmed===true?"✅ Подтверждена":(b.confirmed===false?"❌ Отменена":"⏳ Ожидание"); 
-    $("i-status").textContent=statusText; 
+    $("i-employee").textContent=employeeName || 'Не назначен'; 
+    $("i-type").textContent=isBirthday ? '🎂 День рождения' : 'Обычная запись';
     $("infoModal").classList.add("open"); 
   }
   
