@@ -1021,7 +1021,7 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
+  const AUTH_SPREADSHEET_ID = '1TPPemJw2iEeaXCPjO6GiKT1GfAOvuFsfwnvrQg3hxhI';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
   const GAS_URL = "https://script.google.com/macros/s/AKfycbyLdGJMmC9qW7FacqqOp7qEoKvuvS-Vxq3WoTNNo3kZDO74yJaK5iPc-nCdCvawDAHT/exec";
@@ -1948,16 +1948,22 @@
     
     showLoad(); 
     try{ 
-      const scheduleData = tempBookings.map(tb=>({ 
-        sheetName: currentSheetName,
-        stationNumber:tb.lane+1, 
-        start:slots[tb.startSlotIdx].key, 
-        end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
-        name: '', 
-        phone: '', 
-        comment: eventType === 'birthday' ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-        type: eventType
-      }));
+      const scheduleData = tempBookings.map(tb => {
+        const startTime = slots[tb.startSlotIdx].key;
+        const endTime = slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5);
+        const isBirthday = eventType === 'birthday';
+        
+        return { 
+          sheetName: currentSheetName,
+          stationNumber: tb.lane + 1, 
+          start: startTime, 
+          end: endTime, 
+          name: '', 
+          phone: '', 
+          comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+          type: eventType
+        };
+      });
       
       const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(scheduleData))}&_=${Date.now()}`;
       const result = await jsonpRequest(url);
@@ -1966,14 +1972,16 @@
         clearTempSelections(); 
         await loadFromServer(currentSheetName); 
         closeBookModal(); 
+        alert("Записи успешно сохранены!");
       } else {
         alert("Ошибка: " + (result.message || "Неизвестная ошибка"));
       }
-    } catch(e){alert("Ошибка при сохранении: " + e.message);} 
+    } catch(e){
+      console.error("Error saving bookings:", e);
+      alert("Ошибка при сохранении: " + e.message);
+    } 
     hideLoad(); 
   }
-  
-  // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ====================
   
   async function loadFromServer(sheetName){ 
     showLoad(); 
@@ -1985,8 +1993,7 @@
         throw new Error(data.message || "Ошибка загрузки данных");
       }
       
-      bookings = data.schedule ? data.schedule.map(b=>{ 
-        // Проверяем наличие start и end
+      bookings = data.schedule ? data.schedule.map(b => { 
         if (b.start === undefined || b.end === undefined) {
           console.warn('Пропущена запись без start/end:', b);
           return null;
@@ -1995,7 +2002,6 @@
         let startKey = parseFloat(b.start);
         let endKey = parseFloat(b.end);
         
-        // Проверяем, что startKey и endKey - валидные числа
         if (isNaN(startKey) || isNaN(endKey)) {
           console.warn('Пропущена запись с невалидными start/end:', b);
           return null;
@@ -2004,7 +2010,6 @@
         let startSlotIdx = slots.findIndex(s => s.key === startKey);
         let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
         
-        // Если не нашли точное совпадение, ищем ближайшее
         if (startSlotIdx === -1) {
           for (let i = 0; i < slots.length; i++) {
             if (slots[i].key >= startKey) {
@@ -2040,7 +2045,6 @@
         }; 
       }).filter(b => b !== null) : []; 
       
-      // Загружаем сотрудников, привязанных к станциям из данных
       if (data.employeeGroups) {
         employeeGroups = data.employeeGroups;
         if (employeeGroups.length > 0) {
@@ -2054,6 +2058,9 @@
       
       renderAllSliders(); 
       updateCellsHighlight(); 
+      
+      console.log(`Загружено ${bookings.length} записей из листа "${sheetName}"`);
+      
     } catch(e){
       console.error('Ошибка загрузки:', e); 
       alert("Ошибка загрузки: " + e.message);
@@ -2065,7 +2072,12 @@
     if(!booking.id) return; 
     try{ 
       const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
-      await jsonpRequest(url);
+      const result = await jsonpRequest(url);
+      if(result.success){
+        console.log('Booking updated successfully');
+      } else {
+        console.error('Failed to update booking:', result.message);
+      }
     } catch(e){console.error("Error updating booking:", e);} 
   }
   
@@ -2084,6 +2096,7 @@
         await loadFromServer(currentSheetName);
         closeEditEventModal();
         closeInfoModal();
+        alert("Тип события обновлен!");
       } else {
         alert("Ошибка: " + (result.message || "Не удалось обновить тип события"));
       }
@@ -2102,10 +2115,14 @@
       if(result.success){
         closeInfoModal(); 
         await loadFromServer(currentSheetName);
+        alert("Запись удалена!");
       } else {
         alert("Ошибка: " + (result.message || "Не удалось удалить запись"));
       }
-    } catch(e){alert("Ошибка: " + e.message);} 
+    } catch(e){
+      console.error("Error deleting booking:", e);
+      alert("Ошибка: " + e.message);
+    } 
     hideLoad(); 
   }
   
@@ -2199,6 +2216,7 @@
         alert("Ошибка: " + (result.message || "Не удалось сохранить расписание"));
       }
     } catch(e){
+      console.error("Error saving schedule:", e);
       alert("Ошибка при сохранении расписания: " + e.message);
     }
     hideLoad();
