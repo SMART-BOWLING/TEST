@@ -1024,7 +1024,7 @@
   const AUTH_SPREADSHEET_ID = '1TPPemJw2iEeaXCPjO6GiKT1GfAOvuFsfwnvrQg3hxhI';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyZSOIjBMi_6rW_FbiVsAlOKM9l-NfHxp7Qc1HntiknY1tLVakL5s18mVnhGD1_z2ml/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyQ_MJ-08S5BecAIvjbJDswQP7dOpFnezPHas8ESu1MZVAKV2kCqDvqyNpDPISWdHU3/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
@@ -1750,32 +1750,93 @@
     hideAssignBar();
   }
   
-  function applyEmployeeAssignment(){
+  // Функция сохранения сотрудников на сервер
+  async function saveEmployeeGroupsToServer() {
+    try {
+      const payload = {
+        sheetName: currentSheetName,
+        employeeGroups: employeeGroups.map(g => ({
+          id: g.id,
+          name: g.name,
+          stations: g.stations
+        }))
+      };
+      
+      const url = `${GAS_URL}?action=saveEmployeeGroups&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
+      const result = await jsonpRequest(url);
+      
+      if (result.success) {
+        console.log('Employee groups saved to server');
+        return true;
+      } else {
+        console.error('Failed to save employee groups:', result.message);
+        return false;
+      }
+    } catch (e) {
+      console.error('Error saving employee groups:', e);
+      return false;
+    }
+  }
+  
+  async function applyEmployeeAssignment(){
     const input = $("assignEmployeeName");
     const name = input ? input.value.trim() : "";
     if(!name){ alert("Введите ФИО сотрудника"); return; }
     if(selectedLanesForAssign.length === 0) return;
     
     const lanesSet = new Set(selectedLanesForAssign);
-    employeeGroups.forEach(g => { g.stations = g.stations.filter(l => !lanesSet.has(l)); });
-    employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+    let conflict = false;
+    employeeGroups.forEach(g => {
+      g.stations.forEach(l => {
+        if (lanesSet.has(l)) {
+          conflict = true;
+        }
+      });
+    });
     
-    employeeGroups.push({ id: nextGroupId++, name, stations: [...selectedLanesForAssign] });
+    if (conflict) {
+      employeeGroups.forEach(g => { 
+        g.stations = g.stations.filter(l => !lanesSet.has(l)); 
+      });
+      employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+    }
+    
+    const newGroup = { id: nextGroupId++, name, stations: [...selectedLanesForAssign] };
+    employeeGroups.push(newGroup);
     
     selectedLanesForAssign = [];
     updateAssignSelectionHighlight();
     hideAssignBar();
     saveEmployeeGroups();
     refreshGroupHeaders();
+    
+    showLoad();
+    try {
+      await saveEmployeeGroupsToServer();
+      alert(`Сотрудник "${name}" привязан к станциям`);
+    } catch (e) {
+      alert("Ошибка при сохранении: " + e.message);
+    } finally {
+      hideLoad();
+    }
   }
   
-  function removeEmployeeGroup(groupId){
+  async function removeEmployeeGroup(groupId){
     const group = employeeGroups.find(g => g.id === groupId);
     if(!group) return;
     if(!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
     employeeGroups = employeeGroups.filter(g => g.id !== groupId);
     saveEmployeeGroups();
     refreshGroupHeaders();
+    
+    showLoad();
+    try {
+      await saveEmployeeGroupsToServer();
+    } catch (e) {
+      alert("Ошибка при сохранении: " + e.message);
+    } finally {
+      hideLoad();
+    }
   }
   
   function resetEmployeeGroups(){
@@ -2045,21 +2106,23 @@
         }; 
       }).filter(b => b !== null) : []; 
       
-      if (data.employeeGroups) {
+      if (data.employeeGroups && data.employeeGroups.length > 0) {
         employeeGroups = data.employeeGroups;
-        if (employeeGroups.length > 0) {
-          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
-        }
+        nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
         saveEmployeeGroups();
+        console.log('Employee groups loaded from server:', employeeGroups);
       } else {
-        loadEmployeeGroups();
+        const loaded = loadEmployeeGroups();
+        if (!loaded) {
+          employeeGroups = [];
+        }
       }
       refreshGroupHeaders();
       
       renderAllSliders(); 
       updateCellsHighlight(); 
       
-      console.log(`Загружено ${bookings.length} записей из листа "${sheetName}"`);
+      console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
       
     } catch(e){
       console.error('Ошибка загрузки:', e); 
