@@ -1024,7 +1024,7 @@
   const AUTH_SPREADSHEET_ID = '1TPPemJw2iEeaXCPjO6GiKT1GfAOvuFsfwnvrQg3hxhI';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyQ_MJ-08S5BecAIvjbJDswQP7dOpFnezPHas8ESu1MZVAKV2kCqDvqyNpDPISWdHU3/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwd6nWUcu7E3i_9B1oyLFvm7JHNQ0IVDMYuOQw04CfNyxbn8eHJubplBMh2lf7N9h6Q/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
@@ -1530,6 +1530,22 @@
   let selectedEventType = 'regular';
   const $ = id => document.getElementById(id);
   
+  // ==================== ПОЛУЧЕНИЕ ВСЕХ СТАНЦИЙ ДЛЯ ОТПРАВКИ ====================
+  
+  function getAllStationsData() {
+    const numStations = stations.length > 0 ? stations.length : 12;
+    const result = [];
+    for (let i = 0; i < numStations; i++) {
+      const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
+      result.push({
+        id: i + 1,
+        name: station.name || `Станция ${i+1}`,
+        logo: station.logo || ''
+      });
+    }
+    return result;
+  }
+  
   // ==================== ПРИВЯЗКА СОТРУДНИКОВ К СТАНЦИЯМ ====================
   let employeeGroups = [];
   let nextGroupId = 1;
@@ -1750,16 +1766,18 @@
     hideAssignBar();
   }
   
-  // Функция сохранения сотрудников на сервер
   async function saveEmployeeGroupsToServer() {
     try {
+      const allStations = getAllStationsData();
+      
       const payload = {
         sheetName: currentSheetName,
         employeeGroups: employeeGroups.map(g => ({
           id: g.id,
           name: g.name,
           stations: g.stations
-        }))
+        })),
+        allStations: allStations
       };
       
       const url = `${GAS_URL}?action=saveEmployeeGroups&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
@@ -2009,14 +2027,18 @@
     
     showLoad(); 
     try{ 
+      const allStations = getAllStationsData();
+      
       const scheduleData = tempBookings.map(tb => {
         const startTime = slots[tb.startSlotIdx].key;
         const endTime = slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5);
         const isBirthday = eventType === 'birthday';
+        const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
         
         return { 
           sheetName: currentSheetName,
-          stationNumber: tb.lane + 1, 
+          stationNumber: tb.lane + 1,
+          stationName: stationName,
           start: startTime, 
           end: endTime, 
           name: '', 
@@ -2026,7 +2048,16 @@
         };
       });
       
-      const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(scheduleData))}&_=${Date.now()}`;
+      const payload = {
+        schedule: scheduleData,
+        allStations: allStations,
+        employeeGroups: employeeGroups.map(g => ({
+          name: g.name,
+          stations: g.stations
+        }))
+      };
+      
+      const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
       const result = await jsonpRequest(url);
       
       if(result.success){
@@ -2244,8 +2275,11 @@
     
     showLoad();
     try{
+      const allStations = getAllStationsData();
+      
       const scheduleData = bookings.map(b => ({
         station: b.lane + 1,
+        stationName: stations[b.lane]?.name || `Станция ${b.lane+1}`,
         start: b.start,
         end: b.end,
         name: b.name || "",
@@ -2261,7 +2295,8 @@
       
       const payload = { 
         sheetName: sheetName, 
-        schedule: scheduleData, 
+        schedule: scheduleData,
+        allStations: allStations,
         employeeGroups: employeeGroupsData 
       };
       
