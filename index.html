@@ -32,7 +32,7 @@
       -webkit-user-select: text;
     }
     
-    .nav-title, .login-title, .login-sub, .sheet-title, .f-label, .ctrl button span, .calendar-date-text {
+    .nav-title, .login-title, .login-sub, .sheet-title, .f-label, .ctrl button span, .sheet-select-text {
       user-select: text;
       -webkit-user-select: text;
     }
@@ -219,51 +219,47 @@
       border: 0.5px solid var(--border-subtle);
     }
     
-    .google-calendar-btn {
+    .sheet-select-wrapper {
       display: flex;
       align-items: center;
       gap: 12px;
       background: var(--surface-secondary);
       border: 1px solid var(--border-strong);
       border-radius: 8px;
-      padding: 0 20px 0 16px;
+      padding: 0 16px;
       height: 54px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: var(--font-system);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      flex: 1;
+      min-width: 200px;
     }
     
-    .google-calendar-btn:hover {
-      background: #ffffff;
-      border-color: var(--accent-blue);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transform: scale(0.98);
-    }
-    
-    .calendar-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .sheet-select-wrapper i {
       color: var(--accent-blue);
+      font-size: 18px;
     }
     
-    .calendar-date-text {
+    .sheet-select-wrapper select {
+      flex: 1;
+      height: 100%;
+      border: none;
+      background: transparent;
       font-size: 16px;
-      font-weight: 550;
+      font-weight: 500;
       color: var(--label-dark);
-      letter-spacing: -0.2px;
+      font-family: var(--font-system);
+      cursor: pointer;
+      outline: none;
+      padding: 0 4px;
+    }
+    
+    .sheet-select-wrapper select option {
+      padding: 8px;
+    }
+    
+    .sheet-select-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--label-secondary);
       white-space: nowrap;
-    }
-    
-    .chevron-icon {
-      margin-left: 4px;
-      opacity: 0.6;
-      transition: transform 0.2s;
-    }
-    
-    .google-calendar-btn:hover .chevron-icon {
-      transform: translateY(2px);
     }
 
     .btn-book {
@@ -882,7 +878,7 @@
       .ctrl { flex-direction: column; align-items: stretch; }
       .inline-temp-cards { margin-left: 0; justify-content: flex-start; }
       .btn-book, .btn-drag-toggle { width: 100%; height: 54px; }
-      .google-calendar-btn { justify-content: center; width: 100%; }
+      .sheet-select-wrapper { width: 100%; }
       .nav { padding: 0 16px; }
       .user-bar { padding: 4px 12px 4px 8px; }
       .user-email { display: none; }
@@ -934,12 +930,13 @@
   </nav>
   <div class="page">
     <div class="ctrl">
-      <button id="calendarButton" class="google-calendar-btn" type="button">
-        <span class="calendar-icon"><i class="far fa-calendar-alt"></i></span>
-        <span id="displayDateText" class="calendar-date-text">Сегодня</span>
-        <span class="chevron-icon"><i class="fas fa-chevron-down"></i></span>
-      </button>
-      <input type="date" id="hiddenDatePicker" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;" />
+      <div class="sheet-select-wrapper">
+        <i class="fas fa-table"></i>
+        <span class="sheet-select-text">Лист:</span>
+        <select id="sheetSelector" onchange="onSheetChange()">
+          <option value="">Загрузка...</option>
+        </select>
+      </div>
       <button class="btn-book" onclick="openBookModal()"><i class="fas fa-plus-circle"></i><span>Новая запись</span></button>
       <button id="dragToggleBtn" class="btn-drag-toggle"><i class="fas fa-arrows-alt"></i><span>Режим перетяжки: ВЫКЛ</span></button>
       <button id="assignToggleBtn" class="btn-assign-toggle" title="Назначить сотрудника на станции"><i class="fas fa-user-tag"></i><span>Назначить сотрудника</span></button>
@@ -969,13 +966,12 @@
     </div>
     <div class="sheet-body">
       <div class="f-group">
-        <label class="f-label">Название расписания</label>
-        <input class="f-input" id="scheduleNameInput" list="existingSchedulesList" placeholder="Например: 22.07.2026 (основное)" oninput="checkScheduleNameExists()"/>
-        <datalist id="existingSchedulesList"></datalist>
-        <div class="existing-hint" id="scheduleNameHint">Лист с таким названием уже существует — данные в нём будут заменены.</div>
+        <label class="f-label">Название нового листа</label>
+        <input class="f-input" id="scheduleNameInput" placeholder="Например: График 22.07.2026" />
+        <div style="font-size: 12px; color: var(--label-tertiary); margin-top: 6px;">Введите название для нового листа в Google Таблице</div>
       </div>
       <div class="f-actions">
-        <button class="f-btn-ok" onclick="confirmSaveSchedule()">Сохранить</button>
+        <button class="f-btn-ok" onclick="confirmSaveSchedule()">Сохранить как новый лист</button>
         <button class="f-btn-cancel" onclick="closeSaveScheduleModal()">Отмена</button>
       </div>
     </div>
@@ -1028,12 +1024,14 @@
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzcACZtsuAMW6NHOHBlMjEIoofMxG_ZYw_-VVUoPPTWGDiYZ118v57SyMMbTCQOayvy/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw-wB0vs-gdcYizyOEZ069MXRbcCJnTfwdAH7kGUDulZ7IPuttBjYBNpX00UhVRySgR/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
   let currentUser = null;
   let stations = [];
+  let currentSheetName = '';
+  let availableSheets = [];
   
   // ==================== JSONP ФУНКЦИИ ====================
   
@@ -1449,6 +1447,55 @@
     }
   }
   
+  // ==================== РАБОТА С ЛИСТАМИ ====================
+  
+  async function loadSheetsList() {
+    try {
+      const url = `${GAS_URL}?action=getSheetNames&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      
+      const selector = document.getElementById('sheetSelector');
+      
+      if (data.success && data.sheets) {
+        availableSheets = data.sheets;
+        selector.innerHTML = '';
+        
+        if (availableSheets.length === 0) {
+          selector.innerHTML = '<option value="">Нет доступных листов</option>';
+          return;
+        }
+        
+        availableSheets.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          selector.appendChild(option);
+        });
+        
+        // Выбираем первый лист по умолчанию
+        if (availableSheets.length > 0) {
+          selector.value = availableSheets[0];
+          currentSheetName = availableSheets[0];
+        }
+      } else {
+        selector.innerHTML = '<option value="">Ошибка загрузки</option>';
+      }
+    } catch (error) {
+      console.error('Error loading sheets list:', error);
+      document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
+  }
+  
+  function onSheetChange() {
+    const selector = document.getElementById('sheetSelector');
+    currentSheetName = selector.value;
+    if (currentSheetName) {
+      loadFromServer(currentSheetName);
+      clearTempSelections();
+      resetEmployeeGroups();
+    }
+  }
+  
   // ==================== ОСНОВНАЯ ЛОГИКА ====================
   
   async function loadStations() {
@@ -1493,10 +1540,9 @@
   
   function saveEmployeeGroups() {
     try {
-      const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-      const key = `employeeGroups_${dateVal}`;
+      const key = `employeeGroups_${currentSheetName}`;
       localStorage.setItem(key, JSON.stringify(employeeGroups));
-      console.log('Employee groups saved for date:', dateVal);
+      console.log('Employee groups saved for sheet:', currentSheetName);
     } catch (e) {
       console.warn('Failed to save employee groups:', e);
     }
@@ -1504,15 +1550,14 @@
   
   function loadEmployeeGroups() {
     try {
-      const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-      const key = `employeeGroups_${dateVal}`;
+      const key = `employeeGroups_${currentSheetName}`;
       const data = localStorage.getItem(key);
       if (data) {
         employeeGroups = JSON.parse(data);
         if (employeeGroups.length > 0) {
           nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
         }
-        console.log('Employee groups loaded for date:', dateVal, employeeGroups);
+        console.log('Employee groups loaded for sheet:', currentSheetName, employeeGroups);
         return true;
       }
     } catch (e) {
@@ -1554,20 +1599,6 @@
       return `${s.label}–${nextHour}:00`;
     }
     return `${s.label}–${e.label}`;
-  }
-  
-  function formatDateForDisplay(dateStr) {
-    if (!dateStr) return "Выбрать дату";
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    if (date.getTime() === today.getTime()) return "Сегодня";
-    if (date.getTime() === tomorrow.getTime()) return "Завтра";
-    const months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
   }
   
   function buildDesktopTable(){
@@ -1919,7 +1950,7 @@
     showLoad(); 
     try{ 
       const scheduleData = tempBookings.map(tb=>({ 
-        date:window.dateInputForSync?.value || new Date().toISOString().split('T')[0], 
+        sheetName: currentSheetName,
         stationNumber:tb.lane+1, 
         start:slots[tb.startSlotIdx].key, 
         end:slots[tb.endSlotIdx+1]?.key || (slots[tb.endSlotIdx].key+0.5), 
@@ -1934,7 +1965,7 @@
       
       if(result.success){
         clearTempSelections(); 
-        await loadFromServer(); 
+        await loadFromServer(currentSheetName); 
         closeBookModal(); 
       } else {
         alert("Ошибка: " + (result.message || "Неизвестная ошибка"));
@@ -1943,11 +1974,10 @@
     hideLoad(); 
   }
   
-  async function loadFromServer(){ 
+  async function loadFromServer(sheetName){ 
     showLoad(); 
     try{ 
-      let dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-      const url = `${GAS_URL}?action=get&date=${dateVal}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
       const data = await jsonpRequest(url);
       
       bookings = data.schedule ? data.schedule.map(b=>{ 
@@ -1959,7 +1989,7 @@
         let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
         return { 
           id:b.id, 
-          lane:b.station-1, 
+          lane:b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0),
           start:startKey, 
           end:endKey, 
           startSlotIdx, 
@@ -1972,7 +2002,16 @@
         }; 
       }) : []; 
       
-      loadEmployeeGroups();
+      // Загружаем сотрудников, привязанных к станциям из данных
+      if (data.employeeGroups) {
+        employeeGroups = data.employeeGroups;
+        if (employeeGroups.length > 0) {
+          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+        }
+        saveEmployeeGroups();
+      } else {
+        loadEmployeeGroups();
+      }
       refreshGroupHeaders();
       
       renderAllSliders(); 
@@ -1984,7 +2023,7 @@
   async function saveToServer(booking){ 
     if(!booking.id) return; 
     try{ 
-      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
       await jsonpRequest(url);
     } catch(e){console.error("Error updating booking:", e);} 
   }
@@ -1998,10 +2037,10 @@
     
     showLoad();
     try {
-      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&date=${window.dateInputForSync?.value}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
       const result = await jsonpRequest(url);
       if(result.success){
-        await loadFromServer();
+        await loadFromServer(currentSheetName);
         closeEditEventModal();
         closeInfoModal();
       } else {
@@ -2017,11 +2056,11 @@
     if(!currentBooking||!confirm("Удалить запись?")) return; 
     showLoad(); 
     try{ 
-      const url = `${GAS_URL}?action=delete&id=${currentBooking.id}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=delete&id=${currentBooking.id}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
       const result = await jsonpRequest(url);
       if(result.success){
         closeInfoModal(); 
-        await loadFromServer();
+        await loadFromServer(currentSheetName);
       } else {
         alert("Ошибка: " + (result.message || "Не удалось удалить запись"));
       }
@@ -2065,48 +2104,12 @@
     updateBookingType(editingBooking.id, selectedEventType);
   }
   
-  // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ В ЛИСТ ====================
-  
-  let existingScheduleSheetNames = [];
-  
-  async function loadExistingScheduleNames(){
-    try{
-      const url = `${GAS_URL}?action=getSavedSchedules&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
-      existingScheduleSheetNames = (data.success && data.sheets) ? data.sheets : [];
-      const datalist = $("existingSchedulesList");
-      if(datalist){
-        datalist.innerHTML = existingScheduleSheetNames.map(n => `<option value="${escapeHtml(n)}"></option>`).join("");
-      }
-    } catch(e){
-      console.error("Ошибка загрузки списка расписаний:", e);
-      existingScheduleSheetNames = [];
-    }
-  }
-  
-  function checkScheduleNameExists(){
-    const input = $("scheduleNameInput");
-    const hint = $("scheduleNameHint");
-    if(!input || !hint) return;
-    const name = input.value.trim();
-    const exists = name !== "" && existingScheduleSheetNames.includes(name);
-    hint.classList.toggle("show", exists);
-  }
-  
-  function defaultScheduleName(){
-    const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
-    const parts = dateVal.split('-');
-    const ddmmyyyy = parts.length===3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : dateVal;
-    return `Расписание ${ddmmyyyy}`;
-  }
+  // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ В НОВЫЙ ЛИСТ ====================
   
   async function openSaveScheduleModal(){
     const input = $("scheduleNameInput");
-    if(input) input.value = defaultScheduleName();
-    $("scheduleNameHint")?.classList.remove("show");
+    if(input) input.value = '';
     $("saveScheduleModal").classList.add("open");
-    await loadExistingScheduleNames();
-    checkScheduleNameExists();
   }
   
   function closeSaveScheduleModal(){
@@ -2116,14 +2119,10 @@
   async function confirmSaveSchedule(){
     const input = $("scheduleNameInput");
     const sheetName = input ? input.value.trim() : "";
-    if(!sheetName){ alert("Введите название расписания"); return; }
-    
-    const isOverwrite = existingScheduleSheetNames.includes(sheetName);
-    if(isOverwrite && !confirm(`Лист "${sheetName}" уже существует. Заменить его текущим расписанием?`)) return;
+    if(!sheetName){ alert("Введите название нового листа"); return; }
     
     showLoad();
     try{
-      const dateVal = window.dateInputForSync?.value || new Date().toISOString().split('T')[0];
       const scheduleData = bookings.map(b => ({
         station: b.lane + 1,
         start: b.start,
@@ -2133,18 +2132,30 @@
         comment: b.comment || "",
         confirmed: b.confirmed
       }));
+      
       const employeeGroupsData = employeeGroups.map(g => ({
         name: g.name,
         stations: g.stations.map(l => l + 1)
       }));
       
-      const payload = { sheetName, date: dateVal, schedule: scheduleData, employeeGroups: employeeGroupsData };
+      const payload = { 
+        sheetName: sheetName, 
+        schedule: scheduleData, 
+        employeeGroups: employeeGroupsData 
+      };
+      
       const url = `${GAS_URL}?action=saveScheduleSnapshot&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
       const result = await jsonpRequest(url);
       
       if(result.success){
         closeSaveScheduleModal();
         alert(result.message || "Расписание сохранено");
+        // Обновляем список листов
+        await loadSheetsList();
+        // Выбираем новый лист
+        document.getElementById('sheetSelector').value = sheetName;
+        currentSheetName = sheetName;
+        await loadFromServer(currentSheetName);
       } else {
         alert("Ошибка: " + (result.message || "Не удалось сохранить расписание"));
       }
@@ -2357,56 +2368,16 @@
       }
     });
     
-    const calendarBtn = document.getElementById("calendarButton");
-    const hiddenPicker = document.getElementById("hiddenDatePicker");
-    const displaySpan = document.getElementById("displayDateText");
-    const todayStr = new Date().toISOString().split('T')[0];
-    let currentDate = todayStr;
-    if (hiddenPicker) {
-      hiddenPicker.value = currentDate;
-      displaySpan.innerText = formatDateForDisplay(currentDate);
-    }
-    if (calendarBtn && hiddenPicker) {
-      calendarBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        if (hiddenPicker.showPicker) hiddenPicker.showPicker();
-        else { hiddenPicker.click(); hiddenPicker.focus(); }
-      });
-      hiddenPicker.addEventListener("change", (e) => {
-        const newDate = e.target.value;
-        if (newDate) {
-          currentDate = newDate;
-          displaySpan.innerText = formatDateForDisplay(newDate);
-          if (window.dateInputForSync) {
-            window.dateInputForSync.value = newDate;
-            const changeEvent = new Event('change');
-            window.dateInputForSync.dispatchEvent(changeEvent);
-          }
-          loadFromServer();
-          clearTempSelections();
-          resetEmployeeGroups();
-        }
-      });
-    }
-    let legacyDateInput = document.createElement("input");
-    legacyDateInput.type = "date";
-    legacyDateInput.id = "dateInput";
-    legacyDateInput.style.display = "none";
-    document.body.appendChild(legacyDateInput);
-    window.dateInputForSync = legacyDateInput;
-    legacyDateInput.value = currentDate;
-    
     buildDesktopTable();
     
-    legacyDateInput.addEventListener("change", () => { 
-      if (hiddenPicker) hiddenPicker.value = legacyDateInput.value;
-      if (displaySpan) displaySpan.innerText = formatDateForDisplay(legacyDateInput.value);
-      loadFromServer(); 
-      clearTempSelections(); 
-      resetEmployeeGroups();
-    });
+    // Загружаем список листов
+    await loadSheetsList();
     
-    loadFromServer();
+    // Загружаем данные первого листа
+    if (availableSheets.length > 0) {
+      currentSheetName = availableSheets[0];
+      await loadFromServer(currentSheetName);
+    }
     
     const toggleBtn = $("dragToggleBtn");
     toggleBtn.addEventListener("click", () => {
