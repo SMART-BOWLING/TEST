@@ -1021,10 +1021,11 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
+  // ВАЖНО: Замените URL на ваш актуальный URL веб-приложения
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxzy0eKh740R6OAkFLW9hYpTxMyNgs0lQnIs-QtIxMs2h2RI_QZScCIzq8vXpiwDxNf/exec";
   const AUTH_SPREADSHEET_ID = '1TPPemJw2iEeaXCPjO6GiKT1GfAOvuFsfwnvrQg3hxhI';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwd6nWUcu7E3i_9B1oyLFvm7JHNQ0IVDMYuOQw04CfNyxbn8eHJubplBMh2lf7N9h6Q/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
@@ -1033,7 +1034,7 @@
   let currentSheetName = '';
   let availableSheets = [];
   
-  // ==================== JSONP ФУНКЦИИ ====================
+  // ==================== УЛУЧШЕННАЯ JSONP ФУНКЦИЯ ====================
   
   function jsonpRequest(url, callbackName = 'jsonpCallback') {
     return new Promise((resolve, reject) => {
@@ -1041,19 +1042,49 @@
       const script = document.createElement('script');
       
       const separator = url.includes('?') ? '&' : '?';
-      const fullUrl = `${url}${separator}callback=${callbackFunction}`;
+      const timestamp = Date.now();
+      const fullUrl = `${url}${separator}callback=${callbackFunction}&_=${timestamp}`;
+      
+      let timeoutId = setTimeout(() => {
+        cleanup();
+        reject(new Error('JSONP request timeout (30s)'));
+      }, 30000);
+      
+      function cleanup() {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (script.parentNode) {
+          document.body.removeChild(script);
+        }
+        if (window[callbackFunction]) {
+          try {
+            delete window[callbackFunction];
+          } catch(e) {
+            window[callbackFunction] = undefined;
+          }
+        }
+      }
       
       window[callbackFunction] = (data) => {
-        delete window[callbackFunction];
-        document.body.removeChild(script);
+        cleanup();
         resolve(data);
       };
       
       script.src = fullUrl;
       script.onerror = () => {
-        delete window[callbackFunction];
-        document.body.removeChild(script);
-        reject(new Error('JSONP request failed'));
+        cleanup();
+        reject(new Error('JSONP request failed - проверьте URL и доступность сервера'));
+      };
+      
+      script.onload = () => {
+        setTimeout(() => {
+          if (window[callbackFunction]) {
+            cleanup();
+            reject(new Error('JSONP callback not executed'));
+          }
+        }, 5000);
       };
       
       document.body.appendChild(script);
@@ -1451,12 +1482,14 @@
   
   async function loadSheetsList() {
     try {
-      const url = `${GAS_URL}?action=getSheetNames&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=getSheetNames`;
       const data = await jsonpRequest(url);
+      
+      console.log("Sheets list loaded:", data);
       
       const selector = document.getElementById('sheetSelector');
       
-      if (data.success && data.sheets) {
+      if (data && data.success && data.sheets) {
         availableSheets = data.sheets;
         selector.innerHTML = '';
         
@@ -1478,6 +1511,7 @@
         }
       } else {
         selector.innerHTML = '<option value="">Ошибка загрузки</option>';
+        console.error('Failed to load sheets:', data?.message);
       }
     } catch (error) {
       console.error('Error loading sheets list:', error);
@@ -1499,10 +1533,12 @@
   
   async function loadStations() {
     try {
-      const url = `${GAS_URL}?action=getStations&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=getStations`;
       const data = await jsonpRequest(url);
       
-      if (data.success && data.stations) {
+      console.log("Stations loaded:", data);
+      
+      if (data && data.success && data.stations) {
         stations = data.stations;
         console.log('Загружено станций:', stations.length);
         return stations;
@@ -1780,18 +1816,23 @@
         allStations: allStations
       };
       
-      const url = `${GAS_URL}?action=saveEmployeeGroups&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
+      console.log("Sending employee groups:", payload);
+      
+      const url = `${GAS_URL}?action=saveEmployeeGroups&data=${encodeURIComponent(JSON.stringify(payload))}`;
       const result = await jsonpRequest(url);
       
-      if (result.success) {
+      console.log("Response from server:", result);
+      
+      if (result && result.success) {
         console.log('Employee groups saved to server');
         return true;
       } else {
-        console.error('Failed to save employee groups:', result.message);
+        console.error('Failed to save employee groups:', result?.message);
         return false;
       }
     } catch (e) {
       console.error('Error saving employee groups:', e);
+      alert("Ошибка при сохранении сотрудников: " + e.message);
       return false;
     }
   }
@@ -1800,7 +1841,10 @@
     const input = $("assignEmployeeName");
     const name = input ? input.value.trim() : "";
     if(!name){ alert("Введите ФИО сотрудника"); return; }
-    if(selectedLanesForAssign.length === 0) return;
+    if(selectedLanesForAssign.length === 0) {
+      alert("Выберите станции для привязки");
+      return;
+    }
     
     const lanesSet = new Set(selectedLanesForAssign);
     let conflict = false;
@@ -1830,8 +1874,12 @@
     
     showLoad();
     try {
-      await saveEmployeeGroupsToServer();
-      alert(`Сотрудник "${name}" привязан к станциям`);
+      const success = await saveEmployeeGroupsToServer();
+      if (success) {
+        alert(`Сотрудник "${name}" привязан к станциям`);
+      } else {
+        alert("Ошибка при сохранении на сервере, но данные сохранены локально");
+      }
     } catch (e) {
       alert("Ошибка при сохранении: " + e.message);
     } finally {
@@ -2022,7 +2070,10 @@
   }
   
   async function submitTempBookings(){ 
-    if(tempBookings.length===0) return; 
+    if(tempBookings.length===0) {
+      alert("Нет записей для сохранения");
+      return; 
+    }
     const eventType = document.getElementById("eventTypeSelect").value;
     
     showLoad(); 
@@ -2057,20 +2108,24 @@
         }))
       };
       
-      const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
+      console.log("Sending payload:", payload);
+      
+      const url = `${GAS_URL}?action=addSchedule&data=${encodeURIComponent(JSON.stringify(payload))}`;
       const result = await jsonpRequest(url);
       
-      if(result.success){
+      console.log("Response from server:", result);
+      
+      if(result && result.success){
         clearTempSelections(); 
         await loadFromServer(currentSheetName); 
         closeBookModal(); 
         alert("Записи успешно сохранены!");
       } else {
-        alert("Ошибка: " + (result.message || "Неизвестная ошибка"));
+        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
       }
     } catch(e){
       console.error("Error saving bookings:", e);
-      alert("Ошибка при сохранении: " + e.message);
+      alert("Ошибка при сохранении: " + e.message + "\nПопробуйте обновить страницу и повторить.");
     } 
     hideLoad(); 
   }
@@ -2078,11 +2133,13 @@
   async function loadFromServer(sheetName){ 
     showLoad(); 
     try{ 
-      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
+      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`;
       const data = await jsonpRequest(url);
       
-      if (!data.success) {
-        throw new Error(data.message || "Ошибка загрузки данных");
+      console.log("Loaded data from server:", data);
+      
+      if (!data || !data.success) {
+        throw new Error(data?.message || "Ошибка загрузки данных");
       }
       
       bookings = data.schedule ? data.schedule.map(b => { 
@@ -2157,7 +2214,7 @@
       
     } catch(e){
       console.error('Ошибка загрузки:', e); 
-      alert("Ошибка загрузки: " + e.message);
+      alert("Ошибка загрузки: " + e.message + "\nПроверьте подключение к интернету и доступность сервера.");
     } 
     hideLoad(); 
   }
@@ -2300,10 +2357,14 @@
         employeeGroups: employeeGroupsData 
       };
       
-      const url = `${GAS_URL}?action=saveScheduleSnapshot&data=${encodeURIComponent(JSON.stringify(payload))}&_=${Date.now()}`;
+      console.log("Saving schedule:", payload);
+      
+      const url = `${GAS_URL}?action=saveScheduleSnapshot&data=${encodeURIComponent(JSON.stringify(payload))}`;
       const result = await jsonpRequest(url);
       
-      if(result.success){
+      console.log("Response from server:", result);
+      
+      if(result && result.success){
         closeSaveScheduleModal();
         alert(result.message || "Расписание сохранено");
         await loadSheetsList();
@@ -2311,7 +2372,7 @@
         currentSheetName = sheetName;
         await loadFromServer(currentSheetName);
       } else {
-        alert("Ошибка: " + (result.message || "Не удалось сохранить расписание"));
+        alert("Ошибка: " + (result?.message || "Не удалось сохранить расписание"));
       }
     } catch(e){
       console.error("Error saving schedule:", e);
