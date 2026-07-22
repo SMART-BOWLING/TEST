@@ -1024,7 +1024,7 @@
   const AUTH_SPREADSHEET_ID = '1zwi1CInK3NZ8YRAegRMAdjin6XPacVkAkFsjAiqVE0w';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw-wB0vs-gdcYizyOEZ069MXRbcCJnTfwdAH7kGUDulZ7IPuttBjYBNpX00UhVRySgR/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyLdGJMmC9qW7FacqqOp7qEoKvuvS-Vxq3WoTNNo3kZDO74yJaK5iPc-nCdCvawDAHT/exec";
   
   const SESSION_DURATION_DAYS = 1;
   
@@ -1472,7 +1472,6 @@
           selector.appendChild(option);
         });
         
-        // Выбираем первый лист по умолчанию
         if (availableSheets.length > 0) {
           selector.value = availableSheets[0];
           currentSheetName = availableSheets[0];
@@ -1974,33 +1973,72 @@
     hideLoad(); 
   }
   
+  // ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ ЗАГРУЗКИ ====================
+  
   async function loadFromServer(sheetName){ 
     showLoad(); 
     try{ 
       const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
       const data = await jsonpRequest(url);
       
+      if (!data.success) {
+        throw new Error(data.message || "Ошибка загрузки данных");
+      }
+      
       bookings = data.schedule ? data.schedule.map(b=>{ 
-        let startKey=parseFloat(b.start); 
-        let endKey=parseFloat(b.end); 
-        let startSlotIdx=slots.findIndex(s=>s.key===startKey); 
-        let endSlotIdx=slots.findIndex(s=>s.key===endKey)-1; 
-        if(endSlotIdx<0) endSlotIdx=slots.length-1; 
+        // Проверяем наличие start и end
+        if (b.start === undefined || b.end === undefined) {
+          console.warn('Пропущена запись без start/end:', b);
+          return null;
+        }
+        
+        let startKey = parseFloat(b.start);
+        let endKey = parseFloat(b.end);
+        
+        // Проверяем, что startKey и endKey - валидные числа
+        if (isNaN(startKey) || isNaN(endKey)) {
+          console.warn('Пропущена запись с невалидными start/end:', b);
+          return null;
+        }
+        
+        let startSlotIdx = slots.findIndex(s => s.key === startKey);
+        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
+        
+        // Если не нашли точное совпадение, ищем ближайшее
+        if (startSlotIdx === -1) {
+          for (let i = 0; i < slots.length; i++) {
+            if (slots[i].key >= startKey) {
+              startSlotIdx = i;
+              break;
+            }
+          }
+          if (startSlotIdx === -1) startSlotIdx = 0;
+        }
+        
+        if (endSlotIdx < 0 || endSlotIdx >= slots.length) {
+          endSlotIdx = slots.length - 1;
+        }
+        if (endSlotIdx < startSlotIdx) {
+          endSlotIdx = startSlotIdx;
+        }
+        
         let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
+        let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
+        
         return { 
-          id:b.id, 
-          lane:b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0),
-          start:startKey, 
-          end:endKey, 
-          startSlotIdx, 
-          endSlotIdx, 
+          id: b.id || Date.now() + Math.random(),
+          lane: stationIdx,
+          start: startKey, 
+          end: endKey, 
+          startSlotIdx: startSlotIdx, 
+          endSlotIdx: endSlotIdx, 
           name: b.name || '', 
           phone: b.phone || '', 
           comment: b.comment || '', 
-          confirmed:b.confirmed==="Да"?true:(b.confirmed==="Нет"?false:null),
+          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
           type: isBirthday ? 'birthday' : 'regular'
         }; 
-      }) : []; 
+      }).filter(b => b !== null) : []; 
       
       // Загружаем сотрудников, привязанных к станциям из данных
       if (data.employeeGroups) {
@@ -2016,7 +2054,10 @@
       
       renderAllSliders(); 
       updateCellsHighlight(); 
-    } catch(e){console.error(e); alert("Ошибка загрузки: " + e.message);} 
+    } catch(e){
+      console.error('Ошибка загрузки:', e); 
+      alert("Ошибка загрузки: " + e.message);
+    } 
     hideLoad(); 
   }
   
@@ -2150,9 +2191,7 @@
       if(result.success){
         closeSaveScheduleModal();
         alert(result.message || "Расписание сохранено");
-        // Обновляем список листов
         await loadSheetsList();
-        // Выбираем новый лист
         document.getElementById('sheetSelector').value = sheetName;
         currentSheetName = sheetName;
         await loadFromServer(currentSheetName);
@@ -2370,10 +2409,8 @@
     
     buildDesktopTable();
     
-    // Загружаем список листов
     await loadSheetsList();
     
-    // Загружаем данные первого листа
     if (availableSheets.length > 0) {
       currentSheetName = availableSheets[0];
       await loadFromServer(currentSheetName);
