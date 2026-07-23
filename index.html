@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (как в вашем коде) */
     * {
       margin: 0;
       padding: 0;
@@ -922,13 +923,13 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwOzOD4KhcmOhQfTwVf9XQzYqtvvbkYar7BnbBbjUt53xzKzQ-hVQ1WtMrFYgG8LEF1/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz3oMDD7NapdVcG1lBFx6U3MgjJ783aUP8QqG5p0YG7x9U87Z7rTNiV2Tl86RH3ur8/exec";
   
   let stations = [];
   let currentSheetName = '';
   let availableSheets = [];
   
-  // ==================== JSONP ФУНКЦИЯ (для GET запросов) ====================
+  // ==================== JSONP ФУНКЦИЯ ====================
   
   function jsonpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -976,51 +977,32 @@
     });
   }
   
-  // ==================== POST ЗАПРОСЫ (через fetch с CORS) ====================
+  // ==================== ОТПРАВКА ДАННЫХ ЧЕРЕЗ JSONP ====================
 
-  async function postRequest(action, payload) {
+  async function sendJsonpAction(action, payload) {
     showLoad();
     
     try {
-      // Используем fetch с обычным режимом (без no-cors)
-      // Но добавляем параметр action в URL для совместимости
-      const url = `${GAS_URL}?action=${action}`;
+      // Кодируем данные в URL
+      const encodedData = encodeURIComponent(JSON.stringify(payload));
+      const url = `${GAS_URL}?action=${action}&data=${encodedData}&_=${Date.now()}`;
       
-      const response = await fetch(url, {
-        method: 'POST',
-        mode: 'cors', // пробуем CORS
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      console.log('Sending JSONP request:', url);
+      const result = await jsonpRequest(url);
       
-      // Проверяем статус ответа
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
+      console.log('JSONP response:', result);
       return result;
       
     } catch (error) {
-      console.error('POST request failed:', error);
-      
-      // Fallback на JSONP через GET
-      try {
-        console.log('Trying JSONP fallback...');
-        const encodedData = encodeURIComponent(JSON.stringify(payload));
-        const url = `${GAS_URL}?action=${action}&data=${encodedData}&_=${Date.now()}`;
-        const jsonpResult = await jsonpRequest(url);
-        return jsonpResult;
-      } catch (jsonpError) {
-        console.error('JSONP fallback also failed:', jsonpError);
-        throw new Error(`Ошибка отправки: ${error.message || error}`);
-      }
+      console.error('JSONP request failed:', error);
+      throw new Error(`Ошибка отправки: ${error.message || error}`);
     } finally {
       hideLoad();
     }
   }
+  
+  // Алиас для обратной совместимости
+  const postRequest = sendJsonpAction;
   
   // ==================== АДМИН-ПАНЕЛЬ ====================
   
@@ -1507,9 +1489,9 @@
         allStations: allStations
       };
       
-      console.log("Sending employee groups (POST):", payload);
+      console.log("Sending employee groups:", payload);
       
-      const result = await postRequest('saveEmployeeGroups', payload);
+      const result = await sendJsonpAction('saveEmployeeGroups', payload);
       
       console.log("Response from server:", result);
       
@@ -1798,9 +1780,9 @@
         }))
       };
       
-      console.log("Sending payload (POST):", payload);
+      console.log("Sending payload:", payload);
       
-      const result = await postRequest('addSchedule', payload);
+      const result = await sendJsonpAction('addSchedule', payload);
       
       if(result && result.success !== false){
         clearTempSelections(); 
@@ -2044,9 +2026,9 @@
         employeeGroups: employeeGroupsData 
       };
       
-      console.log("Saving schedule (POST):", payload);
+      console.log("Saving schedule:", payload);
       
-      const result = await postRequest('saveScheduleSnapshot', payload);
+      const result = await sendJsonpAction('saveScheduleSnapshot', payload);
       
       if(result && result.success !== false){
         closeSaveScheduleModal();
