@@ -923,24 +923,24 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbybsMi_bzlO1YYRQt5rP8OV4Yinl9_jcR0vy6g5q12TUhssQ4cxjf2YkbyrX9ZtISBl/exec";
+  var GAS_URL = "https://script.google.com/macros/s/AKfycbybsMi_bzlO1YYRQt5rP8OV4Yinl9_jcR0vy6g5q12TUhssQ4cxjf2YkbyrX9ZtISBl/exec";
   
-  let stations = [];
-  let currentSheetName = '';
-  let availableSheets = [];
+  var stations = [];
+  var currentSheetName = '';
+  var availableSheets = [];
   
   // ==================== JSONP ДЛЯ GET ЗАПРОСОВ ====================
   
   function jsonpRequest(url) {
-    return new Promise((resolve, reject) => {
-      const callbackFunction = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const script = document.createElement('script');
+    return new Promise(function(resolve, reject) {
+      var callbackFunction = 'jsonp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      var script = document.createElement('script');
       
-      const separator = url.includes('?') ? '&' : '?';
-      const timestamp = Date.now();
-      const fullUrl = `${url}${separator}callback=${callbackFunction}&_=${timestamp}`;
+      var separator = url.includes('?') ? '&' : '?';
+      var timestamp = Date.now();
+      var fullUrl = url + separator + 'callback=' + callbackFunction + '&_=' + timestamp;
       
-      let timeoutId = setTimeout(() => {
+      var timeoutId = setTimeout(function() {
         cleanup();
         reject(new Error('JSONP request timeout (30s)'));
       }, 30000);
@@ -962,13 +962,13 @@
         }
       }
       
-      window[callbackFunction] = (data) => {
+      window[callbackFunction] = function(data) {
         cleanup();
         resolve(data);
       };
       
       script.src = fullUrl;
-      script.onerror = () => {
+      script.onerror = function() {
         cleanup();
         reject(new Error('JSONP request failed'));
       };
@@ -977,45 +977,43 @@
     });
   }
   
-  // ==================== POST ЗАПРОСЫ (для тяжелых данных) ====================
+  // ==================== ОТПРАВКА POST ЗАПРОСОВ ====================
 
   async function postRequest(action, payload) {
     showLoad();
     
     try {
       // Формируем URL с action
-      const url = `${GAS_URL}?action=${action}`;
+      var url = GAS_URL + '?action=' + action;
       
       // Отправляем POST с телом в JSON
-      const response = await fetch(url, {
+      var response = await fetch(url, {
         method: 'POST',
-        mode: 'no-cors',
+        mode: 'cors',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
       });
       
-      // При mode: 'no-cors' мы не можем прочитать ответ
-      // Но запрос ушел - считаем что успешно
-      console.log('POST request sent (no-cors mode) for action:', action);
-      
-      // Возвращаем успешный результат, так как запрос отправлен
-      return { success: true, message: 'Запрос отправлен' };
+      // Пытаемся прочитать ответ
+      var result = await response.json();
+      console.log('POST response:', result);
+      return result;
       
     } catch (error) {
       console.error('POST request failed:', error);
       
-      // Fallback: пробуем JSONP с GET (но это может не сработать из-за длины URL)
+      // Fallback: пробуем JSONP с GET
       try {
         console.log('Trying JSONP fallback...');
-        const encodedData = encodeURIComponent(JSON.stringify(payload));
-        const url = `${GAS_URL}?action=${action}&data=${encodedData}&_=${Date.now()}`;
-        const jsonpResult = await jsonpRequest(url);
+        var encodedData = encodeURIComponent(JSON.stringify(payload));
+        var url = GAS_URL + '?action=' + action + '&data=' + encodedData + '&_=' + Date.now();
+        var jsonpResult = await jsonpRequest(url);
         return jsonpResult;
       } catch (jsonpError) {
         console.error('JSONP fallback also failed:', jsonpError);
-        throw new Error(`Ошибка отправки: ${error.message || error}`);
+        throw new Error('Ошибка отправки: ' + (error.message || error));
       }
     } finally {
       hideLoad();
@@ -1037,43 +1035,28 @@
   
   async function loadUsersList() {
     try {
-      const url = `${GAS_URL}?action=getUsers&_=${Date.now()}`;
-      const data = await jsonpRequest(url);
+      var url = GAS_URL + '?action=getUsers&_=' + Date.now();
+      var data = await jsonpRequest(url);
       
       if (!data.success) {
         throw new Error(data.message);
       }
       
-      const container = document.getElementById("usersList");
+      var container = document.getElementById("usersList");
       
       if (!data.users || data.users.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--label-tertiary);">Нет добавленных сотрудников</div>';
         return;
       }
       
-      let html = `
-        <table class="users-table">
-          <thead>
-            <tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr>
-          </thead>
-          <tbody>
-      `;
+      var html = '<table class="users-table"><thead><tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr></thead><tbody>';
       
-      data.users.forEach(user => {
-        html += `
-          <tr>
-            <td>${escapeHtml(user.email)}</td>
-            <td>${escapeHtml(user.name || '-')}</td>
-            <td>${escapeHtml(user.role || '-')}</td>
-            <td class="user-actions">
-              <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
-              <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>
-        `;
-      });
+      for (var i = 0; i < data.users.length; i++) {
+        var user = data.users[i];
+        html += '<tr><td>' + escapeHtml(user.email) + '</td><td>' + escapeHtml(user.name || '-') + '</td><td>' + escapeHtml(user.role || '-') + '</td><td class="user-actions"><button class="edit-user-btn" onclick=\'editUser(' + user.row + ', "' + escapeHtml(user.email) + '", "' + escapeHtml(user.name || '') + '", "' + escapeHtml(user.role || '') + '")\'><i class="fas fa-edit"></i></button><button class="delete-user-btn" onclick=\'deleteUser(' + user.row + ', "' + escapeHtml(user.email) + '")\'><i class="fas fa-trash"></i></button></td></tr>';
+      }
       
-      html += `</tbody></table>`;
+      html += '</tbody></table>';
       container.innerHTML = html;
       
     } catch (error) {
@@ -1109,10 +1092,10 @@
   async function saveUser(event) {
     event.preventDefault();
     
-    const row = document.getElementById("editRow").value;
-    const email = document.getElementById("userEmailInput").value.trim();
-    const name = document.getElementById("userNameInput").value.trim();
-    const role = document.getElementById("userRoleInput").value.trim();
+    var row = document.getElementById("editRow").value;
+    var email = document.getElementById("userEmailInput").value.trim();
+    var name = document.getElementById("userNameInput").value.trim();
+    var role = document.getElementById("userRoleInput").value.trim();
     
     if (!email) {
       alert("Введите email или логин");
@@ -1122,14 +1105,14 @@
     showLoad();
     
     try {
-      let url;
+      var url;
       if (row) {
-        url = `${GAS_URL}?action=updateUser&row=${row}&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+        url = GAS_URL + '?action=updateUser&row=' + row + '&email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name) + '&role=' + encodeURIComponent(role) + '&_=' + Date.now();
       } else {
-        url = `${GAS_URL}?action=addUser&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}&_=${Date.now()}`;
+        url = GAS_URL + '?action=addUser&email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name) + '&role=' + encodeURIComponent(role) + '&_=' + Date.now();
       }
       
-      const result = await jsonpRequest(url);
+      var result = await jsonpRequest(url);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка сохранения");
@@ -1148,15 +1131,15 @@
   }
   
   async function deleteUser(row, email) {
-    if (!confirm(`Удалить пользователя ${email}?`)) {
+    if (!confirm('Удалить пользователя ' + email + '?')) {
       return;
     }
     
     showLoad();
     
     try {
-      const url = `${GAS_URL}?action=deleteUser&row=${row}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
+      var url = GAS_URL + '?action=deleteUser&row=' + row + '&_=' + Date.now();
+      var result = await jsonpRequest(url);
       
       if (result && result.success === false) {
         throw new Error(result.message || "Ошибка удаления");
@@ -1177,10 +1160,10 @@
   
   async function loadSheetsList() {
     try {
-      const url = `${GAS_URL}?action=getSheetNames`;
-      const data = await jsonpRequest(url);
+      var url = GAS_URL + '?action=getSheetNames';
+      var data = await jsonpRequest(url);
       
-      const selector = document.getElementById('sheetSelector');
+      var selector = document.getElementById('sheetSelector');
       
       if (data && data.success && data.sheets) {
         availableSheets = data.sheets;
@@ -1191,12 +1174,13 @@
           return;
         }
         
-        availableSheets.forEach(name => {
-          const option = document.createElement('option');
+        for (var i = 0; i < availableSheets.length; i++) {
+          var name = availableSheets[i];
+          var option = document.createElement('option');
           option.value = name;
           option.textContent = name;
           selector.appendChild(option);
-        });
+        }
         
         if (availableSheets.length > 0) {
           selector.value = availableSheets[0];
@@ -1204,7 +1188,7 @@
         }
       } else {
         selector.innerHTML = '<option value="">Ошибка загрузки</option>';
-        console.error('Failed to load sheets:', data?.message);
+        console.error('Failed to load sheets:', data && data.message);
       }
     } catch (error) {
       console.error('Error loading sheets list:', error);
@@ -1213,7 +1197,7 @@
   }
   
   function onSheetChange() {
-    const selector = document.getElementById('sheetSelector');
+    var selector = document.getElementById('sheetSelector');
     currentSheetName = selector.value;
     if (currentSheetName) {
       loadFromServer(currentSheetName);
@@ -1226,8 +1210,8 @@
   
   async function loadStations() {
     try {
-      const url = `${GAS_URL}?action=getStations`;
-      const data = await jsonpRequest(url);
+      var url = GAS_URL + '?action=getStations';
+      var data = await jsonpRequest(url);
       
       if (data && data.success && data.stations) {
         stations = data.stations;
@@ -1243,30 +1227,30 @@
     }
   }
   
-  const SH = 10, EH = 22;
-  const slots = []; 
-  for(let h=SH; h<=EH; h++) { 
-    slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
-    if(h<EH) slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
+  var SH = 10, EH = 22;
+  var slots = []; 
+  for(var h=SH; h<=EH; h++) { 
+    slots.push({ label: h + ':00', key: h, hour: h, minute: 0 }); 
+    if(h<EH) slots.push({ label: h + ':30', key: h+0.5, hour: h, minute: 30 }); 
   }
   
-  let bookings = [], tempBookings = [], nextTempId = 1;
-  let dragModeEnabled = false;
-  let currentBooking = null;
-  let editingBooking = null;
-  let selectedEventType = 'regular';
-  const $ = id => document.getElementById(id);
+  var bookings = [], tempBookings = [], nextTempId = 1;
+  var dragModeEnabled = false;
+  var currentBooking = null;
+  var editingBooking = null;
+  var selectedEventType = 'regular';
+  var $ = function(id) { return document.getElementById(id); };
   
   // ==================== ПОЛУЧЕНИЕ ВСЕХ СТАНЦИЙ ДЛЯ ОТПРАВКИ ====================
   
   function getAllStationsData() {
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const result = [];
-    for (let i = 0; i < numStations; i++) {
-      const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
+    var numStations = stations.length > 0 ? stations.length : 12;
+    var result = [];
+    for (var i = 0; i < numStations; i++) {
+      var station = stations[i] || { name: 'Станция ' + (i+1), logo: '' };
       result.push({
         id: i + 1,
-        name: station.name || `Станция ${i+1}`,
+        name: station.name || 'Станция ' + (i+1),
         logo: station.logo || ''
       });
     }
@@ -1274,15 +1258,15 @@
   }
   
   // ==================== ПРИВЯЗКА СОТРУДНИКОВ К СТАНЦИЯМ ====================
-  let employeeGroups = [];
-  let nextGroupId = 1;
-  let assignModeEnabled = false;
-  let selectedLanesForAssign = [];
-  const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+  var employeeGroups = [];
+  var nextGroupId = 1;
+  var assignModeEnabled = false;
+  var selectedLanesForAssign = [];
+  var GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
   
   function saveEmployeeGroups() {
     try {
-      const key = `employeeGroups_${currentSheetName}`;
+      var key = 'employeeGroups_' + currentSheetName;
       localStorage.setItem(key, JSON.stringify(employeeGroups));
       console.log('Employee groups saved for sheet:', currentSheetName);
     } catch (e) {
@@ -1292,12 +1276,16 @@
   
   function loadEmployeeGroups() {
     try {
-      const key = `employeeGroups_${currentSheetName}`;
-      const data = localStorage.getItem(key);
+      var key = 'employeeGroups_' + currentSheetName;
+      var data = localStorage.getItem(key);
       if (data) {
         employeeGroups = JSON.parse(data);
         if (employeeGroups.length > 0) {
-          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+          var maxId = 0;
+          for (var i = 0; i < employeeGroups.length; i++) {
+            if (employeeGroups[i].id > maxId) maxId = employeeGroups[i].id;
+          }
+          nextGroupId = maxId + 1;
         }
         console.log('Employee groups loaded for sheet:', currentSheetName, employeeGroups);
         return true;
@@ -1309,8 +1297,9 @@
   }
   
   function getEmployeeForLane(lane) {
-    for (let group of employeeGroups) {
-      if (group.stations.includes(lane)) {
+    for (var i = 0; i < employeeGroups.length; i++) {
+      var group = employeeGroups[i];
+      if (group.stations.indexOf(lane) !== -1) {
         return group.name;
       }
     }
@@ -1318,55 +1307,63 @@
   }
   
   function getRowByLane(lane){
-    return document.querySelector(`#dtBody tr[data-lane="${lane}"]`);
+    return document.querySelector('#dtBody tr[data-lane="' + lane + '"]');
   }
   
-  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
-    let startTime = slots[startSlotIdx].key;
-    let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
-    return bookings.some(b => {
-      if (excludeId !== null && b.id === excludeId) return false;
-      if (b.lane !== lane) return false;
-      let bStart = b.start, bEnd = b.end;
-      return !(endTime <= bStart || startTime >= bEnd);
-    });
-  }
-  
-  function fmtFromSlotIdx(startSlotIdx, endSlotIdx = null){ 
-    let s = slots[startSlotIdx];
-    let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
-    let e = slots[endIdx];
-    if (!e) {
-      let nextHour = Math.floor(s.key) + 1;
-      return `${s.label}–${nextHour}:00`;
+  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId) {
+    excludeId = excludeId || null;
+    var startTime = slots[startSlotIdx].key;
+    var endTime = slots[endSlotIdx + 1] && slots[endSlotIdx + 1].key || (slots[endSlotIdx].key + 0.5);
+    
+    for (var i = 0; i < bookings.length; i++) {
+      var b = bookings[i];
+      if (excludeId !== null && b.id === excludeId) continue;
+      if (b.lane !== lane) continue;
+      var bStart = b.start, bEnd = b.end;
+      if (!(endTime <= bStart || startTime >= bEnd)) {
+        return true;
+      }
     }
-    return `${s.label}–${e.label}`;
+    return false;
+  }
+  
+  function fmtFromSlotIdx(startSlotIdx, endSlotIdx) {
+    endSlotIdx = endSlotIdx !== null && endSlotIdx !== undefined ? endSlotIdx : null;
+    var s = slots[startSlotIdx];
+    var endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
+    var e = slots[endIdx];
+    if (!e) {
+      var nextHour = Math.floor(s.key) + 1;
+      return s.label + '–' + nextHour + ':00';
+    }
+    return s.label + '–' + e.label;
   }
   
   function buildDesktopTable(){
-    let headRow = document.querySelector("#dtHead tr");
-    slots.forEach(sl=>{ 
-      let th=document.createElement("th"); 
-      th.className="th-time"; 
-      th.textContent=sl.label; 
-      headRow.appendChild(th); 
-    });
+    var headRow = document.querySelector("#dtHead tr");
+    for (var i = 0; i < slots.length; i++) {
+      var sl = slots[i];
+      var th = document.createElement("th");
+      th.className = "th-time";
+      th.textContent = sl.label;
+      headRow.appendChild(th);
+    }
     
-    let body=$("dtBody");
-    const numStations = stations.length > 0 ? stations.length : 12;
+    var body = $("dtBody");
+    var numStations = stations.length > 0 ? stations.length : 12;
     
-    for(let lane=0; lane<numStations; lane++){
-      let tr=document.createElement("tr"); 
-      tr.dataset.lane=lane;
+    for (var lane = 0; lane < numStations; lane++) {
+      var tr = document.createElement("tr");
+      tr.dataset.lane = lane;
       
-      let lhdr=document.createElement("td"); 
-      lhdr.className="lane-hdr";
+      var lhdr = document.createElement("td");
+      lhdr.className = "lane-hdr";
       
-      let station = stations[lane] || { name: `Станция ${lane+1}`, logo: '' };
-      let stationName = station.name || `Станция ${lane+1}`;
-      let stationLogo = station.logo || '';
+      var station = stations[lane] || { name: 'Станция ' + (lane+1), logo: '' };
+      var stationName = station.name || 'Станция ' + (lane+1);
+      var stationLogo = station.logo || '';
       
-      let logoImg = document.createElement('img');
+      var logoImg = document.createElement('img');
       logoImg.className = 'station-logo';
       logoImg.src = stationLogo || 'https://via.placeholder.com/32/cccccc/ffffff?text=?';
       logoImg.alt = stationName;
@@ -1374,53 +1371,61 @@
         this.src = 'https://via.placeholder.com/32/cccccc/ffffff?text=?'; 
       };
       
-      let nameSpan = document.createElement('span');
+      var nameSpan = document.createElement('span');
       nameSpan.className = 'station-name';
       nameSpan.textContent = stationName;
       
       lhdr.appendChild(logoImg);
       lhdr.appendChild(nameSpan);
-      lhdr.addEventListener("click", () => handleLaneHeaderClick(lane));
+      lhdr.addEventListener("click", function(laneParam) {
+        return function() { handleLaneHeaderClick(laneParam); };
+      }(lane));
       tr.appendChild(lhdr);
       
-      slots.forEach((sl,si)=>{ 
-        let td=document.createElement("td"); 
-        td.className="slot"; 
-        td.dataset.lane=lane; 
-        td.dataset.slotIdx=si; 
-        tr.appendChild(td); 
-      });
+      for (var si = 0; si < slots.length; si++) {
+        var td = document.createElement("td");
+        td.className = "slot";
+        td.dataset.lane = lane;
+        td.dataset.slotIdx = si;
+        tr.appendChild(td);
+      }
       body.appendChild(tr);
     }
   }
   
-  function getSlotCell(lane, slotIdx){ 
-    let row = getRowByLane(lane);
+  function getSlotCell(lane, slotIdx){
+    var row = getRowByLane(lane);
     if (!row) return null;
-    return row.cells[slotIdx+1]; 
+    return row.cells[slotIdx+1];
   }
   
   function updateCellsHighlight(){
-    for(let row of $("dtBody").rows) {
-      for(let i=1; i<row.cells.length; i++) {
-        row.cells[i].classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight");
+    var rows = $("dtBody").rows;
+    for (var r = 0; r < rows.length; r++) {
+      for (var c = 1; c < rows[r].cells.length; c++) {
+        rows[r].cells[c].classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight");
       }
     }
-    for(let b of bookings){ 
-      let si=b.startSlotIdx, ei=b.endSlotIdx; 
-      if(si!==undefined && ei!==undefined) {
-        for(let i=si;i<=ei;i++){ 
-          let cell=getSlotCell(b.lane,i); 
-          if(cell) cell.classList.add(b.confirmed===true?"booking-confirmed":(b.confirmed===false?"booking-rejected":"booking-pending")); 
+    
+    for (var i = 0; i < bookings.length; i++) {
+      var b = bookings[i];
+      var si = b.startSlotIdx, ei = b.endSlotIdx;
+      if (si !== undefined && ei !== undefined) {
+        var cls = b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending");
+        for (var j = si; j <= ei; j++) {
+          var cell = getSlotCell(b.lane, j);
+          if (cell) cell.classList.add(cls);
         }
       }
     }
-    for(let t of tempBookings){ 
-      let si=t.startSlotIdx, ei=t.endSlotIdx; 
-      if(si!==undefined && ei!==undefined) {
-        for(let i=si;i<=ei;i++){ 
-          let cell=getSlotCell(t.lane,i); 
-          if(cell) cell.classList.add("temp-highlight"); 
+    
+    for (var t = 0; t < tempBookings.length; t++) {
+      var tb = tempBookings[t];
+      var si = tb.startSlotIdx, ei = tb.endSlotIdx;
+      if (si !== undefined && ei !== undefined) {
+        for (var j = si; j <= ei; j++) {
+          var cell = getSlotCell(tb.lane, j);
+          if (cell) cell.classList.add("temp-highlight");
         }
       }
     }
@@ -1430,7 +1435,7 @@
   
   function toggleAssignMode(){
     assignModeEnabled = !assignModeEnabled;
-    const btn = $("assignToggleBtn");
+    var btn = $("assignToggleBtn");
     btn.classList.toggle("active", assignModeEnabled);
     if(!assignModeEnabled){
       selectedLanesForAssign = [];
@@ -1443,7 +1448,7 @@
   
   function handleLaneHeaderClick(lane){
     if(!assignModeEnabled) return;
-    const idx = selectedLanesForAssign.indexOf(lane);
+    var idx = selectedLanesForAssign.indexOf(lane);
     if(idx === -1) selectedLanesForAssign.push(lane);
     else selectedLanesForAssign.splice(idx,1);
     updateAssignSelectionHighlight();
@@ -1451,16 +1456,18 @@
   }
   
   function updateAssignSelectionHighlight(){
-    document.querySelectorAll("#tableDesktop td.lane-hdr").forEach(td=>{
-      const tr = td.closest("tr");
-      const lane = tr ? parseInt(tr.dataset.lane) : NaN;
+    var headers = document.querySelectorAll("#tableDesktop td.lane-hdr");
+    for (var i = 0; i < headers.length; i++) {
+      var td = headers[i];
+      var tr = td.closest("tr");
+      var lane = tr ? parseInt(tr.dataset.lane) : NaN;
       td.classList.toggle("assign-selectable", assignModeEnabled);
-      td.classList.toggle("assign-selected", selectedLanesForAssign.includes(lane));
-    });
+      td.classList.toggle("assign-selected", selectedLanesForAssign.indexOf(lane) !== -1);
+    }
   }
   
   function renderAssignBar(){
-    let bar = $("assignBar");
+    var bar = $("assignBar");
     if(selectedLanesForAssign.length === 0){ hideAssignBar(); return; }
     if(!bar){
       bar = document.createElement("div");
@@ -1468,22 +1475,18 @@
       bar.className = "assign-bar";
       document.body.appendChild(bar);
     }
-    const chips = selectedLanesForAssign.map(l => {
-      const name = stations[l]?.name || `Станция ${l+1}`;
-      return `<span class="assign-chip">${escapeHtml(name)}</span>`;
-    }).join("");
-    bar.innerHTML = `
-      <span class="assign-bar-label">Сотрудник для ${selectedLanesForAssign.length} станций:</span>
-      <div class="assign-bar-chips">${chips}</div>
-      <input type="text" id="assignEmployeeName" placeholder="ФИО сотрудника" />
-      <button class="assign-apply-btn" onclick="applyEmployeeAssignment()">Привязать</button>
-      <button class="assign-cancel-btn" onclick="cancelAssignSelection()">Отмена</button>
-    `;
+    var chips = '';
+    for (var i = 0; i < selectedLanesForAssign.length; i++) {
+      var l = selectedLanesForAssign[i];
+      var name = stations[l] && stations[l].name || 'Станция ' + (l+1);
+      chips += '<span class="assign-chip">' + escapeHtml(name) + '</span>';
+    }
+    bar.innerHTML = '<span class="assign-bar-label">Сотрудник для ' + selectedLanesForAssign.length + ' станций:</span><div class="assign-bar-chips">' + chips + '</div><input type="text" id="assignEmployeeName" placeholder="ФИО сотрудника" /><button class="assign-apply-btn" onclick="applyEmployeeAssignment()">Привязать</button><button class="assign-cancel-btn" onclick="cancelAssignSelection()">Отмена</button>';
     bar.style.display = "flex";
   }
   
   function hideAssignBar(){
-    const bar = $("assignBar");
+    var bar = $("assignBar");
     if(bar) bar.style.display = "none";
   }
   
@@ -1495,21 +1498,23 @@
   
   async function saveEmployeeGroupsToServer() {
     try {
-      const allStations = getAllStationsData();
+      var allStations = getAllStationsData();
       
-      const payload = {
+      var payload = {
         sheetName: currentSheetName,
-        employeeGroups: employeeGroups.map(g => ({
-          id: g.id,
-          name: g.name,
-          stations: g.stations.map(l => l + 1)
-        })),
+        employeeGroups: employeeGroups.map(function(g) {
+          return {
+            id: g.id,
+            name: g.name,
+            stations: g.stations.map(function(l) { return l + 1; })
+          };
+        }),
         allStations: allStations
       };
       
       console.log("Sending employee groups (POST):", payload);
       
-      const result = await postRequest('saveEmployeeGroups', payload);
+      var result = await postRequest('saveEmployeeGroups', payload);
       
       console.log("Response from server:", result);
       
@@ -1517,7 +1522,7 @@
         console.log('Employee groups saved to server');
         return true;
       } else {
-        console.error('Failed to save employee groups:', result?.message);
+        console.error('Failed to save employee groups:', result && result.message);
         return false;
       }
     } catch (e) {
@@ -1528,32 +1533,40 @@
   }
   
   async function applyEmployeeAssignment(){
-    const input = $("assignEmployeeName");
-    const name = input ? input.value.trim() : "";
+    var input = $("assignEmployeeName");
+    var name = input ? input.value.trim() : "";
     if(!name){ alert("Введите ФИО сотрудника"); return; }
     if(selectedLanesForAssign.length === 0) {
       alert("Выберите станции для привязки");
       return;
     }
     
-    const lanesSet = new Set(selectedLanesForAssign);
-    let conflict = false;
-    employeeGroups.forEach(g => {
-      g.stations.forEach(l => {
-        if (lanesSet.has(l)) {
+    var lanesSet = {};
+    for (var i = 0; i < selectedLanesForAssign.length; i++) {
+      lanesSet[selectedLanesForAssign[i]] = true;
+    }
+    var conflict = false;
+    for (var g = 0; g < employeeGroups.length; g++) {
+      var group = employeeGroups[g];
+      for (var s = 0; s < group.stations.length; s++) {
+        if (lanesSet[group.stations[s]]) {
           conflict = true;
+          break;
         }
-      });
-    });
-    
-    if (conflict) {
-      employeeGroups.forEach(g => { 
-        g.stations = g.stations.filter(l => !lanesSet.has(l)); 
-      });
-      employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+      }
+      if (conflict) break;
     }
     
-    const newGroup = { id: nextGroupId++, name, stations: [...selectedLanesForAssign] };
+    if (conflict) {
+      for (var g = 0; g < employeeGroups.length; g++) {
+        employeeGroups[g].stations = employeeGroups[g].stations.filter(function(l) {
+          return !lanesSet[l];
+        });
+      }
+      employeeGroups = employeeGroups.filter(function(g) { return g.stations.length > 0; });
+    }
+    
+    var newGroup = { id: nextGroupId++, name: name, stations: selectedLanesForAssign.slice() };
     employeeGroups.push(newGroup);
     
     selectedLanesForAssign = [];
@@ -1564,9 +1577,9 @@
     
     showLoad();
     try {
-      const success = await saveEmployeeGroupsToServer();
+      var success = await saveEmployeeGroupsToServer();
       if (success) {
-        alert(`Сотрудник "${name}" привязан к станциям`);
+        alert('Сотрудник "' + name + '" привязан к станциям');
       } else {
         alert("Ошибка при сохранении на сервере, но данные сохранены локально");
       }
@@ -1578,10 +1591,16 @@
   }
   
   async function removeEmployeeGroup(groupId){
-    const group = employeeGroups.find(g => g.id === groupId);
+    var group = null;
+    for (var i = 0; i < employeeGroups.length; i++) {
+      if (employeeGroups[i].id === groupId) {
+        group = employeeGroups[i];
+        break;
+      }
+    }
     if(!group) return;
-    if(!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
-    employeeGroups = employeeGroups.filter(g => g.id !== groupId);
+    if(!confirm('Убрать привязку сотрудника "' + group.name + '" к станциям?')) return;
+    employeeGroups = employeeGroups.filter(function(g) { return g.id !== groupId; });
     saveEmployeeGroups();
     refreshGroupHeaders();
     
@@ -1604,35 +1623,51 @@
   }
   
   function refreshGroupHeaders(){
-    const body = $("dtBody");
+    var body = $("dtBody");
     if(!body) return;
     
-    body.querySelectorAll("tr.employee-group-header").forEach(tr => tr.remove());
+    var headers = body.querySelectorAll("tr.employee-group-header");
+    for (var i = 0; i < headers.length; i++) {
+      headers[i].remove();
+    }
     
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const laneToGroup = {};
-    employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
+    var numStations = stations.length > 0 ? stations.length : 12;
+    var laneToGroup = {};
+    for (var g = 0; g < employeeGroups.length; g++) {
+      var grp = employeeGroups[g];
+      for (var s = 0; s < grp.stations.length; s++) {
+        laneToGroup[grp.stations[s]] = grp;
+      }
+    }
     
-    const colSpan = 1 + slots.length;
-    let prevGroupId = null;
-    for(let lane = 0; lane < numStations; lane++){
-      const group = laneToGroup[lane];
-      const groupId = group ? group.id : null;
+    var colSpan = 1 + slots.length;
+    var prevGroupId = null;
+    for (var lane = 0; lane < numStations; lane++) {
+      var group = laneToGroup[lane];
+      var groupId = group ? group.id : null;
       if(groupId !== null && groupId !== prevGroupId){
-        const row = getRowByLane(lane);
+        var row = getRowByLane(lane);
         if(row){
-          const colorIdx = employeeGroups.findIndex(g => g.id === groupId) % GROUP_COLORS.length;
-          const color = GROUP_COLORS[colorIdx >= 0 ? colorIdx : 0];
-          const hdrRow = document.createElement("tr");
+          var colorIdx = 0;
+          for (var g = 0; g < employeeGroups.length; g++) {
+            if (employeeGroups[g].id === groupId) {
+              colorIdx = g % GROUP_COLORS.length;
+              break;
+            }
+          }
+          var color = GROUP_COLORS[colorIdx >= 0 ? colorIdx : 0];
+          var hdrRow = document.createElement("tr");
           hdrRow.className = "employee-group-header";
-          const td = document.createElement("td");
+          var td = document.createElement("td");
           td.colSpan = colSpan;
-          td.style.borderLeft = `3px solid ${color}`;
-          td.innerHTML = `<span><i class="fas fa-user"></i> ${escapeHtml(group.name)}</span>`;
-          const rmBtn = document.createElement("button");
+          td.style.borderLeft = '3px solid ' + color;
+          td.innerHTML = '<span><i class="fas fa-user"></i> ' + escapeHtml(group.name) + '</span>';
+          var rmBtn = document.createElement("button");
           rmBtn.className = "group-remove-btn";
           rmBtn.innerHTML = '<i class="fas fa-times"></i>';
-          rmBtn.onclick = (e) => { e.stopPropagation(); removeEmployeeGroup(groupId); };
+          rmBtn.onclick = function(gId) {
+            return function(e) { e.stopPropagation(); removeEmployeeGroup(gId); };
+          }(groupId);
           td.appendChild(rmBtn);
           hdrRow.appendChild(td);
           row.parentNode.insertBefore(hdrRow, row);
@@ -1652,85 +1687,107 @@
   }
   
   function renderInlineTempCards(){ 
-    const container=$("inlineTempContainer"); 
+    var container = $("inlineTempContainer"); 
     if(!container) return; 
-    if(tempBookings.length===0){ 
-      container.innerHTML=""; 
+    if(tempBookings.length === 0){ 
+      container.innerHTML = ""; 
       return; 
     } 
-    container.innerHTML=""; 
-    tempBookings.forEach((tb,idx)=>{ 
-      let card=document.createElement("div"); 
-      card.className="temp-card-inline"; 
-      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
-      let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-      card.innerHTML=`<strong>${stationName}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`; 
-      card.querySelector(".temp-rm").onclick=()=>{ 
-        tempBookings.splice(idx,1); 
-        renderInlineTempCards(); 
-        renderAllSliders(); 
-        updateCellsHighlight(); 
-        updatePreviewTimes(); 
-      }; 
+    container.innerHTML = ""; 
+    for (var idx = 0; idx < tempBookings.length; idx++) {
+      var tb = tempBookings[idx];
+      var card = document.createElement("div"); 
+      card.className = "temp-card-inline"; 
+      var timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+      var stationName = stations[tb.lane] && stations[tb.lane].name || 'Станция ' + (tb.lane+1);
+      card.innerHTML = '<strong>' + stationName + '</strong><span class="temp-time">' + timeStr + '</span><button class="temp-rm" data-idx="' + idx + '"><i class="fas fa-times"></i></button>'; 
+      card.querySelector(".temp-rm").onclick = function(idxParam) {
+        return function() { 
+          tempBookings.splice(idxParam, 1); 
+          renderInlineTempCards(); 
+          renderAllSliders(); 
+          updateCellsHighlight(); 
+          updatePreviewTimes(); 
+        };
+      }(idx);
       container.appendChild(card); 
-    }); 
+    }
     updatePreviewTimes(); 
   }
   
   function updatePreviewTimes() { 
-    const span=document.getElementById("previewTimes"); 
-    if(span) span.innerText = tempBookings.length ? tempBookings.map(tb=>{
-      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
-      let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-      return `${stationName} (${timeStr})`;
-    }).join("; ") : "—"; 
+    var span = document.getElementById("previewTimes"); 
+    if(span) {
+      if (tempBookings.length) {
+        var texts = [];
+        for (var i = 0; i < tempBookings.length; i++) {
+          var tb = tempBookings[i];
+          var timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+          var stationName = stations[tb.lane] && stations[tb.lane].name || 'Станция ' + (tb.lane+1);
+          texts.push(stationName + ' (' + timeStr + ')');
+        }
+        span.innerText = texts.join("; ");
+      } else {
+        span.innerText = "—";
+      }
+    }
   }
   
-  let isDragging=false, dragStartCell=null, dragInterval=null;
+  var isDragging = false, dragStartCell = null, dragInterval = null;
   function onMouseDown(e){ 
     if(dragModeEnabled || assignModeEnabled) return; 
-    let t=e.target; 
-    if(t.classList?.contains("slot")){ 
+    var t = e.target; 
+    if(t.classList && t.classList.contains("slot")){ 
       e.preventDefault(); 
-      let lane=parseInt(t.dataset.lane), si=parseInt(t.dataset.slotIdx); 
-      isDragging=true; 
-      dragStartCell={lane,si}; 
-      dragInterval={lane,startIdx:si,endIdx:si}; 
-      highlightDragInterval(lane,si,si); 
+      var lane = parseInt(t.dataset.lane), si = parseInt(t.dataset.slotIdx); 
+      isDragging = true; 
+      dragStartCell = {lane: lane, si: si}; 
+      dragInterval = {lane: lane, startIdx: si, endIdx: si}; 
+      highlightDragInterval(lane, si, si); 
     } 
   }
   
   function onMouseMove(e){ 
     if(!dragModeEnabled && isDragging && dragStartCell){ 
-      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains("slot")); 
+      var els = document.elementsFromPoint(e.clientX, e.clientY);
+      var el = null;
+      for (var i = 0; i < els.length; i++) {
+        if (els[i].classList && els[i].classList.contains("slot")) {
+          el = els[i];
+          break;
+        }
+      }
       if(el){ 
-        let lane=parseInt(el.dataset.lane), idx=parseInt(el.dataset.slotIdx); 
-        if(lane===dragStartCell.lane){ 
-          let ns=Math.min(dragStartCell.si,idx), ne=Math.max(dragStartCell.si,idx); 
-          dragInterval={lane,startIdx:ns,endIdx:ne}; 
-          highlightDragInterval(lane,ns,ne); 
+        var lane = parseInt(el.dataset.lane), idx = parseInt(el.dataset.slotIdx); 
+        if(lane === dragStartCell.lane){ 
+          var ns = Math.min(dragStartCell.si, idx), ne = Math.max(dragStartCell.si, idx); 
+          dragInterval = {lane: lane, startIdx: ns, endIdx: ne}; 
+          highlightDragInterval(lane, ns, ne); 
         } 
       } 
     } 
   }
   
-  function highlightDragInterval(lane,si,ei){ 
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
-    for(let i=si;i<=ei;i++){ 
-      let cell=getSlotCell(lane,i); 
+  function highlightDragInterval(lane, si, ei){ 
+    var cells = document.querySelectorAll("#tableDesktop td.slot.drag-over");
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].classList.remove("drag-over");
+    }
+    for (var j = si; j <= ei; j++) { 
+      var cell = getSlotCell(lane, j); 
       if(cell) cell.classList.add("drag-over"); 
     } 
   }
   
   function onMouseUp(){ 
     if(!dragModeEnabled && isDragging && dragInterval){ 
-      let {lane,startIdx,endIdx}=dragInterval; 
+      var lane = dragInterval.lane, startIdx = dragInterval.startIdx, endIdx = dragInterval.endIdx; 
       if(hasConflict(lane, startIdx, endIdx)){ 
         alert("Это время уже занято другой записью"); 
       } else { 
         tempBookings.push({ 
-          id:nextTempId++, 
-          lane, 
+          id: nextTempId++, 
+          lane: lane, 
           startSlotIdx: startIdx, 
           endSlotIdx: endIdx,
           type: 'regular'
@@ -1740,14 +1797,17 @@
       renderAllSliders(); 
       updateCellsHighlight(); 
     } 
-    isDragging=false; 
-    dragInterval=null; 
-    dragStartCell=null; 
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
+    isDragging = false; 
+    dragInterval = null; 
+    dragStartCell = null; 
+    var cells = document.querySelectorAll("#tableDesktop td.slot.drag-over");
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].classList.remove("drag-over");
+    }
   }
   
   function openBookModal(){ 
-    if(tempBookings.length===0){ 
+    if(tempBookings.length === 0){ 
       alert("Сначала выделите интервал на станции"); 
       return; 
     } 
@@ -1760,23 +1820,25 @@
   }
   
   async function submitTempBookings(){ 
-    if(tempBookings.length===0) {
+    if(tempBookings.length === 0) {
       alert("Нет записей для сохранения");
       return; 
     }
-    const eventType = document.getElementById("eventTypeSelect").value;
+    var eventType = document.getElementById("eventTypeSelect").value;
     
     showLoad(); 
     try{ 
-      const allStations = getAllStationsData();
+      var allStations = getAllStationsData();
       
-      const scheduleData = tempBookings.map(tb => {
-        const startTime = slots[tb.startSlotIdx].key;
-        const endTime = slots[tb.endSlotIdx + 1]?.key || (slots[tb.endSlotIdx].key + 0.5);
-        const isBirthday = eventType === 'birthday';
-        const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
+      var scheduleData = [];
+      for (var i = 0; i < tempBookings.length; i++) {
+        var tb = tempBookings[i];
+        var startTime = slots[tb.startSlotIdx].key;
+        var endTime = slots[tb.endSlotIdx + 1] && slots[tb.endSlotIdx + 1].key || (slots[tb.endSlotIdx].key + 0.5);
+        var isBirthday = eventType === 'birthday';
+        var stationName = stations[tb.lane] && stations[tb.lane].name || 'Станция ' + (tb.lane+1);
         
-        return { 
+        scheduleData.push({ 
           sheetName: currentSheetName,
           stationNumber: tb.lane + 1,
           stationName: stationName,
@@ -1786,21 +1848,23 @@
           phone: '', 
           comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
           type: eventType
-        };
-      });
+        });
+      }
       
-      const payload = {
+      var payload = {
         schedule: scheduleData,
         allStations: allStations,
-        employeeGroups: employeeGroups.map(g => ({
-          name: g.name,
-          stations: g.stations.map(l => l + 1)
-        }))
+        employeeGroups: employeeGroups.map(function(g) {
+          return {
+            name: g.name,
+            stations: g.stations.map(function(l) { return l + 1; })
+          };
+        })
       };
       
       console.log("Sending payload (POST):", payload);
       
-      const result = await postRequest('addSchedule', payload);
+      var result = await postRequest('addSchedule', payload);
       
       if(result && result.success !== false){
         clearTempSelections(); 
@@ -1808,7 +1872,7 @@
         closeBookModal(); 
         alert("Записи успешно сохранены!");
       } else {
-        alert("Ошибка: " + (result?.message || "Неизвестная ошибка"));
+        alert("Ошибка: " + (result && result.message || "Неизвестная ошибка"));
       }
     } catch(e){
       console.error("Error saving bookings:", e);
@@ -1820,74 +1884,93 @@
   async function loadFromServer(sheetName){ 
     showLoad(); 
     try{ 
-      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`;
-      const data = await jsonpRequest(url);
+      var url = GAS_URL + '?action=get&sheetName=' + encodeURIComponent(sheetName);
+      var data = await jsonpRequest(url);
       
       console.log("Loaded data from server:", data);
       
       if (!data || !data.success) {
-        throw new Error(data?.message || "Ошибка загрузки данных");
+        throw new Error(data && data.message || "Ошибка загрузки данных");
       }
       
-      bookings = data.schedule ? data.schedule.map(b => { 
-        if (b.start === undefined || b.end === undefined) {
-          console.warn('Пропущена запись без start/end:', b);
-          return null;
-        }
-        
-        let startKey = parseFloat(b.start);
-        let endKey = parseFloat(b.end);
-        
-        if (isNaN(startKey) || isNaN(endKey)) {
-          console.warn('Пропущена запись с невалидными start/end:', b);
-          return null;
-        }
-        
-        let startSlotIdx = slots.findIndex(s => s.key === startKey);
-        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
-        
-        if (startSlotIdx === -1) {
-          for (let i = 0; i < slots.length; i++) {
-            if (slots[i].key >= startKey) {
-              startSlotIdx = i;
+      bookings = [];
+      if (data.schedule) {
+        for (var i = 0; i < data.schedule.length; i++) {
+          var b = data.schedule[i];
+          if (b.start === undefined || b.end === undefined) {
+            console.warn('Пропущена запись без start/end:', b);
+            continue;
+          }
+          
+          var startKey = parseFloat(b.start);
+          var endKey = parseFloat(b.end);
+          
+          if (isNaN(startKey) || isNaN(endKey)) {
+            console.warn('Пропущена запись с невалидными start/end:', b);
+            continue;
+          }
+          
+          var startSlotIdx = -1;
+          for (var s = 0; s < slots.length; s++) {
+            if (slots[s].key === startKey) {
+              startSlotIdx = s;
               break;
             }
           }
-          if (startSlotIdx === -1) startSlotIdx = 0;
+          if (startSlotIdx === -1) {
+            for (var s = 0; s < slots.length; s++) {
+              if (slots[s].key >= startKey) {
+                startSlotIdx = s;
+                break;
+              }
+            }
+            if (startSlotIdx === -1) startSlotIdx = 0;
+          }
+          
+          var endSlotIdx = -1;
+          for (var s = 0; s < slots.length; s++) {
+            if (slots[s].key === endKey) {
+              endSlotIdx = s - 1;
+              break;
+            }
+          }
+          if (endSlotIdx < 0 || endSlotIdx >= slots.length) {
+            endSlotIdx = slots.length - 1;
+          }
+          if (endSlotIdx < startSlotIdx) {
+            endSlotIdx = startSlotIdx;
+          }
+          
+          var isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
+          var stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
+          
+          bookings.push({ 
+            id: b.id || Date.now() + Math.random(),
+            lane: stationIdx,
+            start: startKey, 
+            end: endKey, 
+            startSlotIdx: startSlotIdx, 
+            endSlotIdx: endSlotIdx, 
+            name: b.name || '', 
+            phone: b.phone || '', 
+            comment: b.comment || '', 
+            confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
+            type: isBirthday ? 'birthday' : 'regular'
+          });
         }
-        
-        if (endSlotIdx < 0 || endSlotIdx >= slots.length) {
-          endSlotIdx = slots.length - 1;
-        }
-        if (endSlotIdx < startSlotIdx) {
-          endSlotIdx = startSlotIdx;
-        }
-        
-        let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
-        let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
-        
-        return { 
-          id: b.id || Date.now() + Math.random(),
-          lane: stationIdx,
-          start: startKey, 
-          end: endKey, 
-          startSlotIdx: startSlotIdx, 
-          endSlotIdx: endSlotIdx, 
-          name: b.name || '', 
-          phone: b.phone || '', 
-          comment: b.comment || '', 
-          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
-          type: isBirthday ? 'birthday' : 'regular'
-        }; 
-      }).filter(b => b !== null) : []; 
+      }
       
       if (data.employeeGroups && data.employeeGroups.length > 0) {
         employeeGroups = data.employeeGroups;
-        nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+        var maxId = 0;
+        for (var g = 0; g < employeeGroups.length; g++) {
+          if (employeeGroups[g].id > maxId) maxId = employeeGroups[g].id;
+        }
+        nextGroupId = maxId + 1;
         saveEmployeeGroups();
         console.log('Employee groups loaded from server:', employeeGroups);
       } else {
-        const loaded = loadEmployeeGroups();
+        var loaded = loadEmployeeGroups();
         if (!loaded) {
           employeeGroups = [];
         }
@@ -1897,7 +1980,7 @@
       renderAllSliders(); 
       updateCellsHighlight(); 
       
-      console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
+      console.log('Загружено ' + bookings.length + ' записей и ' + employeeGroups.length + ' групп сотрудников из листа "' + sheetName + '"');
       
     } catch(e){
       console.error('Ошибка загрузки:', e); 
@@ -1909,8 +1992,8 @@
   async function saveToServer(booking){ 
     if(!booking.id) return; 
     try{ 
-      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
+      var url = GAS_URL + '?action=update&id=' + booking.id + '&station=' + (booking.lane+1) + '&start=' + booking.start + '&end=' + booking.end + '&name=' + encodeURIComponent(booking.name||'') + '&phone=' + encodeURIComponent(booking.phone||'') + '&comment=' + encodeURIComponent(booking.comment||'') + '&sheetName=' + encodeURIComponent(currentSheetName) + '&_=' + Date.now();
+      var result = await jsonpRequest(url);
       if(result.success){
         console.log('Booking updated successfully');
       } else {
@@ -1920,7 +2003,13 @@
   }
   
   async function updateBookingType(bookingId, newType) {
-    const booking = bookings.find(b => b.id === bookingId);
+    var booking = null;
+    for (var i = 0; i < bookings.length; i++) {
+      if (bookings[i].id === bookingId) {
+        booking = bookings[i];
+        break;
+      }
+    }
     if (!booking) return;
     
     booking.type = newType;
@@ -1928,8 +2017,7 @@
     
     showLoad();
     try {
-      // Используем POST для обновления типа
-      const payload = {
+      var payload = {
         id: booking.id,
         station: booking.lane + 1,
         start: booking.start,
@@ -1940,7 +2028,7 @@
         sheetName: currentSheetName
       };
       
-      const result = await postRequest('update', payload);
+      var result = await postRequest('update', payload);
       
       if(result && result.success !== false){
         await loadFromServer(currentSheetName);
@@ -1948,7 +2036,7 @@
         closeInfoModal();
         alert("Тип события обновлен!");
       } else {
-        alert("Ошибка: " + (result?.message || "Не удалось обновить тип события"));
+        alert("Ошибка: " + (result && result.message || "Не удалось обновить тип события"));
       }
     } catch(e) {
       alert("Ошибка: " + e.message);
@@ -1957,22 +2045,22 @@
   }
   
   async function deleteBooking(){ 
-    if(!currentBooking||!confirm("Удалить запись?")) return; 
+    if(!currentBooking || !confirm("Удалить запись?")) return; 
     showLoad(); 
     try{ 
-      const payload = {
+      var payload = {
         id: currentBooking.id,
         sheetName: currentSheetName
       };
       
-      const result = await postRequest('delete', payload);
+      var result = await postRequest('delete', payload);
       
       if(result && result.success !== false){
         closeInfoModal(); 
         await loadFromServer(currentSheetName);
         alert("Запись удалена!");
       } else {
-        alert("Ошибка: " + (result?.message || "Не удалось удалить запись"));
+        alert("Ошибка: " + (result && result.message || "Не удалось удалить запись"));
       }
     } catch(e){
       console.error("Error deleting booking:", e);
@@ -1987,7 +2075,7 @@
     if (!currentBooking) return;
     editingBooking = currentBooking;
     
-    document.getElementById("editStationName").textContent = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
+    document.getElementById("editStationName").textContent = stations[currentBooking.lane] && stations[currentBooking.lane].name || 'Станция ' + (currentBooking.lane+1);
     document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
     
     selectedEventType = currentBooking.type || 'regular';
@@ -2007,9 +2095,11 @@
   }
   
   function updateEventTypeButtons() {
-    document.querySelectorAll('.event-type-btn').forEach(btn => {
+    var btns = document.querySelectorAll('.event-type-btn');
+    for (var i = 0; i < btns.length; i++) {
+      var btn = btns[i];
       btn.classList.toggle('active', btn.dataset.type === selectedEventType);
-    });
+    }
   }
   
   function saveEventType() {
@@ -2020,7 +2110,7 @@
   // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ В НОВЫЙ ЛИСТ ====================
   
   async function openSaveScheduleModal(){
-    const input = $("scheduleNameInput");
+    var input = $("scheduleNameInput");
     if(input) input.value = '';
     $("saveScheduleModal").classList.add("open");
   }
@@ -2030,31 +2120,35 @@
   }
   
   async function confirmSaveSchedule(){
-    const input = $("scheduleNameInput");
-    const sheetName = input ? input.value.trim() : "";
+    var input = $("scheduleNameInput");
+    var sheetName = input ? input.value.trim() : "";
     if(!sheetName){ alert("Введите название нового листа"); return; }
     
     showLoad();
     try{
-      const allStations = getAllStationsData();
+      var allStations = getAllStationsData();
       
-      const scheduleData = bookings.map(b => ({
-        station: b.lane + 1,
-        stationName: stations[b.lane]?.name || `Станция ${b.lane+1}`,
-        start: b.start,
-        end: b.end,
-        name: b.name || "",
-        phone: b.phone || "",
-        comment: b.comment || "",
-        confirmed: b.confirmed
-      }));
+      var scheduleData = bookings.map(function(b) {
+        return {
+          station: b.lane + 1,
+          stationName: stations[b.lane] && stations[b.lane].name || 'Станция ' + (b.lane+1),
+          start: b.start,
+          end: b.end,
+          name: b.name || "",
+          phone: b.phone || "",
+          comment: b.comment || "",
+          confirmed: b.confirmed
+        };
+      });
       
-      const employeeGroupsData = employeeGroups.map(g => ({
-        name: g.name,
-        stations: g.stations.map(l => l + 1)
-      }));
+      var employeeGroupsData = employeeGroups.map(function(g) {
+        return {
+          name: g.name,
+          stations: g.stations.map(function(l) { return l + 1; })
+        };
+      });
       
-      const payload = { 
+      var payload = { 
         sheetName: sheetName, 
         schedule: scheduleData,
         allStations: allStations,
@@ -2063,7 +2157,7 @@
       
       console.log("Saving schedule (POST):", payload);
       
-      const result = await postRequest('saveScheduleSnapshot', payload);
+      var result = await postRequest('saveScheduleSnapshot', payload);
       
       if(result && result.success !== false){
         closeSaveScheduleModal();
@@ -2073,7 +2167,7 @@
         currentSheetName = sheetName;
         await loadFromServer(currentSheetName);
       } else {
-        alert("Ошибка: " + (result?.message || "Не удалось сохранить расписание"));
+        alert("Ошибка: " + (result && result.message || "Не удалось сохранить расписание"));
       }
     } catch(e){
       console.error("Error saving schedule:", e);
@@ -2083,184 +2177,222 @@
   }
   
   function renderAllSliders(){ 
-    let container=$("slidersLayer"); 
+    var container = $("slidersLayer"); 
     if(!container) return; 
-    container.innerHTML=""; 
-    [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))].forEach(item=>{ 
-      let startIdx=item.startSlotIdx, endIdx=item.endSlotIdx; 
-      if(startIdx===undefined || endIdx===undefined) return; 
-      let row=getRowByLane(item.lane); 
-      if(!row) return; 
-      let sc=row.cells[startIdx+1], ec=row.cells[endIdx+1]; 
-      if(!sc||!ec) return; 
-      let left=sc.offsetLeft+1, top=row.offsetTop+1, width=(ec.offsetLeft+ec.offsetWidth)-sc.offsetLeft-2, height=row.offsetHeight-2; 
+    container.innerHTML = ""; 
+    
+    var allItems = bookings.slice();
+    for (var t = 0; t < tempBookings.length; t++) {
+      var item = tempBookings[t];
+      allItems.push({ 
+        id: item.id,
+        lane: item.lane,
+        startSlotIdx: item.startSlotIdx,
+        endSlotIdx: item.endSlotIdx,
+        type: item.type,
+        comment: item.comment,
+        confirmed: item.confirmed,
+        isTemp: true
+      });
+    }
+    
+    for (var i = 0; i < allItems.length; i++) {
+      var item = allItems[i];
+      var startIdx = item.startSlotIdx, endIdx = item.endSlotIdx; 
+      if(startIdx === undefined || endIdx === undefined) continue; 
+      var row = getRowByLane(item.lane); 
+      if(!row) continue; 
+      var sc = row.cells[startIdx+1], ec = row.cells[endIdx+1]; 
+      if(!sc || !ec) continue; 
+      var left = sc.offsetLeft + 1, top = row.offsetTop + 1, width = (ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2, height = row.offsetHeight - 2; 
       
-      let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending"));
-      let laneType='blue';
-      let slider=document.createElement("div"); 
-      slider.className=`slider ${status}`;
+      var status = item.isTemp ? "temp" : (item.confirmed === true ? "confirmed" : (item.confirmed === false ? "rejected" : "pending"));
+      var laneType = 'blue';
+      var slider = document.createElement("div"); 
+      slider.className = 'slider ' + status;
       
-      let isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      var isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       if(isBirthday) {
         slider.classList.add("birthday");
       }
       
       if(dragModeEnabled) slider.classList.add("drag-mode-enabled"); 
-      slider.setAttribute("data-lane-type",laneType); 
-      slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
+      slider.setAttribute("data-lane-type", laneType); 
+      slider.style.cssText = 'left:' + left + 'px;top:' + top + 'px;width:' + width + 'px;height:' + height + 'px;'; 
       
-      let timeDiv=document.createElement("div"); 
-      timeDiv.className="sl-time"; 
-      timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
+      var timeDiv = document.createElement("div"); 
+      timeDiv.className = "sl-time"; 
+      timeDiv.textContent = fmtFromSlotIdx(startIdx, endIdx); 
       slider.appendChild(timeDiv); 
       
-      let dragHandle=document.createElement("div"); 
-      dragHandle.className="drag-handle"; 
-      if(dragModeEnabled && !item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
-        e.stopPropagation(); 
-        startMoveDrag(item, e, slots); 
-      }); 
-      else if(dragModeEnabled && item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
-        e.stopPropagation(); 
-        startMoveTempDrag(item, e, slots); 
-      }); 
-      else dragHandle.addEventListener("click",(e)=>{ 
-        e.stopPropagation(); 
-        if(!item.isTemp && item.id) showInfoModal(item); 
-        else if(!item.isTemp && !item.id) alert("Загрузка данных..."); 
-        else alert("Временная запись — сохраните для просмотра."); 
-      }); 
+      var dragHandle = document.createElement("div"); 
+      dragHandle.className = "drag-handle";
+      
+      if(dragModeEnabled && !item.isTemp) {
+        dragHandle.addEventListener("mousedown", function(itemParam) {
+          return function(e) { 
+            e.stopPropagation(); 
+            startMoveDrag(itemParam, e, slots); 
+          };
+        }(item));
+      } else if(dragModeEnabled && item.isTemp) {
+        dragHandle.addEventListener("mousedown", function(itemParam) {
+          return function(e) { 
+            e.stopPropagation(); 
+            startMoveTempDrag(itemParam, e, slots); 
+          };
+        }(item));
+      } else {
+        dragHandle.addEventListener("click", function(itemParam) {
+          return function(e) { 
+            e.stopPropagation(); 
+            if(!itemParam.isTemp && itemParam.id) showInfoModal(itemParam); 
+            else if(!itemParam.isTemp && !itemParam.id) alert("Загрузка данных..."); 
+            else alert("Временная запись — сохраните для просмотра."); 
+          };
+        }(item));
+      }
       slider.appendChild(dragHandle); 
       container.appendChild(slider); 
-    }); 
+    }
   }
   
   async function startMoveDrag(booking, e, slotsArr){ 
     e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
+    var slider = e.currentTarget.closest('.slider'); 
     if(!slider) return; 
-    let durationCells = booking.endSlotIdx - booking.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; 
-    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
-      let newStartIdx = finalStartIdx; 
-      let newEndIdx = finalStartIdx + durationCells; 
+    var durationCells = booking.endSlotIdx - booking.startSlotIdx; 
+    var ghost = createGhost(slider); 
+    var currentLane = booking.lane, currentStartIdx = booking.startSlotIdx; 
+    moveLogic(ghost, slider, slotsArr, durationCells, function(finalLane, finalStartIdx){ 
+      var newStartIdx = finalStartIdx; 
+      var newEndIdx = finalStartIdx + durationCells; 
       if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ 
         booking.lane = finalLane; 
         booking.startSlotIdx = newStartIdx; 
         booking.endSlotIdx = newEndIdx; 
         booking.start = slotsArr[newStartIdx].key; 
-        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
+        booking.end = slotsArr[newEndIdx+1] && slotsArr[newEndIdx+1].key || (slotsArr[newEndIdx].key + 0.5); 
         saveToServer(booking); 
         renderAllSliders(); 
         updateCellsHighlight(); 
       } else alert("Конфликт с другой записью"); 
-    }, currentLane,currentStartIdx); 
+    }, currentLane, currentStartIdx); 
   }
   
   async function startMoveTempDrag(temp, e, slotsArr){ 
     e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
+    var slider = e.currentTarget.closest('.slider'); 
     if(!slider) return; 
-    let durationCells = temp.endSlotIdx - temp.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; 
-    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
-      let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; 
+    var durationCells = temp.endSlotIdx - temp.startSlotIdx; 
+    var ghost = createGhost(slider); 
+    var currentLane = temp.lane, currentStartIdx = temp.startSlotIdx; 
+    moveLogic(ghost, slider, slotsArr, durationCells, function(finalLane, finalStartIdx){ 
+      var newStartIdx = finalStartIdx, newEndIdx = finalStartIdx + durationCells; 
       if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ 
-        temp.lane=finalLane; 
-        temp.startSlotIdx=newStartIdx; 
-        temp.endSlotIdx=newEndIdx; 
+        temp.lane = finalLane; 
+        temp.startSlotIdx = newStartIdx; 
+        temp.endSlotIdx = newEndIdx; 
         renderInlineTempCards(); 
         renderAllSliders(); 
         updateCellsHighlight(); 
       } else alert("Конфликт с другой записью"); 
-    }, currentLane,currentStartIdx); 
+    }, currentLane, currentStartIdx); 
   }
   
   function createGhost(slider){ 
-    let ghost=document.createElement('div'); 
-    ghost.className='ghost-slider'; 
-    let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-    if(timeClone) ghost.appendChild(timeClone);
-    ghost.style.cssText=slider.style.cssText; 
-    ghost.style.opacity='0.85'; ghost.style.transition='none';
+    var ghost = document.createElement('div'); 
+    ghost.className = 'ghost-slider'; 
+    var timeClone = slider.querySelector('.sl-time');
+    if(timeClone) ghost.appendChild(timeClone.cloneNode(true));
+    ghost.style.cssText = slider.style.cssText; 
+    ghost.style.opacity = '0.85'; 
+    ghost.style.transition = 'none';
     $('slidersLayer').appendChild(ghost); 
     slider.classList.add('dragging');
     return ghost;
   }
   
-  function moveLogic(ghost,slider,slotsArr,durationCells, onDrop, initialLane, initialStartIdx){
-    let currentLane=initialLane, currentStartIdx=initialStartIdx;
-    function updateGhostPos(lane,startIdx){
-      let row=getRowByLane(lane);
+  function moveLogic(ghost, slider, slotsArr, durationCells, onDrop, initialLane, initialStartIdx){
+    var currentLane = initialLane, currentStartIdx = initialStartIdx;
+    
+    function updateGhostPos(lane, startIdx){
+      var row = getRowByLane(lane);
       if(!row) return;
-      let sc=row.cells[startIdx+1], ec=row.cells[startIdx+durationCells+1];
-      if(sc&&ec){
-        ghost.style.left=(sc.offsetLeft+1)+'px';
-        ghost.style.top=(row.offsetTop+1)+'px';
-        ghost.style.width=(ec.offsetLeft+ec.offsetWidth-sc.offsetLeft-2)+'px';
-        ghost.style.height=(row.offsetHeight-2)+'px';
+      var sc = row.cells[startIdx+1], ec = row.cells[startIdx + durationCells + 1];
+      if(sc && ec){
+        ghost.style.left = (sc.offsetLeft + 1) + 'px';
+        ghost.style.top = (row.offsetTop + 1) + 'px';
+        ghost.style.width = (ec.offsetLeft + ec.offsetWidth - sc.offsetLeft - 2) + 'px';
+        ghost.style.height = (row.offsetHeight - 2) + 'px';
       }
     }
+    
     function getTargetCoords(e){
-      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains('slot'));
-      if(!el) return null;
-      return {lane:parseInt(el.dataset.lane), idx:parseInt(el.dataset.slotIdx)};
+      var els = document.elementsFromPoint(e.clientX, e.clientY);
+      for (var i = 0; i < els.length; i++) {
+        if (els[i].classList && els[i].classList.contains('slot')) {
+          return {lane: parseInt(els[i].dataset.lane), idx: parseInt(els[i].dataset.slotIdx)};
+        }
+      }
+      return null;
     }
+    
     function onDragMove(ev){
-      let tgt=getTargetCoords(ev);
+      var tgt = getTargetCoords(ev);
       if(tgt){
-        let nl=tgt.lane, nsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
-        if(nl!==currentLane||nsi!==currentStartIdx){
-          currentLane=nl; currentStartIdx=nsi;
-          updateGhostPos(currentLane,currentStartIdx);
+        var nl = tgt.lane, nsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
+        if(nl !== currentLane || nsi !== currentStartIdx){
+          currentLane = nl; 
+          currentStartIdx = nsi;
+          updateGhostPos(currentLane, currentStartIdx);
         }
       }
     }
+    
     function onDragEnd(ev){
-      let tgt=getTargetCoords(ev);
+      var tgt = getTargetCoords(ev);
       if(tgt){
-        let fl=tgt.lane, fsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
-        onDrop(fl,fsi);
+        var fl = tgt.lane, fsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
+        onDrop(fl, fsi);
       }
       if(ghost && ghost.parentNode) ghost.remove();
       if(slider) slider.classList.remove('dragging');
-      document.body.style.cursor='';
-      document.removeEventListener('mousemove',onDragMove);
-      document.removeEventListener('mouseup',onDragEnd);
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onDragEnd);
       renderAllSliders();
     }
-    document.body.style.cursor='grabbing';
-    document.addEventListener('mousemove',onDragMove);
-    document.addEventListener('mouseup',onDragEnd);
-    updateGhostPos(currentLane,currentStartIdx);
+    document.body.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+    updateGhostPos(currentLane, currentStartIdx);
   }
   
   function showInfoModal(b){ 
-    currentBooking=b; 
-    let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-    let employeeName = getEmployeeForLane(b.lane);
-    let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+    currentBooking = b; 
+    var stationName = stations[b.lane] && stations[b.lane].name || 'Станция ' + (b.lane+1);
+    var employeeName = getEmployeeForLane(b.lane);
+    var isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
     
-    $("i-table").textContent=stationName; 
-    $("i-time").textContent=fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
-    $("i-employee").textContent=employeeName || 'Не назначен';
-    $("i-type").textContent=isBirthday ? '🎂 День рождения' : 'Обычная запись';
+    $("i-table").textContent = stationName; 
+    $("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
+    $("i-employee").textContent = employeeName || 'Не назначен';
+    $("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
     $("infoModal").classList.add("open"); 
   }
   
   function closeInfoModal(){ 
     $("infoModal").classList.remove("open"); 
-    currentBooking=null; 
+    currentBooking = null; 
   }
   
   function showLoad(){ 
-    $("loader").style.display="flex"; 
+    $("loader").style.display = "flex"; 
   }
   
   function hideLoad(){ 
-    $("loader").style.display="none"; 
+    $("loader").style.display = "none"; 
   }
   
   function escapeHtml(str) {
@@ -2278,7 +2410,7 @@
   async function initApplication() {
     await loadStations();
     
-    document.addEventListener('dragstart', (e) => {
+    document.addEventListener('dragstart', function(e) {
       if (e.target.closest('.drag-handle') || e.target.closest('.slider')) {
         e.preventDefault();
         return false;
@@ -2294,26 +2426,32 @@
       await loadFromServer(currentSheetName);
     }
     
-    const toggleBtn = $("dragToggleBtn");
-    toggleBtn.addEventListener("click", () => {
+    var toggleBtn = $("dragToggleBtn");
+    toggleBtn.addEventListener("click", function() {
       dragModeEnabled = !dragModeEnabled;
       toggleBtn.classList.toggle("active", dragModeEnabled);
       $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
       renderAllSliders();
     });
     
-    const assignBtn = $("assignToggleBtn");
+    var assignBtn = $("assignToggleBtn");
     assignBtn.addEventListener("click", toggleAssignMode);
     
     $("tableDesktop").addEventListener("mousedown", onMouseDown);
     document.body.addEventListener("mousemove", onMouseMove);
     document.body.addEventListener("mouseup", onMouseUp);
     
-    ["bookModal","infoModal","editEventModal","adminModal","userFormModal","saveScheduleModal"].forEach(id=>{ 
-      $(id)?.addEventListener("click",e=>{ 
-        if(e.target=== $(id)) $(id).classList.remove("open"); 
-      }); 
-    });
+    var modals = ["bookModal","infoModal","editEventModal","adminModal","userFormModal","saveScheduleModal"];
+    for (var i = 0; i < modals.length; i++) {
+      var modal = $(modals[i]);
+      if (modal) {
+        modal.addEventListener("click", function(e) {
+          if (e.target === this) {
+            this.classList.remove("open");
+          }
+        });
+      }
+    }
   }
   
   window.addEventListener('load', function() {
