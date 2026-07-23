@@ -922,7 +922,7 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxmRxrdQ3gHafXijbgfmcfF6sRrwUZRkpURhcxJpFDFf9DUWsY1V-XKbS2rTPPRsvoo/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyxZMs5hBcu1rewzIfWFD0R7KSaYAKfB7NFRAKIp6Zwftxr79J1deFMwE3AMdRh6dO3/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -976,13 +976,14 @@
     });
   }
   
-  // ==================== POST ЗАПРОСЫ (для больших данных) ====================
-  
+  // ==================== POST ЗАПРОСЫ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ====================
+
   async function postRequest(action, payload) {
+    showLoad();
+    
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -992,12 +993,31 @@
         })
       });
       
-      console.log('POST request sent (no-cors mode)');
-      return { success: true, message: 'Запрос отправлен' };
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server response error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Response from server:', result);
+      
+      return result;
+      
     } catch (error) {
       console.error('POST request failed:', error);
-      const url = `${GAS_URL}?action=${action}&data=${encodeURIComponent(JSON.stringify(payload))}`;
-      return await jsonpRequest(url);
+      
+      try {
+        console.log('Trying JSONP fallback...');
+        const url = `${GAS_URL}?action=${action}&data=${encodeURIComponent(JSON.stringify(payload))}`;
+        const jsonpResult = await jsonpRequest(url);
+        return jsonpResult;
+      } catch (jsonpError) {
+        console.error('JSONP fallback also failed:', jsonpError);
+        throw new Error(`Ошибка отправки: ${error.message || error}`);
+      }
+    } finally {
+      hideLoad();
     }
   }
   
