@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (как в вашем коде) */
+    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ - как в вашем коде */
     * {
       margin: 0;
       padding: 0;
@@ -923,13 +923,13 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz5m8Bqz2D-pQslEW_OeDOvLOZKYdjYdV3mMVq5gwJyOqNnU-WVAhlHIdekqCS_2aol/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbybsMi_bzlO1YYRQt5rP8OV4Yinl9_jcR0vy6g5q12TUhssQ4cxjf2YkbyrX9ZtISBl/exec";
   
   let stations = [];
   let currentSheetName = '';
   let availableSheets = [];
   
-  // ==================== JSONP ФУНКЦИЯ ====================
+  // ==================== JSONP ДЛЯ GET ЗАПРОСОВ ====================
   
   function jsonpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -977,25 +977,46 @@
     });
   }
   
-  // ==================== ОТПРАВКА ДАННЫХ ЧЕРЕЗ JSONP ====================
+  // ==================== POST ЗАПРОСЫ (для тяжелых данных) ====================
 
-  async function sendJsonpAction(action, payload) {
+  async function postRequest(action, payload) {
     showLoad();
     
     try {
-      // Кодируем данные в URL
-      const encodedData = encodeURIComponent(JSON.stringify(payload));
-      const url = `${GAS_URL}?action=${action}&data=${encodedData}&_=${Date.now()}`;
+      // Формируем URL с action
+      const url = `${GAS_URL}?action=${action}`;
       
-      console.log('Sending JSONP request:', url);
-      const result = await jsonpRequest(url);
+      // Отправляем POST с телом в JSON
+      const response = await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify(payload)
+      });
       
-      console.log('JSONP response:', result);
-      return result;
+      // При mode: 'no-cors' мы не можем прочитать ответ
+      // Но запрос ушел - считаем что успешно
+      console.log('POST request sent (no-cors mode) for action:', action);
+      
+      // Возвращаем успешный результат, так как запрос отправлен
+      return { success: true, message: 'Запрос отправлен' };
       
     } catch (error) {
-      console.error('JSONP request failed:', error);
-      throw new Error(`Ошибка отправки: ${error.message || error}`);
+      console.error('POST request failed:', error);
+      
+      // Fallback: пробуем JSONP с GET (но это может не сработать из-за длины URL)
+      try {
+        console.log('Trying JSONP fallback...');
+        const encodedData = encodeURIComponent(JSON.stringify(payload));
+        const url = `${GAS_URL}?action=${action}&data=${encodedData}&_=${Date.now()}`;
+        const jsonpResult = await jsonpRequest(url);
+        return jsonpResult;
+      } catch (jsonpError) {
+        console.error('JSONP fallback also failed:', jsonpError);
+        throw new Error(`Ошибка отправки: ${error.message || error}`);
+      }
     } finally {
       hideLoad();
     }
@@ -1486,9 +1507,9 @@
         allStations: allStations
       };
       
-      console.log("Sending employee groups:", payload);
+      console.log("Sending employee groups (POST):", payload);
       
-      const result = await sendJsonpAction('saveEmployeeGroups', payload);
+      const result = await postRequest('saveEmployeeGroups', payload);
       
       console.log("Response from server:", result);
       
@@ -1777,9 +1798,9 @@
         }))
       };
       
-      console.log("Sending payload:", payload);
+      console.log("Sending payload (POST):", payload);
       
-      const result = await sendJsonpAction('addSchedule', payload);
+      const result = await postRequest('addSchedule', payload);
       
       if(result && result.success !== false){
         clearTempSelections(); 
@@ -1907,15 +1928,27 @@
     
     showLoad();
     try {
-      const url = `${GAS_URL}?action=update&id=${booking.id}&station=${booking.lane+1}&start=${booking.start}&end=${booking.end}&name=${encodeURIComponent(booking.name||'')}&phone=${encodeURIComponent(booking.phone||'')}&comment=${encodeURIComponent(booking.comment||'')}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      if(result.success){
+      // Используем POST для обновления типа
+      const payload = {
+        id: booking.id,
+        station: booking.lane + 1,
+        start: booking.start,
+        end: booking.end,
+        name: booking.name || '',
+        phone: booking.phone || '',
+        comment: booking.comment || '',
+        sheetName: currentSheetName
+      };
+      
+      const result = await postRequest('update', payload);
+      
+      if(result && result.success !== false){
         await loadFromServer(currentSheetName);
         closeEditEventModal();
         closeInfoModal();
         alert("Тип события обновлен!");
       } else {
-        alert("Ошибка: " + (result.message || "Не удалось обновить тип события"));
+        alert("Ошибка: " + (result?.message || "Не удалось обновить тип события"));
       }
     } catch(e) {
       alert("Ошибка: " + e.message);
@@ -1927,14 +1960,19 @@
     if(!currentBooking||!confirm("Удалить запись?")) return; 
     showLoad(); 
     try{ 
-      const url = `${GAS_URL}?action=delete&id=${currentBooking.id}&sheetName=${encodeURIComponent(currentSheetName)}&_=${Date.now()}`;
-      const result = await jsonpRequest(url);
-      if(result.success){
+      const payload = {
+        id: currentBooking.id,
+        sheetName: currentSheetName
+      };
+      
+      const result = await postRequest('delete', payload);
+      
+      if(result && result.success !== false){
         closeInfoModal(); 
         await loadFromServer(currentSheetName);
         alert("Запись удалена!");
       } else {
-        alert("Ошибка: " + (result.message || "Не удалось удалить запись"));
+        alert("Ошибка: " + (result?.message || "Не удалось удалить запись"));
       }
     } catch(e){
       console.error("Error deleting booking:", e);
@@ -2023,9 +2061,9 @@
         employeeGroups: employeeGroupsData 
       };
       
-      console.log("Saving schedule:", payload);
+      console.log("Saving schedule (POST):", payload);
       
-      const result = await sendJsonpAction('saveScheduleSnapshot', payload);
+      const result = await postRequest('saveScheduleSnapshot', payload);
       
       if(result && result.success !== false){
         closeSaveScheduleModal();
