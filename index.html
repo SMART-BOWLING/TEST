@@ -1022,7 +1022,7 @@
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
   // ВАЖНО: Замените URL на ваш актуальный URL веб-приложения
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxzy0eKh740R6OAkFLW9hYpTxMyNgs0lQnIs-QtIxMs2h2RI_QZScCIzq8vXpiwDxNf/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxJK9XDgpMKexvuqyH07Z9ALSbrfKgb5N5eeSnqOt_H7BmNyugENhD0kOl613usM5pG/exec";
   const AUTH_SPREADSHEET_ID = '1TPPemJw2iEeaXCPjO6GiKT1GfAOvuFsfwnvrQg3hxhI';
   const AUTH_SHEET_NAME = '1';
   const API_KEY = 'AIzaSyAXL0Hsfxy-g-AgYhnivj4x9gCB2rrtF-0';
@@ -1808,10 +1808,14 @@
       
       const payload = {
         sheetName: currentSheetName,
+        // ИСПРАВЛЕНО: бэкенд ожидает номера станций с 1 (как и всё расписание),
+        // а employeeGroups на фронтенде хранит индексы с 0 (lane). Раньше здесь
+        // отправлялись "сырые" 0-based индексы, из-за чего в таблице сотрудник
+        // привязывался не к той станции (со сдвигом на одну назад).
         employeeGroups: employeeGroups.map(g => ({
           id: g.id,
           name: g.name,
-          stations: g.stations
+          stations: g.stations.map(l => l + 1)
         })),
         allStations: allStations
       };
@@ -2102,9 +2106,11 @@
       const payload = {
         schedule: scheduleData,
         allStations: allStations,
+        // ИСПРАВЛЕНО: см. пояснение в saveEmployeeGroupsToServer() — станции нужно
+        // переводить в 1-based нумерацию перед отправкой на бэкенд
         employeeGroups: employeeGroups.map(g => ({
           name: g.name,
-          stations: g.stations
+          stations: g.stations.map(l => l + 1)
         }))
       };
       
