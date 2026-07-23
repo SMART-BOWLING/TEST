@@ -922,13 +922,13 @@
 
 <script>
   // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyxZMs5hBcu1rewzIfWFD0R7KSaYAKfB7NFRAKIp6Zwftxr79J1deFMwE3AMdRh6dO3/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyUYAQ24ctMDmdOZ9ZYpkSVKZqk1MESDFMXLmpYwuNS98bV7oGQYSGPb51pMt8oSIMc/exec";
   
   let stations = [];
   let currentSheetName = '';
   let availableSheets = [];
   
-  // ==================== JSONP ФУНКЦИЯ (для GET запросов) ====================
+  // ==================== JSONP ФУНКЦИЯ (для всех запросов) ====================
   
   function jsonpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -976,46 +976,23 @@
     });
   }
   
-  // ==================== POST ЗАПРОСЫ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ====================
+  // ==================== POST ЗАПРОСЫ (ТОЛЬКО JSONP) ====================
 
   async function postRequest(action, payload) {
     showLoad();
     
     try {
-      const response = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: action,
-          ...payload
-        })
-      });
+      const url = `${GAS_URL}?action=${action}&data=${encodeURIComponent(JSON.stringify(payload))}`;
+      console.log('Sending POST via JSONP:', url);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server response error:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-      
-      const result = await response.json();
+      const result = await jsonpRequest(url);
       console.log('Response from server:', result);
       
       return result;
       
     } catch (error) {
       console.error('POST request failed:', error);
-      
-      try {
-        console.log('Trying JSONP fallback...');
-        const url = `${GAS_URL}?action=${action}&data=${encodeURIComponent(JSON.stringify(payload))}`;
-        const jsonpResult = await jsonpRequest(url);
-        return jsonpResult;
-      } catch (jsonpError) {
-        console.error('JSONP fallback also failed:', jsonpError);
-        throw new Error(`Ошибка отправки: ${error.message || error}`);
-      }
+      throw new Error(`Ошибка отправки: ${error.message || error}`);
     } finally {
       hideLoad();
     }
