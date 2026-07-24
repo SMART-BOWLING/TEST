@@ -59,7 +59,7 @@
       --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
       --cell-height: 58px;
       --cell-width: 74px;
-      --lane-width: 220px;
+      --lane-width: 260px;
     }
 
     body {
@@ -503,6 +503,7 @@
       min-height: var(--cell-height);
       background: #e8edf2;
       border-left: 3px solid var(--accent-blue);
+      transition: background 0.3s;
     }
     
     .lane-hdr .station-logo {
@@ -940,7 +941,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzflzTe3z-1iXEwlg4ri2k3lVQOeo98abf28bR1pCM1GB8PVrmUS721MufmLapdj74v/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwscgksO_ZpIpXjlmh5rWUIGrQM-vZwJwMHOv3wd68JRIOWvztfF9JaRc5YXAtWRz6O/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1231,12 +1232,14 @@
     }
   }
   
-  // СЛОТЫ ВРЕМЕНИ с 11:00 до 22:00
+  // СЛОТЫ ВРЕМЕНИ с 11:00 до 22:00 (НЕ ВКЛЮЧИТЕЛЬНО)
   const SH = 11, EH = 22;
   const slots = []; 
-  for(let h=SH; h<=EH; h++) { 
+  for(let h=SH; h<EH; h++) { 
     slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
-    if(h<EH) slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
+    if(h < EH - 1 || (h === EH - 1)) {
+      slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
+    }
   }
   
   let bookings = [], tempBookings = [], nextTempId = 1;
@@ -1381,6 +1384,33 @@
       });
       body.appendChild(tr);
     }
+    
+    applyStationColors();
+  }
+  
+  function applyStationColors() {
+    const rows = document.querySelectorAll("#dtBody tr");
+    rows.forEach(row => {
+      const lane = parseInt(row.dataset.lane);
+      const lhdr = row.querySelector('.lane-hdr');
+      if (!lhdr) return;
+      
+      let groupColor = null;
+      for (const group of employeeGroups) {
+        if (group.stations && group.stations.includes(lane)) {
+          groupColor = group.color;
+          break;
+        }
+      }
+      
+      if (groupColor) {
+        lhdr.style.background = groupColor + '33';
+        lhdr.style.borderLeftColor = groupColor;
+      } else {
+        lhdr.style.background = '#e8edf2';
+        lhdr.style.borderLeftColor = 'var(--accent-blue)';
+      }
+    });
   }
   
   function getSlotCell(lane, slotIdx){ 
@@ -1674,6 +1704,7 @@
       prevGroupId = groupId;
     }
     
+    applyStationColors();
     renderAllSliders();
   }
   
@@ -2333,16 +2364,14 @@
         slider.classList.add("birthday");
       }
       
-      // Находим цвет для этой станции
       let groupColor = null;
       for (const g of employeeGroups) {
-        if (g.stations.includes(group.lane)) {
+        if (g.stations && g.stations.includes(group.lane)) {
           groupColor = g.color;
           break;
         }
       }
       
-      // Применяем цвет
       if (groupColor && !group.isTemp) {
         slider.style.backgroundColor = groupColor;
         slider.style.borderColor = groupColor;
