@@ -7,7 +7,6 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (как в вашем коде) */
     * {
       margin: 0;
       padding: 0;
@@ -922,14 +921,11 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz-GDw7qXVsTsrDDFx3NOeI4FZJEPDkVuTJfQ9YzlyVleF-MKKVizK0kH5ycRk3UZ2Y/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxtd1CDb5TZspDWqauvdyRgp1DM5NsPmPKRLIYil3eRnYaHXeu-vaqohS-JP75mytyj/exec";
   
   let stations = [];
   let currentSheetName = '';
   let availableSheets = [];
-  
-  // ==================== JSONP ФУНКЦИЯ (для лёгких GET-запросов на чтение) ====================
   
   function jsonpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -977,15 +973,6 @@
     });
   }
   
-  // ==================== ОТПРАВКА ДАННЫХ ЧЕРЕЗ POST (fetch) ====================
-  // ВАЖНО: раньше здесь был sendJsonpAction, который кодировал ВЕСЬ payload
-  // (все станции + всё расписание + все группы сотрудников) в параметр URL.
-  // Такой URL превышал допустимую длину и запрос падал с ошибкой
-  // "JSONP request failed". Теперь данные едут в теле POST-запроса,
-  // ограничения по длине URL это больше не касается.
-  // Content-Type: text/plain специально выбран, чтобы браузер НЕ отправлял
-  // предварительный (preflight) OPTIONS-запрос, который Apps Script не умеет обрабатывать.
-
   async function sendPostAction(action, payload) {
     showLoad();
     
@@ -1015,8 +1002,6 @@
       hideLoad();
     }
   }
-  
-  // ==================== АДМИН-ПАНЕЛЬ ====================
   
   async function openAdminPanel() {
     showLoad();
@@ -1161,8 +1146,6 @@
     }
   }
   
-  // ==================== РАБОТА С ЛИСТАМИ ====================
-  
   async function loadSheetsList() {
     try {
       const url = `${GAS_URL}?action=getSheetNames`;
@@ -1210,8 +1193,6 @@
     }
   }
   
-  // ==================== ОСНОВНАЯ ЛОГИКА ====================
-  
   async function loadStations() {
     try {
       const url = `${GAS_URL}?action=getStations`;
@@ -1245,8 +1226,6 @@
   let selectedEventType = 'regular';
   const $ = id => document.getElementById(id);
   
-  // ==================== ПОЛУЧЕНИЕ ВСЕХ СТАНЦИЙ ДЛЯ ОТПРАВКИ ====================
-  
   function getAllStationsData() {
     const numStations = stations.length > 0 ? stations.length : 12;
     const result = [];
@@ -1261,7 +1240,6 @@
     return result;
   }
   
-  // ==================== ПРИВЯЗКА СОТРУДНИКОВ К СТАНЦИЯМ ====================
   let employeeGroups = [];
   let nextGroupId = 1;
   let assignModeEnabled = false;
@@ -1413,8 +1391,6 @@
       }
     }
   }
-  
-  // ---- Режим "выделения" станций для привязки сотрудника ----
   
   function toggleAssignMode(){
     assignModeEnabled = !assignModeEnabled;
@@ -1966,8 +1942,6 @@
     } 
   }
   
-  // ==================== МОДАЛКА РЕДАКТИРОВАНИЯ ТИПА СОБЫТИЯ ====================
-  
   function openEditEventModal() {
     if (!currentBooking) return;
     editingBooking = currentBooking;
@@ -2001,8 +1975,6 @@
     if (!editingBooking) return;
     updateBookingType(editingBooking.id, selectedEventType);
   }
-  
-  // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ В НОВЫЙ ЛИСТ ====================
   
   async function openSaveScheduleModal(){
     const input = $("scheduleNameInput");
@@ -2257,8 +2229,6 @@
       return m;
     });
   }
-  
-  // ==================== ИНИЦИАЛИЗАЦИЯ ====================
   
   async function initApplication() {
     await loadStations();
