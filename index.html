@@ -7,7 +7,6 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (как в предыдущих версиях) */
     * {
       margin: 0;
       padding: 0;
@@ -311,13 +310,34 @@
       border: none;
       background: rgba(179,63,63,0.12);
       color: var(--accent-red);
-      width: 22px;
-      height: 22px;
+      width: 28px;
+      height: 28px;
       border-radius: 5px;
-      font-size: 12px;
+      font-size: 14px;
       cursor: pointer;
-      line-height: 1;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .group-color-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #4f6b4e;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      background: #4f6b4e;
+    }
+    .group-color-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
     }
     
     .assign-bar {
@@ -920,7 +940,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxZP5qvb7TK_6jPVeJ85LFULeGn8SXIKoOILziSpwa7UTc2JJzcMN6rE0tutEP6YNk5/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzflzTe3z-1iXEwlg4ri2k3lVQOeo98abf28bR1pCM1GB8PVrmUS721MufmLapdj74v/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1469,7 +1489,8 @@
         employeeGroups: employeeGroups.map(g => ({
           id: g.id,
           name: g.name,
-          stations: g.stations.map(l => l + 1)
+          stations: g.stations.map(l => l + 1),
+          color: g.color || null
         })),
         allStations: allStations
       };
@@ -1520,7 +1541,13 @@
       employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
     }
     
-    const newGroup = { id: nextGroupId++, name, stations: [...selectedLanesForAssign] };
+    const colorIdx = employeeGroups.length % GROUP_COLORS.length;
+    const newGroup = { 
+      id: nextGroupId++, 
+      name, 
+      stations: [...selectedLanesForAssign],
+      color: GROUP_COLORS[colorIdx]
+    };
     employeeGroups.push(newGroup);
     
     selectedLanesForAssign = [];
@@ -1582,25 +1609,64 @@
     
     const colSpan = 1 + slots.length;
     let prevGroupId = null;
+    
     for(let lane = 0; lane < numStations; lane++){
       const group = laneToGroup[lane];
       const groupId = group ? group.id : null;
       if(groupId !== null && groupId !== prevGroupId){
         const row = getRowByLane(lane);
         if(row){
-          const colorIdx = employeeGroups.findIndex(g => g.id === groupId) % GROUP_COLORS.length;
-          const color = GROUP_COLORS[colorIdx >= 0 ? colorIdx : 0];
+          const color = group.color || '#4f6b4e';
           const hdrRow = document.createElement("tr");
           hdrRow.className = "employee-group-header";
           const td = document.createElement("td");
           td.colSpan = colSpan;
           td.style.borderLeft = `3px solid ${color}`;
-          td.innerHTML = `<span><i class="fas fa-user"></i> ${escapeHtml(group.name)}</span>`;
+          td.style.backgroundColor = color + '22';
+          
+          const container = document.createElement("div");
+          container.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%;";
+          
+          const nameSpan = document.createElement("span");
+          nameSpan.innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(group.name)}`;
+          nameSpan.style.flex = "1";
+          container.appendChild(nameSpan);
+          
+          const colorBtn = document.createElement("button");
+          colorBtn.className = "group-color-btn";
+          colorBtn.style.cssText = `
+            width: 28px; 
+            height: 28px; 
+            border-radius: 50%; 
+            border: 2px solid ${color};
+            background: ${color};
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            transition: all 0.2s;
+            flex-shrink: 0;
+          `;
+          colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
+          colorBtn.title = "Выбрать цвет для сотрудника";
+          colorBtn.onclick = (e) => {
+            e.stopPropagation();
+            openColorPicker(group.id, group.name, color);
+          };
+          container.appendChild(colorBtn);
+          
           const rmBtn = document.createElement("button");
           rmBtn.className = "group-remove-btn";
           rmBtn.innerHTML = '<i class="fas fa-times"></i>';
-          rmBtn.onclick = (e) => { e.stopPropagation(); removeEmployeeGroup(groupId); };
-          td.appendChild(rmBtn);
+          rmBtn.onclick = (e) => { 
+            e.stopPropagation(); 
+            removeEmployeeGroup(groupId); 
+          };
+          container.appendChild(rmBtn);
+          
+          td.appendChild(container);
           hdrRow.appendChild(td);
           row.parentNode.insertBefore(hdrRow, row);
         }
@@ -1610,6 +1676,169 @@
     
     renderAllSliders();
   }
+  
+  // ================ ВЫБОР ЦВЕТА ================
+  
+  function openColorPicker(groupId, employeeName, currentColor) {
+    const modal = document.createElement("div");
+    modal.className = "overlay open";
+    modal.style.cssText = "display: flex; z-index: 3000;";
+    
+    const colors = [
+      '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
+      '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
+      '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
+      '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
+    ];
+    
+    const sheet = document.createElement("div");
+    sheet.className = "sheet";
+    sheet.style.cssText = "max-width: 400px; background: white;";
+    
+    let html = `
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-palette"></i> Выбрать цвет</div>
+        <button class="sheet-x" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <p style="margin-bottom: 16px; font-weight: 500;">Сотрудник: <strong>${escapeHtml(employeeName)}</strong></p>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px;">
+    `;
+    
+    colors.forEach(c => {
+      const selected = c === currentColor ? 'border: 3px solid #333; transform: scale(1.1);' : '';
+      html += `
+        <div style="
+          width: 100%; 
+          aspect-ratio: 1; 
+          background: ${c}; 
+          border-radius: 50%; 
+          cursor: pointer;
+          ${selected}
+          transition: all 0.2s;
+        " 
+        onclick="selectColor('${c}', ${groupId}, '${escapeHtml(employeeName)}')"
+        onmouseover="this.style.transform='scale(1.15)'"
+        onmouseout="this.style.transform='scale(1)'"
+        ></div>
+      `;
+    });
+    
+    html += `
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
+          <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
+          <input type="text" id="customColorInput" value="${currentColor}" style="
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+            text-transform: uppercase;
+          " />
+          <button onclick="applyCustomColor(${groupId}, '${escapeHtml(employeeName)}')" style="
+            padding: 8px 16px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+          ">Применить</button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+          <button onclick="this.closest('.overlay').remove()" style="
+            flex: 1;
+            padding: 12px;
+            background: var(--surface-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+          ">Отмена</button>
+          <button onclick="resetEmployeeColor(${groupId}, '${escapeHtml(employeeName)}')" style="
+            flex: 1;
+            padding: 12px;
+            background: #f2eaea;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--accent-red);
+          ">Сбросить цвет</button>
+        </div>
+      </div>
+    `;
+    
+    sheet.innerHTML = html;
+    modal.appendChild(sheet);
+    document.body.appendChild(modal);
+  }
+  
+  function selectColor(color, groupId, employeeName) {
+    const group = employeeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    group.color = color;
+    saveEmployeeGroups();
+    
+    const modal = document.querySelector('.overlay.open');
+    if (modal) modal.remove();
+    
+    refreshGroupHeaders();
+    saveEmployeeColorToServer(employeeName, color);
+    renderAllSliders();
+  }
+  
+  function applyCustomColor(groupId, employeeName) {
+    const input = document.getElementById('customColorInput');
+    if (!input) return;
+    
+    let color = input.value.trim();
+    if (!color.startsWith('#')) {
+      color = '#' + color;
+    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+      alert('Введите корректный HEX-цвет (например: #4f6b4e)');
+      return;
+    }
+    selectColor(color, groupId, employeeName);
+  }
+  
+  async function saveEmployeeColorToServer(employeeName, color) {
+    try {
+      const payload = {
+        sheetName: currentSheetName,
+        employeeName: employeeName,
+        color: color
+      };
+      const result = await sendPostAction('saveEmployeeColor', payload);
+      console.log('Color saved:', result);
+    } catch (e) {
+      console.error('Error saving color:', e);
+    }
+  }
+  
+  function resetEmployeeColor(groupId, employeeName) {
+    if (!confirm(`Сбросить цвет для "${employeeName}"?`)) return;
+    
+    const defaultColors = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+    const group = employeeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const idx = employeeGroups.indexOf(group);
+    const defaultColor = defaultColors[idx % defaultColors.length];
+    group.color = defaultColor;
+    
+    saveEmployeeGroups();
+    
+    const modal = document.querySelector('.overlay.open');
+    if (modal) modal.remove();
+    
+    refreshGroupHeaders();
+    saveEmployeeColorToServer(employeeName, defaultColor);
+    renderAllSliders();
+  }
+  
+  // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
   
   function clearTempSelections(){ 
     tempBookings = []; 
@@ -1852,7 +2081,8 @@
         allStations: allStations,
         employeeGroups: employeeGroups.map(g => ({
           name: g.name,
-          stations: g.stations.map(l => l + 1)
+          stations: g.stations.map(l => l + 1),
+          color: g.color || null
         }))
       };
       
@@ -1903,7 +2133,6 @@
           return null;
         }
         
-        // ИЩЕМ ИНДЕКС ПО ВРЕМЕНИ
         let startSlotIdx = -1;
         let endSlotIdx = -1;
         
@@ -2015,7 +2244,6 @@
     
     const allItems = [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))];
     
-    // Группируем по станции
     const groupedByLane = {};
     allItems.forEach(item => {
       if (!groupedByLane[item.lane]) {
@@ -2076,7 +2304,6 @@
       }
     }
     
-    // Рисуем объединенные ползунки
     for (const group of mergedItems) {
       let startIdx = group.startSlotIdx;
       let endIdx = group.endSlotIdx;
@@ -2106,32 +2333,46 @@
         slider.classList.add("birthday");
       }
       
+      // Находим цвет для этой станции
+      let groupColor = null;
+      for (const g of employeeGroups) {
+        if (g.stations.includes(group.lane)) {
+          groupColor = g.color;
+          break;
+        }
+      }
+      
+      // Применяем цвет
+      if (groupColor && !group.isTemp) {
+        slider.style.backgroundColor = groupColor;
+        slider.style.borderColor = groupColor;
+      } else if (groupColor && group.isTemp) {
+        slider.style.backgroundColor = groupColor + '88';
+        slider.style.borderColor = groupColor;
+      }
+      
       if (dragModeEnabled) slider.classList.add("drag-mode-enabled");
       slider.setAttribute("data-lane-type", laneType);
-      slider.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+      slider.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;` + 
+        (groupColor ? `background-color: ${group.isTemp ? groupColor + '88' : groupColor};` : '');
       
       let timeDiv = document.createElement("div");
       timeDiv.className = "sl-time";
       
-      // Формируем отображение времени
       const startSlot = slots[startIdx];
       const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
-      const startLabel = startSlot.label;
-      const endLabel = endSlot.label;
       
-      // Если интервал больше 1 часа, показываем только часы (15:00-18:00)
       const duration = endIdx - startIdx + 1;
       if (duration >= 2) {
         const startHour = startSlot.hour;
         const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-        // Проверяем, заканчивается ли на 30 минут
         if (endSlot.minute === 30) {
           timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
         } else {
           timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
         }
       } else {
-        timeDiv.textContent = `${startLabel}–${endLabel}`;
+        timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
       }
       
       slider.appendChild(timeDiv);
