@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* Все стили без изменений */
     * {
       margin: 0;
       padding: 0;
@@ -919,7 +920,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz0hPe0aDVpjfN4uSkzyWN0C1I-XprQ6rbz2pLqd43B_M2A_kFObhCICa61TNkG8sgK/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyI0AKizPjTu2FZHJcdNZt--PLEDdFadZardzNAe_r6iDOUB1aziW1-q0-bdDciDOwk/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1853,9 +1854,19 @@
           return null;
         }
         
-        let startSlotIdx = slots.findIndex(s => s.key === startKey);
-        let endSlotIdx = slots.findIndex(s => s.key === endKey) - 1;
+        // ИЩЕМ ИНДЕКС ПО ВРЕМЕНИ
+        let startSlotIdx = -1;
+        let endSlotIdx = -1;
         
+        // Ищем точное совпадение для start
+        for (let i = 0; i < slots.length; i++) {
+          if (slots[i].key === startKey) {
+            startSlotIdx = i;
+            break;
+          }
+        }
+        
+        // Если не нашли — ищем ближайшее
         if (startSlotIdx === -1) {
           for (let i = 0; i < slots.length; i++) {
             if (slots[i].key >= startKey) {
@@ -1866,12 +1877,22 @@
           if (startSlotIdx === -1) startSlotIdx = 0;
         }
         
-        if (endSlotIdx < 0 || endSlotIdx >= slots.length) {
+        // Ищем конец
+        for (let i = 0; i < slots.length; i++) {
+          if (slots[i].key === endKey) {
+            endSlotIdx = i - 1;
+            break;
+          }
+        }
+        
+        if (endSlotIdx === -1 || endSlotIdx >= slots.length) {
           endSlotIdx = slots.length - 1;
         }
         if (endSlotIdx < startSlotIdx) {
           endSlotIdx = startSlotIdx;
         }
+        
+        console.log(`Загрузка: startKey=${startKey}, endKey=${endKey} -> startSlotIdx=${startSlotIdx}, endSlotIdx=${endSlotIdx}`);
         
         let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
         let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
