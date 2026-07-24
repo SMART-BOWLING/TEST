@@ -1210,7 +1210,8 @@
     }
   }
   
-  const SH = 10, EH = 22;
+  // ИСПРАВЛЕНО: теперь с 11:00 до 22:00
+  const SH = 11, EH = 22;
   const slots = []; 
   for(let h=SH; h<=EH; h++) { 
     slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
@@ -1689,7 +1690,6 @@
     if(!dragModeEnabled && isDragging && dragInterval){ 
       let {lane,startIdx,endIdx}=dragInterval; 
       
-      // ПРОВЕРЯЕМ ЧТО ИНДЕКСЫ ВАЛИДНЫ
       if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
         console.error('Невалидные индексы:', startIdx, endIdx);
         isDragging=false; 
@@ -1727,7 +1727,6 @@
       return; 
     }
     
-    // ПРОВЕРЯЕМ ЧТО ВСЕ ЗАПИСИ ВАЛИДНЫ
     for (const tb of tempBookings) {
       if (tb.startSlotIdx === undefined || tb.endSlotIdx === undefined || 
           tb.startSlotIdx < 0 || tb.startSlotIdx >= slots.length ||
@@ -1758,12 +1757,10 @@
       const allStations = getAllStationsData();
       
       const scheduleData = tempBookings.map(tb => {
-        // ПРОВЕРЯЕМ ЧТО ВРЕМЯ НЕ NULL
         const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
         const endSlotIdx = tb.endSlotIdx + 1;
         const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
         
-        // ЕСЛИ ВРЕМЯ NULL — ПРОПУСКАЕМ
         if (startTime === null || endTime === null) {
           console.error('Ошибка: startTime или endTime = null', tb);
           return null;
@@ -1783,9 +1780,8 @@
           comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
           type: eventType
         };
-      }).filter(item => item !== null); // Убираем null-записи
+      }).filter(item => item !== null);
       
-      // ПРОВЕРЯЕМ ЧТО ЕСТЬ ЧТО СОХРАНЯТЬ
       if (scheduleData.length === 0) {
         alert("Нет корректных записей для сохранения");
         hideLoad();
@@ -1805,7 +1801,6 @@
       
       const result = await sendPostAction('addSchedule', payload);
       
-      // ПРОВЕРЯЕМ ОТВЕТ
       console.log("Response from server:", result);
       
       if(result && result.success !== false){
