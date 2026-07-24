@@ -919,7 +919,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbx2hHW7VKren6df6-iYInfd6uoZyU7408ZJWdu9c6CYNvNwMJofuec7aBW_C14XZUUO/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz0hPe0aDVpjfN4uSkzyWN0C1I-XprQ6rbz2pLqd43B_M2A_kFObhCICa61TNkG8sgK/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1210,7 +1210,7 @@
     }
   }
   
-  // ИСПРАВЛЕНО: теперь с 11:00 до 22:00
+  // с 11:00 до 22:00
   const SH = 11, EH = 22;
   const slots = []; 
   for(let h=SH; h<=EH; h++) { 
@@ -1352,7 +1352,10 @@
         let td=document.createElement("td"); 
         td.className="slot"; 
         td.dataset.lane=lane; 
-        td.dataset.slotIdx=si; 
+        td.dataset.slotIdx=si;
+        td.dataset.hour=sl.hour;
+        td.dataset.minute=sl.minute;
+        td.dataset.timeKey=sl.key;
         tr.appendChild(td); 
       });
       body.appendChild(tr);
@@ -1656,7 +1659,11 @@
     let t=e.target; 
     if(t.classList?.contains("slot")){ 
       e.preventDefault(); 
-      let lane=parseInt(t.dataset.lane), si=parseInt(t.dataset.slotIdx); 
+      let lane=parseInt(t.dataset.lane); 
+      let si=parseInt(t.dataset.slotIdx);
+      
+      console.log('Клик по ячейке:', { lane, slotIdx: si, hour: t.dataset.hour, minute: t.dataset.minute });
+      
       isDragging=true; 
       dragStartCell={lane,si}; 
       dragInterval={lane,startIdx:si,endIdx:si}; 
@@ -1689,6 +1696,8 @@
   function onMouseUp(){ 
     if(!dragModeEnabled && isDragging && dragInterval){ 
       let {lane,startIdx,endIdx}=dragInterval; 
+      
+      console.log('Выделен интервал:', { lane, startIdx, endIdx });
       
       if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
         console.error('Невалидные индексы:', startIdx, endIdx);
