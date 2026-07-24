@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Все стили без изменений */
+    /* ВСЕ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (как в предыдущих версиях) */
     * {
       margin: 0;
       padding: 0;
@@ -1211,7 +1211,7 @@
     }
   }
   
-  // с 11:00 до 22:00
+  // СЛОТЫ ВРЕМЕНИ с 11:00 до 22:00
   const SH = 11, EH = 22;
   const slots = []; 
   for(let h=SH; h<=EH; h++) { 
@@ -1653,8 +1653,14 @@
     }).join("; ") : "—"; 
   }
   
-  let isDragging=false, dragStartCell=null, dragInterval=null;
-  
+  // ================ DRAG & DROP (ИСПРАВЛЕНО) ================
+  let isDragging = false;
+  let dragStartCell = null;
+  let dragInterval = null;
+  let dragLane = -1;
+  let dragStartIdx = -1;
+  let dragEndIdx = -1;
+
   function onMouseDown(e){ 
     if(dragModeEnabled || assignModeEnabled) return; 
     let t=e.target; 
@@ -1662,28 +1668,99 @@
       e.preventDefault(); 
       let lane=parseInt(t.dataset.lane); 
       let si=parseInt(t.dataset.slotIdx);
+      let hour = t.dataset.hour;
+      let minute = t.dataset.minute;
       
-      console.log('Клик по ячейке:', { lane, slotIdx: si, hour: t.dataset.hour, minute: t.dataset.minute });
+      console.log('🔽 КЛИК по ячейке:', { lane, slotIdx: si, hour, minute });
       
-      isDragging=true; 
-      dragStartCell={lane,si}; 
-      dragInterval={lane,startIdx:si,endIdx:si}; 
-      highlightDragInterval(lane,si,si); 
+      isDragging = true; 
+      dragLane = lane;
+      dragStartIdx = si;
+      dragEndIdx = si;
+      dragStartCell = { lane, si };
+      dragInterval = { lane, startIdx: si, endIdx: si };
+      
+      highlightDragInterval(lane, si, si); 
     } 
   }
-  
+
   function onMouseMove(e){ 
     if(!dragModeEnabled && isDragging && dragStartCell){ 
-      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains("slot")); 
+      let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot")); 
       if(el){ 
-        let lane=parseInt(el.dataset.lane), idx=parseInt(el.dataset.slotIdx); 
-        if(lane===dragStartCell.lane){ 
-          let ns=Math.min(dragStartCell.si,idx), ne=Math.max(dragStartCell.si,idx); 
-          dragInterval={lane,startIdx:ns,endIdx:ne}; 
-          highlightDragInterval(lane,ns,ne); 
+        let lane = parseInt(el.dataset.lane); 
+        let idx = parseInt(el.dataset.slotIdx); 
+        if(lane === dragStartCell.lane){ 
+          let ns = Math.min(dragStartCell.si, idx); 
+          let ne = Math.max(dragStartCell.si, idx); 
+          dragLane = lane;
+          dragStartIdx = ns;
+          dragEndIdx = ne;
+          dragInterval = { lane, startIdx: ns, endIdx: ne }; 
+          highlightDragInterval(lane, ns, ne); 
         } 
       } 
     } 
+  }
+
+  function onMouseUp(){ 
+    if(!dragModeEnabled && isDragging && dragInterval){ 
+      let lane = dragLane;
+      let startIdx = dragStartIdx;
+      let endIdx = dragEndIdx;
+      
+      console.log('🔼 ОТПУСКАНИЕ:', { lane, startIdx, endIdx });
+      
+      if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
+        console.error('❌ Невалидные индексы:', startIdx, endIdx);
+        resetDragState();
+        return;
+      }
+      
+      if(hasConflict(lane, startIdx, endIdx)){ 
+        alert("⛔ Это время уже занято другой записью"); 
+      } else { 
+        const startSlot = slots[startIdx];
+        const endSlot = slots[endIdx + 1] || { key: slots[endIdx].key + 0.5 };
+        
+        console.log('✅ СОЗДАНИЕ ЗАПИСИ:', { 
+          lane, 
+          startIdx, 
+          endIdx,
+          startTime: startSlot.key,
+          endTime: endSlot.key,
+          startLabel: startSlot.label,
+          endLabel: endSlot.label
+        });
+        
+        const newBooking = { 
+          id: nextTempId++, 
+          lane: lane, 
+          startSlotIdx: startIdx, 
+          endSlotIdx: endIdx,
+          type: 'regular'
+        };
+        
+        tempBookings.push(newBooking); 
+        console.log('📝 Добавлена временная запись:', tempBookings[tempBookings.length - 1]);
+      } 
+      
+      renderInlineTempCards(); 
+      renderAllSliders(); 
+      updateCellsHighlight(); 
+    } 
+    
+    resetDragState();
+  }
+  
+  function resetDragState() {
+    isDragging = false; 
+    dragInterval = null; 
+    dragStartCell = null;
+    dragLane = -1;
+    dragStartIdx = -1;
+    dragEndIdx = -1;
+    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over")); 
   }
   
   function highlightDragInterval(lane,si,ei){ 
@@ -1693,43 +1770,7 @@
       if(cell) cell.classList.add("drag-over"); 
     } 
   }
-  
-  function onMouseUp(){ 
-    if(!dragModeEnabled && isDragging && dragInterval){ 
-      let {lane,startIdx,endIdx}=dragInterval; 
-      
-      console.log('Выделен интервал:', { lane, startIdx, endIdx });
-      
-      if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
-        console.error('Невалидные индексы:', startIdx, endIdx);
-        isDragging=false; 
-        dragInterval=null; 
-        dragStartCell=null; 
-        document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
-        return;
-      }
-      
-      if(hasConflict(lane, startIdx, endIdx)){ 
-        alert("Это время уже занято другой записью"); 
-      } else { 
-        tempBookings.push({ 
-          id:nextTempId++, 
-          lane, 
-          startSlotIdx: startIdx, 
-          endSlotIdx: endIdx,
-          type: 'regular'
-        }); 
-        console.log('Добавлена временная запись:', tempBookings[tempBookings.length - 1]);
-      } 
-      renderInlineTempCards(); 
-      renderAllSliders(); 
-      updateCellsHighlight(); 
-    } 
-    isDragging=false; 
-    dragInterval=null; 
-    dragStartCell=null; 
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
-  }
+  // ================ КОНЕЦ DRAG & DROP ================
   
   function openBookModal(){ 
     if(tempBookings.length===0){ 
@@ -1771,8 +1812,16 @@
         const endSlotIdx = tb.endSlotIdx + 1;
         const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
         
+        console.log('📤 Отправка записи:', { 
+          startSlotIdx: tb.startSlotIdx, 
+          endSlotIdx: tb.endSlotIdx,
+          startTime, 
+          endTime,
+          station: tb.lane
+        });
+        
         if (startTime === null || endTime === null) {
-          console.error('Ошибка: startTime или endTime = null', tb);
+          console.error('❌ Ошибка: startTime или endTime = null', tb);
           return null;
         }
         
@@ -1807,11 +1856,11 @@
         }))
       };
       
-      console.log("Sending payload:", payload);
+      console.log("📦 Sending payload:", payload);
       
       const result = await sendPostAction('addSchedule', payload);
       
-      console.log("Response from server:", result);
+      console.log("📨 Response from server:", result);
       
       if(result && result.success !== false){
         clearTempSelections(); 
@@ -1822,7 +1871,7 @@
         alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
       }
     } catch(e){
-      console.error("Error saving bookings:", e);
+      console.error("❌ Error saving bookings:", e);
       alert("❌ Ошибка при сохранении: " + e.message + "\nПопробуйте обновить страницу и повторить.");
     } 
     hideLoad(); 
@@ -1858,7 +1907,6 @@
         let startSlotIdx = -1;
         let endSlotIdx = -1;
         
-        // Ищем точное совпадение для start
         for (let i = 0; i < slots.length; i++) {
           if (slots[i].key === startKey) {
             startSlotIdx = i;
@@ -1866,7 +1914,6 @@
           }
         }
         
-        // Если не нашли — ищем ближайшее
         if (startSlotIdx === -1) {
           for (let i = 0; i < slots.length; i++) {
             if (slots[i].key >= startKey) {
@@ -1877,7 +1924,6 @@
           if (startSlotIdx === -1) startSlotIdx = 0;
         }
         
-        // Ищем конец
         for (let i = 0; i < slots.length; i++) {
           if (slots[i].key === endKey) {
             endSlotIdx = i - 1;
