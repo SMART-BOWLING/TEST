@@ -1269,7 +1269,7 @@
         return true;
       }
     } catch (e) {
-      console.warn('Failed to load employee groups:', e);
+      console.warn('Failed to save employee groups:', e);
     }
     return false;
   }
@@ -2153,58 +2153,103 @@
     hideLoad();
   }
   
+  // ===== ОБНОВЛЕННАЯ ФУНКЦИЯ ОТРИСОВКИ СЛАЙДЕРОВ С ОБЪЕДИНЕНИЕМ СОСЕДНИХ =====
   function renderAllSliders(){ 
     let container=$("slidersLayer"); 
     if(!container) return; 
     container.innerHTML=""; 
-    [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))].forEach(item=>{ 
-      let startIdx=item.startSlotIdx, endIdx=item.endSlotIdx; 
-      if(startIdx===undefined || endIdx===undefined) return; 
-      let row=getRowByLane(item.lane); 
-      if(!row) return; 
-      let sc=row.cells[startIdx+1], ec=row.cells[endIdx+1]; 
-      if(!sc||!ec) return; 
-      let left=sc.offsetLeft+1, top=row.offsetTop+1, width=(ec.offsetLeft+ec.offsetWidth)-sc.offsetLeft-2, height=row.offsetHeight-2; 
+    
+    // Получаем все записи (постоянные + временные)
+    let allItems = [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))];
+    
+    // Группируем по lane
+    let groups = {};
+    allItems.forEach(item => {
+      let lane = item.lane;
+      if (!groups[lane]) groups[lane] = [];
+      groups[lane].push(item);
+    });
+    
+    // Для каждой станции объединяем соседние ползунки
+    for (let lane in groups) {
+      let items = groups[lane];
+      // Сортируем по startSlotIdx
+      items.sort((a, b) => a.startSlotIdx - b.startSlotIdx);
       
-      let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending"));
-      let laneType='blue';
-      let slider=document.createElement("div"); 
-      slider.className=`slider ${status}`;
-      
-      let isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      if(isBirthday) {
-        slider.classList.add("birthday");
+      // Ищем соседние ползунки (конец одного = начало следующего)
+      let mergedItems = [];
+      let current = items[0];
+      for (let i = 1; i < items.length; i++) {
+        let next = items[i];
+        // Если текущий заканчивается там, где начинается следующий (+1)
+        if (current.endSlotIdx + 1 === next.startSlotIdx) {
+          // Объединяем: расширяем конечный индекс
+          current.endSlotIdx = next.endSlotIdx;
+          // Если у следующего есть особые свойства (день рождения), помечаем текущий
+          if (next.type === 'birthday' || (next.comment && next.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+            current.type = 'birthday';
+            current.comment = 'ДЕНЬ РОЖДЕНИЯ';
+          }
+          if (next.isTemp) current.isTemp = true;
+        } else {
+          mergedItems.push(current);
+          current = next;
+        }
       }
+      mergedItems.push(current);
       
-      if(dragModeEnabled) slider.classList.add("drag-mode-enabled"); 
-      slider.setAttribute("data-lane-type",laneType); 
-      slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
-      
-      let timeDiv=document.createElement("div"); 
-      timeDiv.className="sl-time"; 
-      timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
-      slider.appendChild(timeDiv); 
-      
-      let dragHandle=document.createElement("div"); 
-      dragHandle.className="drag-handle"; 
-      if(dragModeEnabled && !item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
-        e.stopPropagation(); 
-        startMoveDrag(item, e, slots); 
-      }); 
-      else if(dragModeEnabled && item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
-        e.stopPropagation(); 
-        startMoveTempDrag(item, e, slots); 
-      }); 
-      else dragHandle.addEventListener("click",(e)=>{ 
-        e.stopPropagation(); 
-        if(!item.isTemp && item.id) showInfoModal(item); 
-        else if(!item.isTemp && !item.id) alert("Загрузка данных..."); 
-        else alert("Временная запись — сохраните для просмотра."); 
-      }); 
-      slider.appendChild(dragHandle); 
-      container.appendChild(slider); 
-    }); 
+      // Отрисовываем объединенные ползунки
+      mergedItems.forEach(item => {
+        let startIdx=item.startSlotIdx, endIdx=item.endSlotIdx; 
+        if(startIdx===undefined || endIdx===undefined) return; 
+        let row=getRowByLane(parseInt(lane)); 
+        if(!row) return; 
+        let sc=row.cells[startIdx+1], ec=row.cells[endIdx+1]; 
+        if(!sc||!ec) return; 
+        let left=sc.offsetLeft+1, top=row.offsetTop+1, width=(ec.offsetLeft+ec.offsetWidth)-sc.offsetLeft-2, height=row.offsetHeight-2; 
+        
+        let status=item.isTemp?"temp":(item.confirmed===true?"confirmed":(item.confirmed===false?"rejected":"pending"));
+        let laneType='blue';
+        let slider=document.createElement("div"); 
+        slider.className=`slider ${status}`;
+        
+        let isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+        if(isBirthday) {
+          slider.classList.add("birthday");
+        }
+        
+        if(dragModeEnabled) slider.classList.add("drag-mode-enabled"); 
+        slider.setAttribute("data-lane-type",laneType); 
+        slider.style.cssText=`left:${left}px;top:${top}px;width:${width}px;height:${height}px;`; 
+        
+        let timeDiv=document.createElement("div"); 
+        timeDiv.className="sl-time"; 
+        // Отображаем объединенный интервал
+        timeDiv.textContent=fmtFromSlotIdx(startIdx, endIdx); 
+        slider.appendChild(timeDiv); 
+        
+        let dragHandle=document.createElement("div"); 
+        dragHandle.className="drag-handle"; 
+        if(dragModeEnabled && !item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
+          e.stopPropagation(); 
+          startMoveDrag(item, e, slots); 
+        }); 
+        else if(dragModeEnabled && item.isTemp) dragHandle.addEventListener("mousedown",(e)=>{ 
+          e.stopPropagation(); 
+          startMoveTempDrag(item, e, slots); 
+        }); 
+        else dragHandle.addEventListener("click",(e)=>{ 
+          e.stopPropagation(); 
+          if(!item.isTemp && item.id) showInfoModal(item); 
+          else if(!item.isTemp && !item.id) alert("Загрузка данных..."); 
+          else alert("Временная запись — сохраните для просмотра."); 
+        }); 
+        slider.appendChild(dragHandle); 
+        container.appendChild(slider); 
+      });
+    }
   }
+  // ===== КОНЕЦ ОБНОВЛЕННОЙ ФУНКЦИИ ОТРИСОВКИ СЛАЙДЕРОВ =====
   
   async function startMoveDrag(booking, e, slotsArr){ 
     e.stopPropagation(); 
