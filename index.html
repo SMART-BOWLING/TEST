@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://i.postimg.cc/Z5Vszw0h/STATS-GOOGLE-1.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* (стили без изменений, они уже были в предыдущих версиях) */
     * {
       margin: 0;
       padding: 0;
@@ -899,13 +900,11 @@
 
 <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
 
-<!-- Модалка создания записи -->
+<!-- Модалки и прочие элементы (без изменений) -->
 <div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Тип события</label><select class="f-input" id="eventTypeSelect"><option value="regular">Обычная запись</option><option value="birthday">🎂 День рождения</option></select></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
 
-<!-- Модалка редактирования типа события -->
 <div id="editEventModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-edit"></i> Редактировать событие</div><button class="sheet-x" onclick="closeEditEventModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="editEventInfo" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Станция: </span><strong id="editStationName"></strong><br><span>Время: </span><strong id="editTimeRange"></strong></div><label class="f-label">Тип события</label><div class="event-type-buttons"><button class="event-type-btn regular" data-type="regular" onclick="selectEventType('regular')"><i class="fas fa-clock"></i> Обычная</button><button class="event-type-btn birthday" data-type="birthday" onclick="selectEventType('birthday')"><i class="fas fa-birthday-cake"></i> День рождения</button></div><div class="f-actions"><button class="f-btn-ok" onclick="saveEventType()">Сохранить</button><button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button></div></div></div></div>
 
-<!-- Модалка просмотра события -->
 <div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div><div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div></div><div class="f-actions" style="margin-top: 20px;"><button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button><button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;"><i class="fas fa-trash"></i> Удалить</button></div></div></div></div>
 
 <div id="saveScheduleModal" class="overlay">
@@ -970,7 +969,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxZLrChK2fg3yMOMVbzrGdS63YrEypB62BR_YtTyFMA6MI2qBKCfkCDnpqsaRbHjqdh/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwM9Y8lTFV1gdEQNO_HyL56SUo72vUrcENx-S-MaezBJDIn9P6MtKh8FQnCsIU_jq2V/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1691,14 +1690,32 @@
         if(row){
           const color = group.color || '#4f6b4e';
           
-          // ИЩЕМ ДР У ЭТОГО СОТРУДНИКА - берем первую найденную запись
-          let birthdayBooking = null;
+          // === ИЩЕМ ВСЕ ДР ЗАПИСИ ДЛЯ ЭТОГО СОТРУДНИКА И ОБЪЕДИНЯЕМ ===
+          let birthdaySlots = [];
           for (const b of bookings) {
             const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
             if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
-              birthdayBooking = b;
-              break;
+              birthdaySlots.push({ start: b.startSlotIdx, end: b.endSlotIdx });
             }
+          }
+          
+          // Объединяем пересекающиеся или смежные интервалы
+          let birthdayRange = null;
+          if (birthdaySlots.length > 0) {
+            birthdaySlots.sort((a, b) => a.start - b.start);
+            const merged = [];
+            let current = birthdaySlots[0];
+            for (let i = 1; i < birthdaySlots.length; i++) {
+              if (birthdaySlots[i].start <= current.end + 1) {
+                current.end = Math.max(current.end, birthdaySlots[i].end);
+              } else {
+                merged.push(current);
+                current = birthdaySlots[i];
+              }
+            }
+            merged.push(current);
+            // берем первый объединенный интервал (обычно он один)
+            birthdayRange = merged[0];
           }
           
           const hdrRow = document.createElement("tr");
@@ -1775,32 +1792,25 @@
           
           td.appendChild(headerContainer);
           
-          // === МАРКЕР ДР — НА ВСЮ ШИРИНУ ПОЛЗУНКА ===
-          if (birthdayBooking) {
-            const stationRow = getRowByLane(birthdayBooking.lane);
+          // === МАРКЕР ДР НА ВЕСЬ ОБЪЕДИНЕННЫЙ ИНТЕРВАЛ ===
+          if (birthdayRange) {
+            const stationRow = getRowByLane(lane);
             if (stationRow) {
-              const startIdx = birthdayBooking.startSlotIdx;
-              const endIdx = birthdayBooking.endSlotIdx;
-              
-              // Получаем ПЕРВУЮ и ПОСЛЕДНЮЮ ячейки ползунка
+              const startIdx = birthdayRange.start;
+              const endIdx = birthdayRange.end;
               const startCell = stationRow.cells[startIdx + 1];
               const endCell = stationRow.cells[endIdx + 1];
               
               if (startCell && endCell) {
-                // Вычисляем ширину от первой до последней ячейки
                 // Используем getBoundingClientRect для точного расчета
                 const startRect = startCell.getBoundingClientRect();
                 const endRect = endCell.getBoundingClientRect();
                 const tableRect = document.getElementById('tableDesktop').getBoundingClientRect();
                 
-                // Вычисляем позицию относительно таблицы
                 const sliderLeft = startRect.left - tableRect.left;
                 const sliderWidth = (endRect.right - startRect.left);
                 const rowHeight = stationRow.offsetHeight;
                 
-                console.log(`Маркер ДР: startIdx=${startIdx}, endIdx=${endIdx}, ширина=${sliderWidth}px`);
-                
-                // Создаем маркер ДР на всю ширину ползунка
                 const badge = document.createElement("div");
                 badge.style.cssText = `
                   position: absolute;
