@@ -567,6 +567,16 @@
       z-index: 20;
     }
     
+    #birthdayLabelsLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 25;
+    }
+    
     .slider {
       position: absolute;
       border-radius: 6px;
@@ -592,32 +602,6 @@
     .slider .sl-time {
       color: #ffffff !important;
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }
-    
-    /* МЕТКА ДР НАД ПОЛЗУНКОМ */
-    .birthday-label {
-      position: absolute;
-      top: -22px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      font-weight: 700;
-      color: #1e1e1e;
-      background: #f1c40f;
-      padding: 2px 10px;
-      border-radius: 10px;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      z-index: 5;
-      border: 1px solid #f39c12;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    
-    .birthday-label i {
-      font-size: 12px;
     }
     
     .ghost-slider {
@@ -908,7 +892,18 @@
       <button class="btn-save-schedule" title="Сохранить расписание" onclick="openSaveScheduleModal()"><i class="fas fa-save"></i><span>Сохранить расписание</span></button>
       <div id="inlineTempContainer" class="inline-temp-cards"></div>
     </div>
-    <div class="grid-card"><div class="grid-scroll" id="gridScroll"><table id="tableDesktop"><thead id="dtHead"><tr><th class="corner">СТАНЦИЯ</th></tr></thead><tbody id="dtBody"></tbody></table><div id="slidersLayer"></div></div></div>
+    <div class="grid-card">
+      <div class="grid-scroll" id="gridScroll">
+        <table id="tableDesktop">
+          <thead id="dtHead">
+            <tr><th class="corner">СТАНЦИЯ</th></tr>
+          </thead>
+          <tbody id="dtBody"></tbody>
+        </table>
+        <div id="slidersLayer"></div>
+        <div id="birthdayLabelsLayer"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -985,7 +980,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwscgksO_ZpIpXjlmh5rWUIGrQM-vZwJwMHOv3wd68JRIOWvztfF9JaRc5YXAtWRz6O/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwNbRZ2xsxLXODdzMlyp8UGynezmwFx-0j5UdKqKUDLFuFXx6NKAiCKvzmjZd_88y37/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1710,12 +1705,13 @@
           td.colSpan = colSpan;
           td.style.background = color + '22';
           td.style.borderLeft = `3px solid ${color}`;
+          td.style.padding = '6px 16px';
           
           const container = document.createElement("div");
-          container.className = "group-header-container";
+          container.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
           
           const nameSpan = document.createElement("span");
-          nameSpan.className = "group-name";
+          nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
           nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
           container.appendChild(nameSpan);
           
@@ -1735,6 +1731,7 @@
             color: white;
             transition: all 0.2s;
             flex-shrink: 0;
+            margin-left: auto;
           `;
           colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
           colorBtn.title = "Выбрать цвет для сотрудника";
@@ -1746,6 +1743,20 @@
           
           const rmBtn = document.createElement("button");
           rmBtn.className = "group-remove-btn";
+          rmBtn.style.cssText = `
+            border: none;
+            background: rgba(179,63,63,0.12);
+            color: var(--accent-red);
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `;
           rmBtn.innerHTML = '<i class="fas fa-times"></i>';
           rmBtn.onclick = (e) => { 
             e.stopPropagation(); 
@@ -1763,6 +1774,7 @@
     
     applyStationColors();
     renderAllSliders();
+    renderBirthdayLabels();
   }
   
   // ================ ВЫБОР ЦВЕТА ================
@@ -1874,6 +1886,7 @@
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, color);
     renderAllSliders();
+    renderBirthdayLabels();
   }
   
   function applyCustomColor(groupId, employeeName) {
@@ -1924,6 +1937,7 @@
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, defaultColor);
     renderAllSliders();
+    renderBirthdayLabels();
   }
   
   // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
@@ -1932,7 +1946,8 @@
     tempBookings = []; 
     renderInlineTempCards(); 
     renderAllSliders(); 
-    updateCellsHighlight(); 
+    updateCellsHighlight();
+    renderBirthdayLabels();
   }
   
   function renderInlineTempCards(){ 
@@ -1953,8 +1968,8 @@
         tempBookings.splice(idx,1); 
         renderInlineTempCards(); 
         renderAllSliders(); 
-        updateCellsHighlight(); 
-        updatePreviewTimes(); 
+        updateCellsHighlight();
+        renderBirthdayLabels();
       }; 
       container.appendChild(card); 
     }); 
@@ -2064,7 +2079,8 @@
       
       renderInlineTempCards(); 
       renderAllSliders(); 
-      updateCellsHighlight(); 
+      updateCellsHighlight();
+      renderBirthdayLabels();
     } 
     
     resetDragState();
@@ -2290,6 +2306,7 @@
       
       renderAllSliders(); 
       updateCellsHighlight(); 
+      renderBirthdayLabels();
       
       console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
       
@@ -2317,6 +2334,7 @@
       const result = await sendPostAction('update', payload);
       if(result && result.success){
         console.log('Booking updated successfully');
+        renderBirthdayLabels();
       } else {
         console.error('Failed to update booking:', result && result.message);
       }
@@ -2367,6 +2385,10 @@
           if (nextStart <= currentEnd + 1) {
             currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
             currentGroup.items.push(item);
+            if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+              currentGroup.type = 'birthday';
+              currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
+            }
           } else {
             mergedItems.push(currentGroup);
             currentGroup = {
@@ -2412,9 +2434,6 @@
       let slider = document.createElement("div");
       slider.className = `slider ${status}`;
       
-      // ПРОВЕРЯЕМ — ЭТО ДР?
-      const isBirthday = group.type === 'birthday' || (group.comment && group.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      
       let groupColor = null;
       for (const g of employeeGroups) {
         if (g.stations && g.stations.includes(group.lane)) {
@@ -2440,14 +2459,6 @@
         styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
       }
       slider.style.cssText = styleText;
-      
-      // ЕСЛИ ДР — ДОБАВЛЯЕМ МЕТКУ НАД ПОЛЗУНКОМ
-      if (isBirthday) {
-        const label = document.createElement("div");
-        label.className = "birthday-label";
-        label.innerHTML = '<i class="fas fa-birthday-cake"></i> ДР';
-        slider.appendChild(label);
-      }
       
       let timeDiv = document.createElement("div");
       timeDiv.className = "sl-time";
@@ -2504,6 +2515,72 @@
     }
   }
   
+  // ================ МЕТКИ ДР НАД ПОЛЗУНКАМИ ================
+  
+  function renderBirthdayLabels() {
+    const container = document.getElementById("birthdayLabelsLayer");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    // Находим все ДР записи
+    const birthdayBookings = bookings.filter(b => {
+      return b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+    });
+    
+    for (const b of birthdayBookings) {
+      // Находим строку с этим сотрудником
+      const employeeName = getEmployeeForLane(b.lane);
+      if (!employeeName) continue;
+      
+      // Находим заголовок группы этого сотрудника
+      const headerRows = document.querySelectorAll('tr.employee-group-header');
+      let targetHeaderRow = null;
+      for (const hdr of headerRows) {
+        const nameSpan = hdr.querySelector('.group-name');
+        if (nameSpan && nameSpan.textContent.trim() === employeeName) {
+          targetHeaderRow = hdr;
+          break;
+        }
+      }
+      if (!targetHeaderRow) continue;
+      
+      // Находим ячейку времени
+      const startIdx = b.startSlotIdx;
+      const endIdx = b.endSlotIdx;
+      const row = getRowByLane(b.lane);
+      if (!row) continue;
+      
+      const sc = row.cells[startIdx + 1];
+      const ec = row.cells[endIdx + 1];
+      if (!sc || !ec) continue;
+      
+      // Создаем метку над ползунком
+      const label = document.createElement("div");
+      label.style.cssText = `
+        position: absolute;
+        top: ${sc.offsetTop - 30}px;
+        left: ${sc.offsetLeft + 1}px;
+        width: ${(ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2}px;
+        height: 24px;
+        background: #27ae60;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        z-index: 30;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        border: 1px solid #1e8449;
+      `;
+      label.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 11px;"></i> ДР`;
+      container.appendChild(label);
+    }
+  }
+  
   // ================ КОНЕЦ ОБЪЕДИНЕНИЯ ПОЛЗУНКОВ ================
   
   async function startMoveDrag(booking, e, slotsArr){ 
@@ -2524,7 +2601,8 @@
         booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
         saveToServer(booking); 
         renderAllSliders(); 
-        updateCellsHighlight(); 
+        updateCellsHighlight();
+        renderBirthdayLabels();
       } else alert("Конфликт с другой записью"); 
     }, currentLane,currentStartIdx); 
   }
@@ -2544,7 +2622,8 @@
         temp.endSlotIdx=newEndIdx; 
         renderInlineTempCards(); 
         renderAllSliders(); 
-        updateCellsHighlight(); 
+        updateCellsHighlight();
+        renderBirthdayLabels();
       } else alert("Конфликт с другой записью"); 
     }, currentLane,currentStartIdx); 
   }
@@ -2554,9 +2633,6 @@
     ghost.className='ghost-slider'; 
     let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
     if(timeClone) ghost.appendChild(timeClone);
-    // Если есть метка ДР — копируем её в призрак
-    const labelClone = slider.querySelector('.birthday-label')?.cloneNode(true);
-    if(labelClone) ghost.appendChild(labelClone);
     ghost.style.cssText=slider.style.cssText; 
     ghost.style.opacity='0.85'; ghost.style.transition='none';
     $('slidersLayer').appendChild(ghost); 
@@ -2604,6 +2680,7 @@
       document.removeEventListener('mousemove',onDragMove);
       document.removeEventListener('mouseup',onDragEnd);
       renderAllSliders();
+      renderBirthdayLabels();
     }
     document.body.style.cursor='grabbing';
     document.addEventListener('mousemove',onDragMove);
@@ -2672,6 +2749,7 @@
       toggleBtn.classList.toggle("active", dragModeEnabled);
       $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
       renderAllSliders();
+      renderBirthdayLabels();
     });
     
     const assignBtn = $("assignToggleBtn");
