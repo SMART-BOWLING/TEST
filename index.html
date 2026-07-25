@@ -1691,18 +1691,12 @@
         if(row){
           const color = group.color || '#4f6b4e';
           
-          // ИЩЕМ ДР У ЭТОГО СОТРУДНИКА
-          let hasBirthday = false;
-          let birthdayStartIdx = -1;
-          let birthdayEndIdx = -1;
-          let birthdayLane = -1;
+          // ИЩЕМ ДР У ЭТОГО СОТРУДНИКА - берем первую найденную запись
+          let birthdayBooking = null;
           for (const b of bookings) {
             const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
             if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
-              hasBirthday = true;
-              birthdayStartIdx = b.startSlotIdx;
-              birthdayEndIdx = b.endSlotIdx;
-              birthdayLane = b.lane;
+              birthdayBooking = b;
               break;
             }
           }
@@ -1719,10 +1713,15 @@
           td.style.padding = '6px 16px';
           td.style.position = "relative";
           td.style.minHeight = "44px";
+          td.style.display = "flex";
+          td.style.alignItems = "center";
+          td.style.flexWrap = "wrap";
+          td.style.gap = "8px";
+          td.style.justifyContent = "space-between";
           
           // === КОНТЕЙНЕР С ИМЕНЕМ И КНОПКАМИ ===
           const headerContainer = document.createElement("div");
-          headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
+          headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px;";
           
           const nameSpan = document.createElement("span");
           nameSpan.className = "group-name";
@@ -1746,7 +1745,6 @@
             color: white;
             transition: all 0.2s;
             flex-shrink: 0;
-            margin-left: auto;
           `;
           colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
           colorBtn.title = "Выбрать цвет для сотрудника";
@@ -1781,36 +1779,46 @@
           
           td.appendChild(headerContainer);
           
-          // === МАРКЕР ДР — ШИРИНА КАК У ПОЛЗУНКА ===
-          if (hasBirthday && birthdayStartIdx >= 0 && birthdayEndIdx >= 0) {
-            const stationRow = getRowByLane(birthdayLane);
+          // === МАРКЕР ДР — ТОЧНО КАК ПОЛЗУНОК ===
+          if (birthdayBooking) {
+            const stationRow = getRowByLane(birthdayBooking.lane);
             if (stationRow) {
-              const startCell = stationRow.cells[birthdayStartIdx + 1];
-              const endCell = stationRow.cells[birthdayEndIdx + 1];
+              const startIdx = birthdayBooking.startSlotIdx;
+              const endIdx = birthdayBooking.endSlotIdx;
+              const startCell = stationRow.cells[startIdx + 1];
+              const endCell = stationRow.cells[endIdx + 1];
+              
               if (startCell && endCell) {
+                const sliderLeft = startCell.offsetLeft + 1;
+                const sliderWidth = (endCell.offsetLeft + endCell.offsetWidth) - startCell.offsetLeft - 2;
+                const rowHeight = stationRow.offsetHeight;
+                
+                // Создаем маркер ДР поверх заголовка, но над полем ввода
                 const badge = document.createElement("div");
                 badge.style.cssText = `
                   position: absolute;
                   top: 50%;
                   transform: translateY(-50%);
-                  left: ${startCell.offsetLeft + 1}px;
-                  width: ${(endCell.offsetLeft + endCell.offsetWidth) - startCell.offsetLeft - 2}px;
-                  height: 26px;
-                  background: #27ae60;
+                  left: ${sliderLeft}px;
+                  width: ${sliderWidth}px;
+                  height: ${Math.min(rowHeight - 8, 28)}px;
+                  background: linear-gradient(135deg, #27ae60, #2ecc71);
                   color: white;
-                  font-size: 12px;
+                  font-size: 11px;
                   font-weight: 700;
                   border-radius: 4px;
                   display: flex;
                   align-items: center;
                   justify-content: center;
                   gap: 4px;
-                  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+                  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.4);
                   border: 1px solid #1e8449;
                   pointer-events: none;
                   z-index: 10;
+                  letter-spacing: 0.3px;
+                  min-width: 40px;
                 `;
-                badge.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 13px;"></i> ДР`;
+                badge.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 11px;"></i> ДР`;
                 td.appendChild(badge);
               }
             }
