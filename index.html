@@ -303,6 +303,7 @@
       justify-content: space-between;
       gap: 10px;
       transition: background 0.3s;
+      position: relative;
     }
     #tableDesktop tbody tr.employee-group-header { height: auto; }
     
@@ -565,16 +566,6 @@
       height: 100%;
       pointer-events: none;
       z-index: 20;
-    }
-    
-    #birthdayLabelsLayer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 25;
     }
     
     .slider {
@@ -901,7 +892,6 @@
           <tbody id="dtBody"></tbody>
         </table>
         <div id="slidersLayer"></div>
-        <div id="birthdayLabelsLayer"></div>
       </div>
     </div>
   </div>
@@ -1678,7 +1668,7 @@
     refreshGroupHeaders();
   }
   
-  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП (ИСПРАВЛЕНА) ================
+  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП (С МЕТКОЙ ДР) ================
   
   function refreshGroupHeaders(){
     const body = $("dtBody");
@@ -1701,25 +1691,55 @@
         if(row){
           const color = group.color || '#4f6b4e';
           
+          // ИЩЕМ ДР У ЭТОГО СОТРУДНИКА
+          let birthdayInfo = null;
+          for (const b of bookings) {
+            const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+            if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
+              const startSlot = slots[b.startSlotIdx];
+              const endSlot = slots[b.endSlotIdx + 1] || { label: `${Math.floor(slots[b.endSlotIdx].key) + 1}:00` };
+              const duration = b.endSlotIdx - b.startSlotIdx + 1;
+              let timeStr;
+              if (duration >= 2) {
+                const startHour = startSlot.hour;
+                const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
+                timeStr = `${startHour}:00-${Math.floor(endHour)}:00`;
+              } else {
+                timeStr = `${startSlot.label}–${endSlot.label}`;
+              }
+              birthdayInfo = { 
+                time: timeStr, 
+                startIdx: b.startSlotIdx, 
+                endIdx: b.endSlotIdx,
+                startSlot: startSlot,
+                endSlot: endSlot
+              };
+              break;
+            }
+          }
+          
           const hdrRow = document.createElement("tr");
           hdrRow.className = "employee-group-header";
-          // ВАЖНО: добавляем data-employee для поиска в renderBirthdayLabels
           hdrRow.dataset.employee = group.name;
+          hdrRow.style.position = "relative";
           
           const td = document.createElement("td");
           td.colSpan = colSpan;
           td.style.background = color + '22';
           td.style.borderLeft = `3px solid ${color}`;
           td.style.padding = '6px 16px';
+          td.style.position = "relative";
+          td.style.minHeight = "50px";
           
-          const container = document.createElement("div");
-          container.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
+          // === КОНТЕЙНЕР С ИМЕНЕМ И КНОПКАМИ ===
+          const headerContainer = document.createElement("div");
+          headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
           
           const nameSpan = document.createElement("span");
           nameSpan.className = "group-name";
           nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
           nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
-          container.appendChild(nameSpan);
+          headerContainer.appendChild(nameSpan);
           
           const colorBtn = document.createElement("button");
           colorBtn.className = "group-color-btn";
@@ -1745,7 +1765,7 @@
             e.stopPropagation();
             openColorPicker(group.id, group.name, color);
           };
-          container.appendChild(colorBtn);
+          headerContainer.appendChild(colorBtn);
           
           const rmBtn = document.createElement("button");
           rmBtn.className = "group-remove-btn";
@@ -1768,9 +1788,45 @@
             e.stopPropagation(); 
             removeEmployeeGroup(groupId); 
           };
-          container.appendChild(rmBtn);
+          headerContainer.appendChild(rmBtn);
           
-          td.appendChild(container);
+          td.appendChild(headerContainer);
+          
+          // === ЕСЛИ ЕСТЬ ДР — ДОБАВЛЯЕМ МЕТКУ НАД ПОЛЗУНКОМ В СТРОКЕ ФИО ===
+          if (birthdayInfo) {
+            const stationRow = getRowByLane(lane);
+            if (stationRow) {
+              const startCell = stationRow.cells[birthdayInfo.startIdx + 1];
+              const endCell = stationRow.cells[birthdayInfo.endIdx + 1];
+              if (startCell && endCell) {
+                const badge = document.createElement("div");
+                badge.style.cssText = `
+                  position: absolute;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  left: ${startCell.offsetLeft + 1}px;
+                  width: ${(endCell.offsetLeft + endCell.offsetWidth) - startCell.offsetLeft - 2}px;
+                  height: 28px;
+                  background: #27ae60;
+                  color: white;
+                  font-size: 11px;
+                  font-weight: 700;
+                  border-radius: 4px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 4px;
+                  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+                  border: 1px solid #1e8449;
+                  pointer-events: none;
+                  z-index: 10;
+                `;
+                badge.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 12px;"></i> ДР ${birthdayInfo.time}`;
+                td.appendChild(badge);
+              }
+            }
+          }
+          
           hdrRow.appendChild(td);
           row.parentNode.insertBefore(hdrRow, row);
         }
@@ -1780,7 +1836,6 @@
     
     applyStationColors();
     renderAllSliders();
-    renderBirthdayLabels();
   }
   
   // ================ ВЫБОР ЦВЕТА ================
@@ -1892,7 +1947,6 @@
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, color);
     renderAllSliders();
-    renderBirthdayLabels();
   }
   
   function applyCustomColor(groupId, employeeName) {
@@ -1943,7 +1997,6 @@
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, defaultColor);
     renderAllSliders();
-    renderBirthdayLabels();
   }
   
   // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
@@ -1953,7 +2006,6 @@
     renderInlineTempCards(); 
     renderAllSliders(); 
     updateCellsHighlight();
-    renderBirthdayLabels();
   }
   
   function renderInlineTempCards(){ 
@@ -1975,7 +2027,6 @@
         renderInlineTempCards(); 
         renderAllSliders(); 
         updateCellsHighlight();
-        renderBirthdayLabels();
       }; 
       container.appendChild(card); 
     }); 
@@ -2086,7 +2137,6 @@
       renderInlineTempCards(); 
       renderAllSliders(); 
       updateCellsHighlight();
-      renderBirthdayLabels();
     } 
     
     resetDragState();
@@ -2312,7 +2362,6 @@
       
       renderAllSliders(); 
       updateCellsHighlight();
-      renderBirthdayLabels();
       
       console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
       
@@ -2340,7 +2389,6 @@
       const result = await sendPostAction('update', payload);
       if(result && result.success){
         console.log('Booking updated successfully');
-        renderBirthdayLabels();
       } else {
         console.error('Failed to update booking:', result && result.message);
       }
@@ -2521,106 +2569,6 @@
     }
   }
   
-  // ================ МЕТКИ ДР НАД ПОЛЗУНКАМИ (ИСПРАВЛЕНА) ================
-  
-  function renderBirthdayLabels() {
-    const container = document.getElementById("birthdayLabelsLayer");
-    if (!container) {
-      console.warn('❌ container birthdayLabelsLayer не найден');
-      return;
-    }
-    container.innerHTML = "";
-    
-    console.log('🔍 renderBirthdayLabels: bookings =', bookings);
-    
-    // Находим все ДР записи
-    const birthdayBookings = bookings.filter(b => {
-      const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      if (isBirthday) {
-        console.log('✅ Найдена ДР запись:', b);
-      }
-      return isBirthday;
-    });
-    
-    console.log(`📊 Найдено ${birthdayBookings.length} ДР записей`);
-    
-    if (birthdayBookings.length === 0) {
-      console.log('ℹ️ Нет ДР записей, метки не создаются');
-      return;
-    }
-    
-    for (const b of birthdayBookings) {
-      // Находим сотрудника для этой станции
-      const employeeName = getEmployeeForLane(b.lane);
-      console.log(`👤 Сотрудник для станции ${b.lane}: "${employeeName}"`);
-      if (!employeeName) continue;
-      
-      // Находим заголовок группы этого сотрудника по data-employee
-      const headerRows = document.querySelectorAll('tr.employee-group-header');
-      console.log(`📋 Найдено ${headerRows.length} заголовков групп`);
-      
-      let targetHeaderRow = null;
-      for (const hdr of headerRows) {
-        const emp = hdr.dataset.employee;
-        console.log(`  - Сравнение: "${emp}" === "${employeeName}"`);
-        if (emp === employeeName) {
-          targetHeaderRow = hdr;
-          break;
-        }
-      }
-      
-      if (!targetHeaderRow) {
-        console.warn(`❌ Не найден заголовок для сотрудника "${employeeName}"`);
-        continue;
-      }
-      console.log(`✅ Найден заголовок для "${employeeName}"`);
-      
-      // Находим ячейку времени
-      const startIdx = b.startSlotIdx;
-      const endIdx = b.endSlotIdx;
-      const row = getRowByLane(b.lane);
-      if (!row) {
-        console.warn(`❌ Не найдена строка для станции ${b.lane}`);
-        continue;
-      }
-      
-      const sc = row.cells[startIdx + 1];
-      const ec = row.cells[endIdx + 1];
-      if (!sc || !ec) {
-        console.warn(`❌ Не найдены ячейки для индексов ${startIdx} и ${endIdx}`);
-        continue;
-      }
-      
-      console.log(`📍 Позиция: left=${sc.offsetLeft}, top=${sc.offsetTop}, width=${(ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft}`);
-      
-      // Создаем метку над ползунком
-      const label = document.createElement("div");
-      label.style.cssText = `
-        position: absolute;
-        top: ${sc.offsetTop - 30}px;
-        left: ${sc.offsetLeft + 1}px;
-        width: ${(ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2}px;
-        height: 24px;
-        background: #27ae60;
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        z-index: 30;
-        pointer-events: none;
-        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
-        border: 1px solid #1e8449;
-      `;
-      label.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 11px;"></i> ДР`;
-      container.appendChild(label);
-      console.log(`✅ Метка ДР создана для "${employeeName}"!`);
-    }
-  }
-  
   // ================ КОНЕЦ ОБЪЕДИНЕНИЯ ПОЛЗУНКОВ ================
   
   async function startMoveDrag(booking, e, slotsArr){ 
@@ -2642,7 +2590,6 @@
         saveToServer(booking); 
         renderAllSliders(); 
         updateCellsHighlight();
-        renderBirthdayLabels();
       } else alert("Конфликт с другой записью"); 
     }, currentLane,currentStartIdx); 
   }
@@ -2663,7 +2610,6 @@
         renderInlineTempCards(); 
         renderAllSliders(); 
         updateCellsHighlight();
-        renderBirthdayLabels();
       } else alert("Конфликт с другой записью"); 
     }, currentLane,currentStartIdx); 
   }
@@ -2720,7 +2666,6 @@
       document.removeEventListener('mousemove',onDragMove);
       document.removeEventListener('mouseup',onDragEnd);
       renderAllSliders();
-      renderBirthdayLabels();
     }
     document.body.style.cursor='grabbing';
     document.addEventListener('mousemove',onDragMove);
@@ -2789,7 +2734,6 @@
       toggleBtn.classList.toggle("active", dragModeEnabled);
       $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
       renderAllSliders();
-      renderBirthdayLabels();
     });
     
     const assignBtn = $("assignToggleBtn");
