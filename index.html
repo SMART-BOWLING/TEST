@@ -1695,12 +1695,14 @@
           let hasBirthday = false;
           let birthdayStartIdx = -1;
           let birthdayEndIdx = -1;
+          let birthdayLane = -1;
           for (const b of bookings) {
             const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
             if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
               hasBirthday = true;
               birthdayStartIdx = b.startSlotIdx;
               birthdayEndIdx = b.endSlotIdx;
+              birthdayLane = b.lane;
               break;
             }
           }
@@ -1779,9 +1781,9 @@
           
           td.appendChild(headerContainer);
           
-          // === ЕСЛИ ЕСТЬ ДР — ДОБАВЛЯЕМ МЕТКУ НАД ПОЛЗУНКОМ ===
+          // === МАРКЕР ДР — ШИРИНА КАК У ПОЛЗУНКА ===
           if (hasBirthday && birthdayStartIdx >= 0 && birthdayEndIdx >= 0) {
-            const stationRow = getRowByLane(lane);
+            const stationRow = getRowByLane(birthdayLane);
             if (stationRow) {
               const startCell = stationRow.cells[birthdayStartIdx + 1];
               const endCell = stationRow.cells[birthdayEndIdx + 1];
