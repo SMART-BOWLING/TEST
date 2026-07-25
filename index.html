@@ -318,10 +318,28 @@
       color: #000000 !important;
       font-weight: 600;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     
-    .group-header-container .fa-user {
-      font-size: 14px;
+    /* Бейдж ДР в строке ФИО */
+    .birthday-badge {
+      background: #f1c40f;
+      color: #1e1e1e;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid #f39c12;
+    }
+    
+    .birthday-badge i {
+      font-size: 12px;
     }
     
     .group-remove-btn {
@@ -595,11 +613,6 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
-    .slider.birthday .sl-time {
-      color: #1e1e1e !important;
-      text-shadow: none;
-    }
-    
     .ghost-slider {
       position: absolute;
       border-radius: 6px;
@@ -634,16 +647,6 @@
     .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; }
     .slider.rejected[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.55); opacity: 0.85; }
     .slider.temp[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.75); border: 1px solid #c9b16b; }
-    
-    .slider.birthday { 
-      background: #f1c40f !important; 
-      border: 2px solid #f39c12 !important;
-      color: #1e1e1e !important;
-    }
-    
-    .slider.birthday .sl-time::after {
-      content: "";
-    }
     
     .sl-time { 
       font-size: 13px; 
@@ -1333,7 +1336,7 @@
   
   function getEmployeeForLane(lane) {
     for (let group of employeeGroups) {
-      if (group.stations.includes(lane)) {
+      if (group.stations && group.stations.includes(lane)) {
         return group.name;
       }
     }
@@ -1693,6 +1696,17 @@
         const row = getRowByLane(lane);
         if(row){
           const color = group.color || '#4f6b4e';
+          
+          // ПРОВЕРЯЕМ — ЕСТЬ ЛИ У ЭТОГО СОТРУДНИКА ДР?
+          let hasBirthday = false;
+          for (const b of bookings) {
+            const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+            if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
+              hasBirthday = true;
+              break;
+            }
+          }
+          
           const hdrRow = document.createElement("tr");
           hdrRow.className = "employee-group-header";
           const td = document.createElement("td");
@@ -1705,7 +1719,14 @@
           
           const nameSpan = document.createElement("span");
           nameSpan.className = "group-name";
-          nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
+          
+          // ЕСЛИ ЕСТЬ ДР — ДОБАВЛЯЕМ БЕЙДЖ В СТРОКУ ФИО
+          if (hasBirthday) {
+            nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)} <span class="birthday-badge"><i class="fas fa-birthday-cake"></i> ДР</span>`;
+          } else {
+            nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
+          }
+          
           container.appendChild(nameSpan);
           
           const colorBtn = document.createElement("button");
@@ -2353,16 +2374,9 @@
           const nextStart = item.startSlotIdx;
           const currentEnd = currentGroup.endSlotIdx;
           
-          const isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-          const currentIsBirthday = currentGroup.type === 'birthday' || (currentGroup.comment && currentGroup.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-          
-          if (nextStart <= currentEnd + 1 && isBirthday === currentIsBirthday) {
+          if (nextStart <= currentEnd + 1) {
             currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
             currentGroup.items.push(item);
-            if (isBirthday) {
-              currentGroup.type = 'birthday';
-              currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
-            }
           } else {
             mergedItems.push(currentGroup);
             currentGroup = {
@@ -2408,8 +2422,6 @@
       let slider = document.createElement("div");
       slider.className = `slider ${status}`;
       
-      const isBirthday = group.type === 'birthday' || (group.comment && group.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      
       let groupColor = null;
       for (const g of employeeGroups) {
         if (g.stations && g.stations.includes(group.lane)) {
@@ -2418,12 +2430,8 @@
         }
       }
       
-      if (isBirthday) {
-        slider.style.backgroundColor = '#f1c40f';
-        slider.style.borderColor = '#f39c12';
-        slider.style.color = '#1e1e1e';
-        slider.classList.add("birthday");
-      } else if (groupColor && !group.isTemp) {
+      // ПОЛЗУНОК ВСЕГДА В ЦВЕТЕ СОТРУДНИКА
+      if (groupColor && !group.isTemp) {
         slider.style.backgroundColor = groupColor;
         slider.style.borderColor = groupColor;
       } else if (groupColor && group.isTemp) {
@@ -2435,9 +2443,7 @@
       slider.setAttribute("data-lane-type", laneType);
       
       let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
-      if (isBirthday) {
-        styleText += `background-color: #f1c40f; border-color: #f39c12;`;
-      } else if (groupColor) {
+      if (groupColor) {
         styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
       }
       slider.style.cssText = styleText;
@@ -2450,35 +2456,19 @@
       
       const duration = endIdx - startIdx + 1;
       
-      if (isBirthday) {
-        if (duration >= 2) {
-          const startHour = startSlot.hour;
-          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-          if (endSlot.minute === 30) {
-            timeDiv.textContent = `🎂 ДР ${startHour}:00-${Math.floor(endHour)}:30`;
-          } else {
-            timeDiv.textContent = `🎂 ДР ${startHour}:00-${Math.floor(endHour)}:00`;
-          }
+      if (duration >= 2) {
+        const startHour = startSlot.hour;
+        const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
+        if (endSlot.minute === 30) {
+          timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
         } else {
-          timeDiv.textContent = `🎂 ДР ${startSlot.label}–${endSlot.label}`;
+          timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
         }
-        timeDiv.style.color = '#1e1e1e';
-        timeDiv.style.textShadow = 'none';
       } else {
-        if (duration >= 2) {
-          const startHour = startSlot.hour;
-          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-          if (endSlot.minute === 30) {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
-          } else {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
-          }
-        } else {
-          timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
-        }
-        timeDiv.style.color = '#ffffff';
-        timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
+        timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
       }
+      timeDiv.style.color = '#ffffff';
+      timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
       
       slider.appendChild(timeDiv);
       
