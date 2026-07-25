@@ -980,7 +980,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwNbRZ2xsxLXODdzMlyp8UGynezmwFx-0j5UdKqKUDLFuFXx6NKAiCKvzmjZd_88y37/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwqwox2mNKxDx2hObKPN7Bp7UArriDepdCm4sx-Z4R41WA158oUigEOTOfZ7RAPHC8i/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -2305,7 +2305,7 @@
       refreshGroupHeaders();
       
       renderAllSliders(); 
-      updateCellsHighlight(); 
+      updateCellsHighlight();
       renderBirthdayLabels();
       
       console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
@@ -2519,40 +2519,74 @@
   
   function renderBirthdayLabels() {
     const container = document.getElementById("birthdayLabelsLayer");
-    if (!container) return;
+    if (!container) {
+      console.warn('❌ container birthdayLabelsLayer не найден');
+      return;
+    }
     container.innerHTML = "";
+    
+    console.log('🔍 renderBirthdayLabels: bookings =', bookings);
     
     // Находим все ДР записи
     const birthdayBookings = bookings.filter(b => {
-      return b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      if (isBirthday) {
+        console.log('✅ Найдена ДР запись:', b);
+      }
+      return isBirthday;
     });
     
+    console.log(`📊 Найдено ${birthdayBookings.length} ДР записей`);
+    
+    if (birthdayBookings.length === 0) {
+      console.log('ℹ️ Нет ДР записей, метки не создаются');
+      return;
+    }
+    
     for (const b of birthdayBookings) {
-      // Находим строку с этим сотрудником
+      // Находим сотрудника для этой станции
       const employeeName = getEmployeeForLane(b.lane);
+      console.log(`👤 Сотрудник для станции ${b.lane}: "${employeeName}"`);
       if (!employeeName) continue;
       
       // Находим заголовок группы этого сотрудника
       const headerRows = document.querySelectorAll('tr.employee-group-header');
+      console.log(`📋 Найдено ${headerRows.length} заголовков групп`);
+      
       let targetHeaderRow = null;
       for (const hdr of headerRows) {
         const nameSpan = hdr.querySelector('.group-name');
-        if (nameSpan && nameSpan.textContent.trim() === employeeName) {
+        const nameText = nameSpan ? nameSpan.textContent.trim() : '';
+        console.log(`  - Сравнение: "${nameText}" === "${employeeName}"`);
+        if (nameText === employeeName) {
           targetHeaderRow = hdr;
           break;
         }
       }
-      if (!targetHeaderRow) continue;
+      
+      if (!targetHeaderRow) {
+        console.warn(`❌ Не найден заголовок для сотрудника "${employeeName}"`);
+        continue;
+      }
+      console.log(`✅ Найден заголовок для "${employeeName}"`);
       
       // Находим ячейку времени
       const startIdx = b.startSlotIdx;
       const endIdx = b.endSlotIdx;
       const row = getRowByLane(b.lane);
-      if (!row) continue;
+      if (!row) {
+        console.warn(`❌ Не найдена строка для станции ${b.lane}`);
+        continue;
+      }
       
       const sc = row.cells[startIdx + 1];
       const ec = row.cells[endIdx + 1];
-      if (!sc || !ec) continue;
+      if (!sc || !ec) {
+        console.warn(`❌ Не найдены ячейки для индексов ${startIdx} и ${endIdx}`);
+        continue;
+      }
+      
+      console.log(`📍 Позиция: left=${sc.offsetLeft}, top=${sc.offsetTop}, width=${(ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft}`);
       
       // Создаем метку над ползунком
       const label = document.createElement("div");
@@ -2578,6 +2612,7 @@
       `;
       label.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 11px;"></i> ДР`;
       container.appendChild(label);
+      console.log(`✅ Метка ДР создана!`);
     }
   }
   
