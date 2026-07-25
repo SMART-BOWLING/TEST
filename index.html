@@ -980,7 +980,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwqwox2mNKxDx2hObKPN7Bp7UArriDepdCm4sx-Z4R41WA158oUigEOTOfZ7RAPHC8i/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzFpkcBHBSJbgig1ZNqokhQwUgXcPTbwxIsev2YGgdi-hGlS8eU07q-7ZBgL8sGY5Ea/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1678,6 +1678,8 @@
     refreshGroupHeaders();
   }
   
+  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП (ИСПРАВЛЕНА) ================
+  
   function refreshGroupHeaders(){
     const body = $("dtBody");
     if(!body) return;
@@ -1701,6 +1703,9 @@
           
           const hdrRow = document.createElement("tr");
           hdrRow.className = "employee-group-header";
+          // ВАЖНО: добавляем data-employee для поиска в renderBirthdayLabels
+          hdrRow.dataset.employee = group.name;
+          
           const td = document.createElement("td");
           td.colSpan = colSpan;
           td.style.background = color + '22';
@@ -1711,6 +1716,7 @@
           container.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
           
           const nameSpan = document.createElement("span");
+          nameSpan.className = "group-name";
           nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
           nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
           container.appendChild(nameSpan);
@@ -2515,7 +2521,7 @@
     }
   }
   
-  // ================ МЕТКИ ДР НАД ПОЛЗУНКАМИ ================
+  // ================ МЕТКИ ДР НАД ПОЛЗУНКАМИ (ИСПРАВЛЕНА) ================
   
   function renderBirthdayLabels() {
     const container = document.getElementById("birthdayLabelsLayer");
@@ -2549,16 +2555,15 @@
       console.log(`👤 Сотрудник для станции ${b.lane}: "${employeeName}"`);
       if (!employeeName) continue;
       
-      // Находим заголовок группы этого сотрудника
+      // Находим заголовок группы этого сотрудника по data-employee
       const headerRows = document.querySelectorAll('tr.employee-group-header');
       console.log(`📋 Найдено ${headerRows.length} заголовков групп`);
       
       let targetHeaderRow = null;
       for (const hdr of headerRows) {
-        const nameSpan = hdr.querySelector('.group-name');
-        const nameText = nameSpan ? nameSpan.textContent.trim() : '';
-        console.log(`  - Сравнение: "${nameText}" === "${employeeName}"`);
-        if (nameText === employeeName) {
+        const emp = hdr.dataset.employee;
+        console.log(`  - Сравнение: "${emp}" === "${employeeName}"`);
+        if (emp === employeeName) {
           targetHeaderRow = hdr;
           break;
         }
@@ -2612,7 +2617,7 @@
       `;
       label.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 11px;"></i> ДР`;
       container.appendChild(label);
-      console.log(`✅ Метка ДР создана!`);
+      console.log(`✅ Метка ДР создана для "${employeeName}"!`);
     }
   }
   
