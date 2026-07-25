@@ -294,18 +294,36 @@
     #tableDesktop tbody tr.employee-group-header td {
       height: auto;
       padding: 9px 16px;
-      background: #eef3ea;
       border-bottom: 1px solid var(--border-strong);
       border-top: 1px solid var(--border-strong);
       font-size: 13px;
       font-weight: 650;
-      color: #3c5a3b;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      transition: background 0.3s;
     }
     #tableDesktop tbody tr.employee-group-header { height: auto; }
+    
+    .group-header-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+    
+    .group-header-container .group-name {
+      flex: 1;
+      color: #000000 !important;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .group-header-container .fa-user {
+      font-size: 14px;
+    }
+    
     .group-remove-btn {
       border: none;
       background: rgba(179,63,63,0.12);
@@ -320,6 +338,7 @@
       align-items: center;
       justify-content: center;
     }
+    
     .group-color-btn {
       width: 28px;
       height: 28px;
@@ -506,6 +525,15 @@
       transition: background 0.3s;
     }
     
+    .station-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+      display: none;
+    }
+    
     .lane-hdr .station-logo {
       width: 32px;
       height: 32px;
@@ -515,6 +543,7 @@
     }
     
     .lane-hdr .station-name {
+      color: #000000 !important;
       font-weight: 600;
       font-size: 14px;
       white-space: nowrap;
@@ -570,6 +599,11 @@
       white-space: nowrap;
     }
     
+    .slider .sl-time {
+      color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
     .ghost-slider {
       position: absolute;
       border-radius: 6px;
@@ -596,6 +630,7 @@
     
     .ghost-slider .sl-time {
       opacity: 0.85;
+      color: #ffffff !important;
     }
     
     .slider[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); color: white; }
@@ -620,6 +655,7 @@
       opacity: 0.95; 
       text-align: center;
       letter-spacing: 0.5px;
+      color: #ffffff !important;
     }
     
     .drag-handle {
@@ -872,11 +908,13 @@
 
 <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
 
-<!-- Модалки -->
+<!-- Модалка создания записи -->
 <div id="bookModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div><button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Выбранное время: </span><span id="previewTimes">—</span></div><div class="f-group"><label class="f-label">Тип события</label><select class="f-input" id="eventTypeSelect"><option value="regular">Обычная запись</option><option value="birthday">🎂 День рождения</option></select></div><div class="f-actions"><button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button><button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button></div></div></div></div>
 
+<!-- Модалка редактирования типа события -->
 <div id="editEventModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-edit"></i> Редактировать событие</div><button class="sheet-x" onclick="closeEditEventModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div id="editEventInfo" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;"><span>Станция: </span><strong id="editStationName"></strong><br><span>Время: </span><strong id="editTimeRange"></strong></div><label class="f-label">Тип события</label><div class="event-type-buttons"><button class="event-type-btn regular" data-type="regular" onclick="selectEventType('regular')"><i class="fas fa-clock"></i> Обычная</button><button class="event-type-btn birthday" data-type="birthday" onclick="selectEventType('birthday')"><i class="fas fa-birthday-cake"></i> День рождения</button></div><div class="f-actions"><button class="f-btn-ok" onclick="saveEventType()">Сохранить</button><button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button></div></div></div></div>
 
+<!-- Модалка просмотра события -->
 <div id="infoModal" class="overlay"><div class="sheet"><div class="sheet-head"><div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div><button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button></div><div class="sheet-body"><div class="info-list"><div class="info-row"><span>Станция</span><strong id="i-table"></strong></div><div class="info-row"><span>Время</span><strong id="i-time"></strong></div><div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div><div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div></div><div class="f-actions" style="margin-top: 20px;"><button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button><button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;"><i class="fas fa-trash"></i> Удалить</button></div></div></div></div>
 
 <div id="saveScheduleModal" class="overlay">
@@ -1237,7 +1275,7 @@
   const slots = []; 
   for(let h=SH; h<EH; h++) { 
     slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
-    if(h < EH - 1 || (h === EH - 1)) {
+    if(h < EH - 1 || h === EH - 1) {
       slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
     }
   }
@@ -1363,12 +1401,28 @@
         this.src = 'https://via.placeholder.com/32/cccccc/ffffff?text=?'; 
       };
       
+      let contentContainer = document.createElement('div');
+      contentContainer.style.cssText = 'display: flex; align-items: center; gap: 10px; width: 100%;';
+      contentContainer.appendChild(logoImg);
+      
+      let colorDot = document.createElement('span');
+      colorDot.className = 'station-color-dot';
+      colorDot.style.cssText = `
+        display: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.1);
+      `;
+      contentContainer.appendChild(colorDot);
+      
       let nameSpan = document.createElement('span');
       nameSpan.className = 'station-name';
       nameSpan.textContent = stationName;
+      contentContainer.appendChild(nameSpan);
       
-      lhdr.appendChild(logoImg);
-      lhdr.appendChild(nameSpan);
+      lhdr.appendChild(contentContainer);
       lhdr.addEventListener("click", () => handleLaneHeaderClick(lane));
       tr.appendChild(lhdr);
       
@@ -1403,12 +1457,30 @@
         }
       }
       
+      const colorDot = lhdr.querySelector('.station-color-dot');
+      const nameSpan = lhdr.querySelector('.station-name');
+      
       if (groupColor) {
-        lhdr.style.background = groupColor + '33';
+        lhdr.style.background = groupColor + '22';
         lhdr.style.borderLeftColor = groupColor;
+        
+        if (colorDot) {
+          colorDot.style.display = 'inline-block';
+          colorDot.style.background = groupColor;
+        }
+        if (nameSpan) {
+          nameSpan.style.color = '#000000';
+        }
       } else {
         lhdr.style.background = '#e8edf2';
         lhdr.style.borderLeftColor = 'var(--accent-blue)';
+        
+        if (colorDot) {
+          colorDot.style.display = 'none';
+        }
+        if (nameSpan) {
+          nameSpan.style.color = '#000000';
+        }
       }
     });
   }
@@ -1651,15 +1723,15 @@
           hdrRow.className = "employee-group-header";
           const td = document.createElement("td");
           td.colSpan = colSpan;
+          td.style.background = color + '22';
           td.style.borderLeft = `3px solid ${color}`;
-          td.style.backgroundColor = color + '22';
           
           const container = document.createElement("div");
-          container.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%;";
+          container.className = "group-header-container";
           
           const nameSpan = document.createElement("span");
-          nameSpan.innerHTML = `<i class="fas fa-user"></i> ${escapeHtml(group.name)}`;
-          nameSpan.style.flex = "1";
+          nameSpan.className = "group-name";
+          nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
           container.appendChild(nameSpan);
           
           const colorBtn = document.createElement("button");
@@ -2382,8 +2454,12 @@
       
       if (dragModeEnabled) slider.classList.add("drag-mode-enabled");
       slider.setAttribute("data-lane-type", laneType);
-      slider.style.cssText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;` + 
-        (groupColor ? `background-color: ${group.isTemp ? groupColor + '88' : groupColor};` : '');
+      
+      let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+      if (groupColor) {
+        styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
+      }
+      slider.style.cssText = styleText;
       
       let timeDiv = document.createElement("div");
       timeDiv.className = "sl-time";
