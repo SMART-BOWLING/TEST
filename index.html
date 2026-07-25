@@ -970,7 +970,7 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzFpkcBHBSJbgig1ZNqokhQwUgXcPTbwxIsev2YGgdi-hGlS8eU07q-7ZBgL8sGY5Ea/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw7R2Git8V6_1enjkgzdvxtautIwrIqNc3QKJbFLQq1s26n0IibnwI-RFzyMH0c0MU1/exec";
   
   let stations = [];
   let currentSheetName = '';
@@ -1668,7 +1668,7 @@
     refreshGroupHeaders();
   }
   
-  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП (С МЕТКОЙ ДР) ================
+  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП ================
   
   function refreshGroupHeaders(){
     const body = $("dtBody");
@@ -1692,28 +1692,15 @@
           const color = group.color || '#4f6b4e';
           
           // ИЩЕМ ДР У ЭТОГО СОТРУДНИКА
-          let birthdayInfo = null;
+          let hasBirthday = false;
+          let birthdayStartIdx = -1;
+          let birthdayEndIdx = -1;
           for (const b of bookings) {
             const isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
             if (isBirthday && getEmployeeForLane(b.lane) === group.name) {
-              const startSlot = slots[b.startSlotIdx];
-              const endSlot = slots[b.endSlotIdx + 1] || { label: `${Math.floor(slots[b.endSlotIdx].key) + 1}:00` };
-              const duration = b.endSlotIdx - b.startSlotIdx + 1;
-              let timeStr;
-              if (duration >= 2) {
-                const startHour = startSlot.hour;
-                const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-                timeStr = `${startHour}:00-${Math.floor(endHour)}:00`;
-              } else {
-                timeStr = `${startSlot.label}–${endSlot.label}`;
-              }
-              birthdayInfo = { 
-                time: timeStr, 
-                startIdx: b.startSlotIdx, 
-                endIdx: b.endSlotIdx,
-                startSlot: startSlot,
-                endSlot: endSlot
-              };
+              hasBirthday = true;
+              birthdayStartIdx = b.startSlotIdx;
+              birthdayEndIdx = b.endSlotIdx;
               break;
             }
           }
@@ -1729,7 +1716,7 @@
           td.style.borderLeft = `3px solid ${color}`;
           td.style.padding = '6px 16px';
           td.style.position = "relative";
-          td.style.minHeight = "50px";
+          td.style.minHeight = "44px";
           
           // === КОНТЕЙНЕР С ИМЕНЕМ И КНОПКАМИ ===
           const headerContainer = document.createElement("div");
@@ -1792,12 +1779,12 @@
           
           td.appendChild(headerContainer);
           
-          // === ЕСЛИ ЕСТЬ ДР — ДОБАВЛЯЕМ МЕТКУ НАД ПОЛЗУНКОМ В СТРОКЕ ФИО ===
-          if (birthdayInfo) {
+          // === ЕСЛИ ЕСТЬ ДР — ДОБАВЛЯЕМ МЕТКУ НАД ПОЛЗУНКОМ ===
+          if (hasBirthday && birthdayStartIdx >= 0 && birthdayEndIdx >= 0) {
             const stationRow = getRowByLane(lane);
             if (stationRow) {
-              const startCell = stationRow.cells[birthdayInfo.startIdx + 1];
-              const endCell = stationRow.cells[birthdayInfo.endIdx + 1];
+              const startCell = stationRow.cells[birthdayStartIdx + 1];
+              const endCell = stationRow.cells[birthdayEndIdx + 1];
               if (startCell && endCell) {
                 const badge = document.createElement("div");
                 badge.style.cssText = `
@@ -1806,10 +1793,10 @@
                   transform: translateY(-50%);
                   left: ${startCell.offsetLeft + 1}px;
                   width: ${(endCell.offsetLeft + endCell.offsetWidth) - startCell.offsetLeft - 2}px;
-                  height: 28px;
+                  height: 26px;
                   background: #27ae60;
                   color: white;
-                  font-size: 11px;
+                  font-size: 12px;
                   font-weight: 700;
                   border-radius: 4px;
                   display: flex;
@@ -1821,7 +1808,7 @@
                   pointer-events: none;
                   z-index: 10;
                 `;
-                badge.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 12px;"></i> ДР ${birthdayInfo.time}`;
+                badge.innerHTML = `<i class="fas fa-birthday-cake" style="font-size: 13px;"></i> ДР`;
                 td.appendChild(badge);
               }
             }
