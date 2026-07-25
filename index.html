@@ -525,15 +525,6 @@
       transition: background 0.3s;
     }
     
-    .station-color-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      border: 1px solid rgba(0,0,0,0.1);
-      display: none;
-    }
-    
     .lane-hdr .station-logo {
       width: 32px;
       height: 32px;
@@ -604,6 +595,11 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
+    .slider.birthday .sl-time {
+      color: #1e1e1e !important;
+      text-shadow: none;
+    }
+    
     .ghost-slider {
       position: absolute;
       border-radius: 6px;
@@ -639,14 +635,14 @@
     .slider.rejected[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.55); opacity: 0.85; }
     .slider.temp[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.75); border: 1px solid #c9b16b; }
     
-    .slider.birthday[data-lane-type="blue"] { 
-      background: #c97b2e !important; 
-      border: 2px solid #ffd700 !important;
+    .slider.birthday { 
+      background: #f1c40f !important; 
+      border: 2px solid #f39c12 !important;
+      color: #1e1e1e !important;
     }
     
     .slider.birthday .sl-time::after {
-      content: " 🎂";
-      font-size: 14px;
+      content: "";
     }
     
     .sl-time { 
@@ -1405,18 +1401,6 @@
       contentContainer.style.cssText = 'display: flex; align-items: center; gap: 10px; width: 100%;';
       contentContainer.appendChild(logoImg);
       
-      let colorDot = document.createElement('span');
-      colorDot.className = 'station-color-dot';
-      colorDot.style.cssText = `
-        display: none;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        border: 1px solid rgba(0,0,0,0.1);
-      `;
-      contentContainer.appendChild(colorDot);
-      
       let nameSpan = document.createElement('span');
       nameSpan.className = 'station-name';
       nameSpan.textContent = stationName;
@@ -1457,27 +1441,17 @@
         }
       }
       
-      const colorDot = lhdr.querySelector('.station-color-dot');
       const nameSpan = lhdr.querySelector('.station-name');
       
       if (groupColor) {
         lhdr.style.background = groupColor + '22';
         lhdr.style.borderLeftColor = groupColor;
-        
-        if (colorDot) {
-          colorDot.style.display = 'inline-block';
-          colorDot.style.background = groupColor;
-        }
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
       } else {
         lhdr.style.background = '#e8edf2';
         lhdr.style.borderLeftColor = 'var(--accent-blue)';
-        
-        if (colorDot) {
-          colorDot.style.display = 'none';
-        }
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
@@ -2379,10 +2353,13 @@
           const nextStart = item.startSlotIdx;
           const currentEnd = currentGroup.endSlotIdx;
           
-          if (nextStart <= currentEnd + 1) {
+          const isBirthday = item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+          const currentIsBirthday = currentGroup.type === 'birthday' || (currentGroup.comment && currentGroup.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+          
+          if (nextStart <= currentEnd + 1 && isBirthday === currentIsBirthday) {
             currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
             currentGroup.items.push(item);
-            if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+            if (isBirthday) {
               currentGroup.type = 'birthday';
               currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
             }
@@ -2431,10 +2408,7 @@
       let slider = document.createElement("div");
       slider.className = `slider ${status}`;
       
-      let isBirthday = group.type === 'birthday' || (group.comment && group.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      if (isBirthday) {
-        slider.classList.add("birthday");
-      }
+      const isBirthday = group.type === 'birthday' || (group.comment && group.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       
       let groupColor = null;
       for (const g of employeeGroups) {
@@ -2444,7 +2418,12 @@
         }
       }
       
-      if (groupColor && !group.isTemp) {
+      if (isBirthday) {
+        slider.style.backgroundColor = '#f1c40f';
+        slider.style.borderColor = '#f39c12';
+        slider.style.color = '#1e1e1e';
+        slider.classList.add("birthday");
+      } else if (groupColor && !group.isTemp) {
         slider.style.backgroundColor = groupColor;
         slider.style.borderColor = groupColor;
       } else if (groupColor && group.isTemp) {
@@ -2456,7 +2435,9 @@
       slider.setAttribute("data-lane-type", laneType);
       
       let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
-      if (groupColor) {
+      if (isBirthday) {
+        styleText += `background-color: #f1c40f; border-color: #f39c12;`;
+      } else if (groupColor) {
         styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
       }
       slider.style.cssText = styleText;
@@ -2468,16 +2449,35 @@
       const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
       
       const duration = endIdx - startIdx + 1;
-      if (duration >= 2) {
-        const startHour = startSlot.hour;
-        const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-        if (endSlot.minute === 30) {
-          timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
+      
+      if (isBirthday) {
+        if (duration >= 2) {
+          const startHour = startSlot.hour;
+          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
+          if (endSlot.minute === 30) {
+            timeDiv.textContent = `🎂 ДР ${startHour}:00-${Math.floor(endHour)}:30`;
+          } else {
+            timeDiv.textContent = `🎂 ДР ${startHour}:00-${Math.floor(endHour)}:00`;
+          }
         } else {
-          timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
+          timeDiv.textContent = `🎂 ДР ${startSlot.label}–${endSlot.label}`;
         }
+        timeDiv.style.color = '#1e1e1e';
+        timeDiv.style.textShadow = 'none';
       } else {
-        timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
+        if (duration >= 2) {
+          const startHour = startSlot.hour;
+          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
+          if (endSlot.minute === 30) {
+            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
+          } else {
+            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
+          }
+        } else {
+          timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
+        }
+        timeDiv.style.color = '#ffffff';
+        timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
       }
       
       slider.appendChild(timeDiv);
