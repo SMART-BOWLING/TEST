@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -306,21 +306,6 @@
       position: relative;
     }
     #tableDesktop tbody tr.employee-group-header { height: auto; }
-
-    #tableDesktop tbody tr.employee-group-divider td {
-      height: 10px;
-      padding: 0;
-      background: repeating-linear-gradient(
-        45deg,
-        #d8d8d8,
-        #d8d8d8 6px,
-        #e6e6e6 6px,
-        #e6e6e6 12px
-      );
-      border-top: 1px solid #aeaeae;
-      border-bottom: 1px solid #aeaeae;
-    }
-    #tableDesktop tbody tr.employee-group-divider { height: 10px; }
     
     .group-header-container {
       display: flex;
@@ -538,21 +523,6 @@
       background: #e8edf2;
       border-left: 3px solid var(--accent-blue);
       transition: background 0.3s;
-    }
-
-    #tableDesktop tbody td.lane-hdr.unassigned-lane {
-      background: repeating-linear-gradient(
-        135deg,
-        #f4f4f4,
-        #f4f4f4 10px,
-        #ececec 10px,
-        #ececec 20px
-      ) !important;
-      border-left: 3px solid #b9b9b9 !important;
-    }
-
-    #tableDesktop tbody td.lane-hdr.block-start {
-      box-shadow: inset 0 3px 0 0 rgba(0,0,0,0.18);
     }
     
     .lane-hdr .station-logo {
@@ -1449,7 +1419,7 @@
   }
   
   function applyStationColors() {
-    const rows = document.querySelectorAll("#dtBody tr[data-lane]");
+    const rows = document.querySelectorAll("#dtBody tr");
     rows.forEach(row => {
       const lane = parseInt(row.dataset.lane);
       const lhdr = row.querySelector('.lane-hdr');
@@ -1466,17 +1436,14 @@
       const nameSpan = lhdr.querySelector('.station-name');
       
       if (groupColor) {
-        lhdr.classList.remove('unassigned-lane');
         lhdr.style.background = groupColor + '22';
         lhdr.style.borderLeftColor = groupColor;
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
       } else {
-        // Станция без привязанного сотрудника — явно отличаем визуально (штриховка + серая рамка)
-        lhdr.classList.add('unassigned-lane');
-        lhdr.style.background = '';
-        lhdr.style.borderLeftColor = '#b9b9b9';
+        lhdr.style.background = '#e8edf2';
+        lhdr.style.borderLeftColor = 'var(--accent-blue)';
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
@@ -1704,114 +1671,97 @@
     const body = $("dtBody");
     if(!body) return;
     
-    body.querySelectorAll("tr.employee-group-header, tr.employee-group-divider").forEach(tr => tr.remove());
-    document.querySelectorAll("#tableDesktop td.lane-hdr.block-start").forEach(td => td.classList.remove("block-start"));
+    body.querySelectorAll("tr.employee-group-header").forEach(tr => tr.remove());
     
     const numStations = stations.length > 0 ? stations.length : 12;
     const laneToGroup = {};
     employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
     
     const colSpan = 1 + slots.length;
-    let prevGroupId; // undefined sentinel: distinct from null (unassigned) so lane 0 always starts a block
+    let prevGroupId = null;
     
     for(let lane = 0; lane < numStations; lane++){
       const group = laneToGroup[lane];
       const groupId = group ? group.id : null;
-
-      if(groupId !== prevGroupId){
+      if(groupId !== null && groupId !== prevGroupId){
         const row = getRowByLane(lane);
         if(row){
-          const lhdrCell = row.querySelector('.lane-hdr');
-          if(lhdrCell) lhdrCell.classList.add('block-start');
-
-          if(group){
-            // Полноценный заголовок блока станций конкретного сотрудника
-            const color = group.color || '#4f6b4e';
-            
-            const hdrRow = document.createElement("tr");
-            hdrRow.className = "employee-group-header";
-            hdrRow.dataset.employee = group.name;
-            hdrRow.style.position = "relative";
-            
-            const td = document.createElement("td");
-            td.colSpan = colSpan;
-            td.style.background = color + '22';
-            td.style.borderLeft = `3px solid ${color}`;
-            td.style.padding = '6px 16px';
-            td.style.position = "relative";
-            td.style.minHeight = "44px";
-            
-            const headerContainer = document.createElement("div");
-            headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
-            
-            const nameSpan = document.createElement("span");
-            nameSpan.className = "group-name";
-            nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
-            nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
-            headerContainer.appendChild(nameSpan);
-            
-            const colorBtn = document.createElement("button");
-            colorBtn.className = "group-color-btn";
-            colorBtn.style.cssText = `
-              width: 28px; 
-              height: 28px; 
-              border-radius: 50%; 
-              border: 2px solid ${color};
-              background: ${color};
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 12px;
-              color: white;
-              transition: all 0.2s;
-              flex-shrink: 0;
-              margin-left: auto;
-            `;
-            colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
-            colorBtn.title = "Выбрать цвет для сотрудника";
-            colorBtn.onclick = (e) => {
-              e.stopPropagation();
-              openColorPicker(group.id, group.name, color);
-            };
-            headerContainer.appendChild(colorBtn);
-            
-            const rmBtn = document.createElement("button");
-            rmBtn.className = "group-remove-btn";
-            rmBtn.style.cssText = `
-              border: none;
-              background: rgba(179,63,63,0.12);
-              color: var(--accent-red);
-              width: 28px;
-              height: 28px;
-              border-radius: 5px;
-              font-size: 14px;
-              cursor: pointer;
-              flex-shrink: 0;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            `;
-            rmBtn.innerHTML = '<i class="fas fa-times"></i>';
-            rmBtn.onclick = (e) => { 
-              e.stopPropagation(); 
-              removeEmployeeGroup(groupId); 
-            };
-            headerContainer.appendChild(rmBtn);
-            
-            td.appendChild(headerContainer);
-            hdrRow.appendChild(td);
-            row.parentNode.insertBefore(hdrRow, row);
-          } else if (lane !== 0) {
-            // Переход к станциям без привязанного сотрудника — тонкая штрихованная разделительная полоса,
-            // чтобы визуально отделить их от предыдущего блока сотрудника
-            const divRow = document.createElement("tr");
-            divRow.className = "employee-group-divider";
-            const dtd = document.createElement("td");
-            dtd.colSpan = colSpan;
-            divRow.appendChild(dtd);
-            row.parentNode.insertBefore(divRow, row);
-          }
+          const color = group.color || '#4f6b4e';
+          
+          const hdrRow = document.createElement("tr");
+          hdrRow.className = "employee-group-header";
+          hdrRow.dataset.employee = group.name;
+          hdrRow.style.position = "relative";
+          
+          const td = document.createElement("td");
+          td.colSpan = colSpan;
+          td.style.background = color + '22';
+          td.style.borderLeft = `3px solid ${color}`;
+          td.style.padding = '6px 16px';
+          td.style.position = "relative";
+          td.style.minHeight = "44px";
+          
+          const headerContainer = document.createElement("div");
+          headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
+          
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "group-name";
+          nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
+          nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
+          headerContainer.appendChild(nameSpan);
+          
+          const colorBtn = document.createElement("button");
+          colorBtn.className = "group-color-btn";
+          colorBtn.style.cssText = `
+            width: 28px; 
+            height: 28px; 
+            border-radius: 50%; 
+            border: 2px solid ${color};
+            background: ${color};
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            margin-left: auto;
+          `;
+          colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
+          colorBtn.title = "Выбрать цвет для сотрудника";
+          colorBtn.onclick = (e) => {
+            e.stopPropagation();
+            openColorPicker(group.id, group.name, color);
+          };
+          headerContainer.appendChild(colorBtn);
+          
+          const rmBtn = document.createElement("button");
+          rmBtn.className = "group-remove-btn";
+          rmBtn.style.cssText = `
+            border: none;
+            background: rgba(179,63,63,0.12);
+            color: var(--accent-red);
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `;
+          rmBtn.innerHTML = '<i class="fas fa-times"></i>';
+          rmBtn.onclick = (e) => { 
+            e.stopPropagation(); 
+            removeEmployeeGroup(groupId); 
+          };
+          headerContainer.appendChild(rmBtn);
+          
+          td.appendChild(headerContainer);
+          hdrRow.appendChild(td);
+          row.parentNode.insertBefore(hdrRow, row);
         }
       }
       prevGroupId = groupId;
