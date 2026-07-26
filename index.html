@@ -567,8 +567,9 @@
     #tableDesktop tbody td.slot.temp-highlight { background: #dde9f0 !important; border: 1px solid #3b6e8f !important; }
     #tableDesktop tbody td.slot.drag-over { background: #e2dfcf !important; }
     
-    /* Стили для закрашенных ячеек (вместо ползунков) */
+    /* Стили для закрашенных ячеек (вместо ползунков) - ОДИН ЦВЕТ ДЛЯ ВСЕХ */
     #tableDesktop tbody td.slot.booked {
+      background: var(--accent-blue) !important;
       color: #ffffff !important;
       font-weight: 600;
       font-size: 13px;
@@ -578,7 +579,7 @@
     }
     
     #tableDesktop tbody td.slot.booked.birthday {
-      background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+      background: #27ae60 !important;
     }
     
     #tableDesktop tbody td.slot.booked .slot-label {
@@ -594,6 +595,15 @@
     /* Стили для выделения при drag & drop */
     #tableDesktop tbody td.slot.drag-over {
       background: #e2dfcf !important;
+    }
+    
+    /* Закраска всей строки сотрудника его цветом */
+    #tableDesktop tbody tr.employee-row {
+      transition: background 0.3s;
+    }
+    
+    #tableDesktop tbody tr.employee-row .slot {
+      transition: background 0.3s;
     }
 
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); z-index: 2000; justify-content: center; align-items: center; }
@@ -1314,6 +1324,7 @@
     for(let lane=0; lane<numStations; lane++){
       let tr=document.createElement("tr"); 
       tr.dataset.lane=lane;
+      tr.className = "employee-row";
       
       let lhdr=document.createElement("td"); 
       lhdr.className="lane-hdr";
@@ -1356,15 +1367,13 @@
       body.appendChild(tr);
     }
     
-    applyStationColors();
+    applyEmployeeRowColors();
   }
   
-  function applyStationColors() {
-    const rows = document.querySelectorAll("#dtBody tr");
+  function applyEmployeeRowColors() {
+    const rows = document.querySelectorAll("#dtBody tr.employee-row");
     rows.forEach(row => {
       const lane = parseInt(row.dataset.lane);
-      const lhdr = row.querySelector('.lane-hdr');
-      if (!lhdr) return;
       
       let groupColor = null;
       for (const group of employeeGroups) {
@@ -1374,17 +1383,39 @@
         }
       }
       
-      const nameSpan = lhdr.querySelector('.station-name');
+      const lhdr = row.querySelector('.lane-hdr');
+      const nameSpan = lhdr?.querySelector('.station-name');
       
+      // Закрашиваем ВСЮ строку цветом сотрудника
       if (groupColor) {
-        lhdr.style.background = groupColor + '22';
-        lhdr.style.borderLeftColor = groupColor;
+        // Закрашиваем все ячейки строки
+        const cells = row.querySelectorAll('.slot');
+        cells.forEach(cell => {
+          // Не закрашиваем забронированные ячейки - они имеют свой стиль
+          if (!cell.classList.contains('booked')) {
+            cell.style.backgroundColor = groupColor + '15';
+          }
+        });
+        
+        // Закрашиваем заголовок станции
+        if (lhdr) {
+          lhdr.style.background = groupColor + '30';
+          lhdr.style.borderLeftColor = groupColor;
+        }
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
       } else {
-        lhdr.style.background = '#e8edf2';
-        lhdr.style.borderLeftColor = 'var(--accent-blue)';
+        // Сброс цвета для незакрепленных станций
+        const cells = row.querySelectorAll('.slot:not(.booked)');
+        cells.forEach(cell => {
+          cell.style.backgroundColor = '#ffffff';
+        });
+        
+        if (lhdr) {
+          lhdr.style.background = '#e8edf2';
+          lhdr.style.borderLeftColor = 'var(--accent-blue)';
+        }
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
@@ -1410,7 +1441,7 @@
       }
     }
     
-    // Закрашиваем ячейки для бронирований
+    // Закрашиваем ячейки для бронирований - ОДИН ЦВЕТ ДЛЯ ВСЕХ
     for(let b of bookings){ 
       let si=b.startSlotIdx, ei=b.endSlotIdx; 
       if(si!==undefined && ei!==undefined) {
@@ -1446,6 +1477,9 @@
         }
       }
     }
+    
+    // Применяем цвета строк
+    applyEmployeeRowColors();
   }
   
   function toggleAssignMode(){
@@ -1739,7 +1773,7 @@
       }
     });
     
-    applyStationColors();
+    applyEmployeeRowColors();
     updateCellsHighlight();
   }
   
@@ -1851,7 +1885,6 @@
     
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, color);
-    updateCellsHighlight();
   }
   
   function applyCustomColor(groupId, employeeName) {
@@ -1901,7 +1934,6 @@
     
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, defaultColor);
-    updateCellsHighlight();
   }
   
   // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
