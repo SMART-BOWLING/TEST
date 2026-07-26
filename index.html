@@ -306,6 +306,21 @@
       position: relative;
     }
     #tableDesktop tbody tr.employee-group-header { height: auto; }
+
+    #tableDesktop tbody tr.employee-group-divider td {
+      height: 10px;
+      padding: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        #d8d8d8,
+        #d8d8d8 6px,
+        #e6e6e6 6px,
+        #e6e6e6 12px
+      );
+      border-top: 1px solid #aeaeae;
+      border-bottom: 1px solid #aeaeae;
+    }
+    #tableDesktop tbody tr.employee-group-divider { height: 10px; }
     
     .group-header-container {
       display: flex;
@@ -522,7 +537,22 @@
       min-height: var(--cell-height);
       background: #e8edf2;
       border-left: 3px solid var(--accent-blue);
-      transition: background 0.3s, border-left-color 0.3s;
+      transition: background 0.3s;
+    }
+
+    #tableDesktop tbody td.lane-hdr.unassigned-lane {
+      background: repeating-linear-gradient(
+        135deg,
+        #f4f4f4,
+        #f4f4f4 10px,
+        #ececec 10px,
+        #ececec 20px
+      ) !important;
+      border-left: 3px solid #b9b9b9 !important;
+    }
+
+    #tableDesktop tbody td.lane-hdr.block-start {
+      box-shadow: inset 0 3px 0 0 rgba(0,0,0,0.18);
     }
     
     .lane-hdr .station-logo {
@@ -967,30 +997,11 @@
 <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
 <script>
-  // ========================================================================
-  //   КОНФИГУРАЦИЯ
-  // ========================================================================
   const GAS_URL = "https://script.google.com/macros/s/AKfycbwgPy7jqW7cfd52EpLyWYcoJHqkE6LvDCaLzw1JNUUmgd0hwZ-LPHnrgXzbcX5xZdBk/exec";
   
   let stations = [];
   let currentSheetName = '';
   let availableSheets = [];
-  
-  // ========================================================================
-  //   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-  // ========================================================================
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-  
-  function showLoad(){ document.getElementById("loader").style.display = "flex"; }
-  function hideLoad(){ document.getElementById("loader").style.display = "none"; }
   
   function jsonpRequest(url) {
     return new Promise((resolve, reject) => {
@@ -1015,7 +1026,11 @@
           document.body.removeChild(script);
         }
         if (window[callbackFunction]) {
-          try { delete window[callbackFunction]; } catch(e) { window[callbackFunction] = undefined; }
+          try {
+            delete window[callbackFunction];
+          } catch(e) {
+            window[callbackFunction] = undefined;
+          }
         }
       }
       
@@ -1036,16 +1051,26 @@
   
   async function sendPostAction(action, payload) {
     showLoad();
+    
     try {
       const body = JSON.stringify(Object.assign({ action: action }, payload));
+      
+      console.log('Sending POST request:', action, payload);
+      
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: body
       });
-      if (!response.ok) throw new Error(`Сервер вернул код ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`Сервер вернул код ${response.status}`);
+      }
+      
       const result = await response.json();
+      console.log('POST response:', result);
       return result;
+      
     } catch (error) {
       console.error('POST request failed:', error);
       throw new Error(`Ошибка отправки: ${error.message || error}`);
@@ -1054,37 +1079,60 @@
     }
   }
   
-  // ========================================================================
-  //   АДМИН ПАНЕЛЬ (пользователи)
-  // ========================================================================
   async function openAdminPanel() {
     showLoad();
     document.getElementById("adminModal").classList.add("open");
     await loadUsersList();
     hideLoad();
   }
-  function closeAdminModal() { document.getElementById("adminModal").classList.remove("open"); }
+  
+  function closeAdminModal() {
+    document.getElementById("adminModal").classList.remove("open");
+  }
   
   async function loadUsersList() {
     try {
-      const data = await jsonpRequest(`${GAS_URL}?action=getUsers&_=${Date.now()}`);
-      if (!data.success) throw new Error(data.message);
+      const url = `${GAS_URL}?action=getUsers&_=${Date.now()}`;
+      const data = await jsonpRequest(url);
+      
+      if (!data.success) {
+        throw new Error(data.message);
+      }
+      
       const container = document.getElementById("usersList");
+      
       if (!data.users || data.users.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--label-tertiary);">Нет добавленных сотрудников</div>';
         return;
       }
-      let html = `<table class="users-table"><thead><tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr></thead><tbody>`;
+      
+      let html = `
+        <table class="users-table">
+          <thead>
+            <tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr>
+          </thead>
+          <tbody>
+      `;
+      
       data.users.forEach(user => {
-        html += `<tr><td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.name || '-')}</td><td>${escapeHtml(user.role || '-')}</td>
-          <td class="user-actions">
-            <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
-            <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
-          </td></tr>`;
+        html += `
+          <tr>
+            <td>${escapeHtml(user.email)}</td>
+            <td>${escapeHtml(user.name || '-')}</td>
+            <td>${escapeHtml(user.role || '-')}</td>
+            <td class="user-actions">
+              <button class="edit-user-btn" onclick='editUser(${user.row}, "${escapeHtml(user.email)}", "${escapeHtml(user.name || '')}", "${escapeHtml(user.role || '')}")'><i class="fas fa-edit"></i></button>
+              <button class="delete-user-btn" onclick='deleteUser(${user.row}, "${escapeHtml(user.email)}")'><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
       });
+      
       html += `</tbody></table>`;
       container.innerHTML = html;
+      
     } catch (error) {
+      console.error("Error loading users:", error);
       document.getElementById("usersList").innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Ошибка загрузки списка пользователей</div>';
     }
   }
@@ -1109,70 +1157,104 @@
     document.getElementById("userFormModal").classList.add("open");
   }
   
-  function closeUserFormModal() { document.getElementById("userFormModal").classList.remove("open"); }
+  function closeUserFormModal() {
+    document.getElementById("userFormModal").classList.remove("open");
+  }
   
   async function saveUser(event) {
     event.preventDefault();
+    
     const row = document.getElementById("editRow").value;
     const email = document.getElementById("userEmailInput").value.trim();
     const name = document.getElementById("userNameInput").value.trim();
     const role = document.getElementById("userRoleInput").value.trim();
-    if (!email) { alert("Введите email или логин"); return; }
+    
+    if (!email) {
+      alert("Введите email или логин");
+      return;
+    }
+    
     showLoad();
+    
     try {
-      const result = row 
+      const result = row
         ? await sendPostAction('updateUser', { row: parseInt(row), email, name, role })
         : await sendPostAction('addUser', { email, name, role });
-      if (result && result.success === false) throw new Error(result.message);
+      
+      if (result && result.success === false) {
+        throw new Error(result.message || "Ошибка сохранения");
+      }
+      
       closeUserFormModal();
       await loadUsersList();
       alert(row ? "Пользователь обновлён" : "Пользователь добавлен");
+      
     } catch (error) {
+      console.error("Error saving user:", error);
       alert("Ошибка: " + error.message);
-    } finally { hideLoad(); }
+    } finally {
+      hideLoad();
+    }
   }
   
   async function deleteUser(row, email) {
-    if (!confirm(`Удалить пользователя ${email}?`)) return;
+    if (!confirm(`Удалить пользователя ${email}?`)) {
+      return;
+    }
+    
     showLoad();
+    
     try {
       const result = await sendPostAction('deleteUser', { row });
-      if (result && result.success === false) throw new Error(result.message);
+      
+      if (result && result.success === false) {
+        throw new Error(result.message || "Ошибка удаления");
+      }
+      
       await loadUsersList();
       alert("Пользователь удалён");
+      
     } catch (error) {
+      console.error("Error deleting user:", error);
       alert("Ошибка: " + error.message);
-    } finally { hideLoad(); }
+    } finally {
+      hideLoad();
+    }
   }
   
-  // ========================================================================
-  //   ЗАГРУЗКА ЛИСТОВ И СТАНЦИЙ
-  // ========================================================================
   async function loadSheetsList() {
     try {
-      const data = await jsonpRequest(`${GAS_URL}?action=getSheetNames`);
+      const url = `${GAS_URL}?action=getSheetNames`;
+      const data = await jsonpRequest(url);
+      
       const selector = document.getElementById('sheetSelector');
+      
       if (data && data.success && data.sheets) {
         availableSheets = data.sheets;
         selector.innerHTML = '';
+        
         if (availableSheets.length === 0) {
           selector.innerHTML = '<option value="">Нет доступных листов</option>';
           return;
         }
+        
         availableSheets.forEach(name => {
           const option = document.createElement('option');
           option.value = name;
           option.textContent = name;
           selector.appendChild(option);
         });
+        
         if (availableSheets.length > 0) {
           selector.value = availableSheets[0];
           currentSheetName = availableSheets[0];
         }
       } else {
         selector.innerHTML = '<option value="">Ошибка загрузки</option>';
+        console.error('Failed to load sheets:', data?.message);
       }
     } catch (error) {
+      console.error('Error loading sheets list:', error);
       document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
     }
   }
@@ -1183,41 +1265,36 @@
     if (currentSheetName) {
       loadFromServer(currentSheetName);
       clearTempSelections();
+      resetEmployeeGroups();
     }
   }
   
   async function loadStations() {
     try {
-      const data = await jsonpRequest(`${GAS_URL}?action=getStations`);
+      const url = `${GAS_URL}?action=getStations`;
+      const data = await jsonpRequest(url);
+      
       if (data && data.success && data.stations) {
         stations = data.stations;
+        console.log('Загружено станций:', stations.length);
         return stations;
+      } else {
+        console.warn('Не удалось загрузить станции, используем стандартные');
+        return [];
       }
-      return [];
     } catch (error) {
+      console.error('Ошибка загрузки станций:', error);
       return [];
     }
   }
   
-  function getAllStationsData() {
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const result = [];
-    for (let i = 0; i < numStations; i++) {
-      const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
-      result.push({ id: i + 1, name: station.name || `Станция ${i+1}`, logo: station.logo || '' });
-    }
-    return result;
-  }
-  
-  // ========================================================================
-  //   СЛОТЫ ВРЕМЕНИ
-  // ========================================================================
+  // СЛОТЫ ВРЕМЕНИ с 11:00 до 22:00 (НЕ ВКЛЮЧИТЕЛЬНО)
   const SH = 11, EH = 22;
-  const slots = [];
-  for(let h = SH; h < EH; h++) {
-    slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 });
+  const slots = []; 
+  for(let h=SH; h<EH; h++) { 
+    slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 }); 
     if(h < EH - 1 || h === EH - 1) {
-      slots.push({ label: `${h}:30`, key: h + 0.5, hour: h, minute: 30 });
+      slots.push({ label: `${h}:30`, key: h+0.5, hour: h, minute: 30 }); 
     }
   }
   
@@ -1228,9 +1305,20 @@
   let selectedEventType = 'regular';
   const $ = id => document.getElementById(id);
   
-  // ========================================================================
-  //   ГРУППЫ СОТРУДНИКОВ (ВИЗУАЛЬНОЕ РАЗДЕЛЕНИЕ)
-  // ========================================================================
+  function getAllStationsData() {
+    const numStations = stations.length > 0 ? stations.length : 12;
+    const result = [];
+    for (let i = 0; i < numStations; i++) {
+      const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
+      result.push({
+        id: i + 1,
+        name: station.name || `Станция ${i+1}`,
+        logo: station.logo || ''
+      });
+    }
+    return result;
+  }
+  
   let employeeGroups = [];
   let nextGroupId = 1;
   let assignModeEnabled = false;
@@ -1241,7 +1329,10 @@
     try {
       const key = `employeeGroups_${currentSheetName}`;
       localStorage.setItem(key, JSON.stringify(employeeGroups));
-    } catch (e) {}
+      console.log('Employee groups saved for sheet:', currentSheetName);
+    } catch (e) {
+      console.warn('Failed to save employee groups:', e);
+    }
   }
   
   function loadEmployeeGroups() {
@@ -1253,9 +1344,12 @@
         if (employeeGroups.length > 0) {
           nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
         }
+        console.log('Employee groups loaded for sheet:', currentSheetName, employeeGroups);
         return true;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Failed to load employee groups:', e);
+    }
     return false;
   }
   
@@ -1268,31 +1362,50 @@
     return null;
   }
   
-  function getRowByLane(lane) {
+  function getRowByLane(lane){
     return document.querySelector(`#dtBody tr[data-lane="${lane}"]`);
   }
   
-  // ========================================================================
-  //   ПОСТРОЕНИЕ ТАБЛИЦЫ
-  // ========================================================================
-  function buildDesktopTable() {
+  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
+    let startTime = slots[startSlotIdx].key;
+    let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
+    return bookings.some(b => {
+      if (excludeId !== null && b.id === excludeId) return false;
+      if (b.lane !== lane) return false;
+      let bStart = b.start, bEnd = b.end;
+      return !(endTime <= bStart || startTime >= bEnd);
+    });
+  }
+  
+  function fmtFromSlotIdx(startSlotIdx, endSlotIdx = null){ 
+    let s = slots[startSlotIdx];
+    let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
+    let e = slots[endIdx];
+    if (!e) {
+      let nextHour = Math.floor(s.key) + 1;
+      return `${s.label}–${nextHour}:00`;
+    }
+    return `${s.label}–${e.label}`;
+  }
+  
+  function buildDesktopTable(){
     let headRow = document.querySelector("#dtHead tr");
-    slots.forEach(sl => {
-      let th = document.createElement("th");
-      th.className = "th-time";
-      th.textContent = sl.label;
-      headRow.appendChild(th);
+    slots.forEach(sl=>{ 
+      let th=document.createElement("th"); 
+      th.className="th-time"; 
+      th.textContent=sl.label; 
+      headRow.appendChild(th); 
     });
     
-    let body = $("dtBody");
+    let body=$("dtBody");
     const numStations = stations.length > 0 ? stations.length : 12;
     
-    for(let lane = 0; lane < numStations; lane++) {
-      let tr = document.createElement("tr");
-      tr.dataset.lane = lane;
+    for(let lane=0; lane<numStations; lane++){
+      let tr=document.createElement("tr"); 
+      tr.dataset.lane=lane;
       
-      let lhdr = document.createElement("td");
-      lhdr.className = "lane-hdr";
+      let lhdr=document.createElement("td"); 
+      lhdr.className="lane-hdr";
       
       let station = stations[lane] || { name: `Станция ${lane+1}`, logo: '' };
       let stationName = station.name || `Станция ${lane+1}`;
@@ -1302,8 +1415,8 @@
       logoImg.className = 'station-logo';
       logoImg.src = stationLogo || 'https://via.placeholder.com/32/cccccc/ffffff?text=?';
       logoImg.alt = stationName;
-      logoImg.onerror = function() {
-        this.src = 'https://via.placeholder.com/32/cccccc/ffffff?text=?';
+      logoImg.onerror = function() { 
+        this.src = 'https://via.placeholder.com/32/cccccc/ffffff?text=?'; 
       };
       
       let contentContainer = document.createElement('div');
@@ -1319,112 +1432,33 @@
       lhdr.addEventListener("click", () => handleLaneHeaderClick(lane));
       tr.appendChild(lhdr);
       
-      slots.forEach((sl, si) => {
-        let td = document.createElement("td");
-        td.className = "slot";
-        td.dataset.lane = lane;
-        td.dataset.slotIdx = si;
-        td.dataset.hour = sl.hour;
-        td.dataset.minute = sl.minute;
-        td.dataset.timeKey = sl.key;
-        tr.appendChild(td);
+      slots.forEach((sl,si)=>{ 
+        let td=document.createElement("td"); 
+        td.className="slot"; 
+        td.dataset.lane=lane; 
+        td.dataset.slotIdx=si;
+        td.dataset.hour=sl.hour;
+        td.dataset.minute=sl.minute;
+        td.dataset.timeKey=sl.key;
+        tr.appendChild(td); 
       });
       body.appendChild(tr);
     }
     
-    refreshGroupHeaders();
-  }
-  
-  // ========================================================================
-  //   ОСНОВНАЯ ФУНКЦИЯ: ОБНОВЛЕНИЕ ЗАГОЛОВКОВ ГРУПП (ВИЗУАЛЬНОЕ РАЗДЕЛЕНИЕ)
-  // ========================================================================
-  function refreshGroupHeaders() {
-    const body = $("dtBody");
-    if (!body) return;
-    
-    // Удаляем старые заголовки групп
-    body.querySelectorAll("tr.employee-group-header").forEach(tr => tr.remove());
-    
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const laneToGroup = {};
-    employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
-    
-    const colSpan = 1 + slots.length;
-    let prevGroupId = null;
-    
-    for(let lane = 0; lane < numStations; lane++) {
-      const group = laneToGroup[lane];
-      const groupId = group ? group.id : null;
-      if(groupId !== null && groupId !== prevGroupId) {
-        const row = getRowByLane(lane);
-        if(row) {
-          const color = group.color || '#4f6b4e';
-          
-          const hdrRow = document.createElement("tr");
-          hdrRow.className = "employee-group-header";
-          hdrRow.dataset.employee = group.name;
-          
-          const td = document.createElement("td");
-          td.colSpan = colSpan;
-          td.style.background = color + '22';
-          td.style.borderLeft = `3px solid ${color}`;
-          td.style.padding = '6px 16px';
-          td.style.position = "relative";
-          td.style.minHeight = "44px";
-          
-          const headerContainer = document.createElement("div");
-          headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
-          
-          const nameSpan = document.createElement("span");
-          nameSpan.className = "group-name";
-          nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
-          nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
-          headerContainer.appendChild(nameSpan);
-          
-          const colorBtn = document.createElement("button");
-          colorBtn.className = "group-color-btn";
-          colorBtn.style.cssText = `width: 28px; height: 28px; border-radius: 50%; border: 2px solid ${color}; background: ${color}; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; transition: all 0.2s; flex-shrink: 0; margin-left: auto;`;
-          colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
-          colorBtn.title = "Выбрать цвет для сотрудника";
-          colorBtn.onclick = (e) => {
-            e.stopPropagation();
-            openColorPicker(group.id, group.name, color);
-          };
-          headerContainer.appendChild(colorBtn);
-          
-          const rmBtn = document.createElement("button");
-          rmBtn.className = "group-remove-btn";
-          rmBtn.style.cssText = "border: none; background: rgba(179,63,63,0.12); color: var(--accent-red); width: 28px; height: 28px; border-radius: 5px; font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;";
-          rmBtn.innerHTML = '<i class="fas fa-times"></i>';
-          rmBtn.onclick = (e) => {
-            e.stopPropagation();
-            removeEmployeeGroup(group.id);
-          };
-          headerContainer.appendChild(rmBtn);
-          
-          td.appendChild(headerContainer);
-          hdrRow.appendChild(td);
-          row.parentNode.insertBefore(hdrRow, row);
-        }
-      }
-      prevGroupId = groupId;
-    }
-    
     applyStationColors();
-    renderAllSliders();
   }
   
   function applyStationColors() {
-    const rows = document.querySelectorAll("#dtBody tr");
+    const rows = document.querySelectorAll("#dtBody tr[data-lane]");
     rows.forEach(row => {
       const lane = parseInt(row.dataset.lane);
       const lhdr = row.querySelector('.lane-hdr');
       if (!lhdr) return;
       
       let groupColor = null;
-      for (const g of employeeGroups) {
-        if (g.stations && g.stations.includes(lane)) {
-          groupColor = g.color;
+      for (const group of employeeGroups) {
+        if (group.stations && group.stations.includes(lane)) {
+          groupColor = group.color;
           break;
         }
       }
@@ -1432,14 +1466,17 @@
       const nameSpan = lhdr.querySelector('.station-name');
       
       if (groupColor) {
+        lhdr.classList.remove('unassigned-lane');
         lhdr.style.background = groupColor + '22';
         lhdr.style.borderLeftColor = groupColor;
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
       } else {
-        lhdr.style.background = '#e8edf2';
-        lhdr.style.borderLeftColor = 'var(--accent-blue)';
+        // Станция без привязанного сотрудника — явно отличаем визуально (штриховка + серая рамка)
+        lhdr.classList.add('unassigned-lane');
+        lhdr.style.background = '';
+        lhdr.style.borderLeftColor = '#b9b9b9';
         if (nameSpan) {
           nameSpan.style.color = '#000000';
         }
@@ -1447,107 +1484,43 @@
     });
   }
   
-  // ========================================================================
-  //   ВЫБОР ЦВЕТА
-  // ========================================================================
-  function openColorPicker(groupId, employeeName, currentColor) {
-    const modal = document.createElement("div");
-    modal.className = "overlay open";
-    modal.style.cssText = "display: flex; z-index: 3000;";
-    
-    const colors = ['#4f6b4e','#3b6e8f','#b87c2e','#7a5ea8','#a04f6e','#4a8a8a','#c0392b','#2980b9','#27ae60','#f39c12','#8e44ad','#1abc9c','#e74c3c','#3498db','#2ecc71','#f1c40f','#9b59b6','#16a085','#d35400','#2c3e50','#7f8c8d','#e67e22','#1a5276','#148f77'];
-    
-    const sheet = document.createElement("div");
-    sheet.className = "sheet";
-    sheet.style.cssText = "max-width: 400px; background: white;";
-    
-    let html = `
-      <div class="sheet-head">
-        <div class="sheet-title"><i class="fas fa-palette"></i> Выбрать цвет</div>
-        <button class="sheet-x" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="sheet-body">
-        <p style="margin-bottom: 16px; font-weight: 500;">Сотрудник: <strong>${escapeHtml(employeeName)}</strong></p>
-        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px;">
-    `;
-    
-    colors.forEach(c => {
-      const selected = c === currentColor ? 'border: 3px solid #333; transform: scale(1.1);' : '';
-      html += `<div style="width: 100%; aspect-ratio: 1; background: ${c}; border-radius: 50%; cursor: pointer; ${selected} transition: all 0.2s;" 
-        onclick="selectColor('${c}', ${groupId}, '${escapeHtml(employeeName)}')"
-        onmouseover="this.style.transform='scale(1.15)'"
-        onmouseout="this.style.transform='scale(1)'"></div>`;
-    });
-    
-    html += `
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
-          <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
-          <input type="text" id="customColorInput" value="${currentColor}" style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 6px; font-size: 14px; font-family: monospace; text-transform: uppercase;" />
-          <button onclick="applyCustomColor(${groupId}, '${escapeHtml(employeeName)}')" style="padding: 8px 16px; background: var(--accent-blue); color: white; border: none; border-radius: 6px; cursor: pointer;">Применить</button>
-        </div>
-        <div style="display: flex; gap: 8px; margin-top: 16px;">
-          <button onclick="this.closest('.overlay').remove()" style="flex: 1; padding: 12px; background: var(--surface-secondary); border: none; border-radius: 6px; cursor: pointer;">Отмена</button>
-          <button onclick="resetEmployeeColor(${groupId}, '${escapeHtml(employeeName)}')" style="flex: 1; padding: 12px; background: #f2eaea; border: none; border-radius: 6px; cursor: pointer; color: var(--accent-red);">Сбросить цвет</button>
-        </div>
-      </div>
-    `;
-    
-    sheet.innerHTML = html;
-    modal.appendChild(sheet);
-    document.body.appendChild(modal);
+  function getSlotCell(lane, slotIdx){ 
+    let row = getRowByLane(lane);
+    if (!row) return null;
+    return row.cells[slotIdx+1]; 
   }
   
-  function selectColor(color, groupId, employeeName) {
-    const group = employeeGroups.find(g => g.id === groupId);
-    if (!group) return;
-    group.color = color;
-    saveEmployeeGroups();
-    const modal = document.querySelector('.overlay.open');
-    if (modal) modal.remove();
-    refreshGroupHeaders();
-    saveEmployeeColorToServer(employeeName, color);
-  }
-  
-  function applyCustomColor(groupId, employeeName) {
-    const input = document.getElementById('customColorInput');
-    if (!input) return;
-    let color = input.value.trim();
-    if (!color.startsWith('#')) color = '#' + color;
-    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
-      alert('Введите корректный HEX-цвет (например: #4f6b4e)');
-      return;
+  function updateCellsHighlight(){
+    for(let row of $("dtBody").rows) {
+      for(let i=1; i<row.cells.length; i++) {
+        row.cells[i].classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight");
+      }
     }
-    selectColor(color, groupId, employeeName);
+    for(let b of bookings){ 
+      let si=b.startSlotIdx, ei=b.endSlotIdx; 
+      if(si!==undefined && ei!==undefined) {
+        for(let i=si;i<=ei;i++){ 
+          let cell=getSlotCell(b.lane,i); 
+          if(cell) cell.classList.add(b.confirmed===true?"booking-confirmed":(b.confirmed===false?"booking-rejected":"booking-pending")); 
+        }
+      }
+    }
+    for(let t of tempBookings){ 
+      let si=t.startSlotIdx, ei=t.endSlotIdx; 
+      if(si!==undefined && ei!==undefined) {
+        for(let i=si;i<=ei;i++){ 
+          let cell=getSlotCell(t.lane,i); 
+          if(cell) cell.classList.add("temp-highlight"); 
+        }
+      }
+    }
   }
   
-  async function saveEmployeeColorToServer(employeeName, color) {
-    try {
-      await sendPostAction('saveEmployeeColor', { sheetName: currentSheetName, employeeName, color });
-    } catch (e) {}
-  }
-  
-  function resetEmployeeColor(groupId, employeeName) {
-    if (!confirm(`Сбросить цвет для "${employeeName}"?`)) return;
-    const group = employeeGroups.find(g => g.id === groupId);
-    if (!group) return;
-    const idx = employeeGroups.indexOf(group);
-    group.color = GROUP_COLORS[idx % GROUP_COLORS.length];
-    saveEmployeeGroups();
-    const modal = document.querySelector('.overlay.open');
-    if (modal) modal.remove();
-    refreshGroupHeaders();
-    saveEmployeeColorToServer(employeeName, group.color);
-  }
-  
-  // ========================================================================
-  //   НАЗНАЧЕНИЕ СОТРУДНИКОВ
-  // ========================================================================
-  function toggleAssignMode() {
+  function toggleAssignMode(){
     assignModeEnabled = !assignModeEnabled;
     const btn = $("assignToggleBtn");
     btn.classList.toggle("active", assignModeEnabled);
-    if (!assignModeEnabled) {
+    if(!assignModeEnabled){
       selectedLanesForAssign = [];
       updateAssignSelectionHighlight();
       hideAssignBar();
@@ -1556,17 +1529,17 @@
     }
   }
   
-  function handleLaneHeaderClick(lane) {
-    if (!assignModeEnabled) return;
+  function handleLaneHeaderClick(lane){
+    if(!assignModeEnabled) return;
     const idx = selectedLanesForAssign.indexOf(lane);
-    if (idx === -1) selectedLanesForAssign.push(lane);
-    else selectedLanesForAssign.splice(idx, 1);
+    if(idx === -1) selectedLanesForAssign.push(lane);
+    else selectedLanesForAssign.splice(idx,1);
     updateAssignSelectionHighlight();
     renderAssignBar();
   }
   
-  function updateAssignSelectionHighlight() {
-    document.querySelectorAll("#tableDesktop td.lane-hdr").forEach(td => {
+  function updateAssignSelectionHighlight(){
+    document.querySelectorAll("#tableDesktop td.lane-hdr").forEach(td=>{
       const tr = td.closest("tr");
       const lane = tr ? parseInt(tr.dataset.lane) : NaN;
       td.classList.toggle("assign-selectable", assignModeEnabled);
@@ -1574,10 +1547,10 @@
     });
   }
   
-  function renderAssignBar() {
+  function renderAssignBar(){
     let bar = $("assignBar");
-    if (selectedLanesForAssign.length === 0) { hideAssignBar(); return; }
-    if (!bar) {
+    if(selectedLanesForAssign.length === 0){ hideAssignBar(); return; }
+    if(!bar){
       bar = document.createElement("div");
       bar.id = "assignBar";
       bar.className = "assign-bar";
@@ -1597,33 +1570,82 @@
     bar.style.display = "flex";
   }
   
-  function hideAssignBar() {
+  function hideAssignBar(){
     const bar = $("assignBar");
-    if (bar) bar.style.display = "none";
+    if(bar) bar.style.display = "none";
   }
   
-  function cancelAssignSelection() {
+  function cancelAssignSelection(){
     selectedLanesForAssign = [];
     updateAssignSelectionHighlight();
     hideAssignBar();
   }
   
-  async function applyEmployeeAssignment() {
+  async function saveEmployeeGroupsToServer() {
+    try {
+      const allStations = getAllStationsData();
+      
+      const payload = {
+        sheetName: currentSheetName,
+        employeeGroups: employeeGroups.map(g => ({
+          id: g.id,
+          name: g.name,
+          stations: g.stations.map(l => l + 1),
+          color: g.color || null
+        })),
+        allStations: allStations
+      };
+      
+      console.log("Sending employee groups:", payload);
+      
+      const result = await sendPostAction('saveEmployeeGroups', payload);
+      
+      console.log("Response from server:", result);
+      
+      if (result && result.success !== false) {
+        console.log('Employee groups saved to server');
+        return true;
+      } else {
+        console.error('Failed to save employee groups:', result?.message);
+        return false;
+      }
+    } catch (e) {
+      console.error('Error saving employee groups:', e);
+      alert("Ошибка при сохранении сотрудников: " + e.message);
+      return false;
+    }
+  }
+  
+  async function applyEmployeeAssignment(){
     const input = $("assignEmployeeName");
     const name = input ? input.value.trim() : "";
-    if (!name) { alert("Введите ФИО сотрудника"); return; }
-    if (selectedLanesForAssign.length === 0) { alert("Выберите станции для привязки"); return; }
+    if(!name){ alert("Введите ФИО сотрудника"); return; }
+    if(selectedLanesForAssign.length === 0) {
+      alert("Выберите станции для привязки");
+      return;
+    }
     
     const lanesSet = new Set(selectedLanesForAssign);
+    let conflict = false;
     employeeGroups.forEach(g => {
-      g.stations = g.stations.filter(l => !lanesSet.has(l));
+      g.stations.forEach(l => {
+        if (lanesSet.has(l)) {
+          conflict = true;
+        }
+      });
     });
-    employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+    
+    if (conflict) {
+      employeeGroups.forEach(g => { 
+        g.stations = g.stations.filter(l => !lanesSet.has(l)); 
+      });
+      employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+    }
     
     const colorIdx = employeeGroups.length % GROUP_COLORS.length;
-    const newGroup = {
-      id: nextGroupId++,
-      name,
+    const newGroup = { 
+      id: nextGroupId++, 
+      name, 
       stations: [...selectedLanesForAssign],
       color: GROUP_COLORS[colorIdx]
     };
@@ -1637,292 +1659,555 @@
     
     showLoad();
     try {
-      const allStations = getAllStationsData();
-      const payload = {
-        sheetName: currentSheetName,
-        employeeGroups: employeeGroups.map(g => ({
-          id: g.id,
-          name: g.name,
-          stations: g.stations.map(l => l + 1),
-          color: g.color
-        })),
-        allStations: allStations
-      };
-      const result = await sendPostAction('saveEmployeeGroups', payload);
-      if (result && result.success !== false) {
+      const success = await saveEmployeeGroupsToServer();
+      if (success) {
         alert(`Сотрудник "${name}" привязан к станциям`);
       } else {
-        alert("Ошибка при сохранении на сервере");
+        alert("Ошибка при сохранении на сервере, но данные сохранены локально");
       }
     } catch (e) {
-      alert("Ошибка: " + e.message);
+      alert("Ошибка при сохранении: " + e.message);
     } finally {
       hideLoad();
     }
   }
   
-  async function removeEmployeeGroup(groupId) {
+  async function removeEmployeeGroup(groupId){
     const group = employeeGroups.find(g => g.id === groupId);
-    if (!group || !confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
+    if(!group) return;
+    if(!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
     employeeGroups = employeeGroups.filter(g => g.id !== groupId);
     saveEmployeeGroups();
     refreshGroupHeaders();
     
     showLoad();
     try {
-      const allStations = getAllStationsData();
-      const payload = {
-        sheetName: currentSheetName,
-        employeeGroups: employeeGroups.map(g => ({
-          id: g.id,
-          name: g.name,
-          stations: g.stations.map(l => l + 1),
-          color: g.color
-        })),
-        allStations: allStations
-      };
-      await sendPostAction('saveEmployeeGroups', payload);
+      await saveEmployeeGroupsToServer();
     } catch (e) {
-      alert("Ошибка: " + e.message);
+      alert("Ошибка при сохранении: " + e.message);
     } finally {
       hideLoad();
     }
   }
   
-  function resetEmployeeGroups() {
+  function resetEmployeeGroups(){
     employeeGroups = [];
     selectedLanesForAssign = [];
-    if (assignModeEnabled) toggleAssignMode();
+    if(assignModeEnabled) toggleAssignMode();
     saveEmployeeGroups();
     refreshGroupHeaders();
   }
   
-  // ========================================================================
-  //   БРОНИРОВАНИЯ
-  // ========================================================================
-  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
-    let startTime = slots[startSlotIdx].key;
-    let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
-    return bookings.some(b => {
-      if (excludeId !== null && b.id === excludeId) return false;
-      if (b.lane !== lane) return false;
-      let bStart = b.start, bEnd = b.end;
-      return !(endTime <= bStart || startTime >= bEnd);
-    });
-  }
+  // ================ ОСНОВНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ ЗАГОЛОВКОВ ГРУПП ================
   
-  function fmtFromSlotIdx(startSlotIdx, endSlotIdx = null) {
-    let s = slots[startSlotIdx];
-    let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
-    let e = slots[endIdx];
-    if (!e) {
-      let nextHour = Math.floor(s.key) + 1;
-      return `${s.label}–${nextHour}:00`;
+  function refreshGroupHeaders(){
+    const body = $("dtBody");
+    if(!body) return;
+    
+    body.querySelectorAll("tr.employee-group-header, tr.employee-group-divider").forEach(tr => tr.remove());
+    document.querySelectorAll("#tableDesktop td.lane-hdr.block-start").forEach(td => td.classList.remove("block-start"));
+    
+    const numStations = stations.length > 0 ? stations.length : 12;
+    const laneToGroup = {};
+    employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
+    
+    const colSpan = 1 + slots.length;
+    let prevGroupId; // undefined sentinel: distinct from null (unassigned) so lane 0 always starts a block
+    
+    for(let lane = 0; lane < numStations; lane++){
+      const group = laneToGroup[lane];
+      const groupId = group ? group.id : null;
+
+      if(groupId !== prevGroupId){
+        const row = getRowByLane(lane);
+        if(row){
+          const lhdrCell = row.querySelector('.lane-hdr');
+          if(lhdrCell) lhdrCell.classList.add('block-start');
+
+          if(group){
+            // Полноценный заголовок блока станций конкретного сотрудника
+            const color = group.color || '#4f6b4e';
+            
+            const hdrRow = document.createElement("tr");
+            hdrRow.className = "employee-group-header";
+            hdrRow.dataset.employee = group.name;
+            hdrRow.style.position = "relative";
+            
+            const td = document.createElement("td");
+            td.colSpan = colSpan;
+            td.style.background = color + '22';
+            td.style.borderLeft = `3px solid ${color}`;
+            td.style.padding = '6px 16px';
+            td.style.position = "relative";
+            td.style.minHeight = "44px";
+            
+            const headerContainer = document.createElement("div");
+            headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
+            
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "group-name";
+            nameSpan.style.cssText = "font-weight: 600; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 6px;";
+            nameSpan.innerHTML = `<i class="fas fa-user" style="color: ${color};"></i> ${escapeHtml(group.name)}`;
+            headerContainer.appendChild(nameSpan);
+            
+            const colorBtn = document.createElement("button");
+            colorBtn.className = "group-color-btn";
+            colorBtn.style.cssText = `
+              width: 28px; 
+              height: 28px; 
+              border-radius: 50%; 
+              border: 2px solid ${color};
+              background: ${color};
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              color: white;
+              transition: all 0.2s;
+              flex-shrink: 0;
+              margin-left: auto;
+            `;
+            colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
+            colorBtn.title = "Выбрать цвет для сотрудника";
+            colorBtn.onclick = (e) => {
+              e.stopPropagation();
+              openColorPicker(group.id, group.name, color);
+            };
+            headerContainer.appendChild(colorBtn);
+            
+            const rmBtn = document.createElement("button");
+            rmBtn.className = "group-remove-btn";
+            rmBtn.style.cssText = `
+              border: none;
+              background: rgba(179,63,63,0.12);
+              color: var(--accent-red);
+              width: 28px;
+              height: 28px;
+              border-radius: 5px;
+              font-size: 14px;
+              cursor: pointer;
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            `;
+            rmBtn.innerHTML = '<i class="fas fa-times"></i>';
+            rmBtn.onclick = (e) => { 
+              e.stopPropagation(); 
+              removeEmployeeGroup(groupId); 
+            };
+            headerContainer.appendChild(rmBtn);
+            
+            td.appendChild(headerContainer);
+            hdrRow.appendChild(td);
+            row.parentNode.insertBefore(hdrRow, row);
+          } else if (lane !== 0) {
+            // Переход к станциям без привязанного сотрудника — тонкая штрихованная разделительная полоса,
+            // чтобы визуально отделить их от предыдущего блока сотрудника
+            const divRow = document.createElement("tr");
+            divRow.className = "employee-group-divider";
+            const dtd = document.createElement("td");
+            dtd.colSpan = colSpan;
+            divRow.appendChild(dtd);
+            row.parentNode.insertBefore(divRow, row);
+          }
+        }
+      }
+      prevGroupId = groupId;
     }
-    return `${s.label}–${e.label}`;
-  }
-  
-  function getSlotCell(lane, slotIdx) {
-    let row = getRowByLane(lane);
-    if (!row) return null;
-    return row.cells[slotIdx + 1];
-  }
-  
-  function clearTempSelections() {
-    tempBookings = [];
-    renderInlineTempCards();
+    
+    applyStationColors();
     renderAllSliders();
+  }
+  
+  // ================ ВЫБОР ЦВЕТА ================
+  
+  function openColorPicker(groupId, employeeName, currentColor) {
+    const modal = document.createElement("div");
+    modal.className = "overlay open";
+    modal.style.cssText = "display: flex; z-index: 3000;";
+    
+    const colors = [
+      '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
+      '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
+      '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
+      '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
+    ];
+    
+    const sheet = document.createElement("div");
+    sheet.className = "sheet";
+    sheet.style.cssText = "max-width: 400px; background: white;";
+    
+    let html = `
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-palette"></i> Выбрать цвет</div>
+        <button class="sheet-x" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <p style="margin-bottom: 16px; font-weight: 500;">Сотрудник: <strong>${escapeHtml(employeeName)}</strong></p>
+        <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px;">
+    `;
+    
+    colors.forEach(c => {
+      const selected = c === currentColor ? 'border: 3px solid #333; transform: scale(1.1);' : '';
+      html += `
+        <div style="
+          width: 100%; 
+          aspect-ratio: 1; 
+          background: ${c}; 
+          border-radius: 50%; 
+          cursor: pointer;
+          ${selected}
+          transition: all 0.2s;
+        " 
+        onclick="selectColor('${c}', ${groupId}, '${escapeHtml(employeeName)}')"
+        onmouseover="this.style.transform='scale(1.15)'"
+        onmouseout="this.style.transform='scale(1)'"
+        ></div>
+      `;
+    });
+    
+    html += `
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
+          <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
+          <input type="text" id="customColorInput" value="${currentColor}" style="
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: monospace;
+            text-transform: uppercase;
+          " />
+          <button onclick="applyCustomColor(${groupId}, '${escapeHtml(employeeName)}')" style="
+            padding: 8px 16px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+          ">Применить</button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+          <button onclick="this.closest('.overlay').remove()" style="
+            flex: 1;
+            padding: 12px;
+            background: var(--surface-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+          ">Отмена</button>
+          <button onclick="resetEmployeeColor(${groupId}, '${escapeHtml(employeeName)}')" style="
+            flex: 1;
+            padding: 12px;
+            background: #f2eaea;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--accent-red);
+          ">Сбросить цвет</button>
+        </div>
+      </div>
+    `;
+    
+    sheet.innerHTML = html;
+    modal.appendChild(sheet);
+    document.body.appendChild(modal);
+  }
+  
+  function selectColor(color, groupId, employeeName) {
+    const group = employeeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    group.color = color;
+    saveEmployeeGroups();
+    
+    const modal = document.querySelector('.overlay.open');
+    if (modal) modal.remove();
+    
+    refreshGroupHeaders();
+    saveEmployeeColorToServer(employeeName, color);
+    renderAllSliders();
+  }
+  
+  function applyCustomColor(groupId, employeeName) {
+    const input = document.getElementById('customColorInput');
+    if (!input) return;
+    
+    let color = input.value.trim();
+    if (!color.startsWith('#')) {
+      color = '#' + color;
+    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+      alert('Введите корректный HEX-цвет (например: #4f6b4e)');
+      return;
+    }
+    selectColor(color, groupId, employeeName);
+  }
+  
+  async function saveEmployeeColorToServer(employeeName, color) {
+    try {
+      const payload = {
+        sheetName: currentSheetName,
+        employeeName: employeeName,
+        color: color
+      };
+      const result = await sendPostAction('saveEmployeeColor', payload);
+      console.log('Color saved:', result);
+    } catch (e) {
+      console.error('Error saving color:', e);
+    }
+  }
+  
+  function resetEmployeeColor(groupId, employeeName) {
+    if (!confirm(`Сбросить цвет для "${employeeName}"?`)) return;
+    
+    const defaultColors = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+    const group = employeeGroups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const idx = employeeGroups.indexOf(group);
+    const defaultColor = defaultColors[idx % defaultColors.length];
+    group.color = defaultColor;
+    
+    saveEmployeeGroups();
+    
+    const modal = document.querySelector('.overlay.open');
+    if (modal) modal.remove();
+    
+    refreshGroupHeaders();
+    saveEmployeeColorToServer(employeeName, defaultColor);
+    renderAllSliders();
+  }
+  
+  // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
+  
+  function clearTempSelections(){ 
+    tempBookings = []; 
+    renderInlineTempCards(); 
+    renderAllSliders(); 
     updateCellsHighlight();
   }
   
-  function renderInlineTempCards() {
-    const container = $("inlineTempContainer");
-    if (!container) return;
-    if (tempBookings.length === 0) { container.innerHTML = ""; return; }
-    container.innerHTML = "";
-    tempBookings.forEach((tb, idx) => {
-      let card = document.createElement("div");
-      card.className = "temp-card-inline";
+  function renderInlineTempCards(){ 
+    const container=$("inlineTempContainer"); 
+    if(!container) return; 
+    if(tempBookings.length===0){ 
+      container.innerHTML=""; 
+      return; 
+    } 
+    container.innerHTML=""; 
+    tempBookings.forEach((tb,idx)=>{ 
+      let card=document.createElement("div"); 
+      card.className="temp-card-inline"; 
       let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
       let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-      card.innerHTML = `<strong>${stationName}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`;
-      card.querySelector(".temp-rm").onclick = () => {
-        tempBookings.splice(idx, 1);
-        renderInlineTempCards();
-        renderAllSliders();
+      card.innerHTML=`<strong>${stationName}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`; 
+      card.querySelector(".temp-rm").onclick=()=>{ 
+        tempBookings.splice(idx,1); 
+        renderInlineTempCards(); 
+        renderAllSliders(); 
         updateCellsHighlight();
-      };
-      container.appendChild(card);
-    });
-    updatePreviewTimes();
+      }; 
+      container.appendChild(card); 
+    }); 
+    updatePreviewTimes(); 
   }
   
-  function updatePreviewTimes() {
-    const span = document.getElementById("previewTimes");
-    if (span) span.innerText = tempBookings.length ? tempBookings.map(tb => {
+  function updatePreviewTimes() { 
+    const span=document.getElementById("previewTimes"); 
+    if(span) span.innerText = tempBookings.length ? tempBookings.map(tb=>{
       let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
       let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
       return `${stationName} (${timeStr})`;
-    }).join("; ") : "—";
+    }).join("; ") : "—"; 
   }
   
-  function updateCellsHighlight() {
-    for (let row of $("dtBody").rows) {
-      for (let i = 1; i < row.cells.length; i++) {
-        row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
-      }
-    }
-    for (let b of bookings) {
-      let si = b.startSlotIdx, ei = b.endSlotIdx;
-      if (si !== undefined && ei !== undefined) {
-        for (let i = si; i <= ei; i++) {
-          let cell = getSlotCell(b.lane, i);
-          if (cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending"));
-        }
-      }
-    }
-    for (let t of tempBookings) {
-      let si = t.startSlotIdx, ei = t.endSlotIdx;
-      if (si !== undefined && ei !== undefined) {
-        for (let i = si; i <= ei; i++) {
-          let cell = getSlotCell(t.lane, i);
-          if (cell) cell.classList.add("temp-highlight");
-        }
-      }
-    }
-  }
-  
-  // ========================================================================
-  //   DRAG & DROP
-  // ========================================================================
+  // ================ DRAG & DROP ================
   let isDragging = false;
   let dragStartCell = null;
   let dragInterval = null;
   let dragLane = -1;
   let dragStartIdx = -1;
   let dragEndIdx = -1;
-  
-  function onMouseDown(e) {
-    if (dragModeEnabled || assignModeEnabled) return;
-    let t = e.target;
-    if (t.classList?.contains("slot")) {
-      e.preventDefault();
-      let lane = parseInt(t.dataset.lane);
-      let si = parseInt(t.dataset.slotIdx);
-      isDragging = true;
+
+  function onMouseDown(e){ 
+    if(dragModeEnabled || assignModeEnabled) return; 
+    let t=e.target; 
+    if(t.classList?.contains("slot")){ 
+      e.preventDefault(); 
+      let lane=parseInt(t.dataset.lane); 
+      let si=parseInt(t.dataset.slotIdx);
+      let hour = t.dataset.hour;
+      let minute = t.dataset.minute;
+      
+      console.log('🔽 КЛИК по ячейке:', { lane, slotIdx: si, hour, minute });
+      
+      isDragging = true; 
       dragLane = lane;
       dragStartIdx = si;
       dragEndIdx = si;
       dragStartCell = { lane, si };
       dragInterval = { lane, startIdx: si, endIdx: si };
-      highlightDragInterval(lane, si, si);
-    }
+      
+      highlightDragInterval(lane, si, si); 
+    } 
   }
-  
-  function onMouseMove(e) {
-    if (!dragModeEnabled && isDragging && dragStartCell) {
-      let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
-      if (el) {
-        let lane = parseInt(el.dataset.lane);
-        let idx = parseInt(el.dataset.slotIdx);
-        if (lane === dragStartCell.lane) {
-          let ns = Math.min(dragStartCell.si, idx);
-          let ne = Math.max(dragStartCell.si, idx);
+
+  function onMouseMove(e){ 
+    if(!dragModeEnabled && isDragging && dragStartCell){ 
+      let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot")); 
+      if(el){ 
+        let lane = parseInt(el.dataset.lane); 
+        let idx = parseInt(el.dataset.slotIdx); 
+        if(lane === dragStartCell.lane){ 
+          let ns = Math.min(dragStartCell.si, idx); 
+          let ne = Math.max(dragStartCell.si, idx); 
           dragLane = lane;
           dragStartIdx = ns;
           dragEndIdx = ne;
-          dragInterval = { lane, startIdx: ns, endIdx: ne };
-          highlightDragInterval(lane, ns, ne);
-        }
-      }
-    }
+          dragInterval = { lane, startIdx: ns, endIdx: ne }; 
+          highlightDragInterval(lane, ns, ne); 
+        } 
+      } 
+    } 
   }
-  
-  function onMouseUp() {
-    if (!dragModeEnabled && isDragging && dragInterval) {
+
+  function onMouseUp(){ 
+    if(!dragModeEnabled && isDragging && dragInterval){ 
       let lane = dragLane;
       let startIdx = dragStartIdx;
       let endIdx = dragEndIdx;
       
-      if (startIdx >= 0 && endIdx < slots.length && startIdx <= endIdx) {
-        if (hasConflict(lane, startIdx, endIdx)) {
-          alert("⛔ Это время уже занято другой записью");
-        } else {
-          const newBooking = {
-            id: nextTempId++,
-            lane: lane,
-            startSlotIdx: startIdx,
-            endSlotIdx: endIdx,
-            type: 'regular'
-          };
-          tempBookings.push(newBooking);
-        }
+      console.log('🔼 ОТПУСКАНИЕ:', { lane, startIdx, endIdx });
+      
+      if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
+        console.error('❌ Невалидные индексы:', startIdx, endIdx);
+        resetDragState();
+        return;
       }
-      renderInlineTempCards();
-      renderAllSliders();
+      
+      if(hasConflict(lane, startIdx, endIdx)){ 
+        alert("⛔ Это время уже занято другой записью"); 
+      } else { 
+        const startSlot = slots[startIdx];
+        const endSlot = slots[endIdx + 1] || { key: slots[endIdx].key + 0.5 };
+        
+        console.log('✅ СОЗДАНИЕ ЗАПИСИ:', { 
+          lane, 
+          startIdx, 
+          endIdx,
+          startTime: startSlot.key,
+          endTime: endSlot.key,
+          startLabel: startSlot.label,
+          endLabel: endSlot.label
+        });
+        
+        const newBooking = { 
+          id: nextTempId++, 
+          lane: lane, 
+          startSlotIdx: startIdx, 
+          endSlotIdx: endIdx,
+          type: 'regular'
+        };
+        
+        tempBookings.push(newBooking); 
+        console.log('📝 Добавлена временная запись:', tempBookings[tempBookings.length - 1]);
+      } 
+      
+      renderInlineTempCards(); 
+      renderAllSliders(); 
       updateCellsHighlight();
-    }
+    } 
+    
     resetDragState();
   }
   
   function resetDragState() {
-    isDragging = false;
-    dragInterval = null;
+    isDragging = false; 
+    dragInterval = null; 
     dragStartCell = null;
     dragLane = -1;
     dragStartIdx = -1;
     dragEndIdx = -1;
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
+    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over")); 
   }
   
-  function highlightDragInterval(lane, si, ei) {
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
-    for (let i = si; i <= ei; i++) {
-      let cell = getSlotCell(lane, i);
-      if (cell) cell.classList.add("drag-over");
+  function highlightDragInterval(lane,si,ei){ 
+    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td=>td.classList.remove("drag-over")); 
+    for(let i=si;i<=ei;i++){ 
+      let cell=getSlotCell(lane,i); 
+      if(cell) cell.classList.add("drag-over"); 
+    } 
+  }
+  // ================ КОНЕЦ DRAG & DROP ================
+  
+  function openBookModal(){ 
+    if(tempBookings.length===0){ 
+      alert("Сначала выделите интервал на станции"); 
+      return; 
     }
-  }
-  
-  // ========================================================================
-  //   СОХРАНЕНИЕ ВРЕМЕННЫХ ЗАПИСЕЙ
-  // ========================================================================
-  function openBookModal() {
-    if (tempBookings.length === 0) {
-      alert("Сначала выделите интервал на станции");
-      return;
+    
+    for (const tb of tempBookings) {
+      if (tb.startSlotIdx === undefined || tb.endSlotIdx === undefined || 
+          tb.startSlotIdx < 0 || tb.startSlotIdx >= slots.length ||
+          tb.endSlotIdx < 0 || tb.endSlotIdx >= slots.length) {
+        alert("Обнаружена некорректная временная запись. Очистите выделение и попробуйте снова.");
+        clearTempSelections();
+        return;
+      }
     }
-    updatePreviewTimes();
-    $("bookModal").classList.add("open");
+    
+    updatePreviewTimes(); 
+    $("bookModal").classList.add("open"); 
   }
   
-  function closeBookModal() {
-    $("bookModal").classList.remove("open");
+  function closeBookModal(){ 
+    $("bookModal").classList.remove("open"); 
   }
   
-  async function submitTempBookings() {
-    if (tempBookings.length === 0) {
+  async function submitTempBookings(){ 
+    if(tempBookings.length===0) {
       alert("Нет записей для сохранения");
-      return;
+      return; 
     }
     const eventType = document.getElementById("eventTypeSelect").value;
-    showLoad();
-    try {
+    
+    showLoad(); 
+    try{ 
       const allStations = getAllStationsData();
+      
       const scheduleData = tempBookings.map(tb => {
         const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
         const endSlotIdx = tb.endSlotIdx + 1;
         const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
-        if (startTime === null || endTime === null) return null;
+        
+        console.log('📤 Отправка записи:', { 
+          startSlotIdx: tb.startSlotIdx, 
+          endSlotIdx: tb.endSlotIdx,
+          startTime, 
+          endTime,
+          station: tb.lane
+        });
+        
+        if (startTime === null || endTime === null) {
+          console.error('❌ Ошибка: startTime или endTime = null', tb);
+          return null;
+        }
+        
         const isBirthday = eventType === 'birthday';
         const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-        return {
+        
+        return { 
           sheetName: currentSheetName,
           stationNumber: tb.lane + 1,
           stationName: stationName,
-          start: startTime,
-          end: endTime,
-          name: '',
-          phone: '',
+          start: startTime, 
+          end: endTime, 
+          name: '', 
+          phone: '', 
           comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
           type: eventType
         };
@@ -1940,109 +2225,139 @@
         employeeGroups: employeeGroups.map(g => ({
           name: g.name,
           stations: g.stations.map(l => l + 1),
-          color: g.color
+          color: g.color || null
         }))
       };
       
+      console.log("📦 Sending payload:", payload);
+      
       const result = await sendPostAction('addSchedule', payload);
-      if (result && result.success !== false) {
-        clearTempSelections();
-        await loadFromServer(currentSheetName);
-        closeBookModal();
+      
+      console.log("📨 Response from server:", result);
+      
+      if(result && result.success !== false){
+        clearTempSelections(); 
+        await loadFromServer(currentSheetName); 
+        closeBookModal(); 
         alert(`✅ Записи успешно сохранены! (${result.savedCount || scheduleData.length} ячеек)`);
       } else {
         alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
       }
-    } catch (e) {
-      alert("❌ Ошибка при сохранении: " + e.message);
-    } finally {
-      hideLoad();
-    }
+    } catch(e){
+      console.error("❌ Error saving bookings:", e);
+      alert("❌ Ошибка при сохранении: " + e.message + "\nПопробуйте обновить страницу и повторить.");
+    } 
+    hideLoad(); 
   }
   
-  // ========================================================================
-  //   ЗАГРУЗКА С СЕРВЕРА
-  // ========================================================================
-  async function loadFromServer(sheetName) {
-    showLoad();
-    try {
-      const data = await jsonpRequest(`${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`);
-      if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
+  async function loadFromServer(sheetName){ 
+    showLoad(); 
+    try{ 
+      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`;
+      const data = await jsonpRequest(url);
       
-      bookings = data.schedule ? data.schedule.map(b => {
-        if (b.start === undefined || b.end === undefined) return null;
+      console.log("Loaded data from server:", data);
+      
+      if (!data || !data.success) {
+        throw new Error(data?.message || "Ошибка загрузки данных");
+      }
+      
+      bookings = data.schedule ? data.schedule.map(b => { 
+        if (b.start === undefined || b.end === undefined) {
+          console.warn('Пропущена запись без start/end:', b);
+          return null;
+        }
+        
         let startKey = parseFloat(b.start);
         let endKey = parseFloat(b.end);
-        if (isNaN(startKey) || isNaN(endKey)) return null;
+        
+        if (isNaN(startKey) || isNaN(endKey)) {
+          console.warn('Пропущена запись с невалидными start/end:', b);
+          return null;
+        }
+        
         let startSlotIdx = -1;
         let endSlotIdx = -1;
+        
         for (let i = 0; i < slots.length; i++) {
-          if (slots[i].key === startKey) { startSlotIdx = i; break; }
+          if (slots[i].key === startKey) {
+            startSlotIdx = i;
+            break;
+          }
         }
+        
         if (startSlotIdx === -1) {
           for (let i = 0; i < slots.length; i++) {
-            if (slots[i].key >= startKey) { startSlotIdx = i; break; }
+            if (slots[i].key >= startKey) {
+              startSlotIdx = i;
+              break;
+            }
           }
           if (startSlotIdx === -1) startSlotIdx = 0;
         }
+        
         for (let i = 0; i < slots.length; i++) {
-          if (slots[i].key === endKey) { endSlotIdx = i - 1; break; }
+          if (slots[i].key === endKey) {
+            endSlotIdx = i - 1;
+            break;
+          }
         }
-        if (endSlotIdx === -1 || endSlotIdx >= slots.length) endSlotIdx = slots.length - 1;
-        if (endSlotIdx < startSlotIdx) endSlotIdx = startSlotIdx;
+        
+        if (endSlotIdx === -1 || endSlotIdx >= slots.length) {
+          endSlotIdx = slots.length - 1;
+        }
+        if (endSlotIdx < startSlotIdx) {
+          endSlotIdx = startSlotIdx;
+        }
+        
+        console.log(`Загрузка: startKey=${startKey}, endKey=${endKey} -> startSlotIdx=${startSlotIdx}, endSlotIdx=${endSlotIdx}`);
+        
         let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
         let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
-        return {
+        
+        return { 
           id: b.id || Date.now() + Math.random(),
           lane: stationIdx,
-          start: startKey,
-          end: endKey,
-          startSlotIdx: startSlotIdx,
-          endSlotIdx: endSlotIdx,
-          name: b.name || '',
-          phone: b.phone || '',
-          comment: b.comment || '',
+          start: startKey, 
+          end: endKey, 
+          startSlotIdx: startSlotIdx, 
+          endSlotIdx: endSlotIdx, 
+          name: b.name || '', 
+          phone: b.phone || '', 
+          comment: b.comment || '', 
           confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
           type: isBirthday ? 'birthday' : 'regular'
-        };
-      }).filter(b => b !== null) : [];
+        }; 
+      }).filter(b => b !== null) : []; 
       
-      // ЗАГРУЗКА ГРУПП СОТРУДНИКОВ С СЕРВЕРА (ГЛАВНОЕ!)
       if (data.employeeGroups && data.employeeGroups.length > 0) {
         employeeGroups = data.employeeGroups;
         nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
         saveEmployeeGroups();
-        console.log('✅ Загружены группы сотрудников с сервера:', employeeGroups);
+        console.log('Employee groups loaded from server:', employeeGroups);
       } else {
-        // Если с сервера не пришли - пробуем из localStorage
         const loaded = loadEmployeeGroups();
         if (!loaded) {
           employeeGroups = [];
         }
-        console.log('📦 Загружены группы из localStorage:', employeeGroups);
       }
-      
-      // ОБНОВЛЯЕМ ЗАГОЛОВКИ И ЦВЕТА
       refreshGroupHeaders();
-      renderAllSliders();
+      
+      renderAllSliders(); 
       updateCellsHighlight();
       
-      console.log(`✅ Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
+      console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
       
-    } catch (e) {
-      console.error('Ошибка загрузки:', e);
-      alert("Ошибка загрузки: " + e.message);
-    } finally {
-      hideLoad();
-    }
+    } catch(e){
+      console.error('Ошибка загрузки:', e); 
+      alert("Ошибка загрузки: " + e.message + "\nПроверьте подключение к интернету и доступность сервера.");
+    } 
+    hideLoad(); 
   }
   
-  // ========================================================================
-  //   СОХРАНЕНИЕ ЗАПИСИ НА СЕРВЕР
-  // ========================================================================
-  async function saveToServer(booking) {
-    if (!booking.id) return;
-    try {
+  async function saveToServer(booking){ 
+    if(!booking.id) return; 
+    try{ 
       const payload = {
         id: booking.id,
         station: booking.lane + 1,
@@ -2053,30 +2368,41 @@
         comment: booking.comment || '',
         sheetName: currentSheetName
       };
-      await sendPostAction('update', payload);
-    } catch (e) {}
+      console.log('Updating booking:', payload);
+      const result = await sendPostAction('update', payload);
+      if(result && result.success){
+        console.log('Booking updated successfully');
+      } else {
+        console.error('Failed to update booking:', result && result.message);
+      }
+    } catch(e){console.error("Error updating booking:", e);} 
   }
   
-  // ========================================================================
-  //   ОТРИСОВКА ПОЛЗУНКОВ (С ЦВЕТАМИ СОТРУДНИКОВ)
-  // ========================================================================
-  function renderAllSliders() {
-    let container = $("slidersLayer");
-    if (!container) return;
-    container.innerHTML = "";
+  // ================ ОБЪЕДИНЕНИЕ И ОТРИСОВКА ПОЛЗУНКОВ ================
+  
+  function renderAllSliders(){ 
+    let container=$("slidersLayer"); 
+    if(!container) return; 
+    container.innerHTML=""; 
     
-    const allItems = [...bookings, ...tempBookings.map(t => ({...t, isTemp: true}))];
+    const allItems = [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))];
+    
     const groupedByLane = {};
     allItems.forEach(item => {
-      if (!groupedByLane[item.lane]) groupedByLane[item.lane] = [];
+      if (!groupedByLane[item.lane]) {
+        groupedByLane[item.lane] = [];
+      }
       groupedByLane[item.lane].push(item);
     });
     
     const mergedItems = [];
+    
     for (const lane in groupedByLane) {
       const items = groupedByLane[lane];
       items.sort((a, b) => a.startSlotIdx - b.startSlotIdx);
+      
       let currentGroup = null;
+      
       for (const item of items) {
         if (currentGroup === null) {
           currentGroup = {
@@ -2090,7 +2416,10 @@
             comment: item.comment || ''
           };
         } else {
-          if (item.startSlotIdx <= currentGroup.endSlotIdx + 1) {
+          const nextStart = item.startSlotIdx;
+          const currentEnd = currentGroup.endSlotIdx;
+          
+          if (nextStart <= currentEnd + 1) {
             currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
             currentGroup.items.push(item);
             if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
@@ -2112,12 +2441,16 @@
           }
         }
       }
-      if (currentGroup !== null) mergedItems.push(currentGroup);
+      
+      if (currentGroup !== null) {
+        mergedItems.push(currentGroup);
+      }
     }
     
     for (const group of mergedItems) {
       let startIdx = group.startSlotIdx;
       let endIdx = group.endSlotIdx;
+      
       if (startIdx === undefined || endIdx === undefined) continue;
       
       let row = getRowByLane(group.lane);
@@ -2133,11 +2466,11 @@
       let height = row.offsetHeight - 2;
       
       let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
+      let laneType = 'blue';
       
       let slider = document.createElement("div");
       slider.className = `slider ${status}`;
       
-      // ОПРЕДЕЛЯЕМ ЦВЕТ СОТРУДНИКА ДЛЯ СТАНЦИИ
       let groupColor = null;
       for (const g of employeeGroups) {
         if (g.stations && g.stations.includes(group.lane)) {
@@ -2146,6 +2479,7 @@
         }
       }
       
+      // ПОЛЗУНОК ВСЕГДА В ЦВЕТЕ СОТРУДНИКА
       if (groupColor && !group.isTemp) {
         slider.style.backgroundColor = groupColor;
         slider.style.borderColor = groupColor;
@@ -2155,7 +2489,7 @@
       }
       
       if (dragModeEnabled) slider.classList.add("drag-mode-enabled");
-      slider.setAttribute("data-lane-type", "blue");
+      slider.setAttribute("data-lane-type", laneType);
       
       let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
       if (groupColor) {
@@ -2169,10 +2503,12 @@
       const startSlot = slots[startIdx];
       const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
       
+      // Если это запись дня рождения - показываем "ДР" вместо времени
       if (group.type === 'birthday') {
         timeDiv.textContent = "🎂 ДР";
       } else {
         const duration = endIdx - startIdx + 1;
+        
         if (duration >= 2) {
           const startHour = startSlot.hour;
           const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
@@ -2187,6 +2523,7 @@
       }
       timeDiv.style.color = '#ffffff';
       timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
+      
       slider.appendChild(timeDiv);
       
       let dragHandle = document.createElement("div");
@@ -2207,6 +2544,8 @@
           e.stopPropagation();
           if (!group.isTemp && group.items && group.items.length > 0) {
             showInfoModal(group.items[0]);
+          } else if (!group.isTemp && !group.items) {
+            alert("Загрузка данных...");
           } else {
             alert("Временная запись — сохраните для просмотра.");
           }
@@ -2218,263 +2557,146 @@
     }
   }
   
-  // ========================================================================
-  //   ПЕРЕТЯГИВАНИЕ
-  // ========================================================================
-  async function startMoveDrag(booking, e, slotsArr) {
-    e.stopPropagation();
-    const slider = e.currentTarget.closest('.slider');
-    if (!slider) return;
-    let durationCells = booking.endSlotIdx - booking.startSlotIdx;
-    let ghost = createGhost(slider);
-    moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-      let newStartIdx = finalStartIdx;
-      let newEndIdx = finalStartIdx + durationCells;
-      if (!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)) {
-        booking.lane = finalLane;
-        booking.startSlotIdx = newStartIdx;
-        booking.endSlotIdx = newEndIdx;
-        booking.start = slotsArr[newStartIdx].key;
-        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key + 0.5);
-        saveToServer(booking);
-        renderAllSliders();
+  // ================ КОНЕЦ ОБЪЕДИНЕНИЯ ПОЛЗУНКОВ ================
+  
+  async function startMoveDrag(booking, e, slotsArr){ 
+    e.stopPropagation(); 
+    const slider=e.currentTarget.closest('.slider'); 
+    if(!slider) return; 
+    let durationCells = booking.endSlotIdx - booking.startSlotIdx; 
+    let ghost=createGhost(slider); 
+    let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; 
+    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
+      let newStartIdx = finalStartIdx; 
+      let newEndIdx = finalStartIdx + durationCells; 
+      if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ 
+        booking.lane = finalLane; 
+        booking.startSlotIdx = newStartIdx; 
+        booking.endSlotIdx = newEndIdx; 
+        booking.start = slotsArr[newStartIdx].key; 
+        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
+        saveToServer(booking); 
+        renderAllSliders(); 
         updateCellsHighlight();
-      } else alert("Конфликт с другой записью");
-    }, booking.lane, booking.startSlotIdx);
+      } else alert("Конфликт с другой записью"); 
+    }, currentLane,currentStartIdx); 
   }
   
-  async function startMoveTempDrag(temp, e, slotsArr) {
-    e.stopPropagation();
-    const slider = e.currentTarget.closest('.slider');
-    if (!slider) return;
-    let durationCells = temp.endSlotIdx - temp.startSlotIdx;
-    let ghost = createGhost(slider);
-    moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-      let newStartIdx = finalStartIdx;
-      let newEndIdx = finalStartIdx + durationCells;
-      if (!hasConflict(finalLane, newStartIdx, newEndIdx)) {
-        temp.lane = finalLane;
-        temp.startSlotIdx = newStartIdx;
-        temp.endSlotIdx = newEndIdx;
-        renderInlineTempCards();
-        renderAllSliders();
+  async function startMoveTempDrag(temp, e, slotsArr){ 
+    e.stopPropagation(); 
+    const slider=e.currentTarget.closest('.slider'); 
+    if(!slider) return; 
+    let durationCells = temp.endSlotIdx - temp.startSlotIdx; 
+    let ghost=createGhost(slider); 
+    let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; 
+    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
+      let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; 
+      if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ 
+        temp.lane=finalLane; 
+        temp.startSlotIdx=newStartIdx; 
+        temp.endSlotIdx=newEndIdx; 
+        renderInlineTempCards(); 
+        renderAllSliders(); 
         updateCellsHighlight();
-      } else alert("Конфликт с другой записью");
-    }, temp.lane, temp.startSlotIdx);
+      } else alert("Конфликт с другой записью"); 
+    }, currentLane,currentStartIdx); 
   }
   
-  function createGhost(slider) {
-    let ghost = document.createElement('div');
-    ghost.className = 'ghost-slider';
+  function createGhost(slider){ 
+    let ghost=document.createElement('div'); 
+    ghost.className='ghost-slider'; 
     let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-    if (timeClone) ghost.appendChild(timeClone);
-    ghost.style.cssText = slider.style.cssText;
-    ghost.style.opacity = '0.85';
-    ghost.style.transition = 'none';
-    $('slidersLayer').appendChild(ghost);
+    if(timeClone) ghost.appendChild(timeClone);
+    ghost.style.cssText=slider.style.cssText; 
+    ghost.style.opacity='0.85'; ghost.style.transition='none';
+    $('slidersLayer').appendChild(ghost); 
     slider.classList.add('dragging');
     return ghost;
   }
   
-  function moveLogic(ghost, slider, slotsArr, durationCells, onDrop, initialLane, initialStartIdx) {
-    let currentLane = initialLane;
-    let currentStartIdx = initialStartIdx;
-    
-    function updateGhostPos(lane, startIdx) {
-      let row = getRowByLane(lane);
-      if (!row) return;
-      let sc = row.cells[startIdx + 1];
-      let ec = row.cells[startIdx + durationCells + 1];
-      if (sc && ec) {
-        ghost.style.left = (sc.offsetLeft + 1) + 'px';
-        ghost.style.top = (row.offsetTop + 1) + 'px';
-        ghost.style.width = (ec.offsetLeft + ec.offsetWidth - sc.offsetLeft - 2) + 'px';
-        ghost.style.height = (row.offsetHeight - 2) + 'px';
+  function moveLogic(ghost,slider,slotsArr,durationCells, onDrop, initialLane, initialStartIdx){
+    let currentLane=initialLane, currentStartIdx=initialStartIdx;
+    function updateGhostPos(lane,startIdx){
+      let row=getRowByLane(lane);
+      if(!row) return;
+      let sc=row.cells[startIdx+1], ec=row.cells[startIdx+durationCells+1];
+      if(sc&&ec){
+        ghost.style.left=(sc.offsetLeft+1)+'px';
+        ghost.style.top=(row.offsetTop+1)+'px';
+        ghost.style.width=(ec.offsetLeft+ec.offsetWidth-sc.offsetLeft-2)+'px';
+        ghost.style.height=(row.offsetHeight-2)+'px';
       }
     }
-    
-    function getTargetCoords(e) {
-      let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains('slot'));
-      if (!el) return null;
-      return { lane: parseInt(el.dataset.lane), idx: parseInt(el.dataset.slotIdx) };
+    function getTargetCoords(e){
+      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains('slot'));
+      if(!el) return null;
+      return {lane:parseInt(el.dataset.lane), idx:parseInt(el.dataset.slotIdx)};
     }
-    
-    function onDragMove(ev) {
-      let tgt = getTargetCoords(ev);
-      if (tgt) {
-        let nl = tgt.lane;
-        let nsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
-        if (nl !== currentLane || nsi !== currentStartIdx) {
-          currentLane = nl;
-          currentStartIdx = nsi;
-          updateGhostPos(currentLane, currentStartIdx);
+    function onDragMove(ev){
+      let tgt=getTargetCoords(ev);
+      if(tgt){
+        let nl=tgt.lane, nsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
+        if(nl!==currentLane||nsi!==currentStartIdx){
+          currentLane=nl; currentStartIdx=nsi;
+          updateGhostPos(currentLane,currentStartIdx);
         }
       }
     }
-    
-    function onDragEnd(ev) {
-      let tgt = getTargetCoords(ev);
-      if (tgt) {
-        let fl = tgt.lane;
-        let fsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
-        onDrop(fl, fsi);
+    function onDragEnd(ev){
+      let tgt=getTargetCoords(ev);
+      if(tgt){
+        let fl=tgt.lane, fsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
+        onDrop(fl,fsi);
       }
-      if (ghost && ghost.parentNode) ghost.remove();
-      if (slider) slider.classList.remove('dragging');
-      document.body.style.cursor = '';
-      document.removeEventListener('mousemove', onDragMove);
-      document.removeEventListener('mouseup', onDragEnd);
+      if(ghost && ghost.parentNode) ghost.remove();
+      if(slider) slider.classList.remove('dragging');
+      document.body.style.cursor='';
+      document.removeEventListener('mousemove',onDragMove);
+      document.removeEventListener('mouseup',onDragEnd);
       renderAllSliders();
     }
-    
-    document.body.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd);
-    updateGhostPos(currentLane, currentStartIdx);
+    document.body.style.cursor='grabbing';
+    document.addEventListener('mousemove',onDragMove);
+    document.addEventListener('mouseup',onDragEnd);
+    updateGhostPos(currentLane,currentStartIdx);
   }
   
-  // ========================================================================
-  //   ИНФОРМАЦИЯ / РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ
-  // ========================================================================
-  function showInfoModal(b) {
-    currentBooking = b;
+  function showInfoModal(b){ 
+    currentBooking=b; 
     let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
     let employeeName = getEmployeeForLane(b.lane);
     let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
     
-    $("i-table").textContent = stationName;
-    $("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
-    $("i-employee").textContent = employeeName || 'Не назначен';
-    $("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
-    $("infoModal").classList.add("open");
+    $("i-table").textContent=stationName; 
+    $("i-time").textContent=fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx); 
+    $("i-employee").textContent=employeeName || 'Не назначен';
+    $("i-type").textContent=isBirthday ? '🎂 День рождения' : 'Обычная запись';
+    $("infoModal").classList.add("open"); 
   }
   
-  function closeInfoModal() {
-    $("infoModal").classList.remove("open");
-    currentBooking = null;
+  function closeInfoModal(){ 
+    $("infoModal").classList.remove("open"); 
+    currentBooking=null; 
   }
   
-  function openEditEventModal() {
-    if (currentBooking) {
-      editingBooking = currentBooking;
-      $("editStationName").textContent = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
-      $("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
-      selectedEventType = (currentBooking.type === 'birthday') ? 'birthday' : 'regular';
-      updateEventTypeButtons();
-      $("infoModal").classList.remove("open");
-      $("editEventModal").classList.add("open");
-    }
+  function showLoad(){ 
+    $("loader").style.display="flex"; 
   }
   
-  function closeEditEventModal() {
-    $("editEventModal").classList.remove("open");
-    editingBooking = null;
+  function hideLoad(){ 
+    $("loader").style.display="none"; 
   }
   
-  function selectEventType(type) {
-    selectedEventType = type;
-    updateEventTypeButtons();
-  }
-  
-  function updateEventTypeButtons() {
-    document.querySelectorAll('.event-type-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.type === selectedEventType);
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
     });
   }
   
-  async function saveEventType() {
-    if (!editingBooking) return;
-    const isBirthday = selectedEventType === 'birthday';
-    editingBooking.type = isBirthday ? 'birthday' : 'regular';
-    editingBooking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
-    await saveToServer(editingBooking);
-    closeEditEventModal();
-    renderAllSliders();
-    updateCellsHighlight();
-  }
-  
-  async function deleteBooking() {
-    if (!currentBooking) return;
-    if (!confirm("Удалить это событие?")) return;
-    showLoad();
-    try {
-      await sendPostAction('delete', { id: currentBooking.id, sheetName: currentSheetName });
-      bookings = bookings.filter(b => b.id !== currentBooking.id);
-      closeInfoModal();
-      renderAllSliders();
-      updateCellsHighlight();
-    } catch (e) {
-      alert("Ошибка удаления: " + e.message);
-    } finally {
-      hideLoad();
-    }
-  }
-  
-  // ========================================================================
-  //   СОХРАНЕНИЕ РАСПИСАНИЯ
-  // ========================================================================
-  function openSaveScheduleModal() {
-    $("saveScheduleModal").classList.add("open");
-  }
-  
-  function closeSaveScheduleModal() {
-    $("saveScheduleModal").classList.remove("open");
-  }
-  
-  async function confirmSaveSchedule() {
-    const name = document.getElementById("scheduleNameInput").value.trim();
-    if (!name) { alert("Введите название листа"); return; }
-    showLoad();
-    try {
-      const allStations = getAllStationsData();
-      const scheduleData = bookings.map(b => {
-        const stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-        return {
-          sheetName: name,
-          stationNumber: b.lane + 1,
-          stationName,
-          start: b.start,
-          end: b.end,
-          name: b.name || '',
-          phone: b.phone || '',
-          comment: b.comment || '',
-          type: b.type || 'regular'
-        };
-      });
-      
-      const payload = {
-        action: 'saveSheet',
-        schedule: scheduleData,
-        allStations: allStations,
-        sheetName: name,
-        employeeGroups: employeeGroups.map(g => ({
-          name: g.name,
-          stations: g.stations.map(l => l + 1),
-          color: g.color
-        }))
-      };
-      
-      const result = await sendPostAction('saveSheet', payload);
-      if (result && result.success !== false) {
-        closeSaveScheduleModal();
-        alert("✅ Лист сохранён!");
-        await loadSheetsList();
-        document.getElementById('sheetSelector').value = name;
-        currentSheetName = name;
-        await loadFromServer(name);
-      } else {
-        alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
-      }
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
-    } finally {
-      hideLoad();
-    }
-  }
-  
-  // ========================================================================
-  //   ИНИЦИАЛИЗАЦИЯ
-  // ========================================================================
   async function initApplication() {
     await loadStations();
     
@@ -2486,6 +2708,7 @@
     });
     
     buildDesktopTable();
+    
     await loadSheetsList();
     
     if (availableSheets.length > 0) {
@@ -2508,14 +2731,16 @@
     document.body.addEventListener("mousemove", onMouseMove);
     document.body.addEventListener("mouseup", onMouseUp);
     
-    ["bookModal", "infoModal", "editEventModal", "adminModal", "userFormModal", "saveScheduleModal"].forEach(id => {
-      $(id)?.addEventListener("click", e => {
-        if (e.target === $(id)) $(id).classList.remove("open");
-      });
+    ["bookModal","infoModal","editEventModal","adminModal","userFormModal","saveScheduleModal"].forEach(id=>{ 
+      $(id)?.addEventListener("click",e=>{ 
+        if(e.target=== $(id)) $(id).classList.remove("open"); 
+      }); 
     });
   }
   
-  window.addEventListener('load', initApplication);
+  window.addEventListener('load', function() {
+    initApplication();
+  });
 </script>
 </body>
 </html>
