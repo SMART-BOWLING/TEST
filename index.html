@@ -293,7 +293,7 @@
     }
     #tableDesktop tbody tr.employee-group-header td {
       height: auto;
-      padding: 4px 16px; /* Уменьшил padding по вертикали */
+      padding: 4px 16px;
       border-bottom: 0.5px solid var(--border-strong);
       border-top: 0.5px solid var(--border-strong);
       font-size: 13px;
@@ -307,12 +307,10 @@
     }
     #tableDesktop tbody tr.employee-group-header { height: auto; }
     
-    /* Разделитель между группами сотрудников */
     #tableDesktop tbody tr.employee-group-header + tr.employee-group-header td {
       border-top: 2px solid var(--border-strong);
     }
     
-    /* Альтернативный разделитель через псевдо-элемент */
     #tableDesktop tbody tr.employee-group-header:not(:first-of-type) td {
       border-top: 2px solid #b0b0b0;
     }
@@ -559,6 +557,7 @@
       border-bottom: 0.5px solid var(--border-subtle);
       border-right: 0.5px solid var(--border-subtle);
       transition: background 0.1s;
+      position: relative;
     }
     
     #tableDesktop tbody tr:hover td.slot { background: #f6f6f6; }
@@ -567,103 +566,36 @@
     #tableDesktop tbody td.slot.booking-rejected { background: #f2e0e0 !important; }
     #tableDesktop tbody td.slot.temp-highlight { background: #dde9f0 !important; border: 1px solid #3b6e8f !important; }
     #tableDesktop tbody td.slot.drag-over { background: #e2dfcf !important; }
-
-    #slidersLayer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 20;
-    }
     
-    .slider {
-      position: absolute;
-      border-radius: 6px;
-      pointer-events: auto;
-      cursor: default;
-      padding: 4px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 2px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      backdrop-filter: blur(8px);
-      border: 0.5px solid rgba(255,255,255,0.25);
-      will-change: left, top;
-      transition: all 0.12s ease;
-      font-weight: 510;
-      font-family: var(--font-system);
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    
-    .slider .sl-time {
+    /* Стили для закрашенных ячеек (вместо ползунков) */
+    #tableDesktop tbody td.slot.booked {
       color: #ffffff !important;
+      font-weight: 600;
+      font-size: 13px;
       text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      position: relative;
+      border-color: rgba(255,255,255,0.2);
     }
     
-    .ghost-slider {
+    #tableDesktop tbody td.slot.booked.birthday {
+      background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+    }
+    
+    #tableDesktop tbody td.slot.booked .slot-label {
       position: absolute;
-      border-radius: 6px;
-      pointer-events: none;
-      padding: 4px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 2px;
-      background: rgba(0, 0, 0, 0.45) !important;
-      backdrop-filter: blur(12px);
-      border: 2px dashed rgba(255, 215, 0, 0.9) !important;
-      box-shadow: 0 0 0 2px rgba(255,255,200,0.3), 0 8px 20px rgba(0,0,0,0.2);
-      z-index: 999;
-      font-weight: 510;
-      font-family: var(--font-system);
-      overflow: hidden;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       white-space: nowrap;
-      transition: none;
-      color: #fff;
-      text-shadow: 0 1px 1px black;
+      font-size: 12px;
+      pointer-events: none;
     }
     
-    .ghost-slider .sl-time {
-      opacity: 0.85;
-      color: #ffffff !important;
+    /* Стили для выделения при drag & drop */
+    #tableDesktop tbody td.slot.drag-over {
+      background: #e2dfcf !important;
     }
-    
-    .slider[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); color: white; }
-    .slider.pending[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.92); }
-    .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; }
-    .slider.rejected[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.55); opacity: 0.85; }
-    .slider.temp[data-lane-type="blue"] { background: rgba(44, 95, 122, 0.75); border: 1px solid #c9b16b; }
-    
-    .sl-time { 
-      font-size: 13px; 
-      font-weight: 600; 
-      opacity: 0.95; 
-      text-align: center;
-      letter-spacing: 0.5px;
-      color: #ffffff !important;
-    }
-    
-    .drag-handle {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 100%;
-      cursor: default;
-      z-index: 2;
-      pointer-events: auto;
-    }
-    
-    .slider.drag-mode-enabled .drag-handle { cursor: grab; }
-    .slider.drag-mode-enabled .drag-handle:active { cursor: grabbing; }
-    .slider:not(.drag-mode-enabled) .drag-handle { cursor: pointer; }
-    
+
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); z-index: 2000; justify-content: center; align-items: center; }
     .overlay.open { display: flex; }
     .sheet { background: rgba(255,255,255,0.98); border-radius: 12px; width: 100%; max-width: 540px; box-shadow: 0 32px 56px rgba(0,0,0,0.2); }
@@ -901,7 +833,6 @@
           </thead>
           <tbody id="dtBody"></tbody>
         </table>
-        <div id="slidersLayer"></div>
       </div>
     </div>
   </div>
@@ -1468,20 +1399,44 @@
   }
   
   function updateCellsHighlight(){
+    // Сначала очищаем все выделения
     for(let row of $("dtBody").rows) {
       for(let i=1; i<row.cells.length; i++) {
-        row.cells[i].classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight");
+        const cell = row.cells[i];
+        cell.classList.remove("booking-pending","booking-confirmed","booking-rejected","temp-highlight","booked","birthday");
+        // Удаляем метку времени
+        const label = cell.querySelector('.slot-label');
+        if (label) label.remove();
       }
     }
+    
+    // Закрашиваем ячейки для бронирований
     for(let b of bookings){ 
       let si=b.startSlotIdx, ei=b.endSlotIdx; 
       if(si!==undefined && ei!==undefined) {
+        let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
         for(let i=si;i<=ei;i++){ 
           let cell=getSlotCell(b.lane,i); 
-          if(cell) cell.classList.add(b.confirmed===true?"booking-confirmed":(b.confirmed===false?"booking-rejected":"booking-pending")); 
+          if(cell) {
+            cell.classList.add("booked");
+            if (isBirthday) {
+              cell.classList.add("birthday");
+            }
+            // Добавляем метку с временем или ДР
+            let label = document.createElement('span');
+            label.className = 'slot-label';
+            if (isBirthday) {
+              label.textContent = '🎂 ДР';
+            } else {
+              label.textContent = fmtFromSlotIdx(si, ei);
+            }
+            cell.appendChild(label);
+          }
         }
       }
     }
+    
+    // Временные выделения
     for(let t of tempBookings){ 
       let si=t.startSlotIdx, ei=t.endSlotIdx; 
       if(si!==undefined && ei!==undefined) {
@@ -1707,9 +1662,9 @@
           td.colSpan = colSpan;
           td.style.background = color + '22';
           td.style.borderLeft = `3px solid ${color}`;
-          td.style.padding = '4px 16px'; /* Уменьшил padding по вертикали */
+          td.style.padding = '4px 16px';
           td.style.position = "relative";
-          td.style.minHeight = "34px"; /* Уменьшил минимальную высоту */
+          td.style.minHeight = "34px";
           
           const headerContainer = document.createElement("div");
           headerContainer.style.cssText = "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
@@ -1777,7 +1732,6 @@
       prevGroupId = groupId;
     }
     
-    // Добавляем разделительную линию между разными группами сотрудников
     const headers = body.querySelectorAll("tr.employee-group-header");
     headers.forEach((hdr, index) => {
       if (index > 0) {
@@ -1786,7 +1740,7 @@
     });
     
     applyStationColors();
-    renderAllSliders();
+    updateCellsHighlight();
   }
   
   // ================ ВЫБОР ЦВЕТА ================
@@ -1897,7 +1851,7 @@
     
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, color);
-    renderAllSliders();
+    updateCellsHighlight();
   }
   
   function applyCustomColor(groupId, employeeName) {
@@ -1947,7 +1901,7 @@
     
     refreshGroupHeaders();
     saveEmployeeColorToServer(employeeName, defaultColor);
-    renderAllSliders();
+    updateCellsHighlight();
   }
   
   // ================ КОНЕЦ ВЫБОРА ЦВЕТА ================
@@ -1955,7 +1909,6 @@
   function clearTempSelections(){ 
     tempBookings = []; 
     renderInlineTempCards(); 
-    renderAllSliders(); 
     updateCellsHighlight();
   }
   
@@ -1976,7 +1929,6 @@
       card.querySelector(".temp-rm").onclick=()=>{ 
         tempBookings.splice(idx,1); 
         renderInlineTempCards(); 
-        renderAllSliders(); 
         updateCellsHighlight();
       }; 
       container.appendChild(card); 
@@ -2086,7 +2038,6 @@
       } 
       
       renderInlineTempCards(); 
-      renderAllSliders(); 
       updateCellsHighlight();
     } 
     
@@ -2311,7 +2262,6 @@
       }
       refreshGroupHeaders();
       
-      renderAllSliders(); 
       updateCellsHighlight();
       
       console.log(`Загружено ${bookings.length} записей и ${employeeGroups.length} групп сотрудников из листа "${sheetName}"`);
@@ -2344,289 +2294,6 @@
         console.error('Failed to update booking:', result && result.message);
       }
     } catch(e){console.error("Error updating booking:", e);} 
-  }
-  
-  // ================ ОБЪЕДИНЕНИЕ И ОТРИСОВКА ПОЛЗУНКОВ ================
-  
-  function renderAllSliders(){ 
-    let container=$("slidersLayer"); 
-    if(!container) return; 
-    container.innerHTML=""; 
-    
-    const allItems = [...bookings, ...tempBookings.map(t=>({...t,isTemp:true}))];
-    
-    const groupedByLane = {};
-    allItems.forEach(item => {
-      if (!groupedByLane[item.lane]) {
-        groupedByLane[item.lane] = [];
-      }
-      groupedByLane[item.lane].push(item);
-    });
-    
-    const mergedItems = [];
-    
-    for (const lane in groupedByLane) {
-      const items = groupedByLane[lane];
-      items.sort((a, b) => a.startSlotIdx - b.startSlotIdx);
-      
-      let currentGroup = null;
-      
-      for (const item of items) {
-        if (currentGroup === null) {
-          currentGroup = {
-            lane: parseInt(lane),
-            startSlotIdx: item.startSlotIdx,
-            endSlotIdx: item.endSlotIdx,
-            items: [item],
-            isTemp: item.isTemp || false,
-            confirmed: item.confirmed,
-            type: item.type || 'regular',
-            comment: item.comment || ''
-          };
-        } else {
-          const nextStart = item.startSlotIdx;
-          const currentEnd = currentGroup.endSlotIdx;
-          
-          if (nextStart <= currentEnd + 1) {
-            currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
-            currentGroup.items.push(item);
-            if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
-              currentGroup.type = 'birthday';
-              currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
-            }
-          } else {
-            mergedItems.push(currentGroup);
-            currentGroup = {
-              lane: parseInt(lane),
-              startSlotIdx: item.startSlotIdx,
-              endSlotIdx: item.endSlotIdx,
-              items: [item],
-              isTemp: item.isTemp || false,
-              confirmed: item.confirmed,
-              type: item.type || 'regular',
-              comment: item.comment || ''
-            };
-          }
-        }
-      }
-      
-      if (currentGroup !== null) {
-        mergedItems.push(currentGroup);
-      }
-    }
-    
-    for (const group of mergedItems) {
-      let startIdx = group.startSlotIdx;
-      let endIdx = group.endSlotIdx;
-      
-      if (startIdx === undefined || endIdx === undefined) continue;
-      
-      let row = getRowByLane(group.lane);
-      if (!row) continue;
-      
-      let sc = row.cells[startIdx + 1];
-      let ec = row.cells[endIdx + 1];
-      if (!sc || !ec) continue;
-      
-      let left = sc.offsetLeft + 1;
-      let top = row.offsetTop + 1;
-      let width = (ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2;
-      let height = row.offsetHeight - 2;
-      
-      let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
-      let laneType = 'blue';
-      
-      let slider = document.createElement("div");
-      slider.className = `slider ${status}`;
-      
-      let groupColor = null;
-      for (const g of employeeGroups) {
-        if (g.stations && g.stations.includes(group.lane)) {
-          groupColor = g.color;
-          break;
-        }
-      }
-      
-      // ПОЛЗУНОК ВСЕГДА В ЦВЕТЕ СОТРУДНИКА
-      if (groupColor && !group.isTemp) {
-        slider.style.backgroundColor = groupColor;
-        slider.style.borderColor = groupColor;
-      } else if (groupColor && group.isTemp) {
-        slider.style.backgroundColor = groupColor + '88';
-        slider.style.borderColor = groupColor;
-      }
-      
-      if (dragModeEnabled) slider.classList.add("drag-mode-enabled");
-      slider.setAttribute("data-lane-type", laneType);
-      
-      let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
-      if (groupColor) {
-        styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
-      }
-      slider.style.cssText = styleText;
-      
-      let timeDiv = document.createElement("div");
-      timeDiv.className = "sl-time";
-      
-      const startSlot = slots[startIdx];
-      const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
-      
-      // Если это запись дня рождения - показываем "ДР" вместо времени
-      if (group.type === 'birthday') {
-        timeDiv.textContent = "🎂 ДР";
-      } else {
-        const duration = endIdx - startIdx + 1;
-        
-        if (duration >= 2) {
-          const startHour = startSlot.hour;
-          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-          if (endSlot.minute === 30) {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
-          } else {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
-          }
-        } else {
-          timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
-        }
-      }
-      timeDiv.style.color = '#ffffff';
-      timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
-      
-      slider.appendChild(timeDiv);
-      
-      let dragHandle = document.createElement("div");
-      dragHandle.className = "drag-handle";
-      
-      if (dragModeEnabled && !group.isTemp) {
-        dragHandle.addEventListener("mousedown", (e) => {
-          e.stopPropagation();
-          startMoveDrag(group, e, slots);
-        });
-      } else if (dragModeEnabled && group.isTemp) {
-        dragHandle.addEventListener("mousedown", (e) => {
-          e.stopPropagation();
-          startMoveTempDrag(group, e, slots);
-        });
-      } else {
-        dragHandle.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (!group.isTemp && group.items && group.items.length > 0) {
-            showInfoModal(group.items[0]);
-          } else if (!group.isTemp && !group.items) {
-            alert("Загрузка данных...");
-          } else {
-            alert("Временная запись — сохраните для просмотра.");
-          }
-        });
-      }
-      
-      slider.appendChild(dragHandle);
-      container.appendChild(slider);
-    }
-  }
-  
-  // ================ КОНЕЦ ОБЪЕДИНЕНИЯ ПОЛЗУНКОВ ================
-  
-  async function startMoveDrag(booking, e, slotsArr){ 
-    e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
-    if(!slider) return; 
-    let durationCells = booking.endSlotIdx - booking.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=booking.lane, currentStartIdx=booking.startSlotIdx; 
-    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
-      let newStartIdx = finalStartIdx; 
-      let newEndIdx = finalStartIdx + durationCells; 
-      if(!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)){ 
-        booking.lane = finalLane; 
-        booking.startSlotIdx = newStartIdx; 
-        booking.endSlotIdx = newEndIdx; 
-        booking.start = slotsArr[newStartIdx].key; 
-        booking.end = slotsArr[newEndIdx+1]?.key || (slotsArr[newEndIdx].key+0.5); 
-        saveToServer(booking); 
-        renderAllSliders(); 
-        updateCellsHighlight();
-      } else alert("Конфликт с другой записью"); 
-    }, currentLane,currentStartIdx); 
-  }
-  
-  async function startMoveTempDrag(temp, e, slotsArr){ 
-    e.stopPropagation(); 
-    const slider=e.currentTarget.closest('.slider'); 
-    if(!slider) return; 
-    let durationCells = temp.endSlotIdx - temp.startSlotIdx; 
-    let ghost=createGhost(slider); 
-    let currentLane=temp.lane, currentStartIdx=temp.startSlotIdx; 
-    moveLogic(ghost,slider,slotsArr, durationCells, (finalLane,finalStartIdx)=>{ 
-      let newStartIdx=finalStartIdx, newEndIdx=finalStartIdx+durationCells; 
-      if(!hasConflict(finalLane, newStartIdx, newEndIdx)){ 
-        temp.lane=finalLane; 
-        temp.startSlotIdx=newStartIdx; 
-        temp.endSlotIdx=newEndIdx; 
-        renderInlineTempCards(); 
-        renderAllSliders(); 
-        updateCellsHighlight();
-      } else alert("Конфликт с другой записью"); 
-    }, currentLane,currentStartIdx); 
-  }
-  
-  function createGhost(slider){ 
-    let ghost=document.createElement('div'); 
-    ghost.className='ghost-slider'; 
-    let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-    if(timeClone) ghost.appendChild(timeClone);
-    ghost.style.cssText=slider.style.cssText; 
-    ghost.style.opacity='0.85'; ghost.style.transition='none';
-    $('slidersLayer').appendChild(ghost); 
-    slider.classList.add('dragging');
-    return ghost;
-  }
-  
-  function moveLogic(ghost,slider,slotsArr,durationCells, onDrop, initialLane, initialStartIdx){
-    let currentLane=initialLane, currentStartIdx=initialStartIdx;
-    function updateGhostPos(lane,startIdx){
-      let row=getRowByLane(lane);
-      if(!row) return;
-      let sc=row.cells[startIdx+1], ec=row.cells[startIdx+durationCells+1];
-      if(sc&&ec){
-        ghost.style.left=(sc.offsetLeft+1)+'px';
-        ghost.style.top=(row.offsetTop+1)+'px';
-        ghost.style.width=(ec.offsetLeft+ec.offsetWidth-sc.offsetLeft-2)+'px';
-        ghost.style.height=(row.offsetHeight-2)+'px';
-      }
-    }
-    function getTargetCoords(e){
-      let el=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList?.contains('slot'));
-      if(!el) return null;
-      return {lane:parseInt(el.dataset.lane), idx:parseInt(el.dataset.slotIdx)};
-    }
-    function onDragMove(ev){
-      let tgt=getTargetCoords(ev);
-      if(tgt){
-        let nl=tgt.lane, nsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
-        if(nl!==currentLane||nsi!==currentStartIdx){
-          currentLane=nl; currentStartIdx=nsi;
-          updateGhostPos(currentLane,currentStartIdx);
-        }
-      }
-    }
-    function onDragEnd(ev){
-      let tgt=getTargetCoords(ev);
-      if(tgt){
-        let fl=tgt.lane, fsi=Math.min(Math.max(0,tgt.idx),slotsArr.length-durationCells-1);
-        onDrop(fl,fsi);
-      }
-      if(ghost && ghost.parentNode) ghost.remove();
-      if(slider) slider.classList.remove('dragging');
-      document.body.style.cursor='';
-      document.removeEventListener('mousemove',onDragMove);
-      document.removeEventListener('mouseup',onDragEnd);
-      renderAllSliders();
-    }
-    document.body.style.cursor='grabbing';
-    document.addEventListener('mousemove',onDragMove);
-    document.addEventListener('mouseup',onDragEnd);
-    updateGhostPos(currentLane,currentStartIdx);
   }
   
   function showInfoModal(b){ 
@@ -2689,7 +2356,6 @@
       dragModeEnabled = !dragModeEnabled;
       toggleBtn.classList.toggle("active", dragModeEnabled);
       $("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
-      renderAllSliders();
     });
     
     const assignBtn = $("assignToggleBtn");
@@ -2698,6 +2364,22 @@
     $("tableDesktop").addEventListener("mousedown", onMouseDown);
     document.body.addEventListener("mousemove", onMouseMove);
     document.body.addEventListener("mouseup", onMouseUp);
+    
+    // Обработка клика по закрашенной ячейке для просмотра информации
+    $("tableDesktop").addEventListener("click", function(e) {
+      const cell = e.target.closest('.slot.booked');
+      if (cell && !dragModeEnabled) {
+        const lane = parseInt(cell.dataset.lane);
+        const slotIdx = parseInt(cell.dataset.slotIdx);
+        // Находим соответствующее бронирование
+        for (const b of bookings) {
+          if (b.lane === lane && b.startSlotIdx <= slotIdx && b.endSlotIdx >= slotIdx) {
+            showInfoModal(b);
+            break;
+          }
+        }
+      }
+    });
     
     ["bookModal","infoModal","editEventModal","adminModal","userFormModal","saveScheduleModal"].forEach(id=>{ 
       $(id)?.addEventListener("click",e=>{ 
