@@ -19,7 +19,6 @@
       -ms-user-select: none;
     }
 
-    /* разрешаем выделение текста в инпутах и информационных блоках */
     input, textarea, .f-input, .sheet-body .f-input,
     .info-list strong, .info-list span,
     .temp-card-inline .temp-time,
@@ -343,7 +342,6 @@
       transition: background 0.3s;
     }
 
-    /* не назначенные станции — светлая штриховка */
     #tableDesktop tbody td.lane-hdr.unassigned-lane {
       background:
         radial-gradient(circle, #d9d9dc 1px, transparent 1.2px) 0 0 / 14px 14px,
@@ -429,7 +427,7 @@
       height: auto;
     }
 
-    /* ===== РАЗДЕЛИТЕЛЬ "СВОБОДНЫЕ СТАНЦИИ" ===== */
+    /* ===== РАЗДЕЛИТЕЛИ для ВСЕХ блоков (и сотрудников, и свободных) ===== */
     #tableDesktop tbody tr.employee-group-divider td {
       height: 34px;
       padding: 0;
@@ -462,7 +460,7 @@
       opacity: 0.7;
     }
 
-    /* ===== ЛИНИЯ ВДОЛЬ ВСЕЙ ТАБЛИЦЫ для "Свободные станции" ===== */
+    /* ===== ЛИНИЯ ВДОЛЬ ВСЕЙ ТАБЛИЦЫ — для ВСЕХ блоков ===== */
     .divider-line {
       position: absolute;
       left: 168px;
@@ -822,9 +820,7 @@
       margin: 0 auto 18px;
     }
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      to { transform: rotate(360deg); }
     }
 
     /* ===== АДМИНКА ===== */
@@ -1374,16 +1370,13 @@
     let editingBooking = null;
     let selectedEventType = 'regular';
 
-    // Группы сотрудников
     let employeeGroups = [];
     let nextGroupId = 1;
     let assignModeEnabled = false;
     let selectedLanesForAssign = [];
     const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
 
-    // Слоты времени (11:00 – 22:00, шаг 30 мин)
-    const SH = 11,
-      EH = 22;
+    const SH = 11, EH = 22;
     const slots = [];
     for (let h = SH; h < EH; h++) {
       slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 });
@@ -1404,7 +1397,6 @@
     }
 
     function showLoad() { document.getElementById("loader").style.display = "flex"; }
-
     function hideLoad() { document.getElementById("loader").style.display = "none"; }
 
     function getRowByLane(lane) {
@@ -1434,8 +1426,7 @@
       return bookings.some(b => {
         if (excludeId !== null && b.id === excludeId) return false;
         if (b.lane !== lane) return false;
-        let bStart = b.start,
-          bEnd = b.end;
+        let bStart = b.start, bEnd = b.end;
         return !(endTime <= bStart || startTime >= bEnd);
       });
     }
@@ -1445,20 +1436,14 @@
       const result = [];
       for (let i = 0; i < numStations; i++) {
         const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
-        result.push({
-          id: i + 1,
-          name: station.name || `Станция ${i+1}`,
-          logo: station.logo || ''
-        });
+        result.push({ id: i + 1, name: station.name || `Станция ${i+1}`, logo: station.logo || '' });
       }
       return result;
     }
 
     function getEmployeeForLane(lane) {
       for (let group of employeeGroups) {
-        if (group.stations && group.stations.includes(lane)) {
-          return group.name;
-        }
+        if (group.stations && group.stations.includes(lane)) return group.name;
       }
       return null;
     }
@@ -1494,21 +1479,16 @@
         const separator = url.includes('?') ? '&' : '?';
         const timestamp = Date.now();
         const fullUrl = `${url}${separator}callback=${callbackFunction}&_=${timestamp}`;
-        let timeoutId = setTimeout(() => { cleanup();
-          reject(new Error('JSONP request timeout (30s)')); }, 30000);
+        let timeoutId = setTimeout(() => { cleanup(); reject(new Error('JSONP request timeout (30s)')); }, 30000);
 
         function cleanup() {
-          if (timeoutId) { clearTimeout(timeoutId);
-            timeoutId = null; }
+          if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
           if (script.parentNode) document.body.removeChild(script);
-          if (window[callbackFunction]) { try { delete window[callbackFunction]; } catch (e) { window[
-              callbackFunction] = undefined; } }
+          if (window[callbackFunction]) { try { delete window[callbackFunction]; } catch (e) { window[callbackFunction] = undefined; } }
         }
-        window[callbackFunction] = (data) => { cleanup();
-          resolve(data); };
+        window[callbackFunction] = (data) => { cleanup(); resolve(data); };
         script.src = fullUrl;
-        script.onerror = () => { cleanup();
-          reject(new Error('JSONP request failed')); };
+        script.onerror = () => { cleanup(); reject(new Error('JSONP request failed')); };
         document.body.appendChild(script);
       });
     }
@@ -1593,8 +1573,7 @@
           let endKey = parseFloat(b.end);
           if (isNaN(startKey) || isNaN(endKey)) return null;
 
-          let startSlotIdx = -1,
-            endSlotIdx = -1;
+          let startSlotIdx = -1, endSlotIdx = -1;
           for (let i = 0; i < slots.length; i++) {
             if (slots[i].key === startKey) { startSlotIdx = i; break; }
           }
@@ -1748,19 +1727,16 @@
         }
       }
       for (let b of bookings) {
-        let si = b.startSlotIdx,
-          ei = b.endSlotIdx;
+        let si = b.startSlotIdx, ei = b.endSlotIdx;
         if (si !== undefined && ei !== undefined) {
           for (let i = si; i <= ei; i++) {
             let cell = getSlotCell(b.lane, i);
-            if (cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ?
-              "booking-rejected" : "booking-pending"));
+            if (cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending"));
           }
         }
       }
       for (let t of tempBookings) {
-        let si = t.startSlotIdx,
-          ei = t.endSlotIdx;
+        let si = t.startSlotIdx, ei = t.endSlotIdx;
         if (si !== undefined && ei !== undefined) {
           for (let i = si; i <= ei; i++) {
             let cell = getSlotCell(t.lane, i);
@@ -1795,72 +1771,33 @@
             const lhdrCell = row.querySelector('.lane-hdr');
             if (lhdrCell) lhdrCell.classList.add('block-start');
 
+            // ===== ВСТАВЛЯЕМ РАЗДЕЛИТЕЛЬ ДЛЯ ЛЮБОГО БЛОКА (и ФИО, и свободные) =====
+            const divRow = document.createElement("tr");
+            divRow.className = "employee-group-divider";
+            const dtd = document.createElement("td");
+            dtd.colSpan = colSpan;
+
             if (group) {
-              // Блок с сотрудником
+              // Блок Сотрудника — линия с именем
               const color = group.color || '#4f6b4e';
-              const hdrRow = document.createElement("tr");
-              hdrRow.className = "employee-group-header";
-              hdrRow.dataset.employee = group.name;
-              hdrRow.style.position = "relative";
-
-              const td = document.createElement("td");
-              td.colSpan = colSpan;
-              td.style.background = `linear-gradient(90deg, ${color}2e 0%, ${color}14 55%, ${color}08 100%)`;
-              td.style.borderLeft = `3px solid ${color}`;
-              td.style.padding = '7px 16px';
-              td.style.position = "relative";
-              td.style.minHeight = "44px";
-
-              const headerContainer = document.createElement("div");
-              headerContainer.style.cssText =
-                "display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap;";
-
-              const initials = group.name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
-              const nameSpan = document.createElement("span");
-              nameSpan.className = "group-name";
-              nameSpan.style.cssText =
-                "font-weight: 630; font-size: 14px; color: #000000; display: flex; align-items: center; gap: 8px;";
-              nameSpan.innerHTML =
-                `<span class="group-avatar" style="background:${color};">${escapeHtml(initials)}</span> ${escapeHtml(group.name)}`;
-              headerContainer.appendChild(nameSpan);
-
-              const colorBtn = document.createElement("button");
-              colorBtn.className = "group-color-btn";
-              colorBtn.style.cssText =
-                `width:28px;height:28px;border-radius:50%;border:2px solid ${color};background:${color};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:white;transition:all 0.2s;flex-shrink:0;margin-left:auto;`;
-              colorBtn.innerHTML = '<i class="fas fa-palette"></i>';
-              colorBtn.title = "Выбрать цвет для сотрудника";
-              colorBtn.onclick = (e) => {
-                e.stopPropagation();
-                openColorPicker(group.id, group.name, color);
-              };
-              headerContainer.appendChild(colorBtn);
-
-              const rmBtn = document.createElement("button");
-              rmBtn.className = "group-remove-btn";
-              rmBtn.style.cssText =
-                "border:none;background:rgba(179,63,63,0.12);color:var(--accent-red);width:28px;height:28px;border-radius:5px;font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;";
-              rmBtn.innerHTML = '<i class="fas fa-times"></i>';
-              rmBtn.onclick = (e) => { e.stopPropagation();
-                removeEmployeeGroup(groupId); };
-              headerContainer.appendChild(rmBtn);
-
-              td.appendChild(headerContainer);
-              hdrRow.appendChild(td);
-              row.parentNode.insertBefore(hdrRow, row);
-            } else if (lane !== 0) {
-              // Разделитель «Свободные станции» с линией вдоль всей таблицы
-              const divRow = document.createElement("tr");
-              divRow.className = "employee-group-divider";
-              const dtd = document.createElement("td");
-              dtd.colSpan = colSpan;
+              dtd.style.background = `linear-gradient(90deg, ${color}2e 0%, ${color}14 55%, ${color}08 100%)`;
+              dtd.style.borderLeft = `3px solid ${color}`;
+              dtd.innerHTML = `
+                <span class="divider-label" style="color:${color};">
+                  <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
+                </span>
+                <span class="divider-line"></span>
+              `;
+            } else {
+              // Свободные станции
               dtd.innerHTML = `
                 <span class="divider-label"><i class="fas fa-circle-minus"></i>Свободные станции</span>
                 <span class="divider-line"></span>
               `;
-              divRow.appendChild(dtd);
-              row.parentNode.insertBefore(divRow, row);
             }
+
+            divRow.appendChild(dtd);
+            row.parentNode.insertBefore(divRow, row);
           }
         }
         prevGroupId = groupId;
@@ -2159,8 +2096,7 @@
         const scheduleData = tempBookings.map(tb => {
           const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
           const endSlotIdx = tb.endSlotIdx + 1;
-          const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key +
-            0.5 : null);
+          const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
           if (startTime === null || endTime === null) return null;
           const isBirthday = eventType === 'birthday';
           const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
@@ -2177,8 +2113,7 @@
           };
         }).filter(item => item !== null);
 
-        if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения");
-          hideLoad(); return; }
+        if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); hideLoad(); return; }
 
         const payload = {
           schedule: scheduleData,
@@ -2265,8 +2200,7 @@
       }
 
       for (const group of mergedItems) {
-        let startIdx = group.startSlotIdx,
-          endIdx = group.endSlotIdx;
+        let startIdx = group.startSlotIdx, endIdx = group.endSlotIdx;
         if (startIdx === undefined || endIdx === undefined) continue;
         let row = getRowByLane(group.lane);
         if (!row) continue;
@@ -2279,8 +2213,7 @@
         let width = (ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2;
         let height = row.offsetHeight - 2;
 
-        let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ?
-          "rejected" : "pending"));
+        let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
@@ -2364,9 +2297,7 @@
     let isDragging = false;
     let dragStartCell = null;
     let dragInterval = null;
-    let dragLane = -1,
-      dragStartIdx = -1,
-      dragEndIdx = -1;
+    let dragLane = -1, dragStartIdx = -1, dragEndIdx = -1;
 
     function onMouseDown(e) {
       if (dragModeEnabled || assignModeEnabled) return;
@@ -2406,9 +2337,7 @@
 
     function onMouseUp() {
       if (!dragModeEnabled && isDragging && dragInterval) {
-        let lane = dragLane,
-          startIdx = dragStartIdx,
-          endIdx = dragEndIdx;
+        let lane = dragLane, startIdx = dragStartIdx, endIdx = dragEndIdx;
         if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
           resetDragState();
           return;
@@ -2451,11 +2380,9 @@
       if (!slider) return;
       let durationCells = booking.endSlotIdx - booking.startSlotIdx;
       let ghost = createGhost(slider);
-      let currentLane = booking.lane,
-        currentStartIdx = booking.startSlotIdx;
+      let currentLane = booking.lane, currentStartIdx = booking.startSlotIdx;
       moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-        let newStartIdx = finalStartIdx,
-          newEndIdx = finalStartIdx + durationCells;
+        let newStartIdx = finalStartIdx, newEndIdx = finalStartIdx + durationCells;
         if (!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)) {
           booking.lane = finalLane;
           booking.startSlotIdx = newStartIdx;
@@ -2475,11 +2402,9 @@
       if (!slider) return;
       let durationCells = temp.endSlotIdx - temp.startSlotIdx;
       let ghost = createGhost(slider);
-      let currentLane = temp.lane,
-        currentStartIdx = temp.startSlotIdx;
+      let currentLane = temp.lane, currentStartIdx = temp.startSlotIdx;
       moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-        let newStartIdx = finalStartIdx,
-          newEndIdx = finalStartIdx + durationCells;
+        let newStartIdx = finalStartIdx, newEndIdx = finalStartIdx + durationCells;
         if (!hasConflict(finalLane, newStartIdx, newEndIdx)) {
           temp.lane = finalLane;
           temp.startSlotIdx = newStartIdx;
@@ -2505,14 +2430,12 @@
     }
 
     function moveLogic(ghost, slider, slotsArr, durationCells, onDrop, initialLane, initialStartIdx) {
-      let currentLane = initialLane,
-        currentStartIdx = initialStartIdx;
+      let currentLane = initialLane, currentStartIdx = initialStartIdx;
 
       function updateGhostPos(lane, startIdx) {
         let row = getRowByLane(lane);
         if (!row) return;
-        let sc = row.cells[startIdx + 1],
-          ec = row.cells[startIdx + durationCells + 1];
+        let sc = row.cells[startIdx + 1], ec = row.cells[startIdx + durationCells + 1];
         if (sc && ec) {
           ghost.style.left = (sc.offsetLeft + 1) + 'px';
           ghost.style.top = (row.offsetTop + 1) + 'px';
@@ -2530,8 +2453,7 @@
       function onDragMove(ev) {
         let tgt = getTargetCoords(ev);
         if (tgt) {
-          let nl = tgt.lane,
-            nsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
+          let nl = tgt.lane, nsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
           if (nl !== currentLane || nsi !== currentStartIdx) {
             currentLane = nl;
             currentStartIdx = nsi;
@@ -2543,8 +2465,7 @@
       function onDragEnd(ev) {
         let tgt = getTargetCoords(ev);
         if (tgt) {
-          let fl = tgt.lane,
-            fsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
+          let fl = tgt.lane, fsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
           onDrop(fl, fsi);
         }
         if (ghost && ghost.parentNode) ghost.remove();
@@ -2601,10 +2522,8 @@
       editingBooking = currentBooking;
       let stationName = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
       document.getElementById("editStationName").textContent = stationName;
-      document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking
-        .endSlotIdx);
-      let isBirthday = currentBooking.type === 'birthday' || (currentBooking.comment && currentBooking.comment.toUpperCase() ===
-        'ДЕНЬ РОЖДЕНИЯ');
+      document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
+      let isBirthday = currentBooking.type === 'birthday' || (currentBooking.comment && currentBooking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       selectedEventType = isBirthday ? 'birthday' : 'regular';
       document.querySelectorAll('.event-type-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelector(`.event-type-btn.${selectedEventType}`).classList.add('active');
@@ -2727,12 +2646,10 @@
         const container = document.getElementById("usersList");
         if (!data.success) throw new Error(data.message);
         if (!data.users || data.users.length === 0) {
-          container.innerHTML =
-            '<div style="text-align: center; padding: 40px; color: var(--label-tertiary);">Нет добавленных сотрудников</div>';
+          container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--label-tertiary);">Нет добавленных сотрудников</div>';
           return;
         }
-        let html =
-          `<table class="users-table"><thead><tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr></thead><tbody>`;
+        let html = `<table class="users-table"><thead><tr><th>Email/Логин</th><th>Имя</th><th>Должность</th><th>Действия</th></tr></thead><tbody>`;
         data.users.forEach(user => {
           html += `
             <tr>
@@ -2750,8 +2667,7 @@
         container.innerHTML = html;
       } catch (error) {
         console.error("Error loading users:", error);
-        document.getElementById("usersList").innerHTML =
-          '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Ошибка загрузки списка пользователей</div>';
+        document.getElementById("usersList").innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Ошибка загрузки списка пользователей</div>';
       }
     }
 
