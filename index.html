@@ -427,7 +427,7 @@
       height: auto;
     }
 
-    /* ===== РАЗДЕЛИТЕЛИ для ВСЕХ блоков (и сотрудников, и свободных) ===== */
+    /* ===== РАЗДЕЛИТЕЛИ ===== */
     #tableDesktop tbody tr.employee-group-divider td {
       height: 34px;
       padding: 0;
@@ -452,7 +452,6 @@
       font-size: 11.5px;
       font-weight: 650;
       letter-spacing: 0.3px;
-      color: var(--label-quaternary);
       text-transform: uppercase;
     }
     .divider-label i {
@@ -460,7 +459,7 @@
       opacity: 0.7;
     }
 
-    /* ===== ЛИНИЯ ВДОЛЬ ВСЕЙ ТАБЛИЦЫ — для ВСЕХ блоков ===== */
+    /* ===== ЛИНИЯ ТОЛЬКО ДЛЯ "СВОБОДНЫХ СТАНЦИЙ" ===== */
     .divider-line {
       position: absolute;
       left: 168px;
@@ -468,6 +467,11 @@
       top: 50%;
       height: 1px;
       background: linear-gradient(90deg, #d5d5d8 0%, #e8e8ea 60%, transparent 100%);
+    }
+
+    /* ===== У сотрудников линии НЕТ — только фон ===== */
+    .divider-employee {
+      /* без линии, только фон */
     }
 
     /* контейнер внутри заголовка группы */
@@ -1771,25 +1775,25 @@
             const lhdrCell = row.querySelector('.lane-hdr');
             if (lhdrCell) lhdrCell.classList.add('block-start');
 
-            // ===== ВСТАВЛЯЕМ РАЗДЕЛИТЕЛЬ ДЛЯ ЛЮБОГО БЛОКА (и ФИО, и свободные) =====
             const divRow = document.createElement("tr");
             divRow.className = "employee-group-divider";
             const dtd = document.createElement("td");
             dtd.colSpan = colSpan;
 
             if (group) {
-              // Блок Сотрудника — линия с именем
+              // Блок сотрудника — цветной фон, БЕЗ ЛИНИИ
               const color = group.color || '#4f6b4e';
               dtd.style.background = `linear-gradient(90deg, ${color}2e 0%, ${color}14 55%, ${color}08 100%)`;
               dtd.style.borderLeft = `3px solid ${color}`;
+              dtd.style.padding = '6px 0';
               dtd.innerHTML = `
                 <span class="divider-label" style="color:${color};">
                   <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
                 </span>
-                <span class="divider-line"></span>
+                <!-- линии НЕТ — только фон -->
               `;
             } else {
-              // Свободные станции
+              // Свободные станции — с линией
               dtd.innerHTML = `
                 <span class="divider-label"><i class="fas fa-circle-minus"></i>Свободные станции</span>
                 <span class="divider-line"></span>
