@@ -256,6 +256,7 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative;
     }
 
     /* ===== Контейнер для прокрутки ===== */
@@ -282,6 +283,13 @@
     }
     .grid-scroll::-webkit-scrollbar-thumb:hover {
       background: #a8a8a8;
+    }
+
+    /* ===== Контейнер для таблицы с относительным позиционированием ===== */
+    .table-wrapper {
+      position: relative;
+      display: inline-block;
+      min-width: 100%;
     }
 
     /* ===== Стили таблицы ===== */
@@ -563,8 +571,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(8px);
       border: 0.5px solid rgba(255, 255, 255, 0.25);
-      will-change: left, top;
-      transition: all 0.12s ease;
       font-weight: 510;
       font-family: var(--font-system);
       overflow: hidden;
@@ -1058,13 +1064,15 @@
     <div class="page">
       <div class="grid-card">
         <div class="grid-scroll" id="gridScroll">
-          <table id="tableDesktop">
-            <thead id="dtHead">
-              <tr><th class="corner">СТАНЦИЯ</th></tr>
-            </thead>
-            <tbody id="dtBody"></tbody>
-          </table>
-          <div id="slidersLayer"></div>
+          <div class="table-wrapper" id="tableWrapper">
+            <table id="tableDesktop">
+              <thead id="dtHead">
+                <tr><th class="corner">СТАНЦИЯ</th></tr>
+              </thead>
+              <tbody id="dtBody"></tbody>
+            </table>
+            <div id="slidersLayer"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2030,6 +2038,13 @@
         if (currentGroup !== null) mergedItems.push(currentGroup);
       }
 
+      // Получаем позицию контейнера table-wrapper
+      const wrapper = document.getElementById('tableWrapper');
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const scrollContainer = document.getElementById('gridScroll');
+      const scrollLeft = scrollContainer.scrollLeft;
+      const scrollTop = scrollContainer.scrollTop;
+
       for (const group of mergedItems) {
         let startIdx = group.startSlotIdx, endIdx = group.endSlotIdx;
         if (startIdx === undefined || endIdx === undefined) continue;
@@ -2039,10 +2054,15 @@
         let ec = row.cells[endIdx + 1];
         if (!sc || !ec) continue;
 
-        let left = sc.offsetLeft + 1;
-        let top = row.offsetTop + 1;
-        let width = (ec.offsetLeft + ec.offsetWidth) - sc.offsetLeft - 2;
-        let height = row.offsetHeight - 2;
+        // Получаем позиции ячеек относительно wrapper
+        let scRect = sc.getBoundingClientRect();
+        let ecRect = ec.getBoundingClientRect();
+        let rowRect = row.getBoundingClientRect();
+
+        let left = scRect.left - wrapperRect.left + scrollLeft;
+        let top = rowRect.top - wrapperRect.top + scrollTop;
+        let width = ecRect.right - scRect.left;
+        let height = rowRect.height;
 
         let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
 
@@ -2460,6 +2480,18 @@
       hideLoad();
     }
 
+    // ==================== ОБРАБОТЧИК СКРОЛЛА ДЛЯ ПЕРЕРИСОВКИ СЛАЙДЕРОВ ====================
+    let scrollTimeout = null;
+
+    function handleScroll() {
+      // Используем throttle для оптимизации
+      if (scrollTimeout) return;
+      scrollTimeout = setTimeout(() => {
+        renderAllSliders();
+        scrollTimeout = null;
+      }, 100);
+    }
+
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
     async function initApplication() {
       await loadStations();
@@ -2491,6 +2523,15 @@
       document.getElementById("tableDesktop").addEventListener("mousedown", onMouseDown);
       document.body.addEventListener("mousemove", onMouseMove);
       document.body.addEventListener("mouseup", onMouseUp);
+
+      // Добавляем обработчик скролла для перерисовки слайдеров
+      const scrollContainer = document.getElementById("gridScroll");
+      scrollContainer.addEventListener("scroll", handleScroll);
+
+      // Также перерисовываем при изменении размера окна
+      window.addEventListener("resize", () => {
+        renderAllSliders();
+      });
 
       ["bookModal", "infoModal", "editEventModal", "saveScheduleModal"].forEach(id => {
         document.getElementById(id)?.addEventListener("click", e => {
