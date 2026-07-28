@@ -256,8 +256,8 @@
       -webkit-overflow-scrolling: touch;
       position: relative;
       width: 100%;
-      max-height: calc(100vh - 200px); /* Увеличили высоту, чтобы было место снизу */
-      min-height: 500px; /* Минимальная высота для комфортного просмотра */
+      max-height: calc(100vh - 200px);
+      min-height: 500px;
     }
 
     /* ЗАКРЕПЛЯЕМ ШАПКУ ТАБЛИЦЫ */
@@ -507,12 +507,15 @@
       align-items: center;
       justify-content: center;
     }
+    .group-remove-btn:hover {
+      background: rgba(179, 63, 63, 0.25);
+    }
 
     .group-color-btn {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      border: 2px solid #4f6b4e;
+      border: 2px solid rgba(255, 255, 255, 0.5);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -521,11 +524,11 @@
       color: white;
       transition: all 0.2s;
       flex-shrink: 0;
-      background: #4f6b4e;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .group-color-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+      transform: scale(1.15);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
     }
 
     /* ===== ПОЛЗУНКИ (слайдеры) ===== */
@@ -687,6 +690,9 @@
       color: #b33f3f;
       font-size: 11px;
     }
+    .temp-card-inline .temp-rm:hover {
+      background: #f0d0d0;
+    }
 
     /* ===== МОДАЛЬНЫЕ ОКНА ===== */
     .overlay {
@@ -734,6 +740,9 @@
       font-size: 24px;
       cursor: pointer;
     }
+    .sheet-x:hover {
+      background: #e5e5e8;
+    }
     .sheet-body {
       padding: 16px 28px 34px;
     }
@@ -772,6 +781,9 @@
       font-weight: 600;
       cursor: pointer;
     }
+    .f-btn-ok:hover {
+      background: var(--accent-blue-hover);
+    }
     .f-btn-cancel {
       flex: 1;
       height: 56px;
@@ -780,6 +792,9 @@
       border-radius: 8px;
       font-weight: 500;
       cursor: pointer;
+    }
+    .f-btn-cancel:hover {
+      background: #e5e5e8;
     }
 
     .info-row {
@@ -923,9 +938,15 @@
       background: var(--accent-green);
       color: white;
     }
+    .assign-bar .assign-apply-btn:hover {
+      filter: brightness(0.9);
+    }
     .assign-bar .assign-cancel-btn {
       background: rgba(255, 255, 255, 0.12);
       color: white;
+    }
+    .assign-bar .assign-cancel-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     /* ===== ИНДИКАТОР РЕЖИМА ПЕРЕТЯЖКИ ===== */
@@ -1604,18 +1625,30 @@
               dtd.style.borderLeft = `3px solid ${color}`;
               dtd.style.padding = '6px 0';
               dtd.innerHTML = `
-                <span class="divider-label" style="color:${color};">
-                  <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
-                </span>
+                <div class="divider-label" style="color:${color}; display: flex; align-items: center; gap: 8px; width: 100%;">
+                  <span style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                    <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
+                  </span>
+                  <span style="display: flex; align-items: center; gap: 6px; margin-right: 12px;">
+                    <button class="group-color-btn" onclick="event.stopPropagation(); openColorPicker(${group.id}, '${escapeHtml(group.name)}', '${escapeHtml(group.color || '#4f6b4e')}')" 
+                      style="background: ${group.color || '#4f6b4e'}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
+                      onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+                      <i class="fas fa-palette" style="font-size: 12px;"></i>
+                    </button>
+                    <button class="group-remove-btn" onclick="event.stopPropagation(); removeEmployeeGroup(${group.id})" title="Убрать привязку">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </span>
+                </div>
               `;
             } else {
               dtd.style.background = 'linear-gradient(90deg, #e8e8ea 0%, #f0f0f2 55%, #f5f5f7 100%)';
               dtd.style.borderLeft = '3px solid #d4d4d6';
               dtd.style.padding = '6px 0';
               dtd.innerHTML = `
-                <span class="divider-label" style="color:var(--label-quaternary);">
-                  <i class="fas fa-circle-minus"></i>Свободные станции
-                </span>
+                <div class="divider-label" style="color:var(--label-quaternary); display: flex; align-items: center; gap: 8px; width: 100%;">
+                  <i class="fas fa-circle-minus"></i> Свободные станции
+                </div>
               `;
             }
 
@@ -1658,7 +1691,7 @@
       colors.forEach(c => {
         const selected = c === currentColor ? 'border: 3px solid #333; transform: scale(1.1);' : '';
         html += `
-          <div style="width:100%;aspect-ratio:1;background:${c};border-radius:50%;cursor:pointer;${selected}transition:all 0.2s;"
+          <div style="width:100%;aspect-ratio:1;background:${c};border-radius:50%;cursor:pointer;${selected}transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.1);"
             onclick="selectColor('${c}', ${groupId}, '${escapeHtml(employeeName)}')"
             onmouseover="this.style.transform='scale(1.15)'"
             onmouseout="this.style.transform='scale(1)'"></div>
