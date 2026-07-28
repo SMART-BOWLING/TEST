@@ -206,17 +206,6 @@
       background: var(--accent-blue-hover);
     }
 
-    .btn-resize-mode {
-      background: #e8d8c8;
-      color: var(--label-dark);
-      border-color: #d4c8a8;
-    }
-    .btn-resize-mode.active {
-      background: var(--accent-amber);
-      color: white;
-      border-color: var(--accent-amber);
-    }
-
     .btn-assign-toggle.active {
       background: var(--accent-amber);
       color: white;
@@ -429,10 +418,6 @@
     #tableDesktop tbody td.slot.drag-over {
       background: #e2dfcf !important;
     }
-    #tableDesktop tbody td.slot.slot-available {
-      background: rgba(75, 200, 100, 0.15) !important;
-      border: 1px dashed rgba(75, 200, 100, 0.3);
-    }
 
     /* ===== РАЗДЕЛИТЕЛИ ===== */
     #tableDesktop tbody tr.employee-group-divider td {
@@ -507,7 +492,7 @@
       position: absolute;
       border-radius: 6px;
       pointer-events: auto;
-      cursor: default;
+      cursor: pointer;
       padding: 2px 8px;
       display: flex;
       flex-direction: column;
@@ -551,11 +536,6 @@
       border: 1px solid #c9b16b;
     }
 
-    .slider.resize-mode-active {
-      border: 2px solid #ffd700;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-    }
-
     .sl-time {
       font-size: 11px;
       font-weight: 600;
@@ -571,87 +551,9 @@
       left: 0;
       right: 0;
       height: 100%;
-      cursor: default;
+      cursor: pointer;
       z-index: 2;
       pointer-events: auto;
-    }
-
-    .slider:not(.resize-mode-active) .drag-handle {
-      cursor: pointer;
-    }
-
-    /* Маркеры изменения размера */
-    .resize-handle {
-      position: absolute;
-      top: 0;
-      width: 14px;
-      height: 100%;
-      cursor: ew-resize;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(255,255,255,0.8);
-      font-size: 10px;
-      z-index: 3;
-      background: rgba(255, 215, 0, 0.3);
-      border-radius: 4px;
-      opacity: 0;
-      transition: opacity 0.3s, background 0.3s;
-      pointer-events: none;
-    }
-
-    .slider.resize-mode-active .resize-handle {
-      pointer-events: auto;
-      opacity: 1;
-    }
-
-    .resize-handle:hover {
-      background: rgba(255, 215, 0, 0.6) !important;
-    }
-
-    .resize-handle-left {
-      left: -3px;
-      border-radius: 4px 0 0 4px;
-    }
-
-    .resize-handle-right {
-      right: -3px;
-      border-radius: 0 4px 4px 0;
-    }
-
-    .resize-handle i {
-      font-size: 10px;
-      opacity: 0.8;
-    }
-
-    .ghost-slider {
-      position: absolute;
-      border-radius: 6px;
-      pointer-events: none;
-      padding: 4px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 2px;
-      background: rgba(0, 0, 0, 0.45) !important;
-      backdrop-filter: blur(12px);
-      border: 2px dashed rgba(255, 215, 0, 0.9) !important;
-      box-shadow: 0 0 0 2px rgba(255, 255, 200, 0.3), 0 8px 20px rgba(0, 0, 0, 0.2);
-      z-index: 999;
-      font-weight: 510;
-      font-family: var(--font-system);
-      overflow: hidden;
-      white-space: nowrap;
-      transition: none;
-      color: #fff;
-      text-shadow: 0 1px 1px black;
-      font-size: 11px;
-    }
-    .ghost-slider .sl-time {
-      opacity: 0.85;
-      color: #ffffff !important;
-      font-size: 11px;
     }
 
     /* ===== ВРЕМЕННЫЕ КАРТОЧКИ ===== */
@@ -953,23 +855,6 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
-    /* ===== ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ ВРЕМЕНИ ===== */
-    .resize-mode-indicator {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #2c2c2ecc;
-      backdrop-filter: blur(20px);
-      color: white;
-      padding: 10px 26px;
-      border-radius: 8px;
-      font-size: 14px;
-      z-index: 1000;
-      pointer-events: none;
-      text-align: center;
-    }
-
     /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА ===== */
     .color-picker-grid {
       display: grid;
@@ -992,6 +877,21 @@
     .color-picker-grid .color-option.selected {
       border: 3px solid #333;
       transform: scale(1.1);
+    }
+
+    /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ВРЕМЕНИ ===== */
+    .time-select-group {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .time-select-group select {
+      flex: 1;
+    }
+    .time-select-group span {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--label-secondary);
     }
 
     /* ===== АДАПТИВ ===== */
@@ -1058,8 +958,9 @@
       .color-picker-grid {
         grid-template-columns: repeat(6, 1fr);
       }
-      .resize-handle {
-        width: 10px;
+      .time-select-group {
+        flex-direction: column;
+        gap: 8px;
       }
     }
   </style>
@@ -1085,9 +986,6 @@
       <div class="ctrl-buttons">
         <button class="btn-ctrl btn-book" onclick="openBookModal()" title="Новая запись">
           <i class="fas fa-plus-circle"></i><span>Запись</span>
-        </button>
-        <button id="resizeModeBtn" class="btn-ctrl btn-resize-mode" title="Режим изменения времени">
-          <i class="fas fa-arrows-alt-h"></i><span>Изменить время</span>
         </button>
         <button id="assignToggleBtn" class="btn-ctrl btn-assign-toggle" title="Назначить сотрудника">
           <i class="fas fa-user-tag"></i><span>Назначить</span>
@@ -1118,11 +1016,6 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ ВРЕМЕНИ -->
-  <div id="resizeModeIndicator" class="resize-mode-indicator" style="display: none;">
-    <i class="fas fa-arrows-alt-h"></i> Режим изменения времени: потяните за золотые маркеры
   </div>
 
   <!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
@@ -1197,10 +1090,42 @@
           <div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div>
         </div>
         <div class="f-actions" style="margin-top: 20px;">
+          <button class="f-btn-ok" onclick="openEditTimeModal()"><i class="fas fa-clock"></i> Изменить время</button>
           <button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button>
           <button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;">
             <i class="fas fa-trash"></i> Удалить
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- РЕДАКТИРОВАТЬ ВРЕМЯ -->
+  <div id="editTimeModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-clock"></i> Изменить время</div>
+        <button class="sheet-x" onclick="closeEditTimeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">Станция: <strong id="editTimeStationName"></strong></label>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Выберите время</label>
+          <div class="time-select-group">
+            <select class="f-input" id="editTimeStartSelect">
+              <!-- Заполняется через JS -->
+            </select>
+            <span>—</span>
+            <select class="f-input" id="editTimeEndSelect">
+              <!-- Заполняется через JS -->
+            </select>
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="applyTimeChange()">Применить</button>
+          <button class="f-btn-cancel" onclick="closeEditTimeModal()">Отмена</button>
         </div>
       </div>
     </div>
@@ -1268,7 +1193,7 @@
   <!-- ===== СКРИПТ ===== -->
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBP1Rnyij1UBW-ThOQv1ck5CzTMiCMQKFizQDWNsJ5shnRXREI1rsoXWQLeoyHFxK6/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwgPy7jqW7cfd52EpLyWYcoJHqkE6LvDCaLzw1JNUUmgd0hwZ-LPHnrgXzbcX5xZdBk/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1277,19 +1202,10 @@
     let bookings = [];
     let tempBookings = [];
     let nextTempId = 1;
-    let resizeModeEnabled = false;
     let currentBooking = null;
     let editingBooking = null;
     let selectedEventType = 'regular';
-
-    // Переменные для изменения времени
-    let isResizing = false;
-    let resizeEdge = null;
-    let resizeBooking = null;
-    let resizeStartX = 0;
-    let resizeStartIdx = 0;
-    let resizeGhost = null;
-    let resizeOriginalBooking = null;
+    let editingTimeBooking = null;
 
     let employeeGroups = [];
     let nextGroupId = 1;
@@ -1351,8 +1267,6 @@
     }
 
     function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
-      let startTime = slots[startSlotIdx].key;
-      let endTime = slots[endSlotIdx + 1]?.key || (slots[endSlotIdx].key + 0.5);
       return bookings.some(b => {
         if (excludeId !== null && b.id === excludeId) return false;
         if (b.lane !== lane) return false;
@@ -1562,7 +1476,6 @@
         loadFromServer(currentSheetName);
         clearTempSelections();
         resetEmployeeGroups();
-        if (resizeModeEnabled) toggleResizeMode();
       }
     }
 
@@ -1655,7 +1568,7 @@
     function updateCellsHighlight() {
       for (let row of document.getElementById("dtBody").rows) {
         for (let i = 1; i < row.cells.length; i++) {
-          row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight", "slot-available");
+          row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
         }
       }
       for (let b of bookings) {
@@ -2062,277 +1975,6 @@
       hideLoad();
     }
 
-    // ==================== РЕЖИМ ИЗМЕНЕНИЯ ВРЕМЕНИ ====================
-    function toggleResizeMode() {
-      resizeModeEnabled = !resizeModeEnabled;
-      const btn = document.getElementById("resizeModeBtn");
-      btn.classList.toggle("active", resizeModeEnabled);
-      document.getElementById("resizeModeIndicator").style.display = resizeModeEnabled ? "block" : "none";
-      
-      if (!resizeModeEnabled) {
-        cleanupResize();
-        renderAllSliders();
-      } else {
-        renderAllSliders();
-      }
-    }
-
-    function startResize(e, booking, edge) {
-      if (!resizeModeEnabled) return;
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (booking.isTemp) {
-        alert('Нельзя изменять временные записи');
-        return;
-      }
-      
-      const actualBooking = bookings.find(b => b.id === booking.id);
-      if (!actualBooking) return;
-      
-      isResizing = true;
-      resizeEdge = edge;
-      resizeBooking = actualBooking;
-      resizeStartX = e.clientX;
-      resizeStartIdx = edge === 'left' ? actualBooking.startSlotIdx : actualBooking.endSlotIdx;
-      
-      resizeOriginalBooking = {
-        startSlotIdx: actualBooking.startSlotIdx,
-        endSlotIdx: actualBooking.endSlotIdx,
-        start: actualBooking.start,
-        end: actualBooking.end
-      };
-      
-      const slider = e.currentTarget.closest('.slider');
-      if (slider) {
-        resizeGhost = createGhost(slider);
-        resizeGhost.style.border = '2px solid #ffd700';
-        resizeGhost.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
-      }
-      
-      highlightAvailableSlots(actualBooking.lane, actualBooking.id);
-      
-      document.body.style.cursor = 'ew-resize';
-      document.addEventListener('mousemove', onResizeMove);
-      document.addEventListener('mouseup', onResizeEnd);
-    }
-
-    function onResizeMove(e) {
-      if (!isResizing || !resizeBooking) return;
-      
-      const deltaX = e.clientX - resizeStartX;
-      const slotWidth = 74;
-      const deltaSlots = Math.round(deltaX / slotWidth);
-      
-      let newStartIdx = resizeBooking.startSlotIdx;
-      let newEndIdx = resizeBooking.endSlotIdx;
-      
-      if (resizeEdge === 'left') {
-        newStartIdx = Math.max(0, resizeStartIdx + deltaSlots);
-        if (newStartIdx >= newEndIdx) {
-          newStartIdx = newEndIdx - 1;
-        }
-        if (newStartIdx < 0) newStartIdx = 0;
-      } else {
-        newEndIdx = Math.min(slots.length - 1, resizeStartIdx + deltaSlots);
-        if (newEndIdx <= newStartIdx) {
-          newEndIdx = newStartIdx + 1;
-        }
-        if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
-      }
-      
-      const hasConflictWithOther = bookings.some(b => {
-        if (b.id === resizeBooking.id) return false;
-        if (b.lane !== resizeBooking.lane) return false;
-        let bStart = b.startSlotIdx;
-        let bEnd = b.endSlotIdx;
-        return !(newEndIdx < bStart || newStartIdx > bEnd);
-      });
-      
-      if (resizeGhost) {
-        const row = getRowByLane(resizeBooking.lane);
-        if (row) {
-          const sc = row.cells[newStartIdx + 1];
-          const ec = row.cells[newEndIdx + 1];
-          if (sc && ec) {
-            const container = document.getElementById('slidersLayer');
-            const containerRect = container.getBoundingClientRect();
-            const scRect = sc.getBoundingClientRect();
-            const ecRect = ec.getBoundingClientRect();
-            
-            resizeGhost.style.left = (scRect.left - containerRect.left + 1) + 'px';
-            resizeGhost.style.width = (ecRect.right - scRect.left - 2) + 'px';
-            
-            const timeDiv = resizeGhost.querySelector('.sl-time');
-            if (timeDiv) {
-              const startSlot = slots[newStartIdx];
-              const endSlot = slots[newEndIdx + 1] || { label: `${Math.floor(slots[newEndIdx].key) + 1}:00` };
-              timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
-            }
-          }
-        }
-      }
-      
-      document.querySelectorAll('.slot-available').forEach(el => {
-        el.classList.remove('slot-available');
-        el.style.background = '';
-      });
-      
-      if (!hasConflictWithOther) {
-        for (let i = newStartIdx; i <= newEndIdx; i++) {
-          const cell = getSlotCell(resizeBooking.lane, i);
-          if (cell) {
-            cell.classList.add('slot-available');
-            cell.style.background = 'rgba(75, 200, 100, 0.2)';
-          }
-        }
-      } else {
-        for (let i = newStartIdx; i <= newEndIdx; i++) {
-          const cell = getSlotCell(resizeBooking.lane, i);
-          if (cell) {
-            const hasConflict = bookings.some(b => {
-              if (b.id === resizeBooking.id) return false;
-              if (b.lane !== resizeBooking.lane) return false;
-              return i >= b.startSlotIdx && i <= b.endSlotIdx;
-            });
-            if (hasConflict) {
-              cell.style.background = 'rgba(255, 50, 50, 0.2)';
-            }
-          }
-        }
-      }
-    }
-
-    function onResizeEnd(e) {
-      if (!isResizing || !resizeBooking) {
-        cleanupResize();
-        return;
-      }
-      
-      const deltaX = e.clientX - resizeStartX;
-      const slotWidth = 74;
-      const deltaSlots = Math.round(deltaX / slotWidth);
-      
-      let newStartIdx = resizeBooking.startSlotIdx;
-      let newEndIdx = resizeBooking.endSlotIdx;
-      
-      if (resizeEdge === 'left') {
-        newStartIdx = Math.max(0, resizeStartIdx + deltaSlots);
-        if (newStartIdx >= newEndIdx) {
-          newStartIdx = newEndIdx - 1;
-        }
-        if (newStartIdx < 0) newStartIdx = 0;
-      } else {
-        newEndIdx = Math.min(slots.length - 1, resizeStartIdx + deltaSlots);
-        if (newEndIdx <= newStartIdx) {
-          newEndIdx = newStartIdx + 1;
-        }
-        if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
-      }
-      
-      const hasConflictWithOther = bookings.some(b => {
-        if (b.id === resizeBooking.id) return false;
-        if (b.lane !== resizeBooking.lane) return false;
-        let bStart = b.startSlotIdx;
-        let bEnd = b.endSlotIdx;
-        return !(newEndIdx < bStart || newStartIdx > bEnd);
-      });
-      
-      if (!hasConflictWithOther && (newStartIdx !== resizeOriginalBooking.startSlotIdx || newEndIdx !== resizeOriginalBooking.endSlotIdx)) {
-        resizeBooking.startSlotIdx = newStartIdx;
-        resizeBooking.endSlotIdx = newEndIdx;
-        resizeBooking.start = slots[newStartIdx].key;
-        resizeBooking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
-        
-        const stationName = stations[resizeBooking.lane]?.name || `Станция ${resizeBooking.lane+1}`;
-        const isBirthday = resizeBooking.type === 'birthday';
-        
-        const payload = {
-          id: resizeBooking.id,
-          stationName: stationName,
-          start: resizeBooking.start,
-          end: resizeBooking.end,
-          comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-          sheetName: currentSheetName
-        };
-        
-        sendPostAction('update', payload).then(() => {
-          renderAllSliders();
-          updateCellsHighlight();
-          const action = resizeEdge === 'left' ? 'начало' : 'конец';
-          alert(`✅ Время изменено: ${action} перемещено на ${Math.abs(deltaSlots)} ячеек`);
-        }).catch(err => {
-          alert('❌ Ошибка сохранения: ' + err.message);
-          resizeBooking.startSlotIdx = resizeOriginalBooking.startSlotIdx;
-          resizeBooking.endSlotIdx = resizeOriginalBooking.endSlotIdx;
-          resizeBooking.start = resizeOriginalBooking.start;
-          resizeBooking.end = resizeOriginalBooking.end;
-          renderAllSliders();
-          updateCellsHighlight();
-        });
-      } else if (hasConflictWithOther) {
-        alert('⛔ Конфликт с другой записью. Изменения отменены');
-        resizeBooking.startSlotIdx = resizeOriginalBooking.startSlotIdx;
-        resizeBooking.endSlotIdx = resizeOriginalBooking.endSlotIdx;
-        resizeBooking.start = resizeOriginalBooking.start;
-        resizeBooking.end = resizeOriginalBooking.end;
-        renderAllSliders();
-        updateCellsHighlight();
-      } else {
-        renderAllSliders();
-        updateCellsHighlight();
-      }
-      
-      cleanupResize();
-    }
-
-    function cleanupResize() {
-      isResizing = false;
-      resizeEdge = null;
-      resizeBooking = null;
-      resizeStartX = 0;
-      resizeStartIdx = 0;
-      resizeOriginalBooking = null;
-      
-      if (resizeGhost && resizeGhost.parentNode) {
-        resizeGhost.remove();
-      }
-      resizeGhost = null;
-      
-      document.body.style.cursor = '';
-      document.removeEventListener('mousemove', onResizeMove);
-      document.removeEventListener('mouseup', onResizeEnd);
-      
-      document.querySelectorAll('.slot-available').forEach(el => {
-        el.classList.remove('slot-available');
-        el.style.background = '';
-      });
-    }
-
-    function highlightAvailableSlots(lane, excludeId) {
-      document.querySelectorAll('.slot-available').forEach(el => {
-        el.classList.remove('slot-available');
-        el.style.background = '';
-      });
-      
-      const row = getRowByLane(lane);
-      if (!row) return;
-      
-      for (let i = 1; i < row.cells.length; i++) {
-        const cell = row.cells[i];
-        const slotIdx = i - 1;
-        const isFree = !bookings.some(b => {
-          if (b.id === excludeId) return false;
-          if (b.lane !== lane) return false;
-          return slotIdx >= b.startSlotIdx && slotIdx <= b.endSlotIdx;
-        });
-        if (isFree) {
-          cell.classList.add('slot-available');
-          cell.style.background = 'rgba(75, 200, 100, 0.1)';
-        }
-      }
-    }
-
     // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
@@ -2417,10 +2059,6 @@
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
-        
-        if (resizeModeEnabled && !group.isTemp) {
-          slider.classList.add("resize-mode-active");
-        }
 
         let groupColor = null;
         for (const g of employeeGroups) {
@@ -2467,26 +2105,6 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        if (resizeModeEnabled && !group.isTemp) {
-          const leftHandle = document.createElement('div');
-          leftHandle.className = 'resize-handle resize-handle-left';
-          leftHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
-          leftHandle.addEventListener('mousedown', (e) => {
-            const booking = group.items[0];
-            if (booking) startResize(e, booking, 'left');
-          });
-          slider.appendChild(leftHandle);
-          
-          const rightHandle = document.createElement('div');
-          rightHandle.className = 'resize-handle resize-handle-right';
-          rightHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
-          rightHandle.addEventListener('mousedown', (e) => {
-            const booking = group.items[0];
-            if (booking) startResize(e, booking, 'right');
-          });
-          slider.appendChild(rightHandle);
-        }
-
         let dragHandle = document.createElement("div");
         dragHandle.className = "drag-handle";
         dragHandle.addEventListener("click", (e) => {
@@ -2511,7 +2129,7 @@
     let dragLane = -1, dragStartIdx = -1, dragEndIdx = -1;
 
     function onMouseDown(e) {
-      if (resizeModeEnabled || assignModeEnabled) return;
+      if (assignModeEnabled) return;
       let t = e.target;
       if (t.classList?.contains("slot")) {
         e.preventDefault();
@@ -2528,7 +2146,7 @@
     }
 
     function onMouseMove(e) {
-      if (!resizeModeEnabled && isDragging && dragStartCell) {
+      if (!assignModeEnabled && isDragging && dragStartCell) {
         let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
         if (el) {
           let lane = parseInt(el.dataset.lane);
@@ -2547,7 +2165,7 @@
     }
 
     function onMouseUp() {
-      if (!resizeModeEnabled && isDragging && dragInterval) {
+      if (!assignModeEnabled && isDragging && dragInterval) {
         let lane = dragLane, startIdx = dragStartIdx, endIdx = dragEndIdx;
         if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
           resetDragState();
@@ -2584,16 +2202,112 @@
       }
     }
 
-    function createGhost(slider) {
-      let ghost = document.createElement('div');
-      ghost.className = 'ghost-slider';
-      let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-      if (timeClone) ghost.appendChild(timeClone);
-      ghost.style.cssText = slider.style.cssText;
-      ghost.style.opacity = '0.85';
-      ghost.style.transition = 'none';
-      document.getElementById('slidersLayer').appendChild(ghost);
-      return ghost;
+    // ==================== РЕДАКТИРОВАНИЕ ВРЕМЕНИ ====================
+    function openEditTimeModal() {
+      if (!currentBooking) return;
+      
+      editingTimeBooking = currentBooking;
+      const booking = currentBooking;
+      
+      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
+      document.getElementById('editTimeStationName').textContent = stationName;
+      
+      // Заполняем селекты
+      const startSelect = document.getElementById('editTimeStartSelect');
+      const endSelect = document.getElementById('editTimeEndSelect');
+      
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+      
+      for (let i = 0; i < slots.length - 1; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
+        option.textContent = `${slots[i].label}–${endSlot.label}`;
+        if (i === booking.startSlotIdx) option.selected = true;
+        startSelect.appendChild(option);
+      }
+      
+      for (let i = 1; i < slots.length; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        const startSlot = slots[i - 1];
+        option.textContent = `${startSlot.label}–${slots[i].label}`;
+        if (i === booking.endSlotIdx + 1) option.selected = true;
+        endSelect.appendChild(option);
+      }
+      
+      // Ограничиваем выбор конца
+      startSelect.onchange = function() {
+        const startVal = parseInt(this.value);
+        Array.from(endSelect.options).forEach(opt => {
+          opt.disabled = parseInt(opt.value) <= startVal;
+        });
+        if (parseInt(endSelect.value) <= startVal) {
+          endSelect.value = startVal + 1;
+        }
+      };
+      startSelect.onchange();
+      
+      closeInfoModal();
+      document.getElementById('editTimeModal').classList.add('open');
+    }
+
+    function closeEditTimeModal() {
+      document.getElementById('editTimeModal').classList.remove('open');
+      editingTimeBooking = null;
+    }
+
+    async function applyTimeChange() {
+      if (!editingTimeBooking) return;
+      
+      const startSelect = document.getElementById('editTimeStartSelect');
+      const endSelect = document.getElementById('editTimeEndSelect');
+      
+      const newStartIdx = parseInt(startSelect.value);
+      const newEndIdx = parseInt(endSelect.value) - 1;
+      
+      if (newStartIdx >= newEndIdx) {
+        alert('❌ Начало должно быть раньше конца');
+        return;
+      }
+      
+      // Проверяем конфликты
+      if (hasConflict(editingTimeBooking.lane, newStartIdx, newEndIdx, editingTimeBooking.id)) {
+        alert('⛔ Это время уже занято другой записью');
+        return;
+      }
+      
+      // Обновляем
+      const booking = bookings.find(b => b.id === editingTimeBooking.id);
+      if (!booking) return;
+      
+      booking.startSlotIdx = newStartIdx;
+      booking.endSlotIdx = newEndIdx;
+      booking.start = slots[newStartIdx].key;
+      booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
+      
+      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
+      const isBirthday = booking.type === 'birthday';
+      
+      const payload = {
+        id: booking.id,
+        stationName: stationName,
+        start: booking.start,
+        end: booking.end,
+        comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+        sheetName: currentSheetName
+      };
+      
+      try {
+        await sendPostAction('update', payload);
+        renderAllSliders();
+        updateCellsHighlight();
+        closeEditTimeModal();
+        alert('✅ Время успешно изменено');
+      } catch (e) {
+        alert('❌ Ошибка сохранения: ' + e.message);
+      }
     }
 
     // ==================== СОХРАНЕНИЕ НА СЕРВЕР ====================
@@ -2852,7 +2566,7 @@
       await loadStations();
 
       document.addEventListener('dragstart', (e) => {
-        if (e.target.closest('.resize-handle') || e.target.closest('.slider')) {
+        if (e.target.closest('.slider')) {
           e.preventDefault();
           return false;
         }
@@ -2865,14 +2579,13 @@
         await loadFromServer(currentSheetName);
       }
 
-      document.getElementById("resizeModeBtn").addEventListener("click", toggleResizeMode);
       document.getElementById("assignToggleBtn").addEventListener("click", toggleAssignMode);
 
       document.getElementById("tableDesktop").addEventListener("mousedown", onMouseDown);
       document.body.addEventListener("mousemove", onMouseMove);
       document.body.addEventListener("mouseup", onMouseUp);
 
-      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal"].forEach(id => {
+      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal", "editTimeModal"].forEach(id => {
         document.getElementById(id)?.addEventListener("click", e => {
           if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove("open");
         });
