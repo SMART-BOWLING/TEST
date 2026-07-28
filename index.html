@@ -556,6 +556,17 @@
       pointer-events: auto;
     }
 
+    .slider .click-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
     /* ===== ВРЕМЕННЫЕ КАРТОЧКИ ===== */
     .inline-temp-cards {
       display: flex;
@@ -1979,7 +1990,7 @@
       hideLoad();
     }
 
-    // ==================== ОТРИСОВКА СЛАЙДЕРОВ (исправленная) ====================
+    // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
       if (!container) return;
@@ -2109,30 +2120,46 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        // ПРЯМОЙ ОБРАБОТЧИК КЛИКА НА СЛАЙДЕР
-        slider.style.cursor = 'pointer';
-        slider.addEventListener('click', function(e) {
-          e.stopPropagation();
-          
-          if (!group.isTemp && group.items && group.items.length > 0) {
-            const booking = group.items[0];
-            if (booking) {
-              const existingBooking = bookings.find(b => b.id === booking.id);
-              if (existingBooking) {
-                showInfoModal(booking);
+        // === НАДЕЖНЫЙ ОБРАБОТЧИК КЛИКА ===
+        let clickLayer = document.createElement("div");
+        clickLayer.className = "click-layer";
+        clickLayer.style.cssText = `
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 10;
+          cursor: pointer;
+          border-radius: 6px;
+        `;
+        
+        (function(currentGroup) {
+          clickLayer.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (!currentGroup.isTemp && currentGroup.items && currentGroup.items.length > 0) {
+              const booking = currentGroup.items[0];
+              if (booking) {
+                const existingBooking = bookings.find(b => b.id === booking.id);
+                if (existingBooking) {
+                  showInfoModal(booking);
+                } else {
+                  alert('Эта запись была удалена');
+                }
               } else {
-                alert('Эта запись была удалена');
+                alert("Ошибка: запись не найдена");
               }
+            } else if (currentGroup.isTemp) {
+              alert("Временная запись — сохраните для просмотра.");
             } else {
-              alert("Ошибка: запись не найдена");
+              alert("Загрузка данных...");
             }
-          } else if (group.isTemp) {
-            alert("Временная запись — сохраните для просмотра.");
-          } else {
-            alert("Загрузка данных...");
-          }
-        });
-
+          });
+        })(group);
+        
+        slider.appendChild(clickLayer);
         container.appendChild(slider);
       }
     }
