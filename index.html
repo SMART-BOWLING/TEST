@@ -2111,13 +2111,15 @@
 
         let dragHandle = document.createElement("div");
         dragHandle.className = "drag-handle";
-        dragHandle.addEventListener("click", (e) => {
+        dragHandle.addEventListener("click", function(e) {
           e.stopPropagation();
           if (!group.isTemp && group.items && group.items.length > 0) {
             const booking = group.items[0];
-            showInfoModal(booking);
-            // Заполняем селекты времени после открытия модалки
-            setTimeout(() => populateTimeSelects(booking), 50);
+            if (booking) {
+              showInfoModal(booking);
+            } else {
+              alert("Ошибка: запись не найдена");
+            }
           } else if (!group.isTemp && !group.items) {
             alert("Загрузка данных...");
           } else {
@@ -2131,15 +2133,24 @@
 
     // ==================== ЗАПОЛНЕНИЕ СЕЛЕКТОВ ВРЕМЕНИ ====================
     function populateTimeSelects(booking) {
+      if (!booking) return;
+      
       const startSelect = document.getElementById('editTimeStartSelect');
       const endSelect = document.getElementById('editTimeEndSelect');
       
-      if (!startSelect || !endSelect) return;
+      if (!startSelect || !endSelect) {
+        console.error('Селекты времени не найдены');
+        return;
+      }
       
       startSelect.innerHTML = '';
       endSelect.innerHTML = '';
       
-      // Заполняем начало
+      if (booking.startSlotIdx === undefined || booking.endSlotIdx === undefined) {
+        console.error('Некорректные индексы времени');
+        return;
+      }
+      
       for (let i = 0; i < slots.length - 1; i++) {
         const option = document.createElement('option');
         option.value = i;
@@ -2149,7 +2160,6 @@
         startSelect.appendChild(option);
       }
       
-      // Заполняем конец
       for (let i = 1; i < slots.length; i++) {
         const option = document.createElement('option');
         option.value = i;
@@ -2159,13 +2169,11 @@
         endSelect.appendChild(option);
       }
       
-      // Ограничиваем выбор конца
       startSelect.onchange = function() {
         const startVal = parseInt(this.value);
         Array.from(endSelect.options).forEach(opt => {
           opt.disabled = parseInt(opt.value) <= startVal;
         });
-        // Если текущий конец стал недоступен - меняем на минимальный доступный
         const currentEnd = parseInt(endSelect.value);
         if (currentEnd <= startVal) {
           for (let opt of endSelect.options) {
@@ -2194,15 +2202,16 @@
         return;
       }
       
-      // Проверяем конфликты
       if (hasConflict(currentBooking.lane, newStartIdx, newEndIdx, currentBooking.id)) {
         alert('⛔ Это время уже занято другой записью');
         return;
       }
       
-      // Обновляем
       const booking = bookings.find(b => b.id === currentBooking.id);
-      if (!booking) return;
+      if (!booking) {
+        alert('❌ Запись не найдена');
+        return;
+      }
       
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
@@ -2226,13 +2235,43 @@
         await sendPostAction('update', payload);
         renderAllSliders();
         updateCellsHighlight();
-        // Обновляем отображение времени в модалке
         document.getElementById("i-time").textContent = fmtFromSlotIdx(booking.startSlotIdx, booking.endSlotIdx);
         alert('✅ Время успешно изменено');
       } catch (e) {
         alert('❌ Ошибка сохранения: ' + e.message);
       }
       hideLoad();
+    }
+
+    // ==================== ПОКАЗ МОДАЛЬНОГО ОКНА ====================
+    function showInfoModal(b) {
+      if (!b) {
+        alert("Ошибка: запись не найдена");
+        return;
+      }
+      
+      currentBooking = b;
+      
+      const existingBooking = bookings.find(bk => bk.id === b.id);
+      if (!existingBooking) {
+        alert("Эта запись была удалена");
+        return;
+      }
+      
+      let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
+      let employeeName = getEmployeeForLane(b.lane);
+      let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      
+      document.getElementById("i-table").textContent = stationName;
+      document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
+      document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
+      document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
+      
+      document.getElementById("infoModal").classList.add("open");
+      
+      setTimeout(() => {
+        populateTimeSelects(b);
+      }, 50);
     }
 
     // ==================== DRAG & DROP (ТОЛЬКО ДЛЯ ВЫДЕЛЕНИЯ ИНТЕРВАЛОВ) ====================
@@ -2334,21 +2373,6 @@
     }
 
     // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
-    function showInfoModal(b) {
-      currentBooking = b;
-      let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-      let employeeName = getEmployeeForLane(b.lane);
-      let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      document.getElementById("i-table").textContent = stationName;
-      document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
-      document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
-      document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
-      document.getElementById("infoModal").classList.add("open");
-      
-      // Заполняем селекты времени
-      populateTimeSelects(b);
-    }
-
     function closeInfoModal() {
       document.getElementById("infoModal").classList.remove("open");
       currentBooking = null;
