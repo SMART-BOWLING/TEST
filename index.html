@@ -1198,7 +1198,7 @@
   <!-- ===== СКРИПТ ===== -->
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwgPy7jqW7cfd52EpLyWYcoJHqkE6LvDCaLzw1JNUUmgd0hwZ-LPHnrgXzbcX5xZdBk/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBP1Rnyij1UBW-ThOQv1ck5CzTMiCMQKFizQDWNsJ5shnRXREI1rsoXWQLeoyHFxK6/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1979,7 +1979,7 @@
       hideLoad();
     }
 
-    // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
+    // ==================== ОТРИСОВКА СЛАЙДЕРОВ (исправленная) ====================
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
       if (!container) return;
@@ -2109,24 +2109,30 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        let dragHandle = document.createElement("div");
-        dragHandle.className = "drag-handle";
-        dragHandle.addEventListener("click", function(e) {
+        // ПРЯМОЙ ОБРАБОТЧИК КЛИКА НА СЛАЙДЕР
+        slider.style.cursor = 'pointer';
+        slider.addEventListener('click', function(e) {
           e.stopPropagation();
+          
           if (!group.isTemp && group.items && group.items.length > 0) {
             const booking = group.items[0];
             if (booking) {
-              showInfoModal(booking);
+              const existingBooking = bookings.find(b => b.id === booking.id);
+              if (existingBooking) {
+                showInfoModal(booking);
+              } else {
+                alert('Эта запись была удалена');
+              }
             } else {
               alert("Ошибка: запись не найдена");
             }
-          } else if (!group.isTemp && !group.items) {
-            alert("Загрузка данных...");
-          } else {
+          } else if (group.isTemp) {
             alert("Временная запись — сохраните для просмотра.");
+          } else {
+            alert("Загрузка данных...");
           }
         });
-        slider.appendChild(dragHandle);
+
         container.appendChild(slider);
       }
     }
