@@ -217,15 +217,6 @@
       border-color: var(--accent-amber);
     }
 
-    .btn-drag-toggle.active {
-      background: var(--accent-blue);
-      color: white;
-      border-color: var(--accent-blue);
-    }
-    .btn-drag-toggle.active:hover {
-      background: var(--accent-blue-hover);
-    }
-
     .btn-assign-toggle.active {
       background: var(--accent-amber);
       color: white;
@@ -962,22 +953,7 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
-    /* ===== ИНДИКАТОР РЕЖИМА ПЕРЕТЯЖКИ ===== */
-    .drag-mode-indicator {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      background: #2c2c2ecc;
-      backdrop-filter: blur(20px);
-      color: white;
-      padding: 10px 26px;
-      border-radius: 8px;
-      font-size: 14px;
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    /* ===== ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ РАЗМЕРА ===== */
+    /* ===== ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ ВРЕМЕНИ ===== */
     .resize-mode-indicator {
       position: fixed;
       bottom: 28px;
@@ -1292,7 +1268,7 @@
   <!-- ===== СКРИПТ ===== -->
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwWeHqppbqjuxS0cJqooGlrw8Nf7j5KfWljzU-uTACREWS3zZl-rYYYUYbi2Jgy_uTu/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBP1Rnyij1UBW-ThOQv1ck5CzTMiCMQKFizQDWNsJ5shnRXREI1rsoXWQLeoyHFxK6/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1380,8 +1356,9 @@
       return bookings.some(b => {
         if (excludeId !== null && b.id === excludeId) return false;
         if (b.lane !== lane) return false;
-        let bStart = b.start, bEnd = b.end;
-        return !(endTime <= bStart || startTime >= bEnd);
+        let bStart = b.startSlotIdx;
+        let bEnd = b.endSlotIdx;
+        return !(endSlotIdx < bStart || startSlotIdx > bEnd);
       });
     }
 
@@ -1585,7 +1562,6 @@
         loadFromServer(currentSheetName);
         clearTempSelections();
         resetEmployeeGroups();
-        // Отключаем режим изменения времени при смене листа
         if (resizeModeEnabled) toggleResizeMode();
       }
     }
@@ -2093,7 +2069,6 @@
       btn.classList.toggle("active", resizeModeEnabled);
       document.getElementById("resizeModeIndicator").style.display = resizeModeEnabled ? "block" : "none";
       
-      // Если режим выключен - сбрасываем все
       if (!resizeModeEnabled) {
         cleanupResize();
         renderAllSliders();
@@ -2112,7 +2087,6 @@
         return;
       }
       
-      // Находим актуальное бронирование
       const actualBooking = bookings.find(b => b.id === booking.id);
       if (!actualBooking) return;
       
@@ -2122,7 +2096,6 @@
       resizeStartX = e.clientX;
       resizeStartIdx = edge === 'left' ? actualBooking.startSlotIdx : actualBooking.endSlotIdx;
       
-      // Сохраняем оригинал для отмены
       resizeOriginalBooking = {
         startSlotIdx: actualBooking.startSlotIdx,
         endSlotIdx: actualBooking.endSlotIdx,
@@ -2130,7 +2103,6 @@
         end: actualBooking.end
       };
       
-      // Создаем призрак
       const slider = e.currentTarget.closest('.slider');
       if (slider) {
         resizeGhost = createGhost(slider);
@@ -2138,7 +2110,6 @@
         resizeGhost.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
       }
       
-      // Подсвечиваем доступные ячейки
       highlightAvailableSlots(actualBooking.lane, actualBooking.id);
       
       document.body.style.cursor = 'ew-resize';
@@ -2170,7 +2141,6 @@
         if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
       }
       
-      // Проверяем конфликты (исключая текущее бронирование)
       const hasConflictWithOther = bookings.some(b => {
         if (b.id === resizeBooking.id) return false;
         if (b.lane !== resizeBooking.lane) return false;
@@ -2179,7 +2149,6 @@
         return !(newEndIdx < bStart || newStartIdx > bEnd);
       });
       
-      // Обновляем призрак
       if (resizeGhost) {
         const row = getRowByLane(resizeBooking.lane);
         if (row) {
@@ -2204,14 +2173,12 @@
         }
       }
       
-      // Подсвечиваем конфликтные ячейки
       document.querySelectorAll('.slot-available').forEach(el => {
         el.classList.remove('slot-available');
         el.style.background = '';
       });
       
       if (!hasConflictWithOther) {
-        // Подсвечиваем зеленым доступные ячейки
         for (let i = newStartIdx; i <= newEndIdx; i++) {
           const cell = getSlotCell(resizeBooking.lane, i);
           if (cell) {
@@ -2220,7 +2187,6 @@
           }
         }
       } else {
-        // Подсвечиваем красным конфликтные ячейки
         for (let i = newStartIdx; i <= newEndIdx; i++) {
           const cell = getSlotCell(resizeBooking.lane, i);
           if (cell) {
@@ -2264,7 +2230,6 @@
         if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
       }
       
-      // Проверяем конфликты
       const hasConflictWithOther = bookings.some(b => {
         if (b.id === resizeBooking.id) return false;
         if (b.lane !== resizeBooking.lane) return false;
@@ -2274,21 +2239,39 @@
       });
       
       if (!hasConflictWithOther && (newStartIdx !== resizeOriginalBooking.startSlotIdx || newEndIdx !== resizeOriginalBooking.endSlotIdx)) {
-        // Сохраняем изменения
         resizeBooking.startSlotIdx = newStartIdx;
         resizeBooking.endSlotIdx = newEndIdx;
         resizeBooking.start = slots[newStartIdx].key;
         resizeBooking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
         
-        saveToServer(resizeBooking);
-        renderAllSliders();
-        updateCellsHighlight();
+        const stationName = stations[resizeBooking.lane]?.name || `Станция ${resizeBooking.lane+1}`;
+        const isBirthday = resizeBooking.type === 'birthday';
         
-        const action = resizeEdge === 'left' ? 'начало' : 'конец';
-        alert(`✅ Время изменено: ${action} перемещено на ${Math.abs(deltaSlots)} ячеек`);
+        const payload = {
+          id: resizeBooking.id,
+          stationName: stationName,
+          start: resizeBooking.start,
+          end: resizeBooking.end,
+          comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+          sheetName: currentSheetName
+        };
+        
+        sendPostAction('update', payload).then(() => {
+          renderAllSliders();
+          updateCellsHighlight();
+          const action = resizeEdge === 'left' ? 'начало' : 'конец';
+          alert(`✅ Время изменено: ${action} перемещено на ${Math.abs(deltaSlots)} ячеек`);
+        }).catch(err => {
+          alert('❌ Ошибка сохранения: ' + err.message);
+          resizeBooking.startSlotIdx = resizeOriginalBooking.startSlotIdx;
+          resizeBooking.endSlotIdx = resizeOriginalBooking.endSlotIdx;
+          resizeBooking.start = resizeOriginalBooking.start;
+          resizeBooking.end = resizeOriginalBooking.end;
+          renderAllSliders();
+          updateCellsHighlight();
+        });
       } else if (hasConflictWithOther) {
         alert('⛔ Конфликт с другой записью. Изменения отменены');
-        // Восстанавливаем оригинал
         resizeBooking.startSlotIdx = resizeOriginalBooking.startSlotIdx;
         resizeBooking.endSlotIdx = resizeOriginalBooking.endSlotIdx;
         resizeBooking.start = resizeOriginalBooking.start;
@@ -2296,7 +2279,6 @@
         renderAllSliders();
         updateCellsHighlight();
       } else {
-        // Изменений нет
         renderAllSliders();
         updateCellsHighlight();
       }
@@ -2321,7 +2303,6 @@
       document.removeEventListener('mousemove', onResizeMove);
       document.removeEventListener('mouseup', onResizeEnd);
       
-      // Убираем подсветку
       document.querySelectorAll('.slot-available').forEach(el => {
         el.classList.remove('slot-available');
         el.style.background = '';
@@ -2329,7 +2310,6 @@
     }
 
     function highlightAvailableSlots(lane, excludeId) {
-      // Убираем старую подсветку
       document.querySelectorAll('.slot-available').forEach(el => {
         el.classList.remove('slot-available');
         el.style.background = '';
@@ -2341,7 +2321,6 @@
       for (let i = 1; i < row.cells.length; i++) {
         const cell = row.cells[i];
         const slotIdx = i - 1;
-        // Проверяем, свободна ли ячейка
         const isFree = !bookings.some(b => {
           if (b.id === excludeId) return false;
           if (b.lane !== lane) return false;
@@ -2439,7 +2418,6 @@
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
         
-        // Если режим изменения времени включен - добавляем класс
         if (resizeModeEnabled && !group.isTemp) {
           slider.classList.add("resize-mode-active");
         }
@@ -2489,9 +2467,7 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        // Если режим изменения времени включен - добавляем маркеры
         if (resizeModeEnabled && !group.isTemp) {
-          // Левый маркер
           const leftHandle = document.createElement('div');
           leftHandle.className = 'resize-handle resize-handle-left';
           leftHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
@@ -2501,7 +2477,6 @@
           });
           slider.appendChild(leftHandle);
           
-          // Правый маркер
           const rightHandle = document.createElement('div');
           rightHandle.className = 'resize-handle resize-handle-right';
           rightHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
@@ -2512,7 +2487,6 @@
           slider.appendChild(rightHandle);
         }
 
-        // Клик по ползунку для просмотра деталей
         let dragHandle = document.createElement("div");
         dragHandle.className = "drag-handle";
         dragHandle.addEventListener("click", (e) => {
@@ -2610,6 +2584,18 @@
       }
     }
 
+    function createGhost(slider) {
+      let ghost = document.createElement('div');
+      ghost.className = 'ghost-slider';
+      let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
+      if (timeClone) ghost.appendChild(timeClone);
+      ghost.style.cssText = slider.style.cssText;
+      ghost.style.opacity = '0.85';
+      ghost.style.transition = 'none';
+      document.getElementById('slidersLayer').appendChild(ghost);
+      return ghost;
+    }
+
     // ==================== СОХРАНЕНИЕ НА СЕРВЕР ====================
     async function saveToServer(booking) {
       if (!booking.id) return;
@@ -2626,18 +2612,6 @@
         };
         await sendPostAction('update', payload);
       } catch (e) { console.error("Error updating booking:", e); }
-    }
-
-    function createGhost(slider) {
-      let ghost = document.createElement('div');
-      ghost.className = 'ghost-slider';
-      let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-      if (timeClone) ghost.appendChild(timeClone);
-      ghost.style.cssText = slider.style.cssText;
-      ghost.style.opacity = '0.85';
-      ghost.style.transition = 'none';
-      document.getElementById('slidersLayer').appendChild(ghost);
-      return ghost;
     }
 
     // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
@@ -2701,16 +2675,27 @@
     async function deleteBooking() {
       if (!currentBooking) return;
       if (!confirm("Удалить эту запись?")) return;
+      
+      showLoad();
       try {
-        await sendPostAction('delete', { id: currentBooking.id, sheetName: currentSheetName });
-        bookings = bookings.filter(b => b.id !== currentBooking.id);
-        closeInfoModal();
-        renderAllSliders();
-        updateCellsHighlight();
-        alert("Запись удалена");
+        const result = await sendPostAction('delete', { 
+          id: currentBooking.id, 
+          sheetName: currentSheetName 
+        });
+        
+        if (result && result.success) {
+          bookings = bookings.filter(b => b.id !== currentBooking.id);
+          closeInfoModal();
+          renderAllSliders();
+          updateCellsHighlight();
+          alert("✅ Запись удалена");
+        } else {
+          alert("❌ Ошибка удаления: " + (result?.message || "Неизвестная ошибка"));
+        }
       } catch (e) {
-        alert("Ошибка удаления: " + e.message);
+        alert("❌ Ошибка: " + e.message);
       }
+      hideLoad();
     }
 
     // ==================== РАБОТА С ЛИСТАМИ ====================
@@ -2880,9 +2865,7 @@
         await loadFromServer(currentSheetName);
       }
 
-      // Режим изменения времени
       document.getElementById("resizeModeBtn").addEventListener("click", toggleResizeMode);
-
       document.getElementById("assignToggleBtn").addEventListener("click", toggleAssignMode);
 
       document.getElementById("tableDesktop").addEventListener("mousedown", onMouseDown);
