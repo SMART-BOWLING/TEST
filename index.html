@@ -556,17 +556,6 @@
       pointer-events: auto;
     }
 
-    .slider .click-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 10;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
     /* ===== ВРЕМЕННЫЕ КАРТОЧКИ ===== */
     .inline-temp-cards {
       display: flex;
@@ -895,40 +884,14 @@
       display: flex;
       gap: 16px;
       align-items: center;
-      margin-top: 8px;
     }
     .time-select-group select {
       flex: 1;
-      padding: 10px 14px;
-      border: 1px solid var(--border-strong);
-      border-radius: 8px;
-      font-size: 15px;
-      background: var(--surface-secondary);
-      font-family: var(--font-system);
-      cursor: pointer;
-      outline: none;
-    }
-    .time-select-group select:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 2px var(--accent-blue-dim);
     }
     .time-select-group span {
       font-size: 18px;
       font-weight: 600;
       color: var(--label-secondary);
-      padding: 0 4px;
-    }
-    .time-display {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--label-dark);
-      background: #f0f2f5;
-      padding: 10px 16px;
-      border-radius: 8px;
-      margin-top: 4px;
     }
 
     /* ===== АДАПТИВ ===== */
@@ -998,9 +961,6 @@
       .time-select-group {
         flex-direction: column;
         gap: 8px;
-      }
-      .time-select-group span {
-        font-size: 14px;
       }
     }
   </style>
@@ -1115,7 +1075,7 @@
     </div>
   </div>
 
-  <!-- ДЕТАЛИ СОБЫТИЯ (ОСНОВНОЕ МЕНЮ ПОЛЗУНКА) -->
+  <!-- ДЕТАЛИ СОБЫТИЯ -->
   <div id="infoModal" class="overlay">
     <div class="sheet">
       <div class="sheet-head">
@@ -1125,23 +1085,47 @@
       <div class="sheet-body">
         <div class="info-list">
           <div class="info-row"><span>Станция</span><strong id="i-table"></strong></div>
-          <div class="info-row" style="flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 0;">
-            <span style="font-size: 13px; color: var(--label-tertiary);">Время</span>
-            <div style="display: flex; gap: 12px; align-items: center;">
-              <select id="editTimeStartSelect" class="f-input" style="flex:1; padding: 10px 14px; font-size: 15px;"></select>
-              <span style="font-size: 18px; font-weight: 600; color: var(--label-secondary);">—</span>
-              <select id="editTimeEndSelect" class="f-input" style="flex:1; padding: 10px 14px; font-size: 15px;"></select>
-            </div>
-          </div>
+          <div class="info-row"><span>Время</span><strong id="i-time"></strong></div>
           <div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div>
           <div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div>
         </div>
         <div class="f-actions" style="margin-top: 20px;">
-          <button class="f-btn-ok" onclick="applyTimeChangeFromInfo()"><i class="fas fa-clock"></i> Сохранить время</button>
-          <button class="f-btn-ok" onclick="openEditEventModal()" style="background: var(--accent-amber);"><i class="fas fa-edit"></i> Тип</button>
+          <button class="f-btn-ok" onclick="openEditTimeModal()"><i class="fas fa-clock"></i> Изменить время</button>
+          <button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button>
           <button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;">
             <i class="fas fa-trash"></i> Удалить
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- РЕДАКТИРОВАТЬ ВРЕМЯ -->
+  <div id="editTimeModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-clock"></i> Изменить время</div>
+        <button class="sheet-x" onclick="closeEditTimeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">Станция: <strong id="editTimeStationName"></strong></label>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Выберите время</label>
+          <div class="time-select-group">
+            <select class="f-input" id="editTimeStartSelect">
+              <!-- Заполняется через JS -->
+            </select>
+            <span>—</span>
+            <select class="f-input" id="editTimeEndSelect">
+              <!-- Заполняется через JS -->
+            </select>
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="applyTimeChange()">Применить</button>
+          <button class="f-btn-cancel" onclick="closeEditTimeModal()">Отмена</button>
         </div>
       </div>
     </div>
@@ -1209,7 +1193,7 @@
   <!-- ===== СКРИПТ ===== -->
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBP1Rnyij1UBW-ThOQv1ck5CzTMiCMQKFizQDWNsJ5shnRXREI1rsoXWQLeoyHFxK6/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwgPy7jqW7cfd52EpLyWYcoJHqkE6LvDCaLzw1JNUUmgd0hwZ-LPHnrgXzbcX5xZdBk/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1221,6 +1205,7 @@
     let currentBooking = null;
     let editingBooking = null;
     let selectedEventType = 'regular';
+    let editingTimeBooking = null;
 
     let employeeGroups = [];
     let nextGroupId = 1;
@@ -2120,191 +2105,21 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        // === НАДЕЖНЫЙ ОБРАБОТЧИК КЛИКА ===
-        let clickLayer = document.createElement("div");
-        clickLayer.className = "click-layer";
-        clickLayer.style.cssText = `
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 10;
-          cursor: pointer;
-          border-radius: 6px;
-        `;
-        
-        (function(currentGroup) {
-          clickLayer.addEventListener('click', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            if (!currentGroup.isTemp && currentGroup.items && currentGroup.items.length > 0) {
-              const booking = currentGroup.items[0];
-              if (booking) {
-                const existingBooking = bookings.find(b => b.id === booking.id);
-                if (existingBooking) {
-                  showInfoModal(booking);
-                } else {
-                  alert('Эта запись была удалена');
-                }
-              } else {
-                alert("Ошибка: запись не найдена");
-              }
-            } else if (currentGroup.isTemp) {
-              alert("Временная запись — сохраните для просмотра.");
-            } else {
-              alert("Загрузка данных...");
-            }
-          });
-        })(group);
-        
-        slider.appendChild(clickLayer);
+        let dragHandle = document.createElement("div");
+        dragHandle.className = "drag-handle";
+        dragHandle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!group.isTemp && group.items && group.items.length > 0) {
+            showInfoModal(group.items[0]);
+          } else if (!group.isTemp && !group.items) {
+            alert("Загрузка данных...");
+          } else {
+            alert("Временная запись — сохраните для просмотра.");
+          }
+        });
+        slider.appendChild(dragHandle);
         container.appendChild(slider);
       }
-    }
-
-    // ==================== ЗАПОЛНЕНИЕ СЕЛЕКТОВ ВРЕМЕНИ ====================
-    function populateTimeSelects(booking) {
-      if (!booking) return;
-      
-      const startSelect = document.getElementById('editTimeStartSelect');
-      const endSelect = document.getElementById('editTimeEndSelect');
-      
-      if (!startSelect || !endSelect) {
-        console.error('Селекты времени не найдены');
-        return;
-      }
-      
-      startSelect.innerHTML = '';
-      endSelect.innerHTML = '';
-      
-      if (booking.startSlotIdx === undefined || booking.endSlotIdx === undefined) {
-        console.error('Некорректные индексы времени');
-        return;
-      }
-      
-      for (let i = 0; i < slots.length - 1; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
-        option.textContent = `${slots[i].label} – ${endSlot.label}`;
-        if (i === booking.startSlotIdx) option.selected = true;
-        startSelect.appendChild(option);
-      }
-      
-      for (let i = 1; i < slots.length; i++) {
-        const option = document.createElement('option');
-        option.value = i;
-        const startSlot = slots[i - 1];
-        option.textContent = `${startSlot.label} – ${slots[i].label}`;
-        if (i === booking.endSlotIdx + 1) option.selected = true;
-        endSelect.appendChild(option);
-      }
-      
-      startSelect.onchange = function() {
-        const startVal = parseInt(this.value);
-        Array.from(endSelect.options).forEach(opt => {
-          opt.disabled = parseInt(opt.value) <= startVal;
-        });
-        const currentEnd = parseInt(endSelect.value);
-        if (currentEnd <= startVal) {
-          for (let opt of endSelect.options) {
-            if (!opt.disabled) {
-              endSelect.value = opt.value;
-              break;
-            }
-          }
-        }
-      };
-      startSelect.onchange();
-    }
-
-    // ==================== ПРИМЕНЕНИЕ НОВОГО ВРЕМЕНИ ====================
-    async function applyTimeChangeFromInfo() {
-      if (!currentBooking) return;
-      
-      const startSelect = document.getElementById('editTimeStartSelect');
-      const endSelect = document.getElementById('editTimeEndSelect');
-      
-      const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value) - 1;
-      
-      if (newStartIdx >= newEndIdx) {
-        alert('❌ Начало должно быть раньше конца');
-        return;
-      }
-      
-      if (hasConflict(currentBooking.lane, newStartIdx, newEndIdx, currentBooking.id)) {
-        alert('⛔ Это время уже занято другой записью');
-        return;
-      }
-      
-      const booking = bookings.find(b => b.id === currentBooking.id);
-      if (!booking) {
-        alert('❌ Запись не найдена');
-        return;
-      }
-      
-      booking.startSlotIdx = newStartIdx;
-      booking.endSlotIdx = newEndIdx;
-      booking.start = slots[newStartIdx].key;
-      booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
-      
-      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
-      const isBirthday = booking.type === 'birthday';
-      
-      const payload = {
-        id: booking.id,
-        stationName: stationName,
-        start: booking.start,
-        end: booking.end,
-        comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-        sheetName: currentSheetName
-      };
-      
-      showLoad();
-      try {
-        await sendPostAction('update', payload);
-        renderAllSliders();
-        updateCellsHighlight();
-        document.getElementById("i-time").textContent = fmtFromSlotIdx(booking.startSlotIdx, booking.endSlotIdx);
-        alert('✅ Время успешно изменено');
-      } catch (e) {
-        alert('❌ Ошибка сохранения: ' + e.message);
-      }
-      hideLoad();
-    }
-
-    // ==================== ПОКАЗ МОДАЛЬНОГО ОКНА ====================
-    function showInfoModal(b) {
-      if (!b) {
-        alert("Ошибка: запись не найдена");
-        return;
-      }
-      
-      currentBooking = b;
-      
-      const existingBooking = bookings.find(bk => bk.id === b.id);
-      if (!existingBooking) {
-        alert("Эта запись была удалена");
-        return;
-      }
-      
-      let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-      let employeeName = getEmployeeForLane(b.lane);
-      let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-      
-      document.getElementById("i-table").textContent = stationName;
-      document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
-      document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
-      document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
-      
-      document.getElementById("infoModal").classList.add("open");
-      
-      setTimeout(() => {
-        populateTimeSelects(b);
-      }, 50);
     }
 
     // ==================== DRAG & DROP (ТОЛЬКО ДЛЯ ВЫДЕЛЕНИЯ ИНТЕРВАЛОВ) ====================
@@ -2387,6 +2202,114 @@
       }
     }
 
+    // ==================== РЕДАКТИРОВАНИЕ ВРЕМЕНИ ====================
+    function openEditTimeModal() {
+      if (!currentBooking) return;
+      
+      editingTimeBooking = currentBooking;
+      const booking = currentBooking;
+      
+      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
+      document.getElementById('editTimeStationName').textContent = stationName;
+      
+      // Заполняем селекты
+      const startSelect = document.getElementById('editTimeStartSelect');
+      const endSelect = document.getElementById('editTimeEndSelect');
+      
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+      
+      for (let i = 0; i < slots.length - 1; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
+        option.textContent = `${slots[i].label}–${endSlot.label}`;
+        if (i === booking.startSlotIdx) option.selected = true;
+        startSelect.appendChild(option);
+      }
+      
+      for (let i = 1; i < slots.length; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        const startSlot = slots[i - 1];
+        option.textContent = `${startSlot.label}–${slots[i].label}`;
+        if (i === booking.endSlotIdx + 1) option.selected = true;
+        endSelect.appendChild(option);
+      }
+      
+      // Ограничиваем выбор конца
+      startSelect.onchange = function() {
+        const startVal = parseInt(this.value);
+        Array.from(endSelect.options).forEach(opt => {
+          opt.disabled = parseInt(opt.value) <= startVal;
+        });
+        if (parseInt(endSelect.value) <= startVal) {
+          endSelect.value = startVal + 1;
+        }
+      };
+      startSelect.onchange();
+      
+      closeInfoModal();
+      document.getElementById('editTimeModal').classList.add('open');
+    }
+
+    function closeEditTimeModal() {
+      document.getElementById('editTimeModal').classList.remove('open');
+      editingTimeBooking = null;
+    }
+
+    async function applyTimeChange() {
+      if (!editingTimeBooking) return;
+      
+      const startSelect = document.getElementById('editTimeStartSelect');
+      const endSelect = document.getElementById('editTimeEndSelect');
+      
+      const newStartIdx = parseInt(startSelect.value);
+      const newEndIdx = parseInt(endSelect.value) - 1;
+      
+      if (newStartIdx >= newEndIdx) {
+        alert('❌ Начало должно быть раньше конца');
+        return;
+      }
+      
+      // Проверяем конфликты
+      if (hasConflict(editingTimeBooking.lane, newStartIdx, newEndIdx, editingTimeBooking.id)) {
+        alert('⛔ Это время уже занято другой записью');
+        return;
+      }
+      
+      // Обновляем
+      const booking = bookings.find(b => b.id === editingTimeBooking.id);
+      if (!booking) return;
+      
+      booking.startSlotIdx = newStartIdx;
+      booking.endSlotIdx = newEndIdx;
+      booking.start = slots[newStartIdx].key;
+      booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
+      
+      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
+      const isBirthday = booking.type === 'birthday';
+      
+      const payload = {
+        id: booking.id,
+        stationName: stationName,
+        start: booking.start,
+        end: booking.end,
+        comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+        sheetName: currentSheetName
+      };
+      
+      try {
+        await sendPostAction('update', payload);
+        renderAllSliders();
+        updateCellsHighlight();
+        closeEditTimeModal();
+        alert('✅ Время успешно изменено');
+      } catch (e) {
+        alert('❌ Ошибка сохранения: ' + e.message);
+      }
+    }
+
     // ==================== СОХРАНЕНИЕ НА СЕРВЕР ====================
     async function saveToServer(booking) {
       if (!booking.id) return;
@@ -2406,6 +2329,18 @@
     }
 
     // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
+    function showInfoModal(b) {
+      currentBooking = b;
+      let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
+      let employeeName = getEmployeeForLane(b.lane);
+      let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      document.getElementById("i-table").textContent = stationName;
+      document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
+      document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
+      document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
+      document.getElementById("infoModal").classList.add("open");
+    }
+
     function closeInfoModal() {
       document.getElementById("infoModal").classList.remove("open");
       currentBooking = null;
@@ -2650,7 +2585,7 @@
       document.body.addEventListener("mousemove", onMouseMove);
       document.body.addEventListener("mouseup", onMouseUp);
 
-      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal"].forEach(id => {
+      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal", "editTimeModal"].forEach(id => {
         document.getElementById(id)?.addEventListener("click", e => {
           if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove("open");
         });
