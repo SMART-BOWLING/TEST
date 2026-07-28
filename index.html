@@ -206,6 +206,17 @@
       background: var(--accent-blue-hover);
     }
 
+    .btn-resize-mode {
+      background: #e8d8c8;
+      color: var(--label-dark);
+      border-color: #d4c8a8;
+    }
+    .btn-resize-mode.active {
+      background: var(--accent-amber);
+      color: white;
+      border-color: var(--accent-amber);
+    }
+
     .btn-drag-toggle.active {
       background: var(--accent-blue);
       color: white;
@@ -427,6 +438,10 @@
     #tableDesktop tbody td.slot.drag-over {
       background: #e2dfcf !important;
     }
+    #tableDesktop tbody td.slot.slot-available {
+      background: rgba(75, 200, 100, 0.15) !important;
+      border: 1px dashed rgba(75, 200, 100, 0.3);
+    }
 
     /* ===== РАЗДЕЛИТЕЛИ ===== */
     #tableDesktop tbody tr.employee-group-divider td {
@@ -545,6 +560,11 @@
       border: 1px solid #c9b16b;
     }
 
+    .slider.resize-mode-active {
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    }
+
     .sl-time {
       font-size: 11px;
       font-weight: 600;
@@ -565,14 +585,52 @@
       pointer-events: auto;
     }
 
-    .slider.drag-mode-enabled .drag-handle {
-      cursor: grab;
-    }
-    .slider.drag-mode-enabled .drag-handle:active {
-      cursor: grabbing;
-    }
-    .slider:not(.drag-mode-enabled) .drag-handle {
+    .slider:not(.resize-mode-active) .drag-handle {
       cursor: pointer;
+    }
+
+    /* Маркеры изменения размера */
+    .resize-handle {
+      position: absolute;
+      top: 0;
+      width: 14px;
+      height: 100%;
+      cursor: ew-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.8);
+      font-size: 10px;
+      z-index: 3;
+      background: rgba(255, 215, 0, 0.3);
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.3s, background 0.3s;
+      pointer-events: none;
+    }
+
+    .slider.resize-mode-active .resize-handle {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .resize-handle:hover {
+      background: rgba(255, 215, 0, 0.6) !important;
+    }
+
+    .resize-handle-left {
+      left: -3px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .resize-handle-right {
+      right: -3px;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .resize-handle i {
+      font-size: 10px;
+      opacity: 0.8;
     }
 
     .ghost-slider {
@@ -919,6 +977,23 @@
       pointer-events: none;
     }
 
+    /* ===== ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ РАЗМЕРА ===== */
+    .resize-mode-indicator {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2c2c2ecc;
+      backdrop-filter: blur(20px);
+      color: white;
+      padding: 10px 26px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      pointer-events: none;
+      text-align: center;
+    }
+
     /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА ===== */
     .color-picker-grid {
       display: grid;
@@ -1007,6 +1082,9 @@
       .color-picker-grid {
         grid-template-columns: repeat(6, 1fr);
       }
+      .resize-handle {
+        width: 10px;
+      }
     }
   </style>
 </head>
@@ -1032,8 +1110,8 @@
         <button class="btn-ctrl btn-book" onclick="openBookModal()" title="Новая запись">
           <i class="fas fa-plus-circle"></i><span>Запись</span>
         </button>
-        <button id="dragToggleBtn" class="btn-ctrl btn-drag-toggle" title="Режим перетяжки">
-          <i class="fas fa-arrows-alt"></i><span>Драг</span>
+        <button id="resizeModeBtn" class="btn-ctrl btn-resize-mode" title="Режим изменения времени">
+          <i class="fas fa-arrows-alt-h"></i><span>Изменить время</span>
         </button>
         <button id="assignToggleBtn" class="btn-ctrl btn-assign-toggle" title="Назначить сотрудника">
           <i class="fas fa-user-tag"></i><span>Назначить</span>
@@ -1066,8 +1144,10 @@
     </div>
   </div>
 
-  <!-- ИНДИКАТОР РЕЖИМА ПЕРЕТЯЖКИ -->
-  <div id="dragModeIndicator" class="drag-mode-indicator" style="display: none;">Режим перетяжки АКТИВЕН</div>
+  <!-- ИНДИКАТОР РЕЖИМА ИЗМЕНЕНИЯ ВРЕМЕНИ -->
+  <div id="resizeModeIndicator" class="resize-mode-indicator" style="display: none;">
+    <i class="fas fa-arrows-alt-h"></i> Режим изменения времени: потяните за золотые маркеры
+  </div>
 
   <!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
 
@@ -1212,7 +1292,7 @@
   <!-- ===== СКРИПТ ===== -->
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyXhJaVSLCjxd7Nz7PipVIACIT2dEJUcJfwF-B6Mn4UwPJfZxEQA2sFGDRv7QlO03bC/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwWeHqppbqjuxS0cJqooGlrw8Nf7j5KfWljzU-uTACREWS3zZl-rYYYUYbi2Jgy_uTu/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1221,10 +1301,19 @@
     let bookings = [];
     let tempBookings = [];
     let nextTempId = 1;
-    let dragModeEnabled = false;
+    let resizeModeEnabled = false;
     let currentBooking = null;
     let editingBooking = null;
     let selectedEventType = 'regular';
+
+    // Переменные для изменения времени
+    let isResizing = false;
+    let resizeEdge = null;
+    let resizeBooking = null;
+    let resizeStartX = 0;
+    let resizeStartIdx = 0;
+    let resizeGhost = null;
+    let resizeOriginalBooking = null;
 
     let employeeGroups = [];
     let nextGroupId = 1;
@@ -1496,6 +1585,8 @@
         loadFromServer(currentSheetName);
         clearTempSelections();
         resetEmployeeGroups();
+        // Отключаем режим изменения времени при смене листа
+        if (resizeModeEnabled) toggleResizeMode();
       }
     }
 
@@ -1588,7 +1679,7 @@
     function updateCellsHighlight() {
       for (let row of document.getElementById("dtBody").rows) {
         for (let i = 1; i < row.cells.length; i++) {
-          row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
+          row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight", "slot-available");
         }
       }
       for (let b of bookings) {
@@ -1995,6 +2086,274 @@
       hideLoad();
     }
 
+    // ==================== РЕЖИМ ИЗМЕНЕНИЯ ВРЕМЕНИ ====================
+    function toggleResizeMode() {
+      resizeModeEnabled = !resizeModeEnabled;
+      const btn = document.getElementById("resizeModeBtn");
+      btn.classList.toggle("active", resizeModeEnabled);
+      document.getElementById("resizeModeIndicator").style.display = resizeModeEnabled ? "block" : "none";
+      
+      // Если режим выключен - сбрасываем все
+      if (!resizeModeEnabled) {
+        cleanupResize();
+        renderAllSliders();
+      } else {
+        renderAllSliders();
+      }
+    }
+
+    function startResize(e, booking, edge) {
+      if (!resizeModeEnabled) return;
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (booking.isTemp) {
+        alert('Нельзя изменять временные записи');
+        return;
+      }
+      
+      // Находим актуальное бронирование
+      const actualBooking = bookings.find(b => b.id === booking.id);
+      if (!actualBooking) return;
+      
+      isResizing = true;
+      resizeEdge = edge;
+      resizeBooking = actualBooking;
+      resizeStartX = e.clientX;
+      resizeStartIdx = edge === 'left' ? actualBooking.startSlotIdx : actualBooking.endSlotIdx;
+      
+      // Сохраняем оригинал для отмены
+      resizeOriginalBooking = {
+        startSlotIdx: actualBooking.startSlotIdx,
+        endSlotIdx: actualBooking.endSlotIdx,
+        start: actualBooking.start,
+        end: actualBooking.end
+      };
+      
+      // Создаем призрак
+      const slider = e.currentTarget.closest('.slider');
+      if (slider) {
+        resizeGhost = createGhost(slider);
+        resizeGhost.style.border = '2px solid #ffd700';
+        resizeGhost.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+      }
+      
+      // Подсвечиваем доступные ячейки
+      highlightAvailableSlots(actualBooking.lane, actualBooking.id);
+      
+      document.body.style.cursor = 'ew-resize';
+      document.addEventListener('mousemove', onResizeMove);
+      document.addEventListener('mouseup', onResizeEnd);
+    }
+
+    function onResizeMove(e) {
+      if (!isResizing || !resizeBooking) return;
+      
+      const deltaX = e.clientX - resizeStartX;
+      const slotWidth = 74;
+      const deltaSlots = Math.round(deltaX / slotWidth);
+      
+      let newStartIdx = resizeBooking.startSlotIdx;
+      let newEndIdx = resizeBooking.endSlotIdx;
+      
+      if (resizeEdge === 'left') {
+        newStartIdx = Math.max(0, resizeStartIdx + deltaSlots);
+        if (newStartIdx >= newEndIdx) {
+          newStartIdx = newEndIdx - 1;
+        }
+        if (newStartIdx < 0) newStartIdx = 0;
+      } else {
+        newEndIdx = Math.min(slots.length - 1, resizeStartIdx + deltaSlots);
+        if (newEndIdx <= newStartIdx) {
+          newEndIdx = newStartIdx + 1;
+        }
+        if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
+      }
+      
+      // Проверяем конфликты (исключая текущее бронирование)
+      const hasConflictWithOther = bookings.some(b => {
+        if (b.id === resizeBooking.id) return false;
+        if (b.lane !== resizeBooking.lane) return false;
+        let bStart = b.startSlotIdx;
+        let bEnd = b.endSlotIdx;
+        return !(newEndIdx < bStart || newStartIdx > bEnd);
+      });
+      
+      // Обновляем призрак
+      if (resizeGhost) {
+        const row = getRowByLane(resizeBooking.lane);
+        if (row) {
+          const sc = row.cells[newStartIdx + 1];
+          const ec = row.cells[newEndIdx + 1];
+          if (sc && ec) {
+            const container = document.getElementById('slidersLayer');
+            const containerRect = container.getBoundingClientRect();
+            const scRect = sc.getBoundingClientRect();
+            const ecRect = ec.getBoundingClientRect();
+            
+            resizeGhost.style.left = (scRect.left - containerRect.left + 1) + 'px';
+            resizeGhost.style.width = (ecRect.right - scRect.left - 2) + 'px';
+            
+            const timeDiv = resizeGhost.querySelector('.sl-time');
+            if (timeDiv) {
+              const startSlot = slots[newStartIdx];
+              const endSlot = slots[newEndIdx + 1] || { label: `${Math.floor(slots[newEndIdx].key) + 1}:00` };
+              timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
+            }
+          }
+        }
+      }
+      
+      // Подсвечиваем конфликтные ячейки
+      document.querySelectorAll('.slot-available').forEach(el => {
+        el.classList.remove('slot-available');
+        el.style.background = '';
+      });
+      
+      if (!hasConflictWithOther) {
+        // Подсвечиваем зеленым доступные ячейки
+        for (let i = newStartIdx; i <= newEndIdx; i++) {
+          const cell = getSlotCell(resizeBooking.lane, i);
+          if (cell) {
+            cell.classList.add('slot-available');
+            cell.style.background = 'rgba(75, 200, 100, 0.2)';
+          }
+        }
+      } else {
+        // Подсвечиваем красным конфликтные ячейки
+        for (let i = newStartIdx; i <= newEndIdx; i++) {
+          const cell = getSlotCell(resizeBooking.lane, i);
+          if (cell) {
+            const hasConflict = bookings.some(b => {
+              if (b.id === resizeBooking.id) return false;
+              if (b.lane !== resizeBooking.lane) return false;
+              return i >= b.startSlotIdx && i <= b.endSlotIdx;
+            });
+            if (hasConflict) {
+              cell.style.background = 'rgba(255, 50, 50, 0.2)';
+            }
+          }
+        }
+      }
+    }
+
+    function onResizeEnd(e) {
+      if (!isResizing || !resizeBooking) {
+        cleanupResize();
+        return;
+      }
+      
+      const deltaX = e.clientX - resizeStartX;
+      const slotWidth = 74;
+      const deltaSlots = Math.round(deltaX / slotWidth);
+      
+      let newStartIdx = resizeBooking.startSlotIdx;
+      let newEndIdx = resizeBooking.endSlotIdx;
+      
+      if (resizeEdge === 'left') {
+        newStartIdx = Math.max(0, resizeStartIdx + deltaSlots);
+        if (newStartIdx >= newEndIdx) {
+          newStartIdx = newEndIdx - 1;
+        }
+        if (newStartIdx < 0) newStartIdx = 0;
+      } else {
+        newEndIdx = Math.min(slots.length - 1, resizeStartIdx + deltaSlots);
+        if (newEndIdx <= newStartIdx) {
+          newEndIdx = newStartIdx + 1;
+        }
+        if (newEndIdx >= slots.length) newEndIdx = slots.length - 1;
+      }
+      
+      // Проверяем конфликты
+      const hasConflictWithOther = bookings.some(b => {
+        if (b.id === resizeBooking.id) return false;
+        if (b.lane !== resizeBooking.lane) return false;
+        let bStart = b.startSlotIdx;
+        let bEnd = b.endSlotIdx;
+        return !(newEndIdx < bStart || newStartIdx > bEnd);
+      });
+      
+      if (!hasConflictWithOther && (newStartIdx !== resizeOriginalBooking.startSlotIdx || newEndIdx !== resizeOriginalBooking.endSlotIdx)) {
+        // Сохраняем изменения
+        resizeBooking.startSlotIdx = newStartIdx;
+        resizeBooking.endSlotIdx = newEndIdx;
+        resizeBooking.start = slots[newStartIdx].key;
+        resizeBooking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
+        
+        saveToServer(resizeBooking);
+        renderAllSliders();
+        updateCellsHighlight();
+        
+        const action = resizeEdge === 'left' ? 'начало' : 'конец';
+        alert(`✅ Время изменено: ${action} перемещено на ${Math.abs(deltaSlots)} ячеек`);
+      } else if (hasConflictWithOther) {
+        alert('⛔ Конфликт с другой записью. Изменения отменены');
+        // Восстанавливаем оригинал
+        resizeBooking.startSlotIdx = resizeOriginalBooking.startSlotIdx;
+        resizeBooking.endSlotIdx = resizeOriginalBooking.endSlotIdx;
+        resizeBooking.start = resizeOriginalBooking.start;
+        resizeBooking.end = resizeOriginalBooking.end;
+        renderAllSliders();
+        updateCellsHighlight();
+      } else {
+        // Изменений нет
+        renderAllSliders();
+        updateCellsHighlight();
+      }
+      
+      cleanupResize();
+    }
+
+    function cleanupResize() {
+      isResizing = false;
+      resizeEdge = null;
+      resizeBooking = null;
+      resizeStartX = 0;
+      resizeStartIdx = 0;
+      resizeOriginalBooking = null;
+      
+      if (resizeGhost && resizeGhost.parentNode) {
+        resizeGhost.remove();
+      }
+      resizeGhost = null;
+      
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onResizeMove);
+      document.removeEventListener('mouseup', onResizeEnd);
+      
+      // Убираем подсветку
+      document.querySelectorAll('.slot-available').forEach(el => {
+        el.classList.remove('slot-available');
+        el.style.background = '';
+      });
+    }
+
+    function highlightAvailableSlots(lane, excludeId) {
+      // Убираем старую подсветку
+      document.querySelectorAll('.slot-available').forEach(el => {
+        el.classList.remove('slot-available');
+        el.style.background = '';
+      });
+      
+      const row = getRowByLane(lane);
+      if (!row) return;
+      
+      for (let i = 1; i < row.cells.length; i++) {
+        const cell = row.cells[i];
+        const slotIdx = i - 1;
+        // Проверяем, свободна ли ячейка
+        const isFree = !bookings.some(b => {
+          if (b.id === excludeId) return false;
+          if (b.lane !== lane) return false;
+          return slotIdx >= b.startSlotIdx && slotIdx <= b.endSlotIdx;
+        });
+        if (isFree) {
+          cell.classList.add('slot-available');
+          cell.style.background = 'rgba(75, 200, 100, 0.1)';
+        }
+      }
+    }
+
     // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
@@ -2079,6 +2438,11 @@
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
+        
+        // Если режим изменения времени включен - добавляем класс
+        if (resizeModeEnabled && !group.isTemp) {
+          slider.classList.add("resize-mode-active");
+        }
 
         let groupColor = null;
         for (const g of employeeGroups) {
@@ -2093,7 +2457,6 @@
           slider.style.borderColor = groupColor;
         }
 
-        if (dragModeEnabled) slider.classList.add("drag-mode-enabled");
         slider.setAttribute("data-lane-type", 'blue');
 
         let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
@@ -2126,43 +2489,55 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
+        // Если режим изменения времени включен - добавляем маркеры
+        if (resizeModeEnabled && !group.isTemp) {
+          // Левый маркер
+          const leftHandle = document.createElement('div');
+          leftHandle.className = 'resize-handle resize-handle-left';
+          leftHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
+          leftHandle.addEventListener('mousedown', (e) => {
+            const booking = group.items[0];
+            if (booking) startResize(e, booking, 'left');
+          });
+          slider.appendChild(leftHandle);
+          
+          // Правый маркер
+          const rightHandle = document.createElement('div');
+          rightHandle.className = 'resize-handle resize-handle-right';
+          rightHandle.innerHTML = '<i class="fas fa-grip-lines-vertical"></i>';
+          rightHandle.addEventListener('mousedown', (e) => {
+            const booking = group.items[0];
+            if (booking) startResize(e, booking, 'right');
+          });
+          slider.appendChild(rightHandle);
+        }
+
+        // Клик по ползунку для просмотра деталей
         let dragHandle = document.createElement("div");
         dragHandle.className = "drag-handle";
-        if (dragModeEnabled && !group.isTemp) {
-          dragHandle.addEventListener("mousedown", (e) => {
-            e.stopPropagation();
-            startMoveDrag(group, e, slots);
-          });
-        } else if (dragModeEnabled && group.isTemp) {
-          dragHandle.addEventListener("mousedown", (e) => {
-            e.stopPropagation();
-            startMoveTempDrag(group, e, slots);
-          });
-        } else {
-          dragHandle.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (!group.isTemp && group.items && group.items.length > 0) {
-              showInfoModal(group.items[0]);
-            } else if (!group.isTemp && !group.items) {
-              alert("Загрузка данных...");
-            } else {
-              alert("Временная запись — сохраните для просмотра.");
-            }
-          });
-        }
+        dragHandle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!group.isTemp && group.items && group.items.length > 0) {
+            showInfoModal(group.items[0]);
+          } else if (!group.isTemp && !group.items) {
+            alert("Загрузка данных...");
+          } else {
+            alert("Временная запись — сохраните для просмотра.");
+          }
+        });
         slider.appendChild(dragHandle);
         container.appendChild(slider);
       }
     }
 
-    // ==================== DRAG & DROP ====================
+    // ==================== DRAG & DROP (ТОЛЬКО ДЛЯ ВЫДЕЛЕНИЯ ИНТЕРВАЛОВ) ====================
     let isDragging = false;
     let dragStartCell = null;
     let dragInterval = null;
     let dragLane = -1, dragStartIdx = -1, dragEndIdx = -1;
 
     function onMouseDown(e) {
-      if (dragModeEnabled || assignModeEnabled) return;
+      if (resizeModeEnabled || assignModeEnabled) return;
       let t = e.target;
       if (t.classList?.contains("slot")) {
         e.preventDefault();
@@ -2179,7 +2554,7 @@
     }
 
     function onMouseMove(e) {
-      if (!dragModeEnabled && isDragging && dragStartCell) {
+      if (!resizeModeEnabled && isDragging && dragStartCell) {
         let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
         if (el) {
           let lane = parseInt(el.dataset.lane);
@@ -2198,7 +2573,7 @@
     }
 
     function onMouseUp() {
-      if (!dragModeEnabled && isDragging && dragInterval) {
+      if (!resizeModeEnabled && isDragging && dragInterval) {
         let lane = dragLane, startIdx = dragStartIdx, endIdx = dragEndIdx;
         if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
           resetDragState();
@@ -2235,120 +2610,6 @@
       }
     }
 
-    // ==================== ПЕРЕМЕЩЕНИЕ СЛАЙДЕРОВ ====================
-    async function startMoveDrag(booking, e, slotsArr) {
-      e.stopPropagation();
-      const slider = e.currentTarget.closest('.slider');
-      if (!slider) return;
-      let durationCells = booking.endSlotIdx - booking.startSlotIdx;
-      let ghost = createGhost(slider);
-      let currentLane = booking.lane, currentStartIdx = booking.startSlotIdx;
-      moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-        let newStartIdx = finalStartIdx, newEndIdx = finalStartIdx + durationCells;
-        if (!hasConflict(finalLane, newStartIdx, newEndIdx, booking.id)) {
-          booking.lane = finalLane;
-          booking.startSlotIdx = newStartIdx;
-          booking.endSlotIdx = newEndIdx;
-          booking.start = slotsArr[newStartIdx].key;
-          booking.end = slotsArr[newEndIdx + 1]?.key || (slotsArr[newEndIdx].key + 0.5);
-          saveToServer(booking);
-          renderAllSliders();
-          updateCellsHighlight();
-        } else alert("Конфликт с другой записью");
-      }, currentLane, currentStartIdx);
-    }
-
-    async function startMoveTempDrag(temp, e, slotsArr) {
-      e.stopPropagation();
-      const slider = e.currentTarget.closest('.slider');
-      if (!slider) return;
-      let durationCells = temp.endSlotIdx - temp.startSlotIdx;
-      let ghost = createGhost(slider);
-      let currentLane = temp.lane, currentStartIdx = temp.startSlotIdx;
-      moveLogic(ghost, slider, slotsArr, durationCells, (finalLane, finalStartIdx) => {
-        let newStartIdx = finalStartIdx, newEndIdx = finalStartIdx + durationCells;
-        if (!hasConflict(finalLane, newStartIdx, newEndIdx)) {
-          temp.lane = finalLane;
-          temp.startSlotIdx = newStartIdx;
-          temp.endSlotIdx = newEndIdx;
-          renderInlineTempCards();
-          renderAllSliders();
-          updateCellsHighlight();
-        } else alert("Конфликт с другой записью");
-      }, currentLane, currentStartIdx);
-    }
-
-    function createGhost(slider) {
-      let ghost = document.createElement('div');
-      ghost.className = 'ghost-slider';
-      let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
-      if (timeClone) ghost.appendChild(timeClone);
-      ghost.style.cssText = slider.style.cssText;
-      ghost.style.opacity = '0.85';
-      ghost.style.transition = 'none';
-      document.getElementById('slidersLayer').appendChild(ghost);
-      slider.classList.add('dragging');
-      return ghost;
-    }
-
-    function moveLogic(ghost, slider, slotsArr, durationCells, onDrop, initialLane, initialStartIdx) {
-      let currentLane = initialLane, currentStartIdx = initialStartIdx;
-      const container = document.getElementById('slidersLayer');
-
-      function updateGhostPos(lane, startIdx) {
-        let row = getRowByLane(lane);
-        if (!row) return;
-        let sc = row.cells[startIdx + 1], ec = row.cells[startIdx + durationCells + 1];
-        if (sc && ec) {
-          const containerRect = container.getBoundingClientRect();
-          const scRect = sc.getBoundingClientRect();
-          const ecRect = ec.getBoundingClientRect();
-          const rowRect = row.getBoundingClientRect();
-
-          ghost.style.left = (scRect.left - containerRect.left + 1) + 'px';
-          ghost.style.top = (rowRect.top - containerRect.top + 1) + 'px';
-          ghost.style.width = (ecRect.right - scRect.left - 2) + 'px';
-          ghost.style.height = (rowRect.height - 2) + 'px';
-        }
-      }
-
-      function getTargetCoords(e) {
-        let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains('slot'));
-        if (!el) return null;
-        return { lane: parseInt(el.dataset.lane), idx: parseInt(el.dataset.slotIdx) };
-      }
-
-      function onDragMove(ev) {
-        let tgt = getTargetCoords(ev);
-        if (tgt) {
-          let nl = tgt.lane, nsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
-          if (nl !== currentLane || nsi !== currentStartIdx) {
-            currentLane = nl;
-            currentStartIdx = nsi;
-            updateGhostPos(currentLane, currentStartIdx);
-          }
-        }
-      }
-
-      function onDragEnd(ev) {
-        let tgt = getTargetCoords(ev);
-        if (tgt) {
-          let fl = tgt.lane, fsi = Math.min(Math.max(0, tgt.idx), slotsArr.length - durationCells - 1);
-          onDrop(fl, fsi);
-        }
-        if (ghost && ghost.parentNode) ghost.remove();
-        if (slider) slider.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.removeEventListener('mousemove', onDragMove);
-        document.removeEventListener('mouseup', onDragEnd);
-        renderAllSliders();
-      }
-      document.body.style.cursor = 'grabbing';
-      document.addEventListener('mousemove', onDragMove);
-      document.addEventListener('mouseup', onDragEnd);
-      updateGhostPos(currentLane, currentStartIdx);
-    }
-
     // ==================== СОХРАНЕНИЕ НА СЕРВЕР ====================
     async function saveToServer(booking) {
       if (!booking.id) return;
@@ -2365,6 +2626,18 @@
         };
         await sendPostAction('update', payload);
       } catch (e) { console.error("Error updating booking:", e); }
+    }
+
+    function createGhost(slider) {
+      let ghost = document.createElement('div');
+      ghost.className = 'ghost-slider';
+      let timeClone = slider.querySelector('.sl-time')?.cloneNode(true);
+      if (timeClone) ghost.appendChild(timeClone);
+      ghost.style.cssText = slider.style.cssText;
+      ghost.style.opacity = '0.85';
+      ghost.style.transition = 'none';
+      document.getElementById('slidersLayer').appendChild(ghost);
+      return ghost;
     }
 
     // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
@@ -2594,7 +2867,7 @@
       await loadStations();
 
       document.addEventListener('dragstart', (e) => {
-        if (e.target.closest('.drag-handle') || e.target.closest('.slider')) {
+        if (e.target.closest('.resize-handle') || e.target.closest('.slider')) {
           e.preventDefault();
           return false;
         }
@@ -2607,13 +2880,8 @@
         await loadFromServer(currentSheetName);
       }
 
-      const toggleBtn = document.getElementById("dragToggleBtn");
-      toggleBtn.addEventListener("click", () => {
-        dragModeEnabled = !dragModeEnabled;
-        toggleBtn.classList.toggle("active", dragModeEnabled);
-        document.getElementById("dragModeIndicator").style.display = dragModeEnabled ? "block" : "none";
-        renderAllSliders();
-      });
+      // Режим изменения времени
+      document.getElementById("resizeModeBtn").addEventListener("click", toggleResizeMode);
 
       document.getElementById("assignToggleBtn").addEventListener("click", toggleAssignMode);
 
