@@ -456,10 +456,63 @@
       font-weight: 650;
       letter-spacing: 0.3px;
       text-transform: uppercase;
+      width: 100%;
     }
     .divider-label i {
       font-size: 12px;
       opacity: 0.7;
+    }
+
+    /* Стили для кнопок в разделителе */
+    .divider-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+      margin-right: 8px;
+    }
+
+    .divider-edit-btn {
+      background: rgba(255, 255, 255, 0.7);
+      border: none;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--label-secondary);
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .divider-edit-btn:hover {
+      background: #ffffff;
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .divider-edit-btn i {
+      font-size: 12px;
+    }
+
+    .divider-remove-btn {
+      background: rgba(179, 63, 63, 0.12);
+      border: none;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--accent-red);
+      transition: all 0.2s;
+    }
+    .divider-remove-btn:hover {
+      background: rgba(179, 63, 63, 0.25);
+      transform: scale(1.05);
     }
 
     .group-header-container {
@@ -964,6 +1017,30 @@
       pointer-events: none;
     }
 
+    /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА ===== */
+    .color-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+    .color-picker-grid .color-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 2px solid transparent;
+    }
+    .color-picker-grid .color-option:hover {
+      transform: scale(1.15);
+    }
+    .color-picker-grid .color-option.selected {
+      border: 3px solid #333;
+      transform: scale(1.1);
+    }
+
     /* ===== АДАПТИВ ===== */
     @media (max-width: 780px) {
       .ctrl {
@@ -1029,6 +1106,9 @@
       .grid-scroll {
         max-height: calc(100vh - 180px);
         min-height: 400px;
+      }
+      .color-picker-grid {
+        grid-template-columns: repeat(6, 1fr);
       }
     }
   </style>
@@ -1190,6 +1270,36 @@
     </div>
   </div>
 
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА -->
+  <div id="editEmployeeModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-user-edit"></i> Редактировать сотрудника</div>
+        <button class="sheet-x" onclick="closeEditEmployeeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">ФИО сотрудника</label>
+          <input class="f-input" id="editEmployeeNameInput" placeholder="Введите ФИО" />
+        </div>
+        <div class="f-group">
+          <label class="f-label">Выберите цвет</label>
+          <div class="color-picker-grid" id="editEmployeeColorGrid">
+            <!-- Цвета будут добавлены через JS -->
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+            <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
+            <input type="text" id="editEmployeeCustomColor" placeholder="#4f6b4e" style="flex:1;padding:8px 12px;border:1px solid var(--border-strong);border-radius:6px;font-size:14px;font-family:monospace;text-transform:uppercase;" />
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="saveEmployeeChanges()">Сохранить</button>
+          <button class="f-btn-cancel" onclick="closeEditEmployeeModal()">Отмена</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ЗАГРУЗЧИК -->
   <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
@@ -1217,7 +1327,16 @@
     let nextGroupId = 1;
     let assignModeEnabled = false;
     let selectedLanesForAssign = [];
+    let editingEmployeeGroupId = null;
+    let selectedEmployeeColor = '#4f6b4e';
     const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
+
+    const EMPLOYEE_COLORS = [
+      '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
+      '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
+      '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
+      '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
+    ];
 
     const SH = 11, EH = 22;
     const slots = [];
@@ -1625,17 +1744,15 @@
               dtd.style.borderLeft = `3px solid ${color}`;
               dtd.style.padding = '6px 0';
               dtd.innerHTML = `
-                <div class="divider-label" style="color:${color}; display: flex; align-items: center; gap: 8px; width: 100%;">
-                  <span style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                <div class="divider-label" style="color:${color};">
+                  <span style="display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
                   </span>
-                  <span style="display: flex; align-items: center; gap: 6px; margin-right: 12px;">
-                    <button class="group-color-btn" onclick="event.stopPropagation(); openColorPicker(${group.id}, '${escapeHtml(group.name)}', '${escapeHtml(group.color || '#4f6b4e')}')" 
-                      style="background: ${group.color || '#4f6b4e'}; width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"
-                      onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-                      <i class="fas fa-palette" style="font-size: 12px;"></i>
+                  <span class="divider-actions">
+                    <button class="divider-edit-btn" onclick="event.stopPropagation(); openEditEmployeeModal(${group.id})" title="Редактировать сотрудника">
+                      <i class="fas fa-pen"></i>
                     </button>
-                    <button class="group-remove-btn" onclick="event.stopPropagation(); removeEmployeeGroup(${group.id})" title="Убрать привязку">
+                    <button class="divider-remove-btn" onclick="event.stopPropagation(); removeEmployeeGroup(${group.id})" title="Убрать привязку">
                       <i class="fas fa-times"></i>
                     </button>
                   </span>
@@ -1646,7 +1763,7 @@
               dtd.style.borderLeft = '3px solid #d4d4d6';
               dtd.style.padding = '6px 0';
               dtd.innerHTML = `
-                <div class="divider-label" style="color:var(--label-quaternary); display: flex; align-items: center; gap: 8px; width: 100%;">
+                <div class="divider-label" style="color:var(--label-quaternary);">
                   <i class="fas fa-circle-minus"></i> Свободные станции
                 </div>
               `;
@@ -1662,97 +1779,99 @@
       renderAllSliders();
     }
 
-    // ==================== ВЫБОР ЦВЕТА ====================
-    function openColorPicker(groupId, employeeName, currentColor) {
-      const modal = document.createElement("div");
-      modal.className = "overlay open";
-      modal.style.cssText = "display: flex; z-index: 3000;";
-
-      const colors = [
-        '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
-        '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
-        '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
-        '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
-      ];
-
-      const sheet = document.createElement("div");
-      sheet.className = "sheet";
-      sheet.style.cssText = "max-width: 400px; background: white;";
-
-      let html = `
-        <div class="sheet-head">
-          <div class="sheet-title"><i class="fas fa-palette"></i> Выбрать цвет</div>
-          <button class="sheet-x" onclick="this.closest('.overlay').remove()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="sheet-body">
-          <p style="margin-bottom: 16px; font-weight: 500;">Сотрудник: <strong>${escapeHtml(employeeName)}</strong></p>
-          <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 16px;">
-      `;
-      colors.forEach(c => {
-        const selected = c === currentColor ? 'border: 3px solid #333; transform: scale(1.1);' : '';
-        html += `
-          <div style="width:100%;aspect-ratio:1;background:${c};border-radius:50%;cursor:pointer;${selected}transition:all 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.1);"
-            onclick="selectColor('${c}', ${groupId}, '${escapeHtml(employeeName)}')"
-            onmouseover="this.style.transform='scale(1.15)'"
-            onmouseout="this.style.transform='scale(1)'"></div>
-        `;
+    // ==================== РЕДАКТИРОВАНИЕ СОТРУДНИКА ====================
+    function openEditEmployeeModal(groupId) {
+      const group = employeeGroups.find(g => g.id === groupId);
+      if (!group) return;
+      
+      editingEmployeeGroupId = groupId;
+      selectedEmployeeColor = group.color || '#4f6b4e';
+      
+      document.getElementById('editEmployeeNameInput').value = group.name || '';
+      document.getElementById('editEmployeeCustomColor').value = selectedEmployeeColor;
+      
+      // Заполняем сетку цветов
+      const grid = document.getElementById('editEmployeeColorGrid');
+      grid.innerHTML = '';
+      EMPLOYEE_COLORS.forEach(color => {
+        const div = document.createElement('div');
+        div.className = 'color-option' + (color === selectedEmployeeColor ? ' selected' : '');
+        div.style.background = color;
+        div.dataset.color = color;
+        div.onclick = function() {
+          document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+          this.classList.add('selected');
+          selectedEmployeeColor = color;
+          document.getElementById('editEmployeeCustomColor').value = color;
+        };
+        grid.appendChild(div);
       });
-      html += `
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
-            <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
-            <input type="text" id="customColorInput" value="${currentColor}" style="flex:1;padding:8px 12px;border:1px solid var(--border-strong);border-radius:6px;font-size:14px;font-family:monospace;text-transform:uppercase;" />
-            <button onclick="applyCustomColor(${groupId}, '${escapeHtml(employeeName)}')" style="padding:8px 16px;background:var(--accent-blue);color:white;border:none;border-radius:6px;cursor:pointer;">Применить</button>
-          </div>
-          <div style="display: flex; gap: 8px; margin-top: 16px;">
-            <button onclick="this.closest('.overlay').remove()" style="flex:1;padding:12px;background:var(--surface-secondary);border:none;border-radius:6px;cursor:pointer;">Отмена</button>
-            <button onclick="resetEmployeeColor(${groupId}, '${escapeHtml(employeeName)}')" style="flex:1;padding:12px;background:#f2eaea;border:none;border-radius:6px;cursor:pointer;color:var(--accent-red);">Сбросить цвет</button>
-          </div>
-        </div>
-      `;
-      sheet.innerHTML = html;
-      modal.appendChild(sheet);
-      document.body.appendChild(modal);
+      
+      document.getElementById('editEmployeeModal').classList.add('open');
+    }
+
+    function closeEditEmployeeModal() {
+      document.getElementById('editEmployeeModal').classList.remove('open');
+      editingEmployeeGroupId = null;
+    }
+
+    async function saveEmployeeChanges() {
+      const nameInput = document.getElementById('editEmployeeNameInput');
+      const newName = nameInput.value.trim();
+      
+      if (!newName) {
+        alert('Введите ФИО сотрудника');
+        return;
+      }
+      
+      const customColor = document.getElementById('editEmployeeCustomColor').value.trim();
+      let finalColor = selectedEmployeeColor;
+      if (customColor) {
+        let color = customColor;
+        if (!color.startsWith('#')) color = '#' + color;
+        if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+          finalColor = color;
+        }
+      }
+      
+      const group = employeeGroups.find(g => g.id === editingEmployeeGroupId);
+      if (!group) return;
+      
+      const oldName = group.name;
+      group.name = newName;
+      group.color = finalColor;
+      
+      saveEmployeeGroups();
+      
+      // Обновляем на сервере
+      try {
+        await saveEmployeeGroupsToServer();
+        await saveEmployeeColorToServer(newName, finalColor);
+      } catch (e) {
+        console.error('Error saving:', e);
+      }
+      
+      closeEditEmployeeModal();
+      refreshGroupHeaders();
+      renderAllSliders();
+      alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
+    }
+
+    // ==================== ВЫБОР ЦВЕТА (старая версия, оставляем для совместимости) ====================
+    function openColorPicker(groupId, employeeName, currentColor) {
+      openEditEmployeeModal(groupId);
     }
 
     function selectColor(color, groupId, employeeName) {
-      const group = employeeGroups.find(g => g.id === groupId);
-      if (!group) return;
-      group.color = color;
-      saveEmployeeGroups();
-      const modal = document.querySelector('.overlay.open');
-      if (modal) modal.remove();
-      refreshGroupHeaders();
-      saveEmployeeColorToServer(employeeName, color);
-      renderAllSliders();
+      // Используется через новую систему
     }
 
     function applyCustomColor(groupId, employeeName) {
-      const input = document.getElementById('customColorInput');
-      if (!input) return;
-      let color = input.value.trim();
-      if (!color.startsWith('#')) color = '#' + color;
-      if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
-        alert('Введите корректный HEX-цвет (например: #4f6b4e)');
-        return;
-      }
-      selectColor(color, groupId, employeeName);
+      // Используется через новую систему
     }
 
     function resetEmployeeColor(groupId, employeeName) {
-      if (!confirm(`Сбросить цвет для "${employeeName}"?`)) return;
-      const defaultColors = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
-      const group = employeeGroups.find(g => g.id === groupId);
-      if (!group) return;
-      const idx = employeeGroups.indexOf(group);
-      const defaultColor = defaultColors[idx % defaultColors.length];
-      group.color = defaultColor;
-      saveEmployeeGroups();
-      const modal = document.querySelector('.overlay.open');
-      if (modal) modal.remove();
-      refreshGroupHeaders();
-      saveEmployeeColorToServer(employeeName, defaultColor);
-      renderAllSliders();
+      // Используется через новую систему
     }
 
     async function saveEmployeeColorToServer(employeeName, color) {
@@ -2533,7 +2652,7 @@
       document.body.addEventListener("mousemove", onMouseMove);
       document.body.addEventListener("mouseup", onMouseUp);
 
-      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal"].forEach(id => {
+      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal"].forEach(id => {
         document.getElementById(id)?.addEventListener("click", e => {
           if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove("open");
         });
