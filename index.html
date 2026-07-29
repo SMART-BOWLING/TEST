@@ -2439,9 +2439,7 @@
         const optEnd = document.createElement('option');
         optEnd.value = index;
         optEnd.textContent = slot.label;
-        // ПРАВИЛЬНО: конечное время = endSlotIdx + 1 (индекс слота, с которого заканчивается)
-        // То есть если интервал 12:00-16:00, endSlotIdx = 9 (16:00), endSlotIdx+1 = 10 (16:30)
-        // Но мы хотим показывать 16:00, поэтому используем endSlotIdx
+        // Правильно: конечное время = endSlotIdx (последний занятый слот)
         if (index === booking.endSlotIdx) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
@@ -2451,8 +2449,8 @@
         Array.from(endSelect.options).forEach(opt => {
           opt.disabled = parseInt(opt.value) <= startVal;
         });
+        // Если текущий конец меньше или равен началу, выбираем следующий доступный
         if (parseInt(endSelect.value) <= startVal) {
-          // Выбираем следующий доступный
           for (let i = startVal + 1; i < slots.length; i++) {
             if (!endSelect.options[i].disabled) {
               endSelect.value = i;
@@ -2486,7 +2484,6 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      // Конец = выбранный индекс (потому что endSelect хранит индекс последнего слота)
       const newEndIdx = parseInt(endSelect.value);
 
       if (newStartIdx >= newEndIdx) {
