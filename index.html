@@ -8,1213 +8,2078 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
     /* ===== ГЛОБАЛЬНЫЕ СБРОСЫ ===== */
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
-    input, textarea, .f-input, .sheet-body .f-input, .info-list strong, .info-list span, .temp-card-inline .temp-time, .info-row strong, .info-row span, .nav-title, .login-title, .login-sub, .sheet-title, .f-label, .ctrl button span, .sheet-select-text { user-select: text; -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; }
-    :root { --bg: #f2f2f2; --surface-primary: #ffffff; --surface-glass: rgba(255,255,255,0.85); --surface-secondary: #f8f8f8; --border-subtle: #e5e5e5; --border-strong: #cccccc; --label-dark: #1e1e1e; --label-secondary: #4a4a4a; --label-tertiary: #7c7c7c; --label-quaternary: #9a9a9a; --accent-blue: #3b6e8f; --accent-blue-hover: #2c5a77; --accent-blue-dim: rgba(59,110,143,0.12); --accent-green: #4f6b4e; --accent-green-dim: rgba(79,107,78,0.12); --accent-red: #b33f3f; --accent-amber: #b87c2e; --radius-card: 8px; --radius-sm: 6px; --radius-pill: 8px; --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; --cell-height: 58px; --cell-width: 74px; --lane-width: 260px; --header-height: 58px; }
-    body { font-family: var(--font-system); background: var(--bg); color: var(--label-dark); min-height: 100vh; -webkit-font-smoothing: antialiased; font-weight: 450; padding-top: 0; }
-    #content { display: block; min-height: 100vh; }
-    .ctrl { position: sticky; top: 0; z-index: 100; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: rgba(255,255,255,0.92); backdrop-filter: blur(28px) saturate(180%); border-bottom: 0.5px solid var(--border-subtle); padding: 12px 36px; min-height: 68px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .ctrl-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px; flex-wrap: wrap; }
-    .ctrl-logo { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; flex-shrink: 0; }
-    .ctrl-title { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; color: var(--label-dark); white-space: nowrap; }
-    .sheet-select-wrapper { display: flex; align-items: center; gap: 12px; background: var(--surface-secondary); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 16px; height: 44px; flex: 1; min-width: 180px; max-width: 320px; }
-    .sheet-select-wrapper i { color: var(--accent-blue); font-size: 16px; }
-    .sheet-select-wrapper select { flex: 1; height: 100%; border: none; background: transparent; font-size: 14px; font-weight: 500; color: var(--label-dark); font-family: var(--font-system); cursor: pointer; outline: none; padding: 0 4px; }
-    .sheet-select-wrapper select option { padding: 8px; }
-    .sheet-select-text { font-size: 13px; font-weight: 500; color: var(--label-secondary); white-space: nowrap; }
-    /* НОВЫЙ БЛОК — два выпадающих списка времени в строке */
-    .time-select-group-inline { display: flex; align-items: center; gap: 6px; background: var(--surface-secondary); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0 12px; height: 44px; }
-    .time-select-group-inline select { height: 100%; border: none; background: transparent; font-size: 14px; font-weight: 500; color: var(--label-dark); font-family: var(--font-system); cursor: pointer; outline: none; padding: 0 4px; min-width: 70px; }
-    .time-select-group-inline span { color: var(--label-tertiary); font-weight: 300; }
-    .ctrl-buttons { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .btn-ctrl { height: 44px; padding: 0 14px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; flex-shrink: 0; font-weight: 500; background: var(--surface-secondary); color: var(--label-secondary); border: 0.5px solid var(--border-strong); }
-    .btn-ctrl i { font-size: 16px; }
-    .btn-ctrl:hover { transform: scale(0.97); background: var(--surface-primary); }
-    .btn-book { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
-    .btn-book:hover { background: var(--accent-blue-hover); }
-    .btn-assign-toggle.active { background: var(--accent-amber); color: white; border-color: var(--accent-amber); }
-    .btn-save-schedule { background: var(--accent-green); color: white; border-color: var(--accent-green); }
-    .btn-save-schedule:hover { filter: brightness(0.95); }
-    .btn-rename-sheet { background: #e8e0c8; color: var(--label-dark); border-color: #d4c8a8; }
-    .btn-rename-sheet:hover { background: #ddd4b8; }
-    .btn-delete-sheet { background: #f2e0e0; color: var(--accent-red); border-color: #e0c8c8; }
-    .btn-delete-sheet:hover { background: #e8d0d0; }
-    .page { width: 100%; margin: 0; padding: 20px 36px 80px; display: flex; flex-direction: column; gap: 24px; }
-    .grid-card { background: var(--surface-primary); border-radius: var(--radius-card); overflow: hidden; border: 0.5px solid var(--border-subtle); width: 100%; position: relative; }
-    .grid-scroll { overflow: auto; -webkit-overflow-scrolling: touch; position: relative; width: 100%; max-height: calc(100vh - 200px); min-height: 500px; }
-    #tableDesktop { display: table; border-collapse: collapse; table-layout: auto; width: 100%; min-width: 720px; font-size: 13px; }
-    #tableDesktop thead { position: sticky; top: 0; z-index: 30; }
-    #tableDesktop thead th { height: var(--cell-height); font-size: 12px; font-weight: 590; color: var(--label-tertiary); border-bottom: 0.5px solid var(--border-strong); border-right: 0.5px solid var(--border-subtle); text-align: center; background: #fafafa; padding: 0 4px; position: sticky; top: 0; z-index: 30; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    #tableDesktop thead th.corner { width: 180px; min-width: 140px; max-width: 220px; position: sticky; left: 0; z-index: 35; font-size: 13px; font-weight: 620; color: var(--label-dark); background: #efefef; text-align: center; box-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
-    #tableDesktop thead th.th-time { cursor: pointer; width: auto; min-width: 48px; max-width: 70px; }
-    #tableDesktop tbody tr { height: var(--cell-height); }
-    #tableDesktop tbody td.lane-hdr { width: 180px; min-width: 140px; max-width: 220px; font-size: 13px; font-weight: 600; border-bottom: 0.5px solid var(--border-strong); border-right: 0.5px solid var(--border-strong); text-align: left; padding: 0 8px; position: sticky; left: 0; z-index: 2; display: flex; align-items: center; gap: 8px; min-height: var(--cell-height); background: #e8edf2; border-left: 3px solid var(--accent-blue); transition: background 0.3s; }
-    #tableDesktop tbody td.lane-hdr.unassigned-lane { background: radial-gradient(circle, #d9d9dc 1px, transparent 1.2px) 0 0 / 14px 14px, #fafafa !important; border-left: 3px solid #d4d4d6 !important; }
-    #tableDesktop tbody td.lane-hdr.unassigned-lane .station-name { color: #8a8a8e !important; font-weight: 550; }
-    #tableDesktop tbody td.lane-hdr.unassigned-lane .station-logo { opacity: 0.55; filter: grayscale(0.4); }
-    #tableDesktop tbody td.lane-hdr.block-start { box-shadow: inset 0 2px 0 0 rgba(0,0,0,0.10); }
-    .lane-hdr .station-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
-    .lane-hdr .station-name { color: #000000 !important; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
-    #tableDesktop tbody td.slot { background: #ffffff; border-bottom: 0.5px solid var(--border-subtle); border-right: 0.5px solid var(--border-subtle); transition: background 0.1s; padding: 0; min-width: 48px; max-width: 70px; height: var(--cell-height); }
-    #tableDesktop tbody tr:hover td.slot { background: #f6f6f6; }
-    #tableDesktop tbody td.slot.booking-pending { background: #faf2e0 !important; }
-    #tableDesktop tbody td.slot.booking-confirmed { background: #e3efe2 !important; }
-    #tableDesktop tbody td.slot.booking-rejected { background: #f2e0e0 !important; }
-    #tableDesktop tbody td.slot.temp-highlight { background: #dde9f0 !important; border: 1px solid #3b6e8f !important; }
-    #tableDesktop tbody td.slot.drag-over { background: #e2dfcf !important; }
-    #tableDesktop tbody tr.employee-group-divider td { height: 28px; padding: 0; background: linear-gradient(180deg, #f7f7f8 0%, #f0f0f2 100%); border-top: 1px solid #e2e2e4; border-bottom: 1px solid #e2e2e4; position: relative; }
-    #tableDesktop tbody tr.employee-group-divider { height: 28px; }
-    .divider-label { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 6px; padding: 5px 16px 5px 12px; font-size: 11px; font-weight: 650; letter-spacing: 0.3px; text-transform: uppercase; width: 100%; }
-    .divider-label i { font-size: 12px; opacity: 0.7; }
-    .divider-edit-before { background: rgba(255,255,255,0.5); border: none; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--label-secondary); transition: all 0.2s; flex-shrink: 0; opacity: 0.6; }
-    .divider-edit-before:hover { background: rgba(255,255,255,0.9); opacity: 1; transform: scale(1.1); }
-    .divider-edit-before i { font-size: 11px; }
-    #slidersLayer { position: absolute; top: var(--header-height, 58px); left: 0; width: 100%; height: calc(100% - var(--header-height, 58px)); pointer-events: none; z-index: 20; }
-    .slider { position: absolute; border-radius: 6px; pointer-events: auto; cursor: pointer; padding: 2px 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); backdrop-filter: blur(8px); border: 0.5px solid rgba(255,255,255,0.25); will-change: left, top; transition: all 0.12s ease; font-weight: 510; font-family: var(--font-system); overflow: hidden; white-space: nowrap; font-size: 11px; }
-    .slider .sl-time { color: #ffffff !important; text-shadow: 0 1px 3px rgba(0,0,0,0.3); font-size: 11px; }
-    .slider[data-lane-type="blue"] { background: rgba(44,95,122,0.92); color: white; }
-    .slider.pending[data-lane-type="blue"] { background: rgba(44,95,122,0.92); }
-    .slider.confirmed[data-lane-type="blue"] { background: #2c5f7a; }
-    .slider.rejected[data-lane-type="blue"] { background: rgba(44,95,122,0.55); opacity: 0.85; }
-    .slider.temp[data-lane-type="blue"] { background: rgba(44,95,122,0.75); border: 1px solid #c9b16b; }
-    .sl-time { font-size: 11px; font-weight: 600; opacity: 0.95; text-align: center; letter-spacing: 0.3px; color: #ffffff !important; }
-    .drag-handle { position: absolute; top: 0; left: 0; right: 0; height: 100%; cursor: pointer; z-index: 2; pointer-events: auto; }
-    .inline-temp-cards { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .temp-card-inline { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.9); border: 0.5px solid var(--border-subtle); border-radius: 6px; padding: 4px 10px 4px 14px; font-size: 12px; }
-    .temp-card-inline strong { font-size: 12px; font-weight: 590; margin-right: 2px; }
-    .temp-card-inline .temp-time { font-family: monospace; font-size: 10px; background: #efefef; padding: 2px 8px; border-radius: 4px; }
-    .temp-card-inline .temp-rm { width: 22px; height: 22px; border-radius: 4px; background: #f2eaea; border: none; cursor: pointer; font-weight: 600; color: #b33f3f; font-size: 11px; }
-    .temp-card-inline .temp-rm:hover { background: #f0d0d0; }
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); z-index: 2000; justify-content: center; align-items: center; }
-    .overlay.open { display: flex; }
-    .sheet { background: rgba(255,255,255,0.98); border-radius: 12px; width: 100%; max-width: 540px; box-shadow: 0 32px 56px rgba(0,0,0,0.2); }
-    .sheet-head { padding: 24px 28px 12px; display: flex; justify-content: space-between; align-items: center; }
-    .sheet-title { font-size: 28px; font-weight: 640; letter-spacing: -0.6px; display: flex; align-items: center; gap: 12px; }
-    .sheet-x { width: 42px; height: 42px; border-radius: 8px; background: #f2f2f5; border: none; font-size: 24px; cursor: pointer; }
-    .sheet-x:hover { background: #e5e5e8; }
-    .sheet-body { padding: 16px 28px 34px; }
-    .f-group { margin-bottom: 24px; }
-    .f-label { font-size: 13px; font-weight: 590; color: var(--label-tertiary); margin-bottom: 8px; display: block; }
-    .f-input { width: 100%; background: var(--surface-secondary); border: 0.5px solid var(--border-strong); border-radius: 8px; font-size: 16px; padding: 14px 20px; }
-    .f-actions { display: flex; gap: 16px; margin-top: 28px; }
-    .f-btn-ok { flex: 1; height: 56px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .f-btn-ok:hover { background: var(--accent-blue-hover); }
-    .f-btn-cancel { flex: 1; height: 56px; background: #f2f2f5; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; }
-    .f-btn-cancel:hover { background: #e5e5e8; }
-    .info-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--border-subtle); font-size: 16px; }
-    #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); z-index: 5000; align-items: center; justify-content: center; }
-    .loader-box { background: rgba(255,255,255,0.96); border-radius: 12px; padding: 32px 48px; text-align: center; }
-    .spin { width: 44px; height: 44px; border: 3px solid #e9e9ef; border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 18px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .event-type-buttons { display: flex; gap: 12px; margin: 20px 0; }
-    .event-type-btn { flex: 1; padding: 16px; border: 2px solid var(--border-strong); border-radius: 8px; background: var(--surface-secondary); cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s; text-align: center; }
-    .event-type-btn:hover { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
-    .event-type-btn.active { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
-    .event-type-btn.birthday { background: #fdf0da; border-color: #c97b2e; }
-    .event-type-btn.birthday.active { background: #c97b2e; color: white; border-color: #ffd700; }
-    .event-type-btn.regular.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
-    .assign-bar { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: rgba(30,30,30,0.95); backdrop-filter: blur(20px); color: white; border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; gap: 14px; z-index: 1500; box-shadow: 0 12px 32px rgba(0,0,0,0.3); max-width: 90vw; flex-wrap: wrap; }
-    .assign-bar .assign-bar-label { font-size: 13px; opacity: 0.8; white-space: nowrap; }
-    .assign-bar .assign-bar-chips { display: flex; gap: 6px; flex-wrap: wrap; max-width: 340px; }
-    .assign-bar .assign-chip { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; }
-    .assign-bar input { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: white; border-radius: 8px; padding: 10px 14px; font-size: 14px; min-width: 180px; }
-    .assign-bar input::placeholder { color: rgba(255,255,255,0.5); }
-    .assign-bar button { border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; cursor: pointer; font-size: 14px; white-space: nowrap; }
-    .assign-bar .assign-apply-btn { background: var(--accent-green); color: white; }
-    .assign-bar .assign-apply-btn:hover { filter: brightness(0.9); }
-    .assign-bar .assign-cancel-btn { background: rgba(255,255,255,0.12); color: white; }
-    .assign-bar .assign-cancel-btn:hover { background: rgba(255,255,255,0.2); }
-    .color-picker-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin: 12px 0 16px; }
-    .color-picker-grid .color-option { width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 2px solid transparent; }
-    .color-picker-grid .color-option:hover { transform: scale(1.15); }
-    .color-picker-grid .color-option.selected { border: 3px solid #333; transform: scale(1.1); }
-    .time-select-group { display: flex; gap: 16px; align-items: center; }
-    .time-select-group select { flex: 1; }
-    .time-select-group span { font-size: 18px; font-weight: 600; color: var(--label-secondary); }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    input, textarea, .f-input, .sheet-body .f-input,
+    .info-list strong, .info-list span,
+    .temp-card-inline .temp-time,
+    .info-row strong, .info-row span,
+    .nav-title, .login-title, .login-sub,
+    .sheet-title, .f-label, .ctrl button span,
+    .sheet-select-text {
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+    }
+
+    /* ===== ПЕРЕМЕННЫЕ ===== */
+    :root {
+      --bg: #f2f2f2;
+      --surface-primary: #ffffff;
+      --surface-glass: rgba(255, 255, 255, 0.85);
+      --surface-secondary: #f8f8f8;
+      --border-subtle: #e5e5e5;
+      --border-strong: #cccccc;
+      --label-dark: #1e1e1e;
+      --label-secondary: #4a4a4a;
+      --label-tertiary: #7c7c7c;
+      --label-quaternary: #9a9a9a;
+      --accent-blue: #3b6e8f;
+      --accent-blue-hover: #2c5a77;
+      --accent-blue-dim: rgba(59, 110, 143, 0.12);
+      --accent-green: #4f6b4e;
+      --accent-green-dim: rgba(79, 107, 78, 0.12);
+      --accent-red: #b33f3f;
+      --accent-amber: #b87c2e;
+      --radius-card: 8px;
+      --radius-sm: 6px;
+      --radius-pill: 8px;
+      --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+      --cell-height: 58px;
+      --cell-width: 74px;
+      --lane-width: 260px;
+      --header-height: 58px;
+    }
+
+    /* ===== БАЗА ===== */
+    body {
+      font-family: var(--font-system);
+      background: var(--bg);
+      color: var(--label-dark);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      font-weight: 450;
+      padding-top: 0;
+    }
+
+    #content {
+      display: block;
+      min-height: 100vh;
+    }
+
+    /* ===== ПАНЕЛЬ УПРАВЛЕНИЯ (закреплена сверху) ===== */
+    .ctrl {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(28px) saturate(180%);
+      border-bottom: 0.5px solid var(--border-subtle);
+      padding: 12px 36px;
+      min-height: 68px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .ctrl-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .ctrl-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--label-dark);
+      white-space: nowrap;
+    }
+
+    .sheet-select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 0 16px;
+      height: 44px;
+      flex: 1;
+      min-width: 180px;
+      max-width: 320px;
+    }
+
+    .sheet-select-wrapper i {
+      color: var(--accent-blue);
+      font-size: 16px;
+    }
+
+    .sheet-select-wrapper select {
+      flex: 1;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--label-dark);
+      font-family: var(--font-system);
+      cursor: pointer;
+      outline: none;
+      padding: 0 4px;
+    }
+
+    .sheet-select-wrapper select option {
+      padding: 8px;
+    }
+
+    .sheet-select-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--label-secondary);
+      white-space: nowrap;
+    }
+
+    .ctrl-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-ctrl {
+      height: 44px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-weight: 500;
+      background: var(--surface-secondary);
+      color: var(--label-secondary);
+      border: 0.5px solid var(--border-strong);
+    }
+
+    .btn-ctrl i {
+      font-size: 16px;
+    }
+
+    .btn-ctrl:hover {
+      transform: scale(0.97);
+      background: var(--surface-primary);
+    }
+
+    .btn-book {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+    .btn-book:hover {
+      background: var(--accent-blue-hover);
+    }
+
+    .btn-assign-toggle.active {
+      background: var(--accent-amber);
+      color: white;
+      border-color: var(--accent-amber);
+    }
+
+    .btn-save-schedule {
+      background: var(--accent-green);
+      color: white;
+      border-color: var(--accent-green);
+    }
+    .btn-save-schedule:hover {
+      filter: brightness(0.95);
+    }
+
+    .btn-rename-sheet {
+      background: #e8e0c8;
+      color: var(--label-dark);
+      border-color: #d4c8a8;
+    }
+    .btn-rename-sheet:hover {
+      background: #ddd4b8;
+    }
+
+    .btn-delete-sheet {
+      background: #f2e0e0;
+      color: var(--accent-red);
+      border-color: #e0c8c8;
+    }
+    .btn-delete-sheet:hover {
+      background: #e8d0d0;
+    }
+
+    /* ===== СТРАНИЦА ===== */
+    .page {
+      width: 100%;
+      margin: 0;
+      padding: 20px 36px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ===== ТАБЛИЦА ===== */
+    .grid-card {
+      background: var(--surface-primary);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      border: 0.5px solid var(--border-subtle);
+      width: 100%;
+      position: relative;
+    }
+
+    .grid-scroll {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      width: 100%;
+      max-height: calc(100vh - 200px);
+      min-height: 500px;
+    }
+
+    /* ЗАКРЕПЛЯЕМ ШАПКУ ТАБЛИЦЫ */
+    #tableDesktop {
+      display: table;
+      border-collapse: collapse;
+      table-layout: auto;
+      width: 100%;
+      min-width: 720px;
+      font-size: 13px;
+    }
+
+    #tableDesktop thead {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    #tableDesktop thead th {
+      height: var(--cell-height);
+      font-size: 12px;
+      font-weight: 590;
+      color: var(--label-tertiary);
+      border-bottom: 0.5px solid var(--border-strong);
+      border-right: 0.5px solid var(--border-subtle);
+      text-align: center;
+      background: #fafafa;
+      padding: 0 4px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    #tableDesktop thead th.corner {
+      width: 180px;
+      min-width: 140px;
+      max-width: 220px;
+      position: sticky;
+      left: 0;
+      z-index: 35;
+      font-size: 13px;
+      font-weight: 620;
+      color: var(--label-dark);
+      background: #efefef;
+      text-align: center;
+      box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+    }
+
+    #tableDesktop thead th.th-time {
+      cursor: pointer;
+      width: auto;
+      min-width: 48px;
+      max-width: 70px;
+    }
+
+    #tableDesktop tbody tr {
+      height: var(--cell-height);
+    }
+
+    /* ===== ЗАГОЛОВКИ СТРОК (СТАНЦИИ) ===== */
+    #tableDesktop tbody td.lane-hdr {
+      width: 180px;
+      min-width: 140px;
+      max-width: 220px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 0.5px solid var(--border-strong);
+      border-right: 0.5px solid var(--border-strong);
+      text-align: left;
+      padding: 0 8px;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: var(--cell-height);
+      background: #e8edf2;
+      border-left: 3px solid var(--accent-blue);
+      transition: background 0.3s;
+    }
+
+    #tableDesktop tbody td.lane-hdr.unassigned-lane {
+      background:
+        radial-gradient(circle, #d9d9dc 1px, transparent 1.2px) 0 0 / 14px 14px,
+        #fafafa !important;
+      border-left: 3px solid #d4d4d6 !important;
+    }
+    #tableDesktop tbody td.lane-hdr.unassigned-lane .station-name {
+      color: #8a8a8e !important;
+      font-weight: 550;
+    }
+    #tableDesktop tbody td.lane-hdr.unassigned-lane .station-logo {
+      opacity: 0.55;
+      filter: grayscale(0.4);
+    }
+
+    #tableDesktop tbody td.lane-hdr.block-start {
+      box-shadow: inset 0 2px 0 0 rgba(0, 0, 0, 0.10);
+    }
+
+    .lane-hdr .station-logo {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .lane-hdr .station-name {
+      color: #000000 !important;
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ===== ЯЧЕЙКИ СЛОТОВ ===== */
+    #tableDesktop tbody td.slot {
+      background: #ffffff;
+      border-bottom: 0.5px solid var(--border-subtle);
+      border-right: 0.5px solid var(--border-subtle);
+      transition: background 0.1s;
+      padding: 0;
+      min-width: 48px;
+      max-width: 70px;
+      height: var(--cell-height);
+    }
+
+    #tableDesktop tbody tr:hover td.slot {
+      background: #f6f6f6;
+    }
+    #tableDesktop tbody td.slot.booking-pending {
+      background: #faf2e0 !important;
+    }
+    #tableDesktop tbody td.slot.booking-confirmed {
+      background: #e3efe2 !important;
+    }
+    #tableDesktop tbody td.slot.booking-rejected {
+      background: #f2e0e0 !important;
+    }
+    #tableDesktop tbody td.slot.temp-highlight {
+      background: #dde9f0 !important;
+      border: 1px solid #3b6e8f !important;
+    }
+    #tableDesktop tbody td.slot.drag-over {
+      background: #e2dfcf !important;
+    }
+
+    /* ===== РАЗДЕЛИТЕЛИ ===== */
+    #tableDesktop tbody tr.employee-group-divider td {
+      height: 28px;
+      padding: 0;
+      background: linear-gradient(180deg, #f7f7f8 0%, #f0f0f2 100%);
+      border-top: 1px solid #e2e2e4;
+      border-bottom: 1px solid #e2e2e4;
+      position: relative;
+    }
+    #tableDesktop tbody tr.employee-group-divider {
+      height: 28px;
+    }
+
+    .divider-label {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 16px 5px 12px;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      width: 100%;
+    }
+    .divider-label i {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .divider-edit-before {
+      background: rgba(255, 255, 255, 0.5);
+      border: none;
+      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--label-secondary);
+      transition: all 0.2s;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+    .divider-edit-before:hover {
+      background: rgba(255, 255, 255, 0.9);
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    .divider-edit-before i {
+      font-size: 11px;
+    }
+
+    /* ===== ПОЛЗУНКИ (слайдеры) ===== */
+    #slidersLayer {
+      position: absolute;
+      top: var(--header-height, 58px);
+      left: 0;
+      width: 100%;
+      height: calc(100% - var(--header-height, 58px));
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .slider {
+      position: absolute;
+      border-radius: 6px;
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 2px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(8px);
+      border: 0.5px solid rgba(255, 255, 255, 0.25);
+      will-change: left, top;
+      transition: all 0.12s ease;
+      font-weight: 510;
+      font-family: var(--font-system);
+      overflow: hidden;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    .slider .sl-time {
+      color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      font-size: 11px;
+    }
+
+    .slider[data-lane-type="blue"] {
+      background: rgba(44, 95, 122, 0.92);
+      color: white;
+    }
+    .slider.pending[data-lane-type="blue"] {
+      background: rgba(44, 95, 122, 0.92);
+    }
+    .slider.confirmed[data-lane-type="blue"] {
+      background: #2c5f7a;
+    }
+    .slider.rejected[data-lane-type="blue"] {
+      background: rgba(44, 95, 122, 0.55);
+      opacity: 0.85;
+    }
+    .slider.temp[data-lane-type="blue"] {
+      background: rgba(44, 95, 122, 0.75);
+      border: 1px solid #c9b16b;
+    }
+
+    .sl-time {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.95;
+      text-align: center;
+      letter-spacing: 0.3px;
+      color: #ffffff !important;
+    }
+
+    .drag-handle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      cursor: pointer;
+      z-index: 2;
+      pointer-events: auto;
+    }
+
+    /* ===== ВРЕМЕННЫЕ КАРТОЧКИ ===== */
+    .inline-temp-cards {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .temp-card-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 0.5px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 4px 10px 4px 14px;
+      font-size: 12px;
+    }
+    .temp-card-inline strong {
+      font-size: 12px;
+      font-weight: 590;
+      margin-right: 2px;
+    }
+    .temp-card-inline .temp-time {
+      font-family: monospace;
+      font-size: 10px;
+      background: #efefef;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .temp-card-inline .temp-rm {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: #f2eaea;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #b33f3f;
+      font-size: 11px;
+    }
+    .temp-card-inline .temp-rm:hover {
+      background: #f0d0d0;
+    }
+
+    /* ===== МОДАЛЬНЫЕ ОКНА ===== */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    .overlay.open {
+      display: flex;
+    }
+
+    .sheet {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 32px 56px rgba(0, 0, 0, 0.2);
+    }
+
+    .sheet-head {
+      padding: 24px 28px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sheet-title {
+      font-size: 28px;
+      font-weight: 640;
+      letter-spacing: -0.6px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sheet-x {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #f2f2f5;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .sheet-x:hover {
+      background: #e5e5e8;
+    }
+    .sheet-body {
+      padding: 16px 28px 34px;
+    }
+
+    .f-group {
+      margin-bottom: 24px;
+    }
+    .f-label {
+      font-size: 13px;
+      font-weight: 590;
+      color: var(--label-tertiary);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .f-input {
+      width: 100%;
+      background: var(--surface-secondary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 8px;
+      font-size: 16px;
+      padding: 14px 20px;
+    }
+
+    .f-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .f-btn-ok {
+      flex: 1;
+      height: 56px;
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .f-btn-ok:hover {
+      background: var(--accent-blue-hover);
+    }
+    .f-btn-cancel {
+      flex: 1;
+      height: 56px;
+      background: #f2f2f5;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .f-btn-cancel:hover {
+      background: #e5e5e8;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 0.5px solid var(--border-subtle);
+      font-size: 16px;
+    }
+
+    /* ===== ЗАГРУЗЧИК ===== */
+    #loader {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+      z-index: 5000;
+      align-items: center;
+      justify-content: center;
+    }
+    .loader-box {
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 12px;
+      padding: 32px 48px;
+      text-align: center;
+    }
+    .spin {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #e9e9ef;
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== ТИПЫ СОБЫТИЙ ===== */
+    .event-type-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .event-type-btn {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--surface-secondary);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .event-type-btn:hover {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-dim);
+    }
+    .event-type-btn.active {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-dim);
+    }
+    .event-type-btn.birthday {
+      background: #fdf0da;
+      border-color: #c97b2e;
+    }
+    .event-type-btn.birthday.active {
+      background: #c97b2e;
+      color: white;
+      border-color: #ffd700;
+    }
+    .event-type-btn.regular.active {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+
+    /* ===== ПРИЛИПАЮЩАЯ ПАНЕЛЬ НАЗНАЧЕНИЯ ===== */
+    .assign-bar {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translateX(-50%);
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(20px);
+      color: white;
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 1500;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+      max-width: 90vw;
+      flex-wrap: wrap;
+    }
+    .assign-bar .assign-bar-label {
+      font-size: 13px;
+      opacity: 0.8;
+      white-space: nowrap;
+    }
+    .assign-bar .assign-bar-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      max-width: 340px;
+    }
+    .assign-bar .assign-chip {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .assign-bar input {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: white;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      min-width: 180px;
+    }
+    .assign-bar input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .assign-bar button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .assign-bar .assign-apply-btn {
+      background: var(--accent-green);
+      color: white;
+    }
+    .assign-bar .assign-apply-btn:hover {
+      filter: brightness(0.9);
+    }
+    .assign-bar .assign-cancel-btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+    }
+    .assign-bar .assign-cancel-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА ===== */
+    .color-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+    .color-picker-grid .color-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 2px solid transparent;
+    }
+    .color-picker-grid .color-option:hover {
+      transform: scale(1.15);
+    }
+    .color-picker-grid .color-option.selected {
+      border: 3px solid #333;
+      transform: scale(1.1);
+    }
+
+    /* ===== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ВРЕМЕНИ ===== */
+    .time-select-group {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .time-select-group select {
+      flex: 1;
+    }
+    .time-select-group span {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--label-secondary);
+    }
+
+    /* --- Стили для контекстного меню ползунка (время) --- */
+    .slider-context-menu {
+      position: fixed;
+      z-index: 3000;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 16px 20px 20px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+      min-width: 220px;
+      border: 0.5px solid var(--border-subtle);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .slider-context-menu.open {
+      display: flex;
+    }
+    .slider-context-menu .menu-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--label-secondary);
+      border-bottom: 0.5px solid var(--border-subtle);
+      padding-bottom: 6px;
+      margin-bottom: 4px;
+    }
+    .slider-context-menu select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--surface-secondary);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--label-dark);
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+    .slider-context-menu select:focus {
+      border-color: var(--accent-blue);
+    }
+    .slider-context-menu .menu-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .slider-context-menu .menu-actions button {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .slider-context-menu .menu-actions .apply-btn {
+      background: var(--accent-blue);
+      color: white;
+    }
+    .slider-context-menu .menu-actions .apply-btn:hover {
+      background: var(--accent-blue-hover);
+    }
+    .slider-context-menu .menu-actions .cancel-btn {
+      background: #f2f2f5;
+      color: var(--label-secondary);
+    }
+    .slider-context-menu .menu-actions .cancel-btn:hover {
+      background: #e5e5e8;
+    }
+
+    /* ===== АДАПТИВ ===== */
     @media (max-width: 780px) {
-      .ctrl { padding: 10px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
-      .ctrl-left { flex-wrap: wrap; }
-      .sheet-select-wrapper { max-width: 100%; flex: 1; }
-      .time-select-group-inline { width: 100%; justify-content: space-between; }
-      .ctrl-buttons { justify-content: stretch; }
-      .btn-ctrl { flex: 1; height: 44px; font-size: 12px; padding: 0 8px; }
-      .btn-ctrl i { font-size: 14px; }
-      .page { padding: 16px 12px 70px; }
-      .inline-temp-cards { margin-left: 0; justify-content: flex-start; }
-      #tableDesktop thead th.corner { width: 120px; min-width: 100px; }
-      #tableDesktop tbody td.lane-hdr { width: 120px; min-width: 100px; }
-      #tableDesktop thead th.th-time { min-width: 38px; font-size: 10px; padding: 0 2px; }
-      #tableDesktop tbody td.slot { min-width: 38px; }
-      .slider { font-size: 9px; padding: 2px 4px; }
-      .slider .sl-time { font-size: 9px; }
-      .grid-scroll { max-height: calc(100vh - 180px); min-height: 400px; }
-      .color-picker-grid { grid-template-columns: repeat(6, 1fr); }
-      .time-select-group { flex-direction: column; gap: 8px; }
+      .ctrl {
+        padding: 10px 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .ctrl-left {
+        flex-wrap: wrap;
+      }
+      .sheet-select-wrapper {
+        max-width: 100%;
+        flex: 1;
+      }
+      .ctrl-buttons {
+        justify-content: stretch;
+      }
+      .btn-ctrl {
+        flex: 1;
+        height: 44px;
+        font-size: 12px;
+        padding: 0 8px;
+      }
+      .btn-ctrl i {
+        font-size: 14px;
+      }
+      .page {
+        padding: 16px 12px 70px;
+      }
+      .inline-temp-cards {
+        margin-left: 0;
+        justify-content: flex-start;
+      }
+      #tableDesktop thead th.corner {
+        width: 120px;
+        min-width: 100px;
+      }
+      #tableDesktop tbody td.lane-hdr {
+        width: 120px;
+        min-width: 100px;
+      }
+      #tableDesktop thead th.th-time {
+        min-width: 38px;
+        font-size: 10px;
+        padding: 0 2px;
+      }
+      #tableDesktop tbody td.slot {
+        min-width: 38px;
+      }
+      .slider {
+        font-size: 9px;
+        padding: 2px 4px;
+      }
+      .slider .sl-time {
+        font-size: 9px;
+      }
+      .grid-scroll {
+        max-height: calc(100vh - 180px);
+        min-height: 400px;
+      }
+      .color-picker-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+      .time-select-group {
+        flex-direction: column;
+        gap: 8px;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<div id="content">
-  <!-- ===== ЗАКРЕПЛЕННАЯ ПАНЕЛЬ УПРАВЛЕНИЯ (ВВЕРХУ) ===== -->
-  <div class="ctrl" id="ctrlPanel">
-    <div class="ctrl-left">
-      <img src="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" alt="Logo" class="ctrl-logo" />
-      <span class="ctrl-title">РОЗКЛАД СТАНЦІЙ</span>
-      <div class="sheet-select-wrapper">
-        <i class="fas fa-table"></i>
-        <span class="sheet-select-text">Лист:</span>
-        <select id="sheetSelector" onchange="onSheetChange()">
-          <option value="">Загрузка...</option>
-        </select>
+  <div id="content">
+    <!-- ===== ЗАКРЕПЛЕННАЯ ПАНЕЛЬ УПРАВЛЕНИЯ (ВВЕРХУ) ===== -->
+    <div class="ctrl" id="ctrlPanel">
+      <div class="ctrl-left">
+        <img src="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" alt="Logo" class="ctrl-logo" />
+        <span class="ctrl-title">РОЗКЛАД СТАНЦІЙ</span>
+        <div class="sheet-select-wrapper">
+          <i class="fas fa-table"></i>
+          <span class="sheet-select-text">Лист:</span>
+          <select id="sheetSelector" onchange="onSheetChange()">
+            <option value="">Загрузка...</option>
+          </select>
+        </div>
+        <div id="inlineTempContainer" class="inline-temp-cards"></div>
       </div>
-      <!-- НОВЫЙ БЛОК: два выпадающих списка (14:00 и 16:00) -->
-      <div class="time-select-group-inline">
-        <i class="fas fa-clock" style="color:var(--accent-blue);"></i>
-        <select id="timeStartSelect" onchange="updateTimePreview()">
-          <option value="14">14:00</option>
-          <option value="15">15:00</option>
-          <option value="16" selected>16:00</option>
-          <option value="17">17:00</option>
-          <option value="18">18:00</option>
-        </select>
-        <span>—</span>
-        <select id="timeEndSelect" onchange="updateTimePreview()">
-          <option value="14">14:00</option>
-          <option value="15">15:00</option>
-          <option value="16" selected>16:00</option>
-          <option value="17">17:00</option>
-          <option value="18">18:00</option>
-        </select>
-        <span style="font-size:12px; color:var(--label-tertiary); margin-left:4px;" id="timePreviewLabel">(интервал)</span>
+      <div class="ctrl-buttons">
+        <button class="btn-ctrl btn-book" onclick="openBookModal()" title="Новая запись">
+          <i class="fas fa-plus-circle"></i><span>Запись</span>
+        </button>
+        <button id="assignToggleBtn" class="btn-ctrl btn-assign-toggle" title="Назначить сотрудника">
+          <i class="fas fa-user-tag"></i><span>Назначить</span>
+        </button>
+        <button class="btn-ctrl btn-save-schedule" title="Сохранить расписание" onclick="openSaveScheduleModal()">
+          <i class="fas fa-save"></i><span>Сохранить</span>
+        </button>
+        <button class="btn-ctrl btn-rename-sheet" onclick="renameSheetPrompt()" title="Переименовать лист">
+          <i class="fas fa-edit"></i><span>Переим.</span>
+        </button>
+        <button class="btn-ctrl btn-delete-sheet" onclick="deleteSheetPrompt()" title="Удалить лист">
+          <i class="fas fa-trash"></i><span>Удалить</span>
+        </button>
       </div>
     </div>
-    <div class="ctrl-buttons">
-      <button class="btn-ctrl btn-book" onclick="openBookModal()" title="Новая запись">
-        <i class="fas fa-plus-circle"></i><span>Запись</span>
-      </button>
-      <button id="assignToggleBtn" class="btn-ctrl btn-assign-toggle" title="Назначить сотрудника">
-        <i class="fas fa-user-tag"></i><span>Назначить</span>
-      </button>
-      <button class="btn-ctrl btn-save-schedule" title="Сохранить расписание" onclick="openSaveScheduleModal()">
-        <i class="fas fa-save"></i><span>Сохранить</span>
-      </button>
-      <button class="btn-ctrl btn-rename-sheet" onclick="renameSheetPrompt()" title="Переименовать лист">
-        <i class="fas fa-edit"></i><span>Переим.</span>
-      </button>
-      <button class="btn-ctrl btn-delete-sheet" onclick="deleteSheetPrompt()" title="Удалить лист">
-        <i class="fas fa-trash"></i><span>Удалить</span>
-      </button>
+
+    <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+    <div class="page">
+      <div class="grid-card">
+        <div class="grid-scroll" id="gridScroll">
+          <table id="tableDesktop">
+            <thead id="dtHead">
+              <tr><th class="corner">СТАНЦИЯ</th></tr>
+            </thead>
+            <tbody id="dtBody"></tbody>
+          </table>
+          <div id="slidersLayer"></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
-  <div class="page">
-    <div class="grid-card">
-      <div class="grid-scroll" id="gridScroll">
-        <table id="tableDesktop">
-          <thead id="dtHead">
-            <tr><th class="corner">СТАНЦИЯ</th></tr>
-          </thead>
-          <tbody id="dtBody"></tbody>
-        </table>
-        <div id="slidersLayer"></div>
+  <!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
+
+  <!-- СОЗДАТЬ СОБЫТИЕ -->
+  <div id="bookModal" class="overlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div>
+        <button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
+          <span>Выбранное время: </span><span id="previewTimes">—</span>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Тип события</label>
+          <select class="f-input" id="eventTypeSelect">
+            <option value="regular">Обычная запись</option>
+            <option value="birthday">🎂 День рождения</option>
+          </select>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button>
+          <button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ===== МОДАЛЬНЫЕ ОКНА ===== -->
-
-<!-- СОЗДАТЬ СОБЫТИЕ -->
-<div id="bookModal" class="overlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-calendar-plus"></i> Создать событие</div>
-      <button class="sheet-x" onclick="closeBookModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div id="bookingTimePreview" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
-        <span>Выбранное время: </span><span id="previewTimes">—</span>
+  <!-- РЕДАКТИРОВАТЬ СОБЫТИЕ -->
+  <div id="editEventModal" class="overlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-edit"></i> Редактировать событие</div>
+        <button class="sheet-x" onclick="closeEditEventModal()"><i class="fas fa-times"></i></button>
       </div>
-      <div class="f-group">
+      <div class="sheet-body">
+        <div id="editEventInfo" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
+          <span>Станция: </span><strong id="editStationName"></strong><br>
+          <span>Время: </span><strong id="editTimeRange"></strong>
+        </div>
         <label class="f-label">Тип события</label>
-        <select class="f-input" id="eventTypeSelect">
-          <option value="regular">Обычная запись</option>
-          <option value="birthday">🎂 День рождения</option>
-        </select>
-      </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button>
-        <button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- РЕДАКТИРОВАТЬ СОБЫТИЕ -->
-<div id="editEventModal" class="overlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-edit"></i> Редактировать событие</div>
-      <button class="sheet-x" onclick="closeEditEventModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div id="editEventInfo" style="background:#f0f2f5; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
-        <span>Станция: </span><strong id="editStationName"></strong><br>
-        <span>Время: </span><strong id="editTimeRange"></strong>
-      </div>
-      <label class="f-label">Тип события</label>
-      <div class="event-type-buttons">
-        <button class="event-type-btn regular" data-type="regular" onclick="selectEventType('regular')">
-          <i class="fas fa-clock"></i> Обычная
-        </button>
-        <button class="event-type-btn birthday" data-type="birthday" onclick="selectEventType('birthday')">
-          <i class="fas fa-birthday-cake"></i> День рождения
-        </button>
-      </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="saveEventType()">Сохранить</button>
-        <button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ДЕТАЛИ СОБЫТИЯ -->
-<div id="infoModal" class="overlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div>
-      <button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div class="info-list">
-        <div class="info-row"><span>Станция</span><strong id="i-table"></strong></div>
-        <div class="info-row"><span>Время</span><strong id="i-time"></strong></div>
-        <div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div>
-        <div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div>
-      </div>
-      <div class="f-actions" style="margin-top: 20px;">
-        <button class="f-btn-ok" onclick="openEditTimeModal()"><i class="fas fa-clock"></i> Изменить время</button>
-        <button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button>
-        <button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;">
-          <i class="fas fa-trash"></i> Удалить
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- РЕДАКТИРОВАТЬ ВРЕМЯ -->
-<div id="editTimeModal" class="overlay">
-  <div class="sheet" style="max-width: 480px;">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-clock"></i> Изменить время</div>
-      <button class="sheet-x" onclick="closeEditTimeModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div class="f-group">
-        <label class="f-label">Станция: <strong id="editTimeStationName"></strong></label>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Выберите время</label>
-        <div class="time-select-group">
-          <select class="f-input" id="editTimeStartSelect"></select>
-          <span>—</span>
-          <select class="f-input" id="editTimeEndSelect"></select>
+        <div class="event-type-buttons">
+          <button class="event-type-btn regular" data-type="regular" onclick="selectEventType('regular')">
+            <i class="fas fa-clock"></i> Обычная
+          </button>
+          <button class="event-type-btn birthday" data-type="birthday" onclick="selectEventType('birthday')">
+            <i class="fas fa-birthday-cake"></i> День рождения
+          </button>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="saveEventType()">Сохранить</button>
+          <button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button>
         </div>
       </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="applyTimeChange()">Применить</button>
-        <button class="f-btn-cancel" onclick="closeEditTimeModal()">Отмена</button>
-      </div>
     </div>
   </div>
-</div>
 
-<!-- СОХРАНИТЬ РАСПИСАНИЕ -->
-<div id="saveScheduleModal" class="overlay">
-  <div class="sheet" style="max-width: 480px;">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-save"></i> Сохранить расписание</div>
-      <button class="sheet-x" onclick="closeSaveScheduleModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div class="f-group">
-        <label class="f-label">Название нового листа</label>
-        <input class="f-input" id="scheduleNameInput" placeholder="Например: График 22.07.2026" />
-        <div style="font-size: 12px; color: var(--label-tertiary); margin-top: 6px;">
-          Введите название для нового листа в Google Таблице
+  <!-- ДЕТАЛИ СОБЫТИЯ -->
+  <div id="infoModal" class="overlay">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-info-circle"></i> Детали события</div>
+        <button class="sheet-x" onclick="closeInfoModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="info-list">
+          <div class="info-row"><span>Станция</span><strong id="i-table"></strong></div>
+          <div class="info-row"><span>Время</span><strong id="i-time"></strong></div>
+          <div class="info-row"><span>Сотрудник</span><strong id="i-employee"></strong></div>
+          <div class="info-row"><span>Тип события</span><strong id="i-type"></strong></div>
+        </div>
+        <div class="f-actions" style="margin-top: 20px;">
+          <button class="f-btn-ok" onclick="openEditTimeModal()"><i class="fas fa-clock"></i> Изменить время</button>
+          <button class="f-btn-ok" onclick="openEditEventModal()"><i class="fas fa-edit"></i> Изменить тип</button>
+          <button class="f-btn-cancel" onclick="deleteBooking()" style="background: #f2eaea; color: #b33f3f;">
+            <i class="fas fa-trash"></i> Удалить
+          </button>
         </div>
       </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="confirmSaveSchedule()">Сохранить как новый лист</button>
-        <button class="f-btn-cancel" onclick="closeSaveScheduleModal()">Отмена</button>
-      </div>
     </div>
   </div>
-</div>
 
-<!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА -->
-<div id="editEmployeeModal" class="overlay">
-  <div class="sheet" style="max-width: 480px;">
-    <div class="sheet-head">
-      <div class="sheet-title"><i class="fas fa-user-edit"></i> Редактировать сотрудника</div>
-      <button class="sheet-x" onclick="closeEditEmployeeModal()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="sheet-body">
-      <div class="f-group">
-        <label class="f-label">ФИО сотрудника</label>
-        <input class="f-input" id="editEmployeeNameInput" placeholder="Введите ФИО" />
+  <!-- РЕДАКТИРОВАТЬ ВРЕМЯ -->
+  <div id="editTimeModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-clock"></i> Изменить время</div>
+        <button class="sheet-x" onclick="closeEditTimeModal()"><i class="fas fa-times"></i></button>
       </div>
-      <div class="f-group">
-        <label class="f-label">Выберите цвет</label>
-        <div class="color-picker-grid" id="editEmployeeColorGrid"></div>
-        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
-          <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
-          <input type="text" id="editEmployeeCustomColor" placeholder="#4f6b4e" style="flex:1;padding:8px 12px;border:1px solid var(--border-strong);border-radius:6px;font-size:14px;font-family:monospace;text-transform:uppercase;" />
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">Станция: <strong id="editTimeStationName"></strong></label>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Выберите время</label>
+          <div class="time-select-group">
+            <select class="f-input" id="editTimeStartSelect">
+              <!-- Заполняется через JS -->
+            </select>
+            <span>—</span>
+            <select class="f-input" id="editTimeEndSelect">
+              <!-- Заполняется через JS -->
+            </select>
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="applyTimeChange()">Применить</button>
+          <button class="f-btn-cancel" onclick="closeEditTimeModal()">Отмена</button>
         </div>
       </div>
-      <div class="f-actions">
-        <button class="f-btn-ok" onclick="saveEmployeeChanges()">Сохранить</button>
-        <button class="f-btn-cancel" onclick="closeEditEmployeeModal()">Отмена</button>
+    </div>
+  </div>
+
+  <!-- СОХРАНИТЬ РАСПИСАНИЕ -->
+  <div id="saveScheduleModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-save"></i> Сохранить расписание</div>
+        <button class="sheet-x" onclick="closeSaveScheduleModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">Название нового листа</label>
+          <input class="f-input" id="scheduleNameInput" placeholder="Например: График 22.07.2026" />
+          <div style="font-size: 12px; color: var(--label-tertiary); margin-top: 6px;">
+            Введите название для нового листа в Google Таблице
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="confirmSaveSchedule()">Сохранить как новый лист</button>
+          <button class="f-btn-cancel" onclick="closeSaveScheduleModal()">Отмена</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ЗАГРУЗЧИК -->
-<div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ СОТРУДНИКА -->
+  <div id="editEmployeeModal" class="overlay">
+    <div class="sheet" style="max-width: 480px;">
+      <div class="sheet-head">
+        <div class="sheet-title"><i class="fas fa-user-edit"></i> Редактировать сотрудника</div>
+        <button class="sheet-x" onclick="closeEditEmployeeModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="f-group">
+          <label class="f-label">ФИО сотрудника</label>
+          <input class="f-input" id="editEmployeeNameInput" placeholder="Введите ФИО" />
+        </div>
+        <div class="f-group">
+          <label class="f-label">Выберите цвет</label>
+          <div class="color-picker-grid" id="editEmployeeColorGrid">
+            <!-- Цвета будут добавлены через JS -->
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+            <span style="font-size: 13px; color: var(--label-tertiary);">Или введите HEX:</span>
+            <input type="text" id="editEmployeeCustomColor" placeholder="#4f6b4e" style="flex:1;padding:8px 12px;border:1px solid var(--border-strong);border-radius:6px;font-size:14px;font-family:monospace;text-transform:uppercase;" />
+          </div>
+        </div>
+        <div class="f-actions">
+          <button class="f-btn-ok" onclick="saveEmployeeChanges()">Сохранить</button>
+          <button class="f-btn-cancel" onclick="closeEditEmployeeModal()">Отмена</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- ПАНЕЛЬ НАЗНАЧЕНИЯ (встраивается динамически) -->
-<div id="assignBar" class="assign-bar" style="display: none;"></div>
+  <!-- ===== КОНТЕКСТНОЕ МЕНЮ ПОЛЗУНКА (ДЛЯ ВЫБОРА ВРЕМЕНИ) ===== -->
+  <div id="sliderContextMenu" class="slider-context-menu">
+    <div class="menu-title"><i class="fas fa-clock"></i> Изменить время</div>
+    <select id="ctxStartSelect"></select>
+    <select id="ctxEndSelect"></select>
+    <div class="menu-actions">
+      <button class="apply-btn" onclick="applySliderTimeChange()">Применить</button>
+      <button class="cancel-btn" onclick="closeSliderContextMenu()">Отмена</button>
+    </div>
+  </div>
 
-<!-- ===== СКРИПТ ===== -->
-<script>
-  // ==================== КОНФИГУРАЦИЯ ====================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzBP1Rnyij1UBW-ThOQv1ck5CzTMiCMQKFizQDWNsJ5shnRXREI1rsoXWQLeoyHFxK6/exec";
+  <!-- ЗАГРУЗЧИК -->
+  <div id="loader"><div class="loader-box"><div class="spin"></div><div>Загрузка...</div></div></div>
 
-  // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
-  let stations = [];
-  let currentSheetName = '';
-  let availableSheets = [];
-  let bookings = [];
-  let tempBookings = [];
-  let nextTempId = 1;
-  let currentBooking = null;
-  let editingBooking = null;
-  let selectedEventType = 'regular';
-  let editingTimeBooking = null;
+  <!-- ПАНЕЛЬ НАЗНАЧЕНИЯ (встраивается динамически) -->
+  <div id="assignBar" class="assign-bar" style="display: none;"></div>
 
-  let employeeGroups = [];
-  let nextGroupId = 1;
-  let assignModeEnabled = false;
-  let selectedLanesForAssign = [];
-  let editingEmployeeGroupId = null;
-  let selectedEmployeeColor = '#4f6b4e';
-  const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
-  const EMPLOYEE_COLORS = [
-    '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
-    '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
-    '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
-    '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
-  ];
+  <!-- ===== СКРИПТ ===== -->
+  <script>
+    // ==================== КОНФИГУРАЦИЯ ====================
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwgPy7jqW7cfd52EpLyWYcoJHqkE6LvDCaLzw1JNUUmgd0hwZ-LPHnrgXzbcX5xZdBk/exec";
 
-  const SH = 11, EH = 22;
-  const slots = [];
-  for (let h = SH; h < EH; h++) {
-    slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 });
-    if (h < EH - 1 || h === EH - 1) {
-      slots.push({ label: `${h}:30`, key: h + 0.5, hour: h, minute: 30 });
-    }
-  }
+    // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+    let stations = [];
+    let currentSheetName = '';
+    let availableSheets = [];
+    let bookings = [];
+    let tempBookings = [];
+    let nextTempId = 1;
+    let currentBooking = null;
+    let editingBooking = null;
+    let selectedEventType = 'regular';
+    let editingTimeBooking = null;
 
-  // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
+    let employeeGroups = [];
+    let nextGroupId = 1;
+    let assignModeEnabled = false;
+    let selectedLanesForAssign = [];
+    let editingEmployeeGroupId = null;
+    let selectedEmployeeColor = '#4f6b4e';
+    const GROUP_COLORS = ['#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a'];
 
-  function showLoad() { document.getElementById("loader").style.display = "flex"; }
-  function hideLoad() { document.getElementById("loader").style.display = "none"; }
+    const EMPLOYEE_COLORS = [
+      '#4f6b4e', '#3b6e8f', '#b87c2e', '#7a5ea8', '#a04f6e', '#4a8a8a',
+      '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#1abc9c',
+      '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#16a085',
+      '#d35400', '#2c3e50', '#7f8c8d', '#e67e22', '#1a5276', '#148f77'
+    ];
 
-  function getRowByLane(lane) {
-    return document.querySelector(`#dtBody tr[data-lane="${lane}"]`);
-  }
-
-  function getSlotCell(lane, slotIdx) {
-    const row = getRowByLane(lane);
-    if (!row) return null;
-    return row.cells[slotIdx + 1];
-  }
-
-  function fmtFromSlotIdx(startSlotIdx, endSlotIdx) {
-    let s = slots[startSlotIdx];
-    let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
-    let e = slots[endIdx];
-    if (!e) {
-      let nextHour = Math.floor(s.key) + 1;
-      return `${s.label}–${nextHour}:00`;
-    }
-    return `${s.label}–${e.label}`;
-  }
-
-  function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
-    return bookings.some(b => {
-      if (excludeId !== null && b.id === excludeId) return false;
-      if (b.lane !== lane) return false;
-      let bStart = b.startSlotIdx;
-      let bEnd = b.endSlotIdx;
-      return !(endSlotIdx < bStart || startSlotIdx > bEnd);
-    });
-  }
-
-  function getAllStationsData() {
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const result = [];
-    for (let i = 0; i < numStations; i++) {
-      const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
-      result.push({ id: i + 1, name: station.name || `Станция ${i+1}`, logo: station.logo || '' });
-    }
-    return result;
-  }
-
-  function getEmployeeForLane(lane) {
-    for (let group of employeeGroups) {
-      if (group.stations && group.stations.includes(lane)) return group.name;
-    }
-    return null;
-  }
-
-  function saveEmployeeGroups() {
-    try {
-      const key = `employeeGroups_${currentSheetName}`;
-      localStorage.setItem(key, JSON.stringify(employeeGroups));
-    } catch (e) { /* ignore */ }
-  }
-
-  function loadEmployeeGroups() {
-    try {
-      const key = `employeeGroups_${currentSheetName}`;
-      const data = localStorage.getItem(key);
-      if (data) {
-        employeeGroups = JSON.parse(data);
-        if (employeeGroups.length > 0) {
-          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
-        }
-        return true;
+    const SH = 11, EH = 22;
+    const slots = [];
+    for (let h = SH; h < EH; h++) {
+      slots.push({ label: `${h}:00`, key: h, hour: h, minute: 0 });
+      if (h < EH - 1 || h === EH - 1) {
+        slots.push({ label: `${h}:30`, key: h + 0.5, hour: h, minute: 30 });
       }
-    } catch (e) { /* ignore */ }
-    return false;
-  }
+    }
 
-  // ==================== JSONP-ЗАПРОСЫ ====================
-  function jsonpRequest(url) {
-    return new Promise((resolve, reject) => {
-      const callbackFunction = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const script = document.createElement('script');
-      const separator = url.includes('?') ? '&' : '?';
-      const timestamp = Date.now();
-      const fullUrl = `${url}${separator}callback=${callbackFunction}&_=${timestamp}`;
-      let timeoutId = setTimeout(() => { cleanup(); reject(new Error('JSONP request timeout (30s)')); }, 30000);
+    // --- Контекстное меню ползунка ---
+    let contextSliderBooking = null;
 
-      function cleanup() {
-        if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
-        if (script.parentNode) document.body.removeChild(script);
-        if (window[callbackFunction]) { try { delete window[callbackFunction]; } catch (e) { window[callbackFunction] = undefined; } }
-      }
-      window[callbackFunction] = (data) => { cleanup(); resolve(data); };
-      script.src = fullUrl;
-      script.onerror = () => { cleanup(); reject(new Error('JSONP request failed')); };
-      document.body.appendChild(script);
-    });
-  }
-
-  async function sendPostAction(action, payload) {
-    showLoad();
-    try {
-      const body = JSON.stringify(Object.assign({ action: action }, payload));
-      const response = await fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: body
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
       });
-      if (!response.ok) throw new Error(`Сервер вернул код ${response.status}`);
-      const result = await response.json();
+    }
+
+    function showLoad() { document.getElementById("loader").style.display = "flex"; }
+    function hideLoad() { document.getElementById("loader").style.display = "none"; }
+
+    function getRowByLane(lane) {
+      return document.querySelector(`#dtBody tr[data-lane="${lane}"]`);
+    }
+
+    function getSlotCell(lane, slotIdx) {
+      const row = getRowByLane(lane);
+      if (!row) return null;
+      return row.cells[slotIdx + 1];
+    }
+
+    function fmtFromSlotIdx(startSlotIdx, endSlotIdx) {
+      let s = slots[startSlotIdx];
+      let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
+      let e = slots[endIdx];
+      if (!e) {
+        let nextHour = Math.floor(s.key) + 1;
+        return `${s.label}–${nextHour}:00`;
+      }
+      return `${s.label}–${e.label}`;
+    }
+
+    function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
+      return bookings.some(b => {
+        if (excludeId !== null && b.id === excludeId) return false;
+        if (b.lane !== lane) return false;
+        let bStart = b.startSlotIdx;
+        let bEnd = b.endSlotIdx;
+        return !(endSlotIdx < bStart || startSlotIdx > bEnd);
+      });
+    }
+
+    function getAllStationsData() {
+      const numStations = stations.length > 0 ? stations.length : 12;
+      const result = [];
+      for (let i = 0; i < numStations; i++) {
+        const station = stations[i] || { name: `Станция ${i+1}`, logo: '' };
+        result.push({ id: i + 1, name: station.name || `Станция ${i+1}`, logo: station.logo || '' });
+      }
       return result;
-    } catch (error) {
-      console.error('POST request failed:', error);
-      throw new Error(`Ошибка отправки: ${error.message || error}`);
-    } finally {
+    }
+
+    function getEmployeeForLane(lane) {
+      for (let group of employeeGroups) {
+        if (group.stations && group.stations.includes(lane)) return group.name;
+      }
+      return null;
+    }
+
+    // ==================== РАБОТА С ЛОКАЛЬНЫМ ХРАНИЛИЩЕМ ====================
+    function saveEmployeeGroups() {
+      try {
+        const key = `employeeGroups_${currentSheetName}`;
+        localStorage.setItem(key, JSON.stringify(employeeGroups));
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadEmployeeGroups() {
+      try {
+        const key = `employeeGroups_${currentSheetName}`;
+        const data = localStorage.getItem(key);
+        if (data) {
+          employeeGroups = JSON.parse(data);
+          if (employeeGroups.length > 0) {
+            nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+          }
+          return true;
+        }
+      } catch (e) { /* ignore */ }
+      return false;
+    }
+
+    // ==================== JSONP-ЗАПРОСЫ ====================
+    function jsonpRequest(url) {
+      return new Promise((resolve, reject) => {
+        const callbackFunction = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const script = document.createElement('script');
+        const separator = url.includes('?') ? '&' : '?';
+        const timestamp = Date.now();
+        const fullUrl = `${url}${separator}callback=${callbackFunction}&_=${timestamp}`;
+        let timeoutId = setTimeout(() => { cleanup(); reject(new Error('JSONP request timeout (30s)')); }, 30000);
+
+        function cleanup() {
+          if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+          if (script.parentNode) document.body.removeChild(script);
+          if (window[callbackFunction]) { try { delete window[callbackFunction]; } catch (e) { window[callbackFunction] = undefined; } }
+        }
+        window[callbackFunction] = (data) => { cleanup(); resolve(data); };
+        script.src = fullUrl;
+        script.onerror = () => { cleanup(); reject(new Error('JSONP request failed')); };
+        document.body.appendChild(script);
+      });
+    }
+
+    async function sendPostAction(action, payload) {
+      showLoad();
+      try {
+        const body = JSON.stringify(Object.assign({ action: action }, payload));
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: body
+        });
+        if (!response.ok) throw new Error(`Сервер вернул код ${response.status}`);
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        console.error('POST request failed:', error);
+        throw new Error(`Ошибка отправки: ${error.message || error}`);
+      } finally {
+        hideLoad();
+      }
+    }
+
+    // ==================== ЗАГРУЗКА ДАННЫХ ====================
+    async function loadStations() {
+      try {
+        const url = `${GAS_URL}?action=getStations`;
+        const data = await jsonpRequest(url);
+        if (data && data.success && data.stations) {
+          stations = data.stations;
+          return stations;
+        }
+        return [];
+      } catch (error) {
+        console.error('Ошибка загрузки станций:', error);
+        return [];
+      }
+    }
+
+    async function loadSheetsList() {
+      try {
+        const url = `${GAS_URL}?action=getSheetNames`;
+        const data = await jsonpRequest(url);
+        const selector = document.getElementById('sheetSelector');
+        if (data && data.success && data.sheets) {
+          availableSheets = data.sheets;
+          selector.innerHTML = '';
+          if (availableSheets.length === 0) {
+            selector.innerHTML = '<option value="">Нет доступных листов</option>';
+            return;
+          }
+          availableSheets.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            selector.appendChild(option);
+          });
+          if (availableSheets.length > 0) {
+            selector.value = availableSheets[0];
+            currentSheetName = availableSheets[0];
+          }
+        } else {
+          selector.innerHTML = '<option value="">Ошибка загрузки</option>';
+        }
+      } catch (error) {
+        console.error('Error loading sheets list:', error);
+        document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
+      }
+    }
+
+    async function loadFromServer(sheetName) {
+      showLoad();
+      try {
+        const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`;
+        const data = await jsonpRequest(url);
+        if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
+
+        bookings = data.schedule ? data.schedule.map(b => {
+          if (b.start === undefined || b.end === undefined) return null;
+          let startKey = parseFloat(b.start);
+          let endKey = parseFloat(b.end);
+          if (isNaN(startKey) || isNaN(endKey)) return null;
+
+          let startSlotIdx = -1, endSlotIdx = -1;
+          for (let i = 0; i < slots.length; i++) {
+            if (slots[i].key === startKey) { startSlotIdx = i; break; }
+          }
+          if (startSlotIdx === -1) {
+            for (let i = 0; i < slots.length; i++) {
+              if (slots[i].key >= startKey) { startSlotIdx = i; break; }
+            }
+            if (startSlotIdx === -1) startSlotIdx = 0;
+          }
+          for (let i = 0; i < slots.length; i++) {
+            if (slots[i].key === endKey) { endSlotIdx = i - 1; break; }
+          }
+          if (endSlotIdx === -1 || endSlotIdx >= slots.length) endSlotIdx = slots.length - 1;
+          if (endSlotIdx < startSlotIdx) endSlotIdx = startSlotIdx;
+
+          let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
+          let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
+          return {
+            id: b.id || Date.now() + Math.random(),
+            lane: stationIdx,
+            start: startKey,
+            end: endKey,
+            startSlotIdx: startSlotIdx,
+            endSlotIdx: endSlotIdx,
+            name: b.name || '',
+            phone: b.phone || '',
+            comment: b.comment || '',
+            confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
+            type: isBirthday ? 'birthday' : 'regular'
+          };
+        }).filter(b => b !== null) : [];
+
+        if (data.employeeGroups && data.employeeGroups.length > 0) {
+          employeeGroups = data.employeeGroups;
+          nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
+          saveEmployeeGroups();
+        } else {
+          const loaded = loadEmployeeGroups();
+          if (!loaded) employeeGroups = [];
+        }
+        refreshGroupHeaders();
+        renderAllSliders();
+        updateCellsHighlight();
+      } catch (e) {
+        console.error('Ошибка загрузки:', e);
+        alert("Ошибка загрузки: " + e.message);
+      }
       hideLoad();
     }
-  }
 
-  // ==================== ЗАГРУЗКА ДАННЫХ ====================
-  async function loadStations() {
-    try {
-      const url = `${GAS_URL}?action=getStations`;
-      const data = await jsonpRequest(url);
-      if (data && data.success && data.stations) {
-        stations = data.stations;
-        return stations;
-      }
-      return [];
-    } catch (error) {
-      console.error('Ошибка загрузки станций:', error);
-      return [];
-    }
-  }
-
-  async function loadSheetsList() {
-    try {
-      const url = `${GAS_URL}?action=getSheetNames`;
-      const data = await jsonpRequest(url);
+    function onSheetChange() {
       const selector = document.getElementById('sheetSelector');
-      if (data && data.success && data.sheets) {
-        availableSheets = data.sheets;
-        selector.innerHTML = '';
-        if (availableSheets.length === 0) {
-          selector.innerHTML = '<option value="">Нет доступных листов</option>';
-          return;
-        }
-        availableSheets.forEach(name => {
-          const option = document.createElement('option');
-          option.value = name;
-          option.textContent = name;
-          selector.appendChild(option);
-        });
-        if (availableSheets.length > 0) {
-          selector.value = availableSheets[0];
-          currentSheetName = availableSheets[0];
-        }
-      } else {
-        selector.innerHTML = '<option value="">Ошибка загрузки</option>';
+      currentSheetName = selector.value;
+      if (currentSheetName) {
+        loadFromServer(currentSheetName);
+        clearTempSelections();
+        resetEmployeeGroups();
       }
-    } catch (error) {
-      console.error('Error loading sheets list:', error);
-      document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
     }
-  }
 
-  async function loadFromServer(sheetName) {
-    showLoad();
-    try {
-      const url = `${GAS_URL}?action=get&sheetName=${encodeURIComponent(sheetName)}`;
-      const data = await jsonpRequest(url);
-      if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
+    // ==================== ПОСТРОЕНИЕ ТАБЛИЦЫ ====================
+    function buildDesktopTable() {
+      let headRow = document.querySelector("#dtHead tr");
+      slots.forEach(sl => {
+        let th = document.createElement("th");
+        th.className = "th-time";
+        th.textContent = sl.label;
+        headRow.appendChild(th);
+      });
 
-      bookings = data.schedule ? data.schedule.map(b => {
-        if (b.start === undefined || b.end === undefined) return null;
-        let startKey = parseFloat(b.start);
-        let endKey = parseFloat(b.end);
-        if (isNaN(startKey) || isNaN(endKey)) return null;
+      let body = document.getElementById("dtBody");
+      const numStations = stations.length > 0 ? stations.length : 12;
 
-        let startSlotIdx = -1, endSlotIdx = -1;
-        for (let i = 0; i < slots.length; i++) {
-          if (slots[i].key === startKey) { startSlotIdx = i; break; }
-        }
-        if (startSlotIdx === -1) {
-          for (let i = 0; i < slots.length; i++) {
-            if (slots[i].key >= startKey) { startSlotIdx = i; break; }
-          }
-          if (startSlotIdx === -1) startSlotIdx = 0;
-        }
-        for (let i = 0; i < slots.length; i++) {
-          if (slots[i].key === endKey) { endSlotIdx = i - 1; break; }
-        }
-        if (endSlotIdx === -1 || endSlotIdx >= slots.length) endSlotIdx = slots.length - 1;
-        if (endSlotIdx < startSlotIdx) endSlotIdx = startSlotIdx;
+      for (let lane = 0; lane < numStations; lane++) {
+        let tr = document.createElement("tr");
+        tr.dataset.lane = lane;
 
-        let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
-        let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
-        return {
-          id: b.id || Date.now() + Math.random(),
-          lane: stationIdx,
-          start: startKey,
-          end: endKey,
-          startSlotIdx: startSlotIdx,
-          endSlotIdx: endSlotIdx,
-          name: b.name || '',
-          phone: b.phone || '',
-          comment: b.comment || '',
-          confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
-          type: isBirthday ? 'birthday' : 'regular'
-        };
-      }).filter(b => b !== null) : [];
+        let lhdr = document.createElement("td");
+        lhdr.className = "lane-hdr";
 
-      if (data.employeeGroups && data.employeeGroups.length > 0) {
-        employeeGroups = data.employeeGroups;
-        nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
-        saveEmployeeGroups();
-      } else {
-        const loaded = loadEmployeeGroups();
-        if (!loaded) employeeGroups = [];
+        let station = stations[lane] || { name: `Станция ${lane+1}`, logo: '' };
+        let stationName = station.name || `Станция ${lane+1}`;
+        let stationLogo = station.logo || '';
+
+        let logoImg = document.createElement('img');
+        logoImg.className = 'station-logo';
+        logoImg.src = stationLogo || 'https://via.placeholder.com/32/cccccc/ffffff?text=?';
+        logoImg.alt = stationName;
+        logoImg.onerror = function() { this.src = 'https://via.placeholder.com/28/cccccc/ffffff?text=?'; };
+
+        let contentContainer = document.createElement('div');
+        contentContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%;';
+        contentContainer.appendChild(logoImg);
+
+        let nameSpan = document.createElement('span');
+        nameSpan.className = 'station-name';
+        nameSpan.textContent = stationName;
+        contentContainer.appendChild(nameSpan);
+
+        lhdr.appendChild(contentContainer);
+        lhdr.addEventListener("click", () => handleLaneHeaderClick(lane));
+        tr.appendChild(lhdr);
+
+        slots.forEach((sl, si) => {
+          let td = document.createElement("td");
+          td.className = "slot";
+          td.dataset.lane = lane;
+          td.dataset.slotIdx = si;
+          td.dataset.hour = sl.hour;
+          td.dataset.minute = sl.minute;
+          td.dataset.timeKey = sl.key;
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
       }
+      applyStationColors();
+    }
+
+    function applyStationColors() {
+      const rows = document.querySelectorAll("#dtBody tr[data-lane]");
+      rows.forEach(row => {
+        const lane = parseInt(row.dataset.lane);
+        const lhdr = row.querySelector('.lane-hdr');
+        if (!lhdr) return;
+        let groupColor = null;
+        for (const group of employeeGroups) {
+          if (group.stations && group.stations.includes(lane)) {
+            groupColor = group.color;
+            break;
+          }
+        }
+        const nameSpan = lhdr.querySelector('.station-name');
+        if (groupColor) {
+          lhdr.classList.remove('unassigned-lane');
+          lhdr.style.background = groupColor + '22';
+          lhdr.style.borderLeftColor = groupColor;
+          if (nameSpan) nameSpan.style.color = '#000000';
+        } else {
+          lhdr.classList.add('unassigned-lane');
+          lhdr.style.background = '';
+          lhdr.style.borderLeftColor = '#b9b9b9';
+          if (nameSpan) nameSpan.style.color = '#000000';
+        }
+      });
+    }
+
+    function updateCellsHighlight() {
+      for (let row of document.getElementById("dtBody").rows) {
+        for (let i = 1; i < row.cells.length; i++) {
+          row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
+        }
+      }
+      for (let b of bookings) {
+        let si = b.startSlotIdx, ei = b.endSlotIdx;
+        if (si !== undefined && ei !== undefined) {
+          for (let i = si; i <= ei; i++) {
+            let cell = getSlotCell(b.lane, i);
+            if (cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending"));
+          }
+        }
+      }
+      for (let t of tempBookings) {
+        let si = t.startSlotIdx, ei = t.endSlotIdx;
+        if (si !== undefined && ei !== undefined) {
+          for (let i = si; i <= ei; i++) {
+            let cell = getSlotCell(t.lane, i);
+            if (cell) cell.classList.add("temp-highlight");
+          }
+        }
+      }
+    }
+
+    // ==================== ГРУППЫ СОТРУДНИКОВ ====================
+    function refreshGroupHeaders() {
+      const body = document.getElementById("dtBody");
+      if (!body) return;
+
+      body.querySelectorAll("tr.employee-group-header, tr.employee-group-divider").forEach(tr => tr.remove());
+      document.querySelectorAll("#tableDesktop td.lane-hdr.block-start").forEach(td => td.classList.remove("block-start"));
+
+      const numStations = stations.length > 0 ? stations.length : 12;
+      const laneToGroup = {};
+      employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
+
+      const colSpan = 1 + slots.length;
+      let prevGroupId;
+
+      for (let lane = 0; lane < numStations; lane++) {
+        const group = laneToGroup[lane];
+        const groupId = group ? group.id : null;
+
+        if (groupId !== prevGroupId) {
+          const row = getRowByLane(lane);
+          if (row) {
+            const lhdrCell = row.querySelector('.lane-hdr');
+            if (lhdrCell) lhdrCell.classList.add('block-start');
+
+            const divRow = document.createElement("tr");
+            divRow.className = "employee-group-divider";
+            const dtd = document.createElement("td");
+            dtd.colSpan = colSpan;
+
+            if (group) {
+              const color = group.color || '#4f6b4e';
+              dtd.style.background = `linear-gradient(90deg, ${color}2e 0%, ${color}14 55%, ${color}08 100%)`;
+              dtd.style.borderLeft = `3px solid ${color}`;
+              dtd.style.padding = '6px 0';
+              dtd.innerHTML = `
+                <div class="divider-label" style="color:${color};">
+                  <button class="divider-edit-before" onclick="event.stopPropagation(); openEditEmployeeModal(${group.id})" title="Редактировать сотрудника">
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
+                  </span>
+                </div>
+              `;
+            } else {
+              dtd.style.background = 'linear-gradient(90deg, #e8e8ea 0%, #f0f0f2 55%, #f5f5f7 100%)';
+              dtd.style.borderLeft = '3px solid #d4d4d6';
+              dtd.style.padding = '6px 0';
+              dtd.innerHTML = `
+                <div class="divider-label" style="color:var(--label-quaternary);">
+                  <i class="fas fa-circle-minus"></i> Свободные станции
+                </div>
+              `;
+            }
+
+            divRow.appendChild(dtd);
+            row.parentNode.insertBefore(divRow, row);
+          }
+        }
+        prevGroupId = groupId;
+      }
+      applyStationColors();
+      renderAllSliders();
+    }
+
+    // ==================== РЕДАКТИРОВАНИЕ СОТРУДНИКА ====================
+    function openEditEmployeeModal(groupId) {
+      const group = employeeGroups.find(g => g.id === groupId);
+      if (!group) return;
+      
+      editingEmployeeGroupId = groupId;
+      selectedEmployeeColor = group.color || '#4f6b4e';
+      
+      document.getElementById('editEmployeeNameInput').value = group.name || '';
+      document.getElementById('editEmployeeCustomColor').value = selectedEmployeeColor;
+      
+      const grid = document.getElementById('editEmployeeColorGrid');
+      grid.innerHTML = '';
+      EMPLOYEE_COLORS.forEach(color => {
+        const div = document.createElement('div');
+        div.className = 'color-option' + (color === selectedEmployeeColor ? ' selected' : '');
+        div.style.background = color;
+        div.dataset.color = color;
+        div.onclick = function() {
+          document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+          this.classList.add('selected');
+          selectedEmployeeColor = color;
+          document.getElementById('editEmployeeCustomColor').value = color;
+        };
+        grid.appendChild(div);
+      });
+      
+      document.getElementById('editEmployeeModal').classList.add('open');
+    }
+
+    function closeEditEmployeeModal() {
+      document.getElementById('editEmployeeModal').classList.remove('open');
+      editingEmployeeGroupId = null;
+    }
+
+    async function saveEmployeeChanges() {
+      const nameInput = document.getElementById('editEmployeeNameInput');
+      const newName = nameInput.value.trim();
+      
+      if (!newName) {
+        alert('Введите ФИО сотрудника');
+        return;
+      }
+      
+      const customColor = document.getElementById('editEmployeeCustomColor').value.trim();
+      let finalColor = selectedEmployeeColor;
+      if (customColor) {
+        let color = customColor;
+        if (!color.startsWith('#')) color = '#' + color;
+        if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+          finalColor = color;
+        }
+      }
+      
+      const group = employeeGroups.find(g => g.id === editingEmployeeGroupId);
+      if (!group) return;
+      
+      const oldName = group.name;
+      group.name = newName;
+      group.color = finalColor;
+      
+      saveEmployeeGroups();
+      
+      try {
+        await saveEmployeeGroupsToServer();
+        await saveEmployeeColorToServer(newName, finalColor);
+      } catch (e) {
+        console.error('Error saving:', e);
+      }
+      
+      closeEditEmployeeModal();
       refreshGroupHeaders();
       renderAllSliders();
-      updateCellsHighlight();
-    } catch (e) {
-      console.error('Ошибка загрузки:', e);
-      alert("Ошибка загрузки: " + e.message);
+      alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
     }
-    hideLoad();
-  }
 
-  function onSheetChange() {
-    const selector = document.getElementById('sheetSelector');
-    currentSheetName = selector.value;
-    if (currentSheetName) {
-      loadFromServer(currentSheetName);
-      clearTempSelections();
-      resetEmployeeGroups();
+    async function saveEmployeeColorToServer(employeeName, color) {
+      try {
+        await sendPostAction('saveEmployeeColor', { sheetName: currentSheetName, employeeName, color });
+      } catch (e) { console.error('Error saving color:', e); }
     }
-  }
 
-  // ==================== ПОСТРОЕНИЕ ТАБЛИЦЫ ====================
-  function buildDesktopTable() {
-    let headRow = document.querySelector("#dtHead tr");
-    slots.forEach(sl => {
-      let th = document.createElement("th");
-      th.className = "th-time";
-      th.textContent = sl.label;
-      headRow.appendChild(th);
-    });
-
-    let body = document.getElementById("dtBody");
-    const numStations = stations.length > 0 ? stations.length : 12;
-
-    for (let lane = 0; lane < numStations; lane++) {
-      let tr = document.createElement("tr");
-      tr.dataset.lane = lane;
-
-      let lhdr = document.createElement("td");
-      lhdr.className = "lane-hdr";
-
-      let station = stations[lane] || { name: `Станция ${lane+1}`, logo: '' };
-      let stationName = station.name || `Станция ${lane+1}`;
-      let stationLogo = station.logo || '';
-
-      let logoImg = document.createElement('img');
-      logoImg.className = 'station-logo';
-      logoImg.src = stationLogo || 'https://via.placeholder.com/32/cccccc/ffffff?text=?';
-      logoImg.alt = stationName;
-      logoImg.onerror = function() { this.src = 'https://via.placeholder.com/28/cccccc/ffffff?text=?'; };
-
-      let contentContainer = document.createElement('div');
-      contentContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; width: 100%;';
-      contentContainer.appendChild(logoImg);
-
-      let nameSpan = document.createElement('span');
-      nameSpan.className = 'station-name';
-      nameSpan.textContent = stationName;
-      contentContainer.appendChild(nameSpan);
-
-      lhdr.appendChild(contentContainer);
-      lhdr.addEventListener("click", () => handleLaneHeaderClick(lane));
-      tr.appendChild(lhdr);
-
-      slots.forEach((sl, si) => {
-        let td = document.createElement("td");
-        td.className = "slot";
-        td.dataset.lane = lane;
-        td.dataset.slotIdx = si;
-        td.dataset.hour = sl.hour;
-        td.dataset.minute = sl.minute;
-        td.dataset.timeKey = sl.key;
-        tr.appendChild(td);
-      });
-      body.appendChild(tr);
+    // ==================== УПРАВЛЕНИЕ ГРУППАМИ ====================
+    async function removeEmployeeGroup(groupId) {
+      const group = employeeGroups.find(g => g.id === groupId);
+      if (!group) return;
+      if (!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
+      employeeGroups = employeeGroups.filter(g => g.id !== groupId);
+      saveEmployeeGroups();
+      refreshGroupHeaders();
+      try { await saveEmployeeGroupsToServer(); } catch (e) { alert("Ошибка при сохранении: " + e.message); }
     }
-    applyStationColors();
-  }
 
-  function applyStationColors() {
-    const rows = document.querySelectorAll("#dtBody tr[data-lane]");
-    rows.forEach(row => {
-      const lane = parseInt(row.dataset.lane);
-      const lhdr = row.querySelector('.lane-hdr');
-      if (!lhdr) return;
-      let groupColor = null;
-      for (const group of employeeGroups) {
-        if (group.stations && group.stations.includes(lane)) {
-          groupColor = group.color;
-          break;
-        }
-      }
-      const nameSpan = lhdr.querySelector('.station-name');
-      if (groupColor) {
-        lhdr.classList.remove('unassigned-lane');
-        lhdr.style.background = groupColor + '22';
-        lhdr.style.borderLeftColor = groupColor;
-        if (nameSpan) nameSpan.style.color = '#000000';
+    function resetEmployeeGroups() {
+      employeeGroups = [];
+      selectedLanesForAssign = [];
+      if (assignModeEnabled) toggleAssignMode();
+      saveEmployeeGroups();
+      refreshGroupHeaders();
+    }
+
+    // ==================== НАЗНАЧЕНИЕ СОТРУДНИКОВ ====================
+    function toggleAssignMode() {
+      assignModeEnabled = !assignModeEnabled;
+      const btn = document.getElementById("assignToggleBtn");
+      btn.classList.toggle("active", assignModeEnabled);
+      if (!assignModeEnabled) {
+        selectedLanesForAssign = [];
+        updateAssignSelectionHighlight();
+        hideAssignBar();
       } else {
-        lhdr.classList.add('unassigned-lane');
-        lhdr.style.background = '';
-        lhdr.style.borderLeftColor = '#b9b9b9';
-        if (nameSpan) nameSpan.style.color = '#000000';
-      }
-    });
-  }
-
-  function updateCellsHighlight() {
-    for (let row of document.getElementById("dtBody").rows) {
-      for (let i = 1; i < row.cells.length; i++) {
-        row.cells[i].classList.remove("booking-pending", "booking-confirmed", "booking-rejected", "temp-highlight");
+        updateAssignSelectionHighlight();
       }
     }
-    for (let b of bookings) {
-      let si = b.startSlotIdx, ei = b.endSlotIdx;
-      if (si !== undefined && ei !== undefined) {
-        for (let i = si; i <= ei; i++) {
-          let cell = getSlotCell(b.lane, i);
-          if (cell) cell.classList.add(b.confirmed === true ? "booking-confirmed" : (b.confirmed === false ? "booking-rejected" : "booking-pending"));
-        }
-      }
+
+    function handleLaneHeaderClick(lane) {
+      if (!assignModeEnabled) return;
+      const idx = selectedLanesForAssign.indexOf(lane);
+      if (idx === -1) selectedLanesForAssign.push(lane);
+      else selectedLanesForAssign.splice(idx, 1);
+      updateAssignSelectionHighlight();
+      renderAssignBar();
     }
-    for (let t of tempBookings) {
-      let si = t.startSlotIdx, ei = t.endSlotIdx;
-      if (si !== undefined && ei !== undefined) {
-        for (let i = si; i <= ei; i++) {
-          let cell = getSlotCell(t.lane, i);
-          if (cell) cell.classList.add("temp-highlight");
-        }
-      }
+
+    function updateAssignSelectionHighlight() {
+      document.querySelectorAll("#tableDesktop td.lane-hdr").forEach(td => {
+        const tr = td.closest("tr");
+        const lane = tr ? parseInt(tr.dataset.lane) : NaN;
+        td.classList.toggle("assign-selectable", assignModeEnabled);
+        td.classList.toggle("assign-selected", selectedLanesForAssign.includes(lane));
+      });
     }
-  }
 
-  // ==================== ГРУППЫ СОТРУДНИКОВ ====================
-  function refreshGroupHeaders() {
-    const body = document.getElementById("dtBody");
-    if (!body) return;
-
-    body.querySelectorAll("tr.employee-group-header, tr.employee-group-divider").forEach(tr => tr.remove());
-    document.querySelectorAll("#tableDesktop td.lane-hdr.block-start").forEach(td => td.classList.remove("block-start"));
-
-    const numStations = stations.length > 0 ? stations.length : 12;
-    const laneToGroup = {};
-    employeeGroups.forEach(g => g.stations.forEach(l => { laneToGroup[l] = g; }));
-
-    const colSpan = 1 + slots.length;
-    let prevGroupId;
-
-    for (let lane = 0; lane < numStations; lane++) {
-      const group = laneToGroup[lane];
-      const groupId = group ? group.id : null;
-
-      if (groupId !== prevGroupId) {
-        const row = getRowByLane(lane);
-        if (row) {
-          const lhdrCell = row.querySelector('.lane-hdr');
-          if (lhdrCell) lhdrCell.classList.add('block-start');
-
-          const divRow = document.createElement("tr");
-          divRow.className = "employee-group-divider";
-          const dtd = document.createElement("td");
-          dtd.colSpan = colSpan;
-
-          if (group) {
-            const color = group.color || '#4f6b4e';
-            dtd.style.background = `linear-gradient(90deg, ${color}2e 0%, ${color}14 55%, ${color}08 100%)`;
-            dtd.style.borderLeft = `3px solid ${color}`;
-            dtd.style.padding = '6px 0';
-            dtd.innerHTML = `
-              <div class="divider-label" style="color:${color};">
-                <button class="divider-edit-before" onclick="event.stopPropagation(); openEditEmployeeModal(${group.id})" title="Редактировать сотрудника">
-                  <i class="fas fa-pen"></i>
-                </button>
-                <span style="display: flex; align-items: center; gap: 6px;">
-                  <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
-                </span>
-              </div>
-            `;
-          } else {
-            dtd.style.background = 'linear-gradient(90deg, #e8e8ea 0%, #f0f0f2 55%, #f5f5f7 100%)';
-            dtd.style.borderLeft = '3px solid #d4d4d6';
-            dtd.style.padding = '6px 0';
-            dtd.innerHTML = `
-              <div class="divider-label" style="color:var(--label-quaternary);">
-                <i class="fas fa-circle-minus"></i> Свободные станции
-              </div>
-            `;
-          }
-
-          divRow.appendChild(dtd);
-          row.parentNode.insertBefore(divRow, row);
-        }
-      }
-      prevGroupId = groupId;
+    function renderAssignBar() {
+      const bar = document.getElementById("assignBar");
+      if (selectedLanesForAssign.length === 0) { hideAssignBar(); return; }
+      const chips = selectedLanesForAssign.map(l => {
+        const name = stations[l]?.name || `Станция ${l+1}`;
+        return `<span class="assign-chip">${escapeHtml(name)}</span>`;
+      }).join("");
+      bar.innerHTML = `
+        <span class="assign-bar-label">Сотрудник для ${selectedLanesForAssign.length} станций:</span>
+        <div class="assign-bar-chips">${chips}</div>
+        <input type="text" id="assignEmployeeName" placeholder="ФИО сотрудника" />
+        <button class="assign-apply-btn" onclick="applyEmployeeAssignment()">Привязать</button>
+        <button class="assign-cancel-btn" onclick="cancelAssignSelection()">Отмена</button>
+      `;
+      bar.style.display = "flex";
     }
-    applyStationColors();
-    renderAllSliders();
-  }
 
-  // ==================== РЕДАКТИРОВАНИЕ СОТРУДНИКА ====================
-  function openEditEmployeeModal(groupId) {
-    const group = employeeGroups.find(g => g.id === groupId);
-    if (!group) return;
-    
-    editingEmployeeGroupId = groupId;
-    selectedEmployeeColor = group.color || '#4f6b4e';
-    
-    document.getElementById('editEmployeeNameInput').value = group.name || '';
-    document.getElementById('editEmployeeCustomColor').value = selectedEmployeeColor;
-    
-    const grid = document.getElementById('editEmployeeColorGrid');
-    grid.innerHTML = '';
-    EMPLOYEE_COLORS.forEach(color => {
-      const div = document.createElement('div');
-      div.className = 'color-option' + (color === selectedEmployeeColor ? ' selected' : '');
-      div.style.background = color;
-      div.dataset.color = color;
-      div.onclick = function() {
-        document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
-        this.classList.add('selected');
-        selectedEmployeeColor = color;
-        document.getElementById('editEmployeeCustomColor').value = color;
-      };
-      grid.appendChild(div);
-    });
-    
-    document.getElementById('editEmployeeModal').classList.add('open');
-  }
-
-  function closeEditEmployeeModal() {
-    document.getElementById('editEmployeeModal').classList.remove('open');
-    editingEmployeeGroupId = null;
-  }
-
-  async function saveEmployeeChanges() {
-    const nameInput = document.getElementById('editEmployeeNameInput');
-    const newName = nameInput.value.trim();
-    
-    if (!newName) {
-      alert('Введите ФИО сотрудника');
-      return;
+    function hideAssignBar() {
+      document.getElementById("assignBar").style.display = "none";
     }
-    
-    const customColor = document.getElementById('editEmployeeCustomColor').value.trim();
-    let finalColor = selectedEmployeeColor;
-    if (customColor) {
-      let color = customColor;
-      if (!color.startsWith('#')) color = '#' + color;
-      if (/^#[0-9a-fA-F]{6}$/.test(color)) {
-        finalColor = color;
-      }
-    }
-    
-    const group = employeeGroups.find(g => g.id === editingEmployeeGroupId);
-    if (!group) return;
-    
-    const oldName = group.name;
-    group.name = newName;
-    group.color = finalColor;
-    
-    saveEmployeeGroups();
-    
-    try {
-      await saveEmployeeGroupsToServer();
-      await saveEmployeeColorToServer(newName, finalColor);
-    } catch (e) {
-      console.error('Error saving:', e);
-    }
-    
-    closeEditEmployeeModal();
-    refreshGroupHeaders();
-    renderAllSliders();
-    alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
-  }
 
-  async function saveEmployeeColorToServer(employeeName, color) {
-    try {
-      await sendPostAction('saveEmployeeColor', { sheetName: currentSheetName, employeeName, color });
-    } catch (e) { console.error('Error saving color:', e); }
-  }
-
-  // ==================== УПРАВЛЕНИЕ ГРУППАМИ ====================
-  async function removeEmployeeGroup(groupId) {
-    const group = employeeGroups.find(g => g.id === groupId);
-    if (!group) return;
-    if (!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
-    employeeGroups = employeeGroups.filter(g => g.id !== groupId);
-    saveEmployeeGroups();
-    refreshGroupHeaders();
-    try { await saveEmployeeGroupsToServer(); } catch (e) { alert("Ошибка при сохранении: " + e.message); }
-  }
-
-  function resetEmployeeGroups() {
-    employeeGroups = [];
-    selectedLanesForAssign = [];
-    if (assignModeEnabled) toggleAssignMode();
-    saveEmployeeGroups();
-    refreshGroupHeaders();
-  }
-
-  // ==================== НАЗНАЧЕНИЕ СОТРУДНИКОВ ====================
-  function toggleAssignMode() {
-    assignModeEnabled = !assignModeEnabled;
-    const btn = document.getElementById("assignToggleBtn");
-    btn.classList.toggle("active", assignModeEnabled);
-    if (!assignModeEnabled) {
+    function cancelAssignSelection() {
       selectedLanesForAssign = [];
       updateAssignSelectionHighlight();
       hideAssignBar();
-    } else {
+    }
+
+    async function applyEmployeeAssignment() {
+      const input = document.getElementById("assignEmployeeName");
+      const name = input ? input.value.trim() : "";
+      if (!name) { alert("Введите ФИО сотрудника"); return; }
+      if (selectedLanesForAssign.length === 0) { alert("Выберите станции для привязки"); return; }
+
+      const lanesSet = new Set(selectedLanesForAssign);
+      employeeGroups.forEach(g => {
+        g.stations = g.stations.filter(l => !lanesSet.has(l));
+      });
+      employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
+
+      const colorIdx = employeeGroups.length % GROUP_COLORS.length;
+      const newGroup = { id: nextGroupId++, name, stations: [...selectedLanesForAssign], color: GROUP_COLORS[colorIdx] };
+      employeeGroups.push(newGroup);
+
+      selectedLanesForAssign = [];
       updateAssignSelectionHighlight();
-    }
-  }
+      hideAssignBar();
+      saveEmployeeGroups();
+      refreshGroupHeaders();
 
-  function handleLaneHeaderClick(lane) {
-    if (!assignModeEnabled) return;
-    const idx = selectedLanesForAssign.indexOf(lane);
-    if (idx === -1) selectedLanesForAssign.push(lane);
-    else selectedLanesForAssign.splice(idx, 1);
-    updateAssignSelectionHighlight();
-    renderAssignBar();
-  }
-
-  function updateAssignSelectionHighlight() {
-    document.querySelectorAll("#tableDesktop td.lane-hdr").forEach(td => {
-      const tr = td.closest("tr");
-      const lane = tr ? parseInt(tr.dataset.lane) : NaN;
-      td.classList.toggle("assign-selectable", assignModeEnabled);
-      td.classList.toggle("assign-selected", selectedLanesForAssign.includes(lane));
-    });
-  }
-
-  function renderAssignBar() {
-    const bar = document.getElementById("assignBar");
-    if (selectedLanesForAssign.length === 0) { hideAssignBar(); return; }
-    const chips = selectedLanesForAssign.map(l => {
-      const name = stations[l]?.name || `Станция ${l+1}`;
-      return `<span class="assign-chip">${escapeHtml(name)}</span>`;
-    }).join("");
-    bar.innerHTML = `
-      <span class="assign-bar-label">Сотрудник для ${selectedLanesForAssign.length} станций:</span>
-      <div class="assign-bar-chips">${chips}</div>
-      <input type="text" id="assignEmployeeName" placeholder="ФИО сотрудника" />
-      <button class="assign-apply-btn" onclick="applyEmployeeAssignment()">Привязать</button>
-      <button class="assign-cancel-btn" onclick="cancelAssignSelection()">Отмена</button>
-    `;
-    bar.style.display = "flex";
-  }
-
-  function hideAssignBar() {
-    document.getElementById("assignBar").style.display = "none";
-  }
-
-  function cancelAssignSelection() {
-    selectedLanesForAssign = [];
-    updateAssignSelectionHighlight();
-    hideAssignBar();
-  }
-
-  async function applyEmployeeAssignment() {
-    const input = document.getElementById("assignEmployeeName");
-    const name = input ? input.value.trim() : "";
-    if (!name) { alert("Введите ФИО сотрудника"); return; }
-    if (selectedLanesForAssign.length === 0) { alert("Выберите станции для привязки"); return; }
-
-    const lanesSet = new Set(selectedLanesForAssign);
-    employeeGroups.forEach(g => {
-      g.stations = g.stations.filter(l => !lanesSet.has(l));
-    });
-    employeeGroups = employeeGroups.filter(g => g.stations.length > 0);
-
-    const colorIdx = employeeGroups.length % GROUP_COLORS.length;
-    const newGroup = { id: nextGroupId++, name, stations: [...selectedLanesForAssign], color: GROUP_COLORS[colorIdx] };
-    employeeGroups.push(newGroup);
-
-    selectedLanesForAssign = [];
-    updateAssignSelectionHighlight();
-    hideAssignBar();
-    saveEmployeeGroups();
-    refreshGroupHeaders();
-
-    try {
-      await saveEmployeeGroupsToServer();
-      alert(`Сотрудник "${name}" привязан к станциям`);
-    } catch (e) {
-      alert("Ошибка при сохранении: " + e.message);
-    }
-  }
-
-  async function saveEmployeeGroupsToServer() {
-    const allStations = getAllStationsData();
-    const payload = {
-      sheetName: currentSheetName,
-      employeeGroups: employeeGroups.map(g => ({
-        id: g.id,
-        name: g.name,
-        stations: g.stations.map(l => l + 1),
-        color: g.color || null
-      })),
-      allStations: allStations
-    };
-    const result = await sendPostAction('saveEmployeeGroups', payload);
-    return result && result.success !== false;
-  }
-
-  // ==================== ВРЕМЕННЫЕ ЗАПИСИ ====================
-  function clearTempSelections() {
-    tempBookings = [];
-    renderInlineTempCards();
-    renderAllSliders();
-    updateCellsHighlight();
-  }
-
-  function renderInlineTempCards() {
-    const container = document.getElementById("inlineTempContainer");
-    if (!container) return;
-    if (tempBookings.length === 0) { container.innerHTML = ""; return; }
-    container.innerHTML = "";
-    tempBookings.forEach((tb, idx) => {
-      let card = document.createElement("div");
-      card.className = "temp-card-inline";
-      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
-      let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-      card.innerHTML =
-        `<strong>${stationName}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`;
-      card.querySelector(".temp-rm").onclick = () => {
-        tempBookings.splice(idx, 1);
-        renderInlineTempCards();
-        renderAllSliders();
-        updateCellsHighlight();
-      };
-      container.appendChild(card);
-    });
-    updatePreviewTimes();
-  }
-
-  function updatePreviewTimes() {
-    const span = document.getElementById("previewTimes");
-    if (span) span.innerText = tempBookings.length ? tempBookings.map(tb => {
-      let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
-      let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-      return `${stationName} (${timeStr})`;
-    }).join("; ") : "—";
-  }
-
-  function openBookModal() {
-    if (tempBookings.length === 0) { alert("Сначала выделите интервал на станции"); return; }
-    for (const tb of tempBookings) {
-      if (tb.startSlotIdx === undefined || tb.endSlotIdx === undefined ||
-        tb.startSlotIdx < 0 || tb.startSlotIdx >= slots.length ||
-        tb.endSlotIdx < 0 || tb.endSlotIdx >= slots.length) {
-        alert("Обнаружена некорректная временная запись. Очистите выделение и попробуйте снова.");
-        clearTempSelections();
-        return;
+      try {
+        await saveEmployeeGroupsToServer();
+        alert(`Сотрудник "${name}" привязан к станциям`);
+      } catch (e) {
+        alert("Ошибка при сохранении: " + e.message);
       }
     }
-    updatePreviewTimes();
-    document.getElementById("bookModal").classList.add("open");
-  }
 
-  function closeBookModal() { document.getElementById("bookModal").classList.remove("open"); }
-
-  async function submitTempBookings() {
-    if (tempBookings.length === 0) { alert("Нет записей для сохранения"); return; }
-    const eventType = document.getElementById("eventTypeSelect").value;
-
-    showLoad();
-    try {
+    async function saveEmployeeGroupsToServer() {
       const allStations = getAllStationsData();
-      const scheduleData = tempBookings.map(tb => {
-        const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
-        const endSlotIdx = tb.endSlotIdx + 1;
-        const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
-        if (startTime === null || endTime === null) return null;
-        const isBirthday = eventType === 'birthday';
-        const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-        return {
-          sheetName: currentSheetName,
-          stationNumber: tb.lane + 1,
-          stationName: stationName,
-          start: startTime,
-          end: endTime,
-          name: '',
-          phone: '',
-          comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-          type: eventType
-        };
-      }).filter(item => item !== null);
-
-      if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); hideLoad(); return; }
-
       const payload = {
-        schedule: scheduleData,
-        allStations: allStations,
+        sheetName: currentSheetName,
         employeeGroups: employeeGroups.map(g => ({
+          id: g.id,
           name: g.name,
           stations: g.stations.map(l => l + 1),
           color: g.color || null
-        }))
+        })),
+        allStations: allStations
       };
-
-      const result = await sendPostAction('addSchedule', payload);
-      if (result && result.success !== false) {
-        clearTempSelections();
-        await loadFromServer(currentSheetName);
-        closeBookModal();
-        alert(`✅ Записи успешно сохранены! (${result.savedCount || scheduleData.length} ячеек)`);
-      } else {
-        alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
-      }
-    } catch (e) {
-      console.error("Error saving bookings:", e);
-      alert("❌ Ошибка при сохранении: " + e.message);
+      const result = await sendPostAction('saveEmployeeGroups', payload);
+      return result && result.success !== false;
     }
-    hideLoad();
-  }
 
-  // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
-  function renderAllSliders() {
-    let container = document.getElementById("slidersLayer");
-    if (!container) return;
-    container.innerHTML = "";
+    // ==================== ВРЕМЕННЫЕ ЗАПИСИ ====================
+    function clearTempSelections() {
+      tempBookings = [];
+      renderInlineTempCards();
+      renderAllSliders();
+      updateCellsHighlight();
+    }
 
-    const allItems = [...bookings, ...tempBookings.map(t => ({ ...t, isTemp: true }))];
-    const groupedByLane = {};
-    allItems.forEach(item => {
-      if (!groupedByLane[item.lane]) groupedByLane[item.lane] = [];
-      groupedByLane[item.lane].push(item);
-    });
+    function renderInlineTempCards() {
+      const container = document.getElementById("inlineTempContainer");
+      if (!container) return;
+      if (tempBookings.length === 0) { container.innerHTML = ""; return; }
+      container.innerHTML = "";
+      tempBookings.forEach((tb, idx) => {
+        let card = document.createElement("div");
+        card.className = "temp-card-inline";
+        let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+        let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
+        card.innerHTML =
+          `<strong>${stationName}</strong><span class="temp-time">${timeStr}</span><button class="temp-rm" data-idx="${idx}"><i class="fas fa-times"></i></button>`;
+        card.querySelector(".temp-rm").onclick = () => {
+          tempBookings.splice(idx, 1);
+          renderInlineTempCards();
+          renderAllSliders();
+          updateCellsHighlight();
+        };
+        container.appendChild(card);
+      });
+      updatePreviewTimes();
+    }
 
-    const mergedItems = [];
-    for (const lane in groupedByLane) {
-      const items = groupedByLane[lane];
-      items.sort((a, b) => a.startSlotIdx - b.startSlotIdx);
-      let currentGroup = null;
-      for (const item of items) {
-        if (currentGroup === null) {
-          currentGroup = {
-            lane: parseInt(lane),
-            startSlotIdx: item.startSlotIdx,
-            endSlotIdx: item.endSlotIdx,
-            items: [item],
-            isTemp: item.isTemp || false,
-            confirmed: item.confirmed,
-            type: item.type || 'regular',
-            comment: item.comment || ''
+    function updatePreviewTimes() {
+      const span = document.getElementById("previewTimes");
+      if (span) span.innerText = tempBookings.length ? tempBookings.map(tb => {
+        let timeStr = fmtFromSlotIdx(tb.startSlotIdx, tb.endSlotIdx);
+        let stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
+        return `${stationName} (${timeStr})`;
+      }).join("; ") : "—";
+    }
+
+    function openBookModal() {
+      if (tempBookings.length === 0) { alert("Сначала выделите интервал на станции"); return; }
+      for (const tb of tempBookings) {
+        if (tb.startSlotIdx === undefined || tb.endSlotIdx === undefined ||
+          tb.startSlotIdx < 0 || tb.startSlotIdx >= slots.length ||
+          tb.endSlotIdx < 0 || tb.endSlotIdx >= slots.length) {
+          alert("Обнаружена некорректная временная запись. Очистите выделение и попробуйте снова.");
+          clearTempSelections();
+          return;
+        }
+      }
+      updatePreviewTimes();
+      document.getElementById("bookModal").classList.add("open");
+    }
+
+    function closeBookModal() { document.getElementById("bookModal").classList.remove("open"); }
+
+    async function submitTempBookings() {
+      if (tempBookings.length === 0) { alert("Нет записей для сохранения"); return; }
+      const eventType = document.getElementById("eventTypeSelect").value;
+
+      showLoad();
+      try {
+        const allStations = getAllStationsData();
+        const scheduleData = tempBookings.map(tb => {
+          const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
+          const endSlotIdx = tb.endSlotIdx + 1;
+          const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
+          if (startTime === null || endTime === null) return null;
+          const isBirthday = eventType === 'birthday';
+          const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
+          return {
+            sheetName: currentSheetName,
+            stationNumber: tb.lane + 1,
+            stationName: stationName,
+            start: startTime,
+            end: endTime,
+            name: '',
+            phone: '',
+            comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+            type: eventType
           };
+        }).filter(item => item !== null);
+
+        if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); hideLoad(); return; }
+
+        const payload = {
+          schedule: scheduleData,
+          allStations: allStations,
+          employeeGroups: employeeGroups.map(g => ({
+            name: g.name,
+            stations: g.stations.map(l => l + 1),
+            color: g.color || null
+          }))
+        };
+
+        const result = await sendPostAction('addSchedule', payload);
+        if (result && result.success !== false) {
+          clearTempSelections();
+          await loadFromServer(currentSheetName);
+          closeBookModal();
+          alert(`✅ Записи успешно сохранены! (${result.savedCount || scheduleData.length} ячеек)`);
         } else {
-          const nextStart = item.startSlotIdx;
-          const currentEnd = currentGroup.endSlotIdx;
-          if (nextStart <= currentEnd + 1) {
-            currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
-            currentGroup.items.push(item);
-            if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
-              currentGroup.type = 'birthday';
-              currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
-            }
-          } else {
-            mergedItems.push(currentGroup);
+          alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
+        }
+      } catch (e) {
+        console.error("Error saving bookings:", e);
+        alert("❌ Ошибка при сохранении: " + e.message);
+      }
+      hideLoad();
+    }
+
+    // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
+    function renderAllSliders() {
+      let container = document.getElementById("slidersLayer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const allItems = [...bookings, ...tempBookings.map(t => ({ ...t, isTemp: true }))];
+      const groupedByLane = {};
+      allItems.forEach(item => {
+        if (!groupedByLane[item.lane]) groupedByLane[item.lane] = [];
+        groupedByLane[item.lane].push(item);
+      });
+
+      const mergedItems = [];
+      for (const lane in groupedByLane) {
+        const items = groupedByLane[lane];
+        items.sort((a, b) => a.startSlotIdx - b.startSlotIdx);
+        let currentGroup = null;
+        for (const item of items) {
+          if (currentGroup === null) {
             currentGroup = {
               lane: parseInt(lane),
               startSlotIdx: item.startSlotIdx,
@@ -1225,589 +2090,598 @@
               type: item.type || 'regular',
               comment: item.comment || ''
             };
-          }
-        }
-      }
-      if (currentGroup !== null) mergedItems.push(currentGroup);
-    }
-
-    const headerHeight = document.querySelector('#dtHead')?.offsetHeight || 58;
-    document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
-
-    for (const group of mergedItems) {
-      let startIdx = group.startSlotIdx, endIdx = group.endSlotIdx;
-      if (startIdx === undefined || endIdx === undefined) continue;
-      let row = getRowByLane(group.lane);
-      if (!row) continue;
-      let sc = row.cells[startIdx + 1];
-      let ec = row.cells[endIdx + 1];
-      if (!sc || !ec) continue;
-
-      const containerRect = container.getBoundingClientRect();
-      const scRect = sc.getBoundingClientRect();
-      const ecRect = ec.getBoundingClientRect();
-      const rowRect = row.getBoundingClientRect();
-
-      let left = scRect.left - containerRect.left + 1;
-      let top = rowRect.top - containerRect.top + 1;
-      let width = ecRect.right - scRect.left - 2;
-      let height = rowRect.height - 2;
-
-      let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
-
-      let slider = document.createElement("div");
-      slider.className = `slider ${status}`;
-
-      let groupColor = null;
-      for (const g of employeeGroups) {
-        if (g.stations && g.stations.includes(group.lane)) { groupColor = g.color; break; }
-      }
-
-      if (groupColor && !group.isTemp) {
-        slider.style.backgroundColor = groupColor;
-        slider.style.borderColor = groupColor;
-      } else if (groupColor && group.isTemp) {
-        slider.style.backgroundColor = groupColor + '88';
-        slider.style.borderColor = groupColor;
-      }
-
-      slider.setAttribute("data-lane-type", 'blue');
-
-      let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
-      if (groupColor) {
-        styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
-      }
-      slider.style.cssText = styleText;
-
-      let timeDiv = document.createElement("div");
-      timeDiv.className = "sl-time";
-      if (group.type === 'birthday') {
-        timeDiv.textContent = "🎂 ДР";
-      } else {
-        const startSlot = slots[startIdx];
-        const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
-        const duration = endIdx - startIdx + 1;
-        if (duration >= 2) {
-          const startHour = startSlot.hour;
-          const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-          if (endSlot.minute === 30) {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
           } else {
-            timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
+            const nextStart = item.startSlotIdx;
+            const currentEnd = currentGroup.endSlotIdx;
+            if (nextStart <= currentEnd + 1) {
+              currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
+              currentGroup.items.push(item);
+              if (item.type === 'birthday' || (item.comment && item.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ')) {
+                currentGroup.type = 'birthday';
+                currentGroup.comment = 'ДЕНЬ РОЖДЕНИЯ';
+              }
+            } else {
+              mergedItems.push(currentGroup);
+              currentGroup = {
+                lane: parseInt(lane),
+                startSlotIdx: item.startSlotIdx,
+                endSlotIdx: item.endSlotIdx,
+                items: [item],
+                isTemp: item.isTemp || false,
+                confirmed: item.confirmed,
+                type: item.type || 'regular',
+                comment: item.comment || ''
+              };
+            }
           }
-        } else {
-          timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
         }
+        if (currentGroup !== null) mergedItems.push(currentGroup);
       }
-      timeDiv.style.color = '#ffffff';
-      timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
-      slider.appendChild(timeDiv);
 
-      let dragHandle = document.createElement("div");
-      dragHandle.className = "drag-handle";
-      dragHandle.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (!group.isTemp && group.items && group.items.length > 0) {
-          showInfoModal(group.items[0]);
-        } else if (!group.isTemp && !group.items) {
-          alert("Загрузка данных...");
-        } else {
-          alert("Временная запись — сохраните для просмотра.");
+      const headerHeight = document.querySelector('#dtHead')?.offsetHeight || 58;
+      document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+
+      for (const group of mergedItems) {
+        let startIdx = group.startSlotIdx, endIdx = group.endSlotIdx;
+        if (startIdx === undefined || endIdx === undefined) continue;
+        let row = getRowByLane(group.lane);
+        if (!row) continue;
+        let sc = row.cells[startIdx + 1];
+        let ec = row.cells[endIdx + 1];
+        if (!sc || !ec) continue;
+
+        const containerRect = container.getBoundingClientRect();
+        const scRect = sc.getBoundingClientRect();
+        const ecRect = ec.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+
+        let left = scRect.left - containerRect.left + 1;
+        let top = rowRect.top - containerRect.top + 1;
+        let width = ecRect.right - scRect.left - 2;
+        let height = rowRect.height - 2;
+
+        let status = group.isTemp ? "temp" : (group.confirmed === true ? "confirmed" : (group.confirmed === false ? "rejected" : "pending"));
+
+        let slider = document.createElement("div");
+        slider.className = `slider ${status}`;
+
+        let groupColor = null;
+        for (const g of employeeGroups) {
+          if (g.stations && g.stations.includes(group.lane)) { groupColor = g.color; break; }
         }
+
+        if (groupColor && !group.isTemp) {
+          slider.style.backgroundColor = groupColor;
+          slider.style.borderColor = groupColor;
+        } else if (groupColor && group.isTemp) {
+          slider.style.backgroundColor = groupColor + '88';
+          slider.style.borderColor = groupColor;
+        }
+
+        slider.setAttribute("data-lane-type", 'blue');
+
+        let styleText = `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+        if (groupColor) {
+          styleText += `background-color: ${group.isTemp ? groupColor + '88' : groupColor};`;
+        }
+        slider.style.cssText = styleText;
+
+        let timeDiv = document.createElement("div");
+        timeDiv.className = "sl-time";
+        if (group.type === 'birthday') {
+          timeDiv.textContent = "🎂 ДР";
+        } else {
+          const startSlot = slots[startIdx];
+          const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
+          const duration = endIdx - startIdx + 1;
+          if (duration >= 2) {
+            const startHour = startSlot.hour;
+            const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
+            if (endSlot.minute === 30) {
+              timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
+            } else {
+              timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
+            }
+          } else {
+            timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
+          }
+        }
+        timeDiv.style.color = '#ffffff';
+        timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
+        slider.appendChild(timeDiv);
+
+        // Обработчик клика по слайдеру — открываем контекстное меню с выбором времени
+        slider.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (group.isTemp) {
+            alert("Временная запись — сохраните для редактирования.");
+            return;
+          }
+          if (group.items && group.items.length > 0) {
+            const booking = group.items[0];
+            openSliderContextMenu(e.clientX, e.clientY, booking);
+          }
+        });
+
+        let dragHandle = document.createElement("div");
+        dragHandle.className = "drag-handle";
+        slider.appendChild(dragHandle);
+        container.appendChild(slider);
+      }
+    }
+
+    // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА ====================
+    function openSliderContextMenu(x, y, booking) {
+      contextSliderBooking = booking;
+
+      const menu = document.getElementById('sliderContextMenu');
+      const startSelect = document.getElementById('ctxStartSelect');
+      const endSelect = document.getElementById('ctxEndSelect');
+
+      // Заполняем селекты
+      startSelect.innerHTML = '';
+      endSelect.innerHTML = '';
+
+      // Собираем все возможные интервалы
+      const intervals = [];
+      for (let i = 0; i < slots.length - 1; i++) {
+        const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
+        intervals.push({
+          value: i,
+          label: `${slots[i].label}–${endSlot.label}`
+        });
+      }
+
+      intervals.forEach(interval => {
+        const optStart = document.createElement('option');
+        optStart.value = interval.value;
+        optStart.textContent = interval.label;
+        if (interval.value === booking.startSlotIdx) optStart.selected = true;
+        startSelect.appendChild(optStart);
+
+        const optEnd = document.createElement('option');
+        optEnd.value = interval.value + 1; // endSlotIdx = value (индекс конца интервала)
+        optEnd.textContent = interval.label;
+        if (interval.value + 1 === booking.endSlotIdx + 1) optEnd.selected = true;
+        endSelect.appendChild(optEnd);
       });
-      slider.appendChild(dragHandle);
-      container.appendChild(slider);
-    }
-  }
 
-  // ==================== DRAG & DROP (ТОЛЬКО ДЛЯ ВЫДЕЛЕНИЯ ИНТЕРВАЛОВ) ====================
-  let isDragging = false;
-  let dragStartCell = null;
-  let dragInterval = null;
-  let dragLane = -1, dragStartIdx = -1, dragEndIdx = -1;
-
-  function onMouseDown(e) {
-    if (assignModeEnabled) return;
-    let t = e.target;
-    if (t.classList?.contains("slot")) {
-      e.preventDefault();
-      let lane = parseInt(t.dataset.lane);
-      let si = parseInt(t.dataset.slotIdx);
-      isDragging = true;
-      dragLane = lane;
-      dragStartIdx = si;
-      dragEndIdx = si;
-      dragStartCell = { lane, si };
-      dragInterval = { lane, startIdx: si, endIdx: si };
-      highlightDragInterval(lane, si, si);
-    }
-  }
-
-  function onMouseMove(e) {
-    if (!assignModeEnabled && isDragging && dragStartCell) {
-      let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
-      if (el) {
-        let lane = parseInt(el.dataset.lane);
-        let idx = parseInt(el.dataset.slotIdx);
-        if (lane === dragStartCell.lane) {
-          let ns = Math.min(dragStartCell.si, idx);
-          let ne = Math.max(dragStartCell.si, idx);
-          dragLane = lane;
-          dragStartIdx = ns;
-          dragEndIdx = ne;
-          dragInterval = { lane, startIdx: ns, endIdx: ne };
-          highlightDragInterval(lane, ns, ne);
+      // Логика ограничения выбора конца
+      startSelect.onchange = function() {
+        const startVal = parseInt(this.value);
+        Array.from(endSelect.options).forEach(opt => {
+          opt.disabled = parseInt(opt.value) <= startVal;
+        });
+        if (parseInt(endSelect.value) <= startVal) {
+          endSelect.value = startVal + 1;
         }
-      }
-    }
-  }
+      };
+      startSelect.onchange();
 
-  function onMouseUp() {
-    if (!assignModeEnabled && isDragging && dragInterval) {
-      let lane = dragLane, startIdx = dragStartIdx, endIdx = dragEndIdx;
-      if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
-        resetDragState();
+      // Позиционируем меню
+      menu.style.left = Math.min(x, window.innerWidth - 280) + 'px';
+      menu.style.top = Math.min(y, window.innerHeight - 220) + 'px';
+      menu.classList.add('open');
+    }
+
+    function closeSliderContextMenu() {
+      document.getElementById('sliderContextMenu').classList.remove('open');
+      contextSliderBooking = null;
+    }
+
+    async function applySliderTimeChange() {
+      if (!contextSliderBooking) return;
+
+      const startSelect = document.getElementById('ctxStartSelect');
+      const endSelect = document.getElementById('ctxEndSelect');
+
+      const newStartIdx = parseInt(startSelect.value);
+      const newEndIdx = parseInt(endSelect.value) - 1; // endSelect хранит endSlotIdx + 1
+
+      if (newStartIdx >= newEndIdx) {
+        alert('❌ Начало должно быть раньше конца');
         return;
       }
-      if (hasConflict(lane, startIdx, endIdx)) {
-        alert("⛔ Это время уже занято другой записью");
-      } else {
-        const newBooking = { id: nextTempId++, lane: lane, startSlotIdx: startIdx, endSlotIdx: endIdx, type: 'regular' };
-        tempBookings.push(newBooking);
+
+      // Проверяем конфликты
+      if (hasConflict(contextSliderBooking.lane, newStartIdx, newEndIdx, contextSliderBooking.id)) {
+        alert('⛔ Это время уже занято другой записью');
+        return;
       }
-      renderInlineTempCards();
-      renderAllSliders();
-      updateCellsHighlight();
-    }
-    resetDragState();
-  }
 
-  function resetDragState() {
-    isDragging = false;
-    dragInterval = null;
-    dragStartCell = null;
-    dragLane = -1;
-    dragStartIdx = -1;
-    dragEndIdx = -1;
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
-  }
-
-  function highlightDragInterval(lane, si, ei) {
-    document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
-    for (let i = si; i <= ei; i++) {
-      let cell = getSlotCell(lane, i);
-      if (cell) cell.classList.add("drag-over");
-    }
-  }
-
-  // ==================== РЕДАКТИРОВАНИЕ ВРЕМЕНИ ====================
-  function openEditTimeModal() {
-    if (!currentBooking) return;
-    
-    editingTimeBooking = currentBooking;
-    const booking = currentBooking;
-    
-    const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
-    document.getElementById('editTimeStationName').textContent = stationName;
-    
-    const startSelect = document.getElementById('editTimeStartSelect');
-    const endSelect = document.getElementById('editTimeEndSelect');
-    
-    startSelect.innerHTML = '';
-    endSelect.innerHTML = '';
-    
-    for (let i = 0; i < slots.length - 1; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
-      option.textContent = `${slots[i].label}–${endSlot.label}`;
-      if (i === booking.startSlotIdx) option.selected = true;
-      startSelect.appendChild(option);
-    }
-    
-    for (let i = 1; i < slots.length; i++) {
-      const option = document.createElement('option');
-      option.value = i;
-      const startSlot = slots[i - 1];
-      option.textContent = `${startSlot.label}–${slots[i].label}`;
-      if (i === booking.endSlotIdx + 1) option.selected = true;
-      endSelect.appendChild(option);
-    }
-    
-    startSelect.onchange = function() {
-      const startVal = parseInt(this.value);
-      Array.from(endSelect.options).forEach(opt => {
-        opt.disabled = parseInt(opt.value) <= startVal;
-      });
-      if (parseInt(endSelect.value) <= startVal) {
-        endSelect.value = startVal + 1;
+      const booking = bookings.find(b => b.id === contextSliderBooking.id);
+      if (!booking) {
+        closeSliderContextMenu();
+        return;
       }
-    };
-    startSelect.onchange();
-    
-    closeInfoModal();
-    document.getElementById('editTimeModal').classList.add('open');
-  }
 
-  function closeEditTimeModal() {
-    document.getElementById('editTimeModal').classList.remove('open');
-    editingTimeBooking = null;
-  }
+      booking.startSlotIdx = newStartIdx;
+      booking.endSlotIdx = newEndIdx;
+      booking.start = slots[newStartIdx].key;
+      booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
 
-  async function applyTimeChange() {
-    if (!editingTimeBooking) return;
-    
-    const startSelect = document.getElementById('editTimeStartSelect');
-    const endSelect = document.getElementById('editTimeEndSelect');
-    
-    const newStartIdx = parseInt(startSelect.value);
-    const newEndIdx = parseInt(endSelect.value) - 1;
-    
-    if (newStartIdx >= newEndIdx) {
-      alert('❌ Начало должно быть раньше конца');
-      return;
-    }
-    
-    if (hasConflict(editingTimeBooking.lane, newStartIdx, newEndIdx, editingTimeBooking.id)) {
-      alert('⛔ Это время уже занято другой записью');
-      return;
-    }
-    
-    const booking = bookings.find(b => b.id === editingTimeBooking.id);
-    if (!booking) return;
-    
-    booking.startSlotIdx = newStartIdx;
-    booking.endSlotIdx = newEndIdx;
-    booking.start = slots[newStartIdx].key;
-    booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
-    
-    const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
-    const isBirthday = booking.type === 'birthday';
-    
-    const payload = {
-      id: booking.id,
-      stationName: stationName,
-      start: booking.start,
-      end: booking.end,
-      comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-      sheetName: currentSheetName
-    };
-    
-    try {
-      await sendPostAction('update', payload);
-      renderAllSliders();
-      updateCellsHighlight();
-      closeEditTimeModal();
-      alert('✅ Время успешно изменено');
-    } catch (e) {
-      alert('❌ Ошибка сохранения: ' + e.message);
-    }
-  }
+      const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
+      const isBirthday = booking.type === 'birthday';
 
-  // ==================== СОХРАНЕНИЕ НА СЕРВЕР ====================
-  async function saveToServer(booking) {
-    if (!booking.id) return;
-    try {
       const payload = {
         id: booking.id,
-        station: booking.lane + 1,
+        stationName: stationName,
         start: booking.start,
         end: booking.end,
-        name: booking.name || '',
-        phone: booking.phone || '',
-        comment: booking.comment || '',
+        comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
         sheetName: currentSheetName
       };
-      await sendPostAction('update', payload);
-    } catch (e) { console.error("Error updating booking:", e); }
-  }
 
-  // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
-  function showInfoModal(b) {
-    currentBooking = b;
-    let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
-    let employeeName = getEmployeeForLane(b.lane);
-    let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-    document.getElementById("i-table").textContent = stationName;
-    document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
-    document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
-    document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
-    document.getElementById("infoModal").classList.add("open");
-  }
-
-  function closeInfoModal() {
-    document.getElementById("infoModal").classList.remove("open");
-    currentBooking = null;
-  }
-
-  function openEditEventModal() {
-    if (!currentBooking) return;
-    editingBooking = currentBooking;
-    let stationName = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
-    document.getElementById("editStationName").textContent = stationName;
-    document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
-    let isBirthday = currentBooking.type === 'birthday' || (currentBooking.comment && currentBooking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
-    selectedEventType = isBirthday ? 'birthday' : 'regular';
-    document.querySelectorAll('.event-type-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.event-type-btn.${selectedEventType}`).classList.add('active');
-    closeInfoModal();
-    document.getElementById("editEventModal").classList.add("open");
-  }
-
-  function closeEditEventModal() {
-    document.getElementById("editEventModal").classList.remove("open");
-    editingBooking = null;
-  }
-
-  function selectEventType(type) {
-    selectedEventType = type;
-    document.querySelectorAll('.event-type-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.event-type-btn.${type}`).classList.add('active');
-  }
-
-  async function saveEventType() {
-    if (!editingBooking) return;
-    let isBirthday = selectedEventType === 'birthday';
-    let oldBooking = bookings.find(b => b.id === editingBooking.id);
-    if (oldBooking) {
-      oldBooking.type = isBirthday ? 'birthday' : 'regular';
-      oldBooking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
-      await saveToServer(oldBooking);
-      renderAllSliders();
-      updateCellsHighlight();
-    }
-    closeEditEventModal();
-    alert("Тип события обновлён");
-  }
-
-  async function deleteBooking() {
-    if (!currentBooking) return;
-    if (!confirm("Удалить эту запись?")) return;
-    
-    showLoad();
-    try {
-      const result = await sendPostAction('delete', { 
-        id: currentBooking.id, 
-        sheetName: currentSheetName 
-      });
-      
-      if (result && result.success) {
-        bookings = bookings.filter(b => b.id !== currentBooking.id);
-        closeInfoModal();
+      try {
+        await sendPostAction('update', payload);
         renderAllSliders();
         updateCellsHighlight();
-        alert("✅ Запись удалена");
-      } else {
-        alert("❌ Ошибка удаления: " + (result?.message || "Неизвестная ошибка"));
+        closeSliderContextMenu();
+        alert('✅ Время успешно изменено');
+      } catch (e) {
+        alert('❌ Ошибка сохранения: ' + e.message);
       }
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
     }
-    hideLoad();
-  }
 
-  // ==================== РАБОТА С ЛИСТАМИ ====================
-  async function renameSheet(oldName, newName) {
-    if (!oldName || !newName) {
-      alert("Укажите старое и новое имя листа");
-      return false;
-    }
-    
-    if (oldName === newName) {
-      alert("Имена совпадают");
-      return true;
-    }
-    
-    showLoad();
-    try {
-      const result = await sendPostAction('renameSheet', {
-        oldName: oldName,
-        newName: newName
-      });
-      
-      if (result && result.success) {
-        alert(result.message);
-        await loadSheetsList();
-        const selector = document.getElementById('sheetSelector');
-        selector.value = newName;
-        currentSheetName = newName;
-        await loadFromServer(currentSheetName);
-        return true;
-      } else {
-        alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
-        return false;
-      }
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
-      return false;
-    } finally {
-      hideLoad();
-    }
-  }
+    // ==================== DRAG & DROP (ТОЛЬКО ДЛЯ ВЫДЕЛЕНИЯ ИНТЕРВАЛОВ) ====================
+    let isDragging = false;
+    let dragStartCell = null;
+    let dragInterval = null;
+    let dragLane = -1, dragStartIdx = -1, dragEndIdx = -1;
 
-  async function deleteSheet(sheetName) {
-    if (!sheetName) {
-      alert("Не указано имя листа");
-      return false;
-    }
-    
-    if (!confirm(`Удалить лист "${sheetName}"? Это действие необратимо!`)) {
-      return false;
-    }
-    
-    showLoad();
-    try {
-      const result = await sendPostAction('deleteSheet', {
-        sheetName: sheetName
-      });
-      
-      if (result && result.success) {
-        alert(result.message);
-        await loadSheetsList();
-        const selector = document.getElementById('sheetSelector');
-        if (selector.options.length > 0) {
-          selector.value = selector.options[0].value;
-          currentSheetName = selector.options[0].value;
-          await loadFromServer(currentSheetName);
-        }
-        return true;
-      } else {
-        alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
-        return false;
-      }
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
-      return false;
-    } finally {
-      hideLoad();
-    }
-  }
-
-  function renameSheetPrompt() {
-    const currentName = currentSheetName;
-    const newName = prompt(`Введите новое имя для листа "${currentName}":`, currentName);
-    if (newName && newName !== currentName) {
-      renameSheet(currentName, newName);
-    }
-  }
-
-  function deleteSheetPrompt() {
-    const currentName = currentSheetName;
-    if (currentName && confirm(`Удалить лист "${currentName}"?`)) {
-      deleteSheet(currentName);
-    }
-  }
-
-  // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ ====================
-  function openSaveScheduleModal() {
-    document.getElementById("saveScheduleModal").classList.add("open");
-  }
-
-  function closeSaveScheduleModal() {
-    document.getElementById("saveScheduleModal").classList.remove("open");
-  }
-
-  async function confirmSaveSchedule() {
-    const nameInput = document.getElementById("scheduleNameInput");
-    const newSheetName = nameInput.value.trim();
-    if (!newSheetName) { alert("Введите название нового листа"); return; }
-
-    showLoad();
-    try {
-      const allStations = getAllStationsData();
-      const payload = {
-        action: 'saveSchedule',
-        sheetName: currentSheetName,
-        newSheetName: newSheetName,
-        schedule: bookings.map(b => ({
-          stationNumber: b.lane + 1,
-          stationName: stations[b.lane]?.name || `Станция ${b.lane+1}`,
-          start: b.start,
-          end: b.end,
-          name: b.name || '',
-          phone: b.phone || '',
-          comment: b.comment || '',
-          type: b.type || 'regular'
-        })),
-        allStations: allStations,
-        employeeGroups: employeeGroups.map(g => ({
-          name: g.name,
-          stations: g.stations.map(l => l + 1),
-          color: g.color || null
-        }))
-      };
-
-      const result = await sendPostAction('saveSchedule', payload);
-      if (result && result.success !== false) {
-        alert(`✅ Расписание сохранено как "${newSheetName}"`);
-        closeSaveScheduleModal();
-        await loadSheetsList();
-        const selector = document.getElementById('sheetSelector');
-        selector.value = newSheetName;
-        currentSheetName = newSheetName;
-        await loadFromServer(currentSheetName);
-      } else {
-        alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
-      }
-    } catch (e) {
-      alert("❌ Ошибка: " + e.message);
-    }
-    hideLoad();
-  }
-
-  // ==================== ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ ПРЕДПРОСМОТРА ВРЕМЕНИ (два списка) ====================
-  function updateTimePreview() {
-    const startVal = document.getElementById('timeStartSelect').value;
-    const endVal = document.getElementById('timeEndSelect').value;
-    const label = document.getElementById('timePreviewLabel');
-    if (startVal && endVal) {
-      label.textContent = `${startVal}:00 – ${endVal}:00`;
-    } else {
-      label.textContent = '(интервал)';
-    }
-  }
-
-  // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-  async function initApplication() {
-    await loadStations();
-
-    document.addEventListener('dragstart', (e) => {
-      if (e.target.closest('.slider')) {
+    function onMouseDown(e) {
+      if (assignModeEnabled) return;
+      let t = e.target;
+      if (t.classList?.contains("slot")) {
         e.preventDefault();
-        return false;
+        let lane = parseInt(t.dataset.lane);
+        let si = parseInt(t.dataset.slotIdx);
+        isDragging = true;
+        dragLane = lane;
+        dragStartIdx = si;
+        dragEndIdx = si;
+        dragStartCell = { lane, si };
+        dragInterval = { lane, startIdx: si, endIdx: si };
+        highlightDragInterval(lane, si, si);
       }
-    });
-
-    buildDesktopTable();
-    await loadSheetsList();
-    if (availableSheets.length > 0) {
-      currentSheetName = availableSheets[0];
-      await loadFromServer(currentSheetName);
     }
 
-    document.getElementById("assignToggleBtn").addEventListener("click", toggleAssignMode);
+    function onMouseMove(e) {
+      if (!assignModeEnabled && isDragging && dragStartCell) {
+        let el = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList?.contains("slot"));
+        if (el) {
+          let lane = parseInt(el.dataset.lane);
+          let idx = parseInt(el.dataset.slotIdx);
+          if (lane === dragStartCell.lane) {
+            let ns = Math.min(dragStartCell.si, idx);
+            let ne = Math.max(dragStartCell.si, idx);
+            dragLane = lane;
+            dragStartIdx = ns;
+            dragEndIdx = ne;
+            dragInterval = { lane, startIdx: ns, endIdx: ne };
+            highlightDragInterval(lane, ns, ne);
+          }
+        }
+      }
+    }
 
-    document.getElementById("tableDesktop").addEventListener("mousedown", onMouseDown);
-    document.body.addEventListener("mousemove", onMouseMove);
-    document.body.addEventListener("mouseup", onMouseUp);
+    function onMouseUp() {
+      if (!assignModeEnabled && isDragging && dragInterval) {
+        let lane = dragLane, startIdx = dragStartIdx, endIdx = dragEndIdx;
+        if (startIdx < 0 || startIdx >= slots.length || endIdx < 0 || endIdx >= slots.length) {
+          resetDragState();
+          return;
+        }
+        if (hasConflict(lane, startIdx, endIdx)) {
+          alert("⛔ Это время уже занято другой записью");
+        } else {
+          const newBooking = { id: nextTempId++, lane: lane, startSlotIdx: startIdx, endSlotIdx: endIdx, type: 'regular' };
+          tempBookings.push(newBooking);
+        }
+        renderInlineTempCards();
+        renderAllSliders();
+        updateCellsHighlight();
+      }
+      resetDragState();
+    }
 
-    ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal", "editTimeModal"].forEach(id => {
-      document.getElementById(id)?.addEventListener("click", e => {
-        if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove("open");
+    function resetDragState() {
+      isDragging = false;
+      dragInterval = null;
+      dragStartCell = null;
+      dragLane = -1;
+      dragStartIdx = -1;
+      dragEndIdx = -1;
+      document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
+    }
+
+    function highlightDragInterval(lane, si, ei) {
+      document.querySelectorAll("#tableDesktop td.slot.drag-over").forEach(td => td.classList.remove("drag-over"));
+      for (let i = si; i <= ei; i++) {
+        let cell = getSlotCell(lane, i);
+        if (cell) cell.classList.add("drag-over");
+      }
+    }
+
+    // ==================== МОДАЛЬНЫЕ ОКНА СОБЫТИЙ ====================
+    function showInfoModal(b) {
+      currentBooking = b;
+      let stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
+      let employeeName = getEmployeeForLane(b.lane);
+      let isBirthday = b.type === 'birthday' || (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      document.getElementById("i-table").textContent = stationName;
+      document.getElementById("i-time").textContent = fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx);
+      document.getElementById("i-employee").textContent = employeeName || 'Не назначен';
+      document.getElementById("i-type").textContent = isBirthday ? '🎂 День рождения' : 'Обычная запись';
+      document.getElementById("infoModal").classList.add("open");
+    }
+
+    function closeInfoModal() {
+      document.getElementById("infoModal").classList.remove("open");
+      currentBooking = null;
+    }
+
+    function openEditEventModal() {
+      if (!currentBooking) return;
+      editingBooking = currentBooking;
+      let stationName = stations[currentBooking.lane]?.name || `Станция ${currentBooking.lane+1}`;
+      document.getElementById("editStationName").textContent = stationName;
+      document.getElementById("editTimeRange").textContent = fmtFromSlotIdx(currentBooking.startSlotIdx, currentBooking.endSlotIdx);
+      let isBirthday = currentBooking.type === 'birthday' || (currentBooking.comment && currentBooking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      selectedEventType = isBirthday ? 'birthday' : 'regular';
+      document.querySelectorAll('.event-type-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.event-type-btn.${selectedEventType}`).classList.add('active');
+      closeInfoModal();
+      document.getElementById("editEventModal").classList.add("open");
+    }
+
+    function closeEditEventModal() {
+      document.getElementById("editEventModal").classList.remove("open");
+      editingBooking = null;
+    }
+
+    function selectEventType(type) {
+      selectedEventType = type;
+      document.querySelectorAll('.event-type-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.event-type-btn.${type}`).classList.add('active');
+    }
+
+    async function saveEventType() {
+      if (!editingBooking) return;
+      let isBirthday = selectedEventType === 'birthday';
+      let oldBooking = bookings.find(b => b.id === editingBooking.id);
+      if (oldBooking) {
+        oldBooking.type = isBirthday ? 'birthday' : 'regular';
+        oldBooking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
+        await saveToServer(oldBooking);
+        renderAllSliders();
+        updateCellsHighlight();
+      }
+      closeEditEventModal();
+      alert("Тип события обновлён");
+    }
+
+    async function deleteBooking() {
+      if (!currentBooking) return;
+      if (!confirm("Удалить эту запись?")) return;
+      
+      showLoad();
+      try {
+        const result = await sendPostAction('delete', { 
+          id: currentBooking.id, 
+          sheetName: currentSheetName 
+        });
+        
+        if (result && result.success) {
+          bookings = bookings.filter(b => b.id !== currentBooking.id);
+          closeInfoModal();
+          renderAllSliders();
+          updateCellsHighlight();
+          alert("✅ Запись удалена");
+        } else {
+          alert("❌ Ошибка удаления: " + (result?.message || "Неизвестная ошибка"));
+        }
+      } catch (e) {
+        alert("❌ Ошибка: " + e.message);
+      }
+      hideLoad();
+    }
+
+    // ==================== РАБОТА С ЛИСТАМИ ====================
+    async function renameSheet(oldName, newName) {
+      if (!oldName || !newName) {
+        alert("Укажите старое и новое имя листа");
+        return false;
+      }
+      
+      if (oldName === newName) {
+        alert("Имена совпадают");
+        return true;
+      }
+      
+      showLoad();
+      try {
+        const result = await sendPostAction('renameSheet', {
+          oldName: oldName,
+          newName: newName
+        });
+        
+        if (result && result.success) {
+          alert(result.message);
+          await loadSheetsList();
+          const selector = document.getElementById('sheetSelector');
+          selector.value = newName;
+          currentSheetName = newName;
+          await loadFromServer(currentSheetName);
+          return true;
+        } else {
+          alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
+          return false;
+        }
+      } catch (e) {
+        alert("❌ Ошибка: " + e.message);
+        return false;
+      } finally {
+        hideLoad();
+      }
+    }
+
+    async function deleteSheet(sheetName) {
+      if (!sheetName) {
+        alert("Не указано имя листа");
+        return false;
+      }
+      
+      if (!confirm(`Удалить лист "${sheetName}"? Это действие необратимо!`)) {
+        return false;
+      }
+      
+      showLoad();
+      try {
+        const result = await sendPostAction('deleteSheet', {
+          sheetName: sheetName
+        });
+        
+        if (result && result.success) {
+          alert(result.message);
+          await loadSheetsList();
+          const selector = document.getElementById('sheetSelector');
+          if (selector.options.length > 0) {
+            selector.value = selector.options[0].value;
+            currentSheetName = selector.options[0].value;
+            await loadFromServer(currentSheetName);
+          }
+          return true;
+        } else {
+          alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
+          return false;
+        }
+      } catch (e) {
+        alert("❌ Ошибка: " + e.message);
+        return false;
+      } finally {
+        hideLoad();
+      }
+    }
+
+    function renameSheetPrompt() {
+      const currentName = currentSheetName;
+      const newName = prompt(`Введите новое имя для листа "${currentName}":`, currentName);
+      if (newName && newName !== currentName) {
+        renameSheet(currentName, newName);
+      }
+    }
+
+    function deleteSheetPrompt() {
+      const currentName = currentSheetName;
+      if (currentName && confirm(`Удалить лист "${currentName}"?`)) {
+        deleteSheet(currentName);
+      }
+    }
+
+    // ==================== СОХРАНЕНИЕ РАСПИСАНИЯ ====================
+    function openSaveScheduleModal() {
+      document.getElementById("saveScheduleModal").classList.add("open");
+    }
+
+    function closeSaveScheduleModal() {
+      document.getElementById("saveScheduleModal").classList.remove("open");
+    }
+
+    async function confirmSaveSchedule() {
+      const nameInput = document.getElementById("scheduleNameInput");
+      const newSheetName = nameInput.value.trim();
+      if (!newSheetName) { alert("Введите название нового листа"); return; }
+
+      showLoad();
+      try {
+        const allStations = getAllStationsData();
+        const payload = {
+          action: 'saveSchedule',
+          sheetName: currentSheetName,
+          newSheetName: newSheetName,
+          schedule: bookings.map(b => ({
+            stationNumber: b.lane + 1,
+            stationName: stations[b.lane]?.name || `Станция ${b.lane+1}`,
+            start: b.start,
+            end: b.end,
+            name: b.name || '',
+            phone: b.phone || '',
+            comment: b.comment || '',
+            type: b.type || 'regular'
+          })),
+          allStations: allStations,
+          employeeGroups: employeeGroups.map(g => ({
+            name: g.name,
+            stations: g.stations.map(l => l + 1),
+            color: g.color || null
+          }))
+        };
+
+        const result = await sendPostAction('saveSchedule', payload);
+        if (result && result.success !== false) {
+          alert(`✅ Расписание сохранено как "${newSheetName}"`);
+          closeSaveScheduleModal();
+          await loadSheetsList();
+          const selector = document.getElementById('sheetSelector');
+          selector.value = newSheetName;
+          currentSheetName = newSheetName;
+          await loadFromServer(currentSheetName);
+        } else {
+          alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
+        }
+      } catch (e) {
+        alert("❌ Ошибка: " + e.message);
+      }
+      hideLoad();
+    }
+
+    // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+    async function initApplication() {
+      await loadStations();
+
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.closest('.slider')) {
+          e.preventDefault();
+          return false;
+        }
       });
-    });
 
-    // Инициализация предпросмотра времени
-    updateTimePreview();
+      buildDesktopTable();
+      await loadSheetsList();
+      if (availableSheets.length > 0) {
+        currentSheetName = availableSheets[0];
+        await loadFromServer(currentSheetName);
+      }
 
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => renderAllSliders(), 100);
-    });
-  }
+      document.getElementById("assignToggleBtn").addEventListener("click", toggleAssignMode);
 
-  window.addEventListener('load', initApplication);
-</script>
+      document.getElementById("tableDesktop").addEventListener("mousedown", onMouseDown);
+      document.body.addEventListener("mousemove", onMouseMove);
+      document.body.addEventListener("mouseup", onMouseUp);
+
+      // Закрываем контекстное меню при клике вне него
+      document.addEventListener('click', (e) => {
+        const menu = document.getElementById('sliderContextMenu');
+        if (menu.classList.contains('open') && !menu.contains(e.target)) {
+          closeSliderContextMenu();
+        }
+      });
+
+      ["bookModal", "infoModal", "editEventModal", "saveScheduleModal", "editEmployeeModal", "editTimeModal"].forEach(id => {
+        document.getElementById(id)?.addEventListener("click", e => {
+          if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove("open");
+        });
+      });
+
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => renderAllSliders(), 100);
+      });
+    }
+
+    window.addEventListener('load', initApplication);
+  </script>
 </body>
 </html>
