@@ -576,6 +576,27 @@
       pointer-events: auto;
     }
 
+    /* Спинер на ползунке */
+    .slider .slider-spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .slider.loading .sl-time {
+      opacity: 0.3;
+    }
+    .slider.loading .slider-spinner {
+      display: block;
+    }
+
     /* ===== ВРЕМЕННЫЕ КАРТОЧКИ ===== */
     .inline-temp-cards {
       display: flex;
@@ -1490,6 +1511,12 @@
       else btn.classList.remove('loading');
     }
 
+    function setSliderLoading(sliderElement, loading) {
+      if (!sliderElement) return;
+      if (loading) sliderElement.classList.add('loading');
+      else sliderElement.classList.remove('loading');
+    }
+
     function showLoad() { document.getElementById("loader").style.display = "flex"; }
     function hideLoad() { document.getElementById("loader").style.display = "none"; }
 
@@ -2362,6 +2389,11 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
+        // Добавляем спинер на ползунок
+        let spinner = document.createElement("div");
+        spinner.className = "slider-spinner";
+        slider.appendChild(spinner);
+
         slider.addEventListener("click", (e) => {
           e.stopPropagation();
           if (group.isTemp) {
@@ -2370,7 +2402,7 @@
           }
           if (group.items && group.items.length > 0) {
             const booking = group.items[0];
-            openSliderContextMenu(e.clientX, e.clientY, booking);
+            openSliderContextMenu(e.clientX, e.clientY, booking, slider);
           }
         });
 
@@ -2382,8 +2414,11 @@
     }
 
     // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА (ВРЕМЯ + ТИП) ====================
-    function openSliderContextMenu(x, y, booking) {
+    let activeSliderElement = null;
+
+    function openSliderContextMenu(x, y, booking, sliderElement) {
       contextSliderBooking = booking;
+      activeSliderElement = sliderElement;
 
       const menu = document.getElementById('sliderContextMenu');
       const startSelect = document.getElementById('ctxStartSelect');
@@ -2430,6 +2465,7 @@
     function closeSliderContextMenu() {
       document.getElementById('sliderContextMenu').classList.remove('open');
       contextSliderBooking = null;
+      activeSliderElement = null;
     }
 
     async function applySliderChanges() {
@@ -2479,18 +2515,26 @@
         sheetName: currentSheetName
       };
 
-      const btn = document.getElementById('ctxApplyBtn');
-      setLoading(btn, true);
+      // Закрываем меню сразу
+      closeSliderContextMenu();
+
+      // Показываем спинер на ползунке
+      if (activeSliderElement) {
+        setSliderLoading(activeSliderElement, true);
+      }
+
       try {
         await sendPostAction('update', payload);
         renderAllSliders();
         updateCellsHighlight();
-        closeSliderContextMenu();
         alert('✅ Время и тип события успешно изменены');
       } catch (e) {
         alert('❌ Ошибка сохранения: ' + e.message);
       } finally {
-        setLoading(btn, false);
+        if (activeSliderElement) {
+          setSliderLoading(activeSliderElement, false);
+        }
+        activeSliderElement = null;
       }
     }
 
