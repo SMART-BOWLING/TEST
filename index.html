@@ -894,7 +894,7 @@
       color: var(--label-secondary);
     }
 
-    /* --- Стили для контекстного меню ползунка (время) --- */
+    /* --- Стили для контекстного меню ползунка (время + тип) --- */
     .slider-context-menu {
       position: fixed;
       z-index: 3000;
@@ -903,7 +903,7 @@
       border-radius: 12px;
       padding: 16px 20px 20px;
       box-shadow: 0 16px 48px rgba(0,0,0,0.25);
-      min-width: 220px;
+      min-width: 240px;
       border: 0.5px solid var(--border-subtle);
       display: none;
       flex-direction: column;
@@ -1032,6 +1032,11 @@
       .time-select-group {
         flex-direction: column;
         gap: 8px;
+      }
+      .slider-context-menu {
+        min-width: 200px;
+        padding: 14px 16px 16px;
+        max-width: 90vw;
       }
     }
   </style>
@@ -1255,13 +1260,30 @@
     </div>
   </div>
 
-  <!-- ===== КОНТЕКСТНОЕ МЕНЮ ПОЛЗУНКА (ДЛЯ ВЫБОРА ВРЕМЕНИ) ===== -->
+  <!-- ===== КОНТЕКСТНОЕ МЕНЮ ПОЛЗУНКА (ВРЕМЯ + ТИП) ===== -->
   <div id="sliderContextMenu" class="slider-context-menu">
-    <div class="menu-title"><i class="fas fa-clock"></i> Изменить время</div>
-    <select id="ctxStartSelect"></select>
-    <select id="ctxEndSelect"></select>
+    <div class="menu-title"><i class="fas fa-clock"></i> Изменить время и тип</div>
+    
+    <div class="f-group" style="margin-bottom: 8px;">
+      <label class="f-label" style="font-size: 12px;">Начало</label>
+      <select id="ctxStartSelect"></select>
+    </div>
+    
+    <div class="f-group" style="margin-bottom: 8px;">
+      <label class="f-label" style="font-size: 12px;">Конец</label>
+      <select id="ctxEndSelect"></select>
+    </div>
+    
+    <div class="f-group" style="margin-bottom: 8px;">
+      <label class="f-label" style="font-size: 12px;">Тип события</label>
+      <select id="ctxTypeSelect">
+        <option value="regular">Обычная запись</option>
+        <option value="birthday">🎂 День рождения</option>
+      </select>
+    </div>
+    
     <div class="menu-actions">
-      <button class="apply-btn" onclick="applySliderTimeChange()">Применить</button>
+      <button class="apply-btn" onclick="applySliderChanges()">Применить</button>
       <button class="cancel-btn" onclick="closeSliderContextMenu()">Отмена</button>
     </div>
   </div>
@@ -2190,7 +2212,7 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        // Обработчик клика по слайдеру — открываем контекстное меню с выбором времени
+        // Обработчик клика по слайдеру — открываем контекстное меню с выбором времени и типа
         slider.addEventListener("click", (e) => {
           e.stopPropagation();
           if (group.isTemp) {
@@ -2210,43 +2232,35 @@
       }
     }
 
-    // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА ====================
+    // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА (ВРЕМЯ + ТИП) ====================
     function openSliderContextMenu(x, y, booking) {
       contextSliderBooking = booking;
 
       const menu = document.getElementById('sliderContextMenu');
       const startSelect = document.getElementById('ctxStartSelect');
       const endSelect = document.getElementById('ctxEndSelect');
+      const typeSelect = document.getElementById('ctxTypeSelect');
 
-      // Заполняем селекты
+      // Заполняем селекты времени (только временные метки, без интервалов)
       startSelect.innerHTML = '';
       endSelect.innerHTML = '';
 
-      // Собираем все возможные интервалы
-      const intervals = [];
-      for (let i = 0; i < slots.length - 1; i++) {
-        const endSlot = slots[i + 1] || { label: `${Math.floor(slots[i].key) + 1}:00` };
-        intervals.push({
-          value: i,
-          label: `${slots[i].label}–${endSlot.label}`
-        });
-      }
-
-      intervals.forEach(interval => {
+      // Добавляем все слоты как отдельные временные точки
+      slots.forEach((slot, index) => {
         const optStart = document.createElement('option');
-        optStart.value = interval.value;
-        optStart.textContent = interval.label;
-        if (interval.value === booking.startSlotIdx) optStart.selected = true;
+        optStart.value = index;
+        optStart.textContent = slot.label;
+        if (index === booking.startSlotIdx) optStart.selected = true;
         startSelect.appendChild(optStart);
 
         const optEnd = document.createElement('option');
-        optEnd.value = interval.value + 1; // endSlotIdx = value (индекс конца интервала)
-        optEnd.textContent = interval.label;
-        if (interval.value + 1 === booking.endSlotIdx + 1) optEnd.selected = true;
+        optEnd.value = index;
+        optEnd.textContent = slot.label;
+        if (index === booking.endSlotIdx + 1) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
 
-      // Логика ограничения выбора конца
+      // Логика ограничения: конец должен быть позже начала
       startSelect.onchange = function() {
         const startVal = parseInt(this.value);
         Array.from(endSelect.options).forEach(opt => {
@@ -2256,12 +2270,18 @@
           endSelect.value = startVal + 1;
         }
       };
-      startSelect.onchange();
+      
+      // Устанавливаем тип события
+      const isBirthday = booking.type === 'birthday' || (booking.comment && booking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
+      typeSelect.value = isBirthday ? 'birthday' : 'regular';
 
       // Позиционируем меню
       menu.style.left = Math.min(x, window.innerWidth - 280) + 'px';
-      menu.style.top = Math.min(y, window.innerHeight - 220) + 'px';
+      menu.style.top = Math.min(y, window.innerHeight - 320) + 'px';
       menu.classList.add('open');
+      
+      // Запускаем проверку ограничений
+      startSelect.onchange();
     }
 
     function closeSliderContextMenu() {
@@ -2269,14 +2289,15 @@
       contextSliderBooking = null;
     }
 
-    async function applySliderTimeChange() {
+    async function applySliderChanges() {
       if (!contextSliderBooking) return;
 
       const startSelect = document.getElementById('ctxStartSelect');
       const endSelect = document.getElementById('ctxEndSelect');
+      const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value) - 1; // endSelect хранит endSlotIdx + 1
+      const newEndIdx = parseInt(endSelect.value) - 1; // endSelect хранит индекс конца интервала
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
@@ -2295,20 +2316,24 @@
         return;
       }
 
+      const newType = typeSelect.value;
+      const isBirthday = newType === 'birthday';
+
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
       booking.start = slots[newStartIdx].key;
       booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
+      booking.type = isBirthday ? 'birthday' : 'regular';
+      booking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
 
       const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
-      const isBirthday = booking.type === 'birthday';
 
       const payload = {
         id: booking.id,
         stationName: stationName,
         start: booking.start,
         end: booking.end,
-        comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+        comment: booking.comment,
         sheetName: currentSheetName
       };
 
@@ -2317,7 +2342,7 @@
         renderAllSliders();
         updateCellsHighlight();
         closeSliderContextMenu();
-        alert('✅ Время успешно изменено');
+        alert('✅ Время и тип события успешно изменены');
       } catch (e) {
         alert('❌ Ошибка сохранения: ' + e.message);
       }
