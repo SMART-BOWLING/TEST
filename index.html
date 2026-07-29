@@ -171,29 +171,28 @@
 
     .btn-ctrl {
       height: 44px;
-      padding: 0 14px;
+      width: 44px;
+      padding: 0;
       border: none;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 18px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
       transition: all 0.2s ease;
       flex-shrink: 0;
-      font-weight: 500;
       background: var(--surface-secondary);
       color: var(--label-secondary);
       border: 0.5px solid var(--border-strong);
     }
 
     .btn-ctrl i {
-      font-size: 16px;
+      font-size: 18px;
     }
 
     .btn-ctrl:hover {
-      transform: scale(0.97);
+      transform: scale(0.95);
       background: var(--surface-primary);
     }
 
@@ -929,7 +928,6 @@
       border: 3px solid #333;
       transform: scale(1.1);
     }
-    /* Новая палитра с выбором цвета */
     .color-picker-custom {
       display: flex;
       align-items: center;
@@ -1070,13 +1068,13 @@
         justify-content: stretch;
       }
       .btn-ctrl {
-        flex: 1;
+        width: 44px;
         height: 44px;
-        font-size: 12px;
-        padding: 0 8px;
+        font-size: 16px;
+        flex: 0 0 44px;
       }
       .btn-ctrl i {
-        font-size: 14px;
+        font-size: 16px;
       }
       .page {
         padding: 16px 12px 70px;
@@ -1155,19 +1153,19 @@
       </div>
       <div class="ctrl-buttons">
         <button class="btn-ctrl btn-book" onclick="openBookModal()" title="Новая запись">
-          <i class="fas fa-plus-circle"></i><span>Запись</span>
+          <i class="fas fa-plus-circle"></i>
         </button>
         <button id="assignToggleBtn" class="btn-ctrl btn-assign-toggle" title="Назначить сотрудника">
-          <i class="fas fa-user-tag"></i><span>Назначить</span>
+          <i class="fas fa-user-tag"></i>
         </button>
         <button class="btn-ctrl btn-save-schedule" title="Сохранить расписание" onclick="openSaveScheduleModal()">
-          <i class="fas fa-save"></i><span>Сохранить</span>
+          <i class="fas fa-save"></i>
         </button>
         <button class="btn-ctrl btn-rename-sheet" onclick="renameSheetPrompt()" title="Переименовать лист">
-          <i class="fas fa-edit"></i><span>Переим.</span>
+          <i class="fas fa-edit"></i>
         </button>
         <button class="btn-ctrl btn-delete-sheet" onclick="deleteSheetPrompt()" title="Удалить лист">
-          <i class="fas fa-trash"></i><span>Удалить</span>
+          <i class="fas fa-trash"></i>
         </button>
       </div>
     </div>
@@ -1338,9 +1336,7 @@
         </div>
         <div class="f-group">
           <label class="f-label">Выберите цвет</label>
-          <!-- СЕТКА ПРЕДУСТАНОВЛЕННЫХ ЦВЕТОВ -->
           <div class="color-picker-grid" id="editEmployeeColorGrid"></div>
-          <!-- ПОЛНОЦЕННАЯ ПАЛИТРА + HEX -->
           <div class="color-picker-custom">
             <input type="color" id="editEmployeeColorPicker" value="#4f6b4e" />
             <input type="text" id="editEmployeeCustomColor" placeholder="#4f6b4e" />
@@ -1871,7 +1867,6 @@
       
       document.getElementById('editEmployeeNameInput').value = group.name || '';
       document.getElementById('editEmployeeCustomColor').value = selectedEmployeeColor;
-      // синхронизируем палитру
       document.getElementById('editEmployeeColorPicker').value = selectedEmployeeColor;
       
       const grid = document.getElementById('editEmployeeColorGrid');
@@ -1908,13 +1903,11 @@
         return;
       }
       
-      // Берем цвет из палитры или HEX
       let colorPicker = document.getElementById('editEmployeeColorPicker').value;
       let customHex = document.getElementById('editEmployeeCustomColor').value.trim();
       
-      let finalColor = colorPicker; // по умолчанию из палитры
+      let finalColor = colorPicker;
       
-      // Если введен HEX, используем его
       if (customHex) {
         let hex = customHex;
         if (!hex.startsWith('#')) hex = '#' + hex;
@@ -1923,7 +1916,6 @@
         }
       }
       
-      // Синхронизируем выбранный цвет
       selectedEmployeeColor = finalColor;
       
       const group = employeeGroups.find(g => g.id === editingEmployeeGroupId);
@@ -2320,7 +2312,6 @@
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
         slider.appendChild(timeDiv);
 
-        // Обработчик клика по слайдеру — открываем контекстное меню с выбором времени и типа
         slider.addEventListener("click", (e) => {
           e.stopPropagation();
           if (group.isTemp) {
@@ -2349,11 +2340,9 @@
       const endSelect = document.getElementById('ctxEndSelect');
       const typeSelect = document.getElementById('ctxTypeSelect');
 
-      // Заполняем селекты времени (только временные метки, без интервалов)
       startSelect.innerHTML = '';
       endSelect.innerHTML = '';
 
-      // Добавляем все слоты как отдельные временные точки
       slots.forEach((slot, index) => {
         const optStart = document.createElement('option');
         optStart.value = index;
@@ -2368,7 +2357,6 @@
         endSelect.appendChild(optEnd);
       });
 
-      // Логика ограничения: конец должен быть позже начала
       startSelect.onchange = function() {
         const startVal = parseInt(this.value);
         Array.from(endSelect.options).forEach(opt => {
@@ -2379,16 +2367,13 @@
         }
       };
       
-      // Устанавливаем тип события
       const isBirthday = booking.type === 'birthday' || (booking.comment && booking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       typeSelect.value = isBirthday ? 'birthday' : 'regular';
 
-      // Позиционируем меню
       menu.style.left = Math.min(x, window.innerWidth - 280) + 'px';
       menu.style.top = Math.min(y, window.innerHeight - 320) + 'px';
       menu.classList.add('open');
       
-      // Запускаем проверку ограничений
       startSelect.onchange();
     }
 
@@ -2405,14 +2390,13 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value) - 1; // endSelect хранит индекс конца интервала
+      const newEndIdx = parseInt(endSelect.value) - 1;
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
         return;
       }
 
-      // Проверяем конфликты
       if (hasConflict(contextSliderBooking.lane, newStartIdx, newEndIdx, contextSliderBooking.id)) {
         alert('⛔ Это время уже занято другой записью');
         return;
@@ -2793,7 +2777,6 @@
       document.body.addEventListener("mousemove", onMouseMove);
       document.body.addEventListener("mouseup", onMouseUp);
 
-      // Закрываем контекстное меню при клике вне него
       document.addEventListener('click', (e) => {
         const menu = document.getElementById('sliderContextMenu');
         if (menu.classList.contains('open') && !menu.contains(e.target)) {
@@ -2801,7 +2784,6 @@
         }
       });
 
-      // Синхронизация палитры и HEX
       const colorPicker = document.getElementById('editEmployeeColorPicker');
       const hexInput = document.getElementById('editEmployeeCustomColor');
       
@@ -2809,7 +2791,6 @@
         const val = this.value;
         hexInput.value = val;
         selectedEmployeeColor = val;
-        // обновляем сетку
         document.querySelectorAll('.color-option').forEach(el => {
           el.classList.toggle('selected', el.dataset.color === val);
         });
