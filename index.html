@@ -2440,7 +2440,9 @@
         optEnd.value = index;
         optEnd.textContent = slot.label;
         // ПРАВИЛЬНО: конечное время = endSlotIdx + 1 (индекс слота, с которого заканчивается)
-        if (index === booking.endSlotIdx + 1) optEnd.selected = true;
+        // То есть если интервал 12:00-16:00, endSlotIdx = 9 (16:00), endSlotIdx+1 = 10 (16:30)
+        // Но мы хотим показывать 16:00, поэтому используем endSlotIdx
+        if (index === booking.endSlotIdx) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
 
@@ -2450,7 +2452,13 @@
           opt.disabled = parseInt(opt.value) <= startVal;
         });
         if (parseInt(endSelect.value) <= startVal) {
-          endSelect.value = startVal + 1;
+          // Выбираем следующий доступный
+          for (let i = startVal + 1; i < slots.length; i++) {
+            if (!endSelect.options[i].disabled) {
+              endSelect.value = i;
+              break;
+            }
+          }
         }
       };
       
@@ -2478,8 +2486,8 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      // Конец = выбранный индекс - 1 (потому что endSelect хранит индекс последнего слота + 1)
-      const newEndIdx = parseInt(endSelect.value) - 1;
+      // Конец = выбранный индекс (потому что endSelect хранит индекс последнего слота)
+      const newEndIdx = parseInt(endSelect.value);
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
