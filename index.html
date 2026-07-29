@@ -185,10 +185,30 @@
       background: var(--accent-blue);
       color: white;
       border: 0.5px solid var(--accent-blue);
+      position: relative;
     }
 
     .btn-ctrl i {
       font-size: 18px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-ctrl .btn-spinner {
+      display: none;
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .btn-ctrl.loading i {
+      opacity: 0;
+    }
+    .btn-ctrl.loading .btn-spinner {
+      display: block;
     }
 
     .btn-ctrl:hover {
@@ -196,13 +216,16 @@
       background: var(--accent-blue-hover);
     }
 
-    /* Активное состояние для кнопки "Назначить" */
     .btn-assign-toggle.active {
       background: var(--accent-amber);
       border-color: var(--accent-amber);
     }
     .btn-assign-toggle.active:hover {
       background: #a0681f;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* ===== СТРАНИЦА ===== */
@@ -683,10 +706,32 @@
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
     }
-    .f-btn-ok:hover {
-      background: var(--accent-blue-hover);
+    .f-btn-ok:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
+    .f-btn-ok .btn-spinner-sm {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .f-btn-ok.loading .btn-spinner-sm {
+      display: inline-block;
+    }
+    .f-btn-ok.loading span {
+      opacity: 0.5;
+    }
+
     .f-btn-cancel {
       flex: 1;
       height: 56px;
@@ -733,9 +778,6 @@
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       margin: 0 auto 18px;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
     }
 
     /* ===== ТИПЫ СОБЫТИЙ ===== */
@@ -1000,6 +1042,10 @@
       cursor: pointer;
       font-size: 14px;
       transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     .slider-context-menu .menu-actions .apply-btn {
       background: var(--accent-blue);
@@ -1014,6 +1060,21 @@
     }
     .slider-context-menu .menu-actions .cancel-btn:hover {
       background: #e5e5e8;
+    }
+    .slider-context-menu .menu-actions .apply-btn .btn-spinner-sm {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .slider-context-menu .menu-actions .apply-btn.loading .btn-spinner-sm {
+      display: inline-block;
+    }
+    .slider-context-menu .menu-actions .apply-btn.loading span {
+      opacity: 0.5;
     }
 
     /* ===== АДАПТИВ ===== */
@@ -1119,20 +1180,25 @@
         <div id="inlineTempContainer" class="inline-temp-cards"></div>
       </div>
       <div class="ctrl-buttons">
-        <button class="btn-ctrl" onclick="openBookModal()" title="Новая запись">
+        <button class="btn-ctrl" onclick="openBookModal()" title="Новая запись" id="btnBook">
           <i class="fas fa-plus-circle"></i>
+          <div class="btn-spinner"></div>
         </button>
         <button id="assignToggleBtn" class="btn-ctrl" title="Назначить сотрудника">
           <i class="fas fa-user-tag"></i>
+          <div class="btn-spinner"></div>
         </button>
-        <button class="btn-ctrl" title="Сохранить расписание" onclick="openSaveScheduleModal()">
+        <button class="btn-ctrl" title="Сохранить расписание" onclick="openSaveScheduleModal()" id="btnSaveSchedule">
           <i class="fas fa-save"></i>
+          <div class="btn-spinner"></div>
         </button>
-        <button class="btn-ctrl" onclick="renameSheetPrompt()" title="Переименовать лист">
+        <button class="btn-ctrl" onclick="renameSheetPrompt()" title="Переименовать лист" id="btnRename">
           <i class="fas fa-edit"></i>
+          <div class="btn-spinner"></div>
         </button>
-        <button class="btn-ctrl" onclick="deleteSheetPrompt()" title="Удалить лист">
+        <button class="btn-ctrl" onclick="deleteSheetPrompt()" title="Удалить лист" id="btnDelete">
           <i class="fas fa-trash"></i>
+          <div class="btn-spinner"></div>
         </button>
       </div>
     </div>
@@ -1174,7 +1240,10 @@
           </select>
         </div>
         <div class="f-actions">
-          <button class="f-btn-ok" onclick="submitTempBookings()">Сохранить</button>
+          <button class="f-btn-ok" onclick="submitTempBookings()" id="submitBookBtn">
+            <span>Сохранить</span>
+            <div class="btn-spinner-sm"></div>
+          </button>
           <button class="f-btn-cancel" onclick="closeBookModal()">Отмена</button>
         </div>
       </div>
@@ -1203,7 +1272,10 @@
           </button>
         </div>
         <div class="f-actions">
-          <button class="f-btn-ok" onclick="saveEventType()">Сохранить</button>
+          <button class="f-btn-ok" onclick="saveEventType()" id="saveEventTypeBtn">
+            <span>Сохранить</span>
+            <div class="btn-spinner-sm"></div>
+          </button>
           <button class="f-btn-cancel" onclick="closeEditEventModal()">Отмена</button>
         </div>
       </div>
@@ -1249,17 +1321,16 @@
         <div class="f-group">
           <label class="f-label">Выберите время</label>
           <div class="time-select-group">
-            <select class="f-input" id="editTimeStartSelect">
-              <!-- Заполняется через JS -->
-            </select>
+            <select class="f-input" id="editTimeStartSelect"></select>
             <span>—</span>
-            <select class="f-input" id="editTimeEndSelect">
-              <!-- Заполняется через JS -->
-            </select>
+            <select class="f-input" id="editTimeEndSelect"></select>
           </div>
         </div>
         <div class="f-actions">
-          <button class="f-btn-ok" onclick="applyTimeChange()">Применить</button>
+          <button class="f-btn-ok" onclick="applyTimeChange()" id="applyTimeBtn">
+            <span>Применить</span>
+            <div class="btn-spinner-sm"></div>
+          </button>
           <button class="f-btn-cancel" onclick="closeEditTimeModal()">Отмена</button>
         </div>
       </div>
@@ -1282,7 +1353,10 @@
           </div>
         </div>
         <div class="f-actions">
-          <button class="f-btn-ok" onclick="confirmSaveSchedule()">Сохранить как новый лист</button>
+          <button class="f-btn-ok" onclick="confirmSaveSchedule()" id="saveScheduleBtn">
+            <span>Сохранить как новый лист</span>
+            <div class="btn-spinner-sm"></div>
+          </button>
           <button class="f-btn-cancel" onclick="closeSaveScheduleModal()">Отмена</button>
         </div>
       </div>
@@ -1313,7 +1387,10 @@
           </div>
         </div>
         <div class="f-actions">
-          <button class="f-btn-ok" onclick="saveEmployeeChanges()">Сохранить</button>
+          <button class="f-btn-ok" onclick="saveEmployeeChanges()" id="saveEmployeeBtn">
+            <span>Сохранить</span>
+            <div class="btn-spinner-sm"></div>
+          </button>
           <button class="f-btn-cancel" onclick="closeEditEmployeeModal()">Отмена</button>
         </div>
       </div>
@@ -1323,17 +1400,14 @@
   <!-- ===== КОНТЕКСТНОЕ МЕНЮ ПОЛЗУНКА (ВРЕМЯ + ТИП) ===== -->
   <div id="sliderContextMenu" class="slider-context-menu">
     <div class="menu-title"><i class="fas fa-clock"></i> Изменить время и тип</div>
-    
     <div class="f-group" style="margin-bottom: 8px;">
       <label class="f-label" style="font-size: 12px;">Начало</label>
       <select id="ctxStartSelect"></select>
     </div>
-    
     <div class="f-group" style="margin-bottom: 8px;">
       <label class="f-label" style="font-size: 12px;">Конец</label>
       <select id="ctxEndSelect"></select>
     </div>
-    
     <div class="f-group" style="margin-bottom: 8px;">
       <label class="f-label" style="font-size: 12px;">Тип события</label>
       <select id="ctxTypeSelect">
@@ -1341,9 +1415,11 @@
         <option value="birthday">🎂 День рождения</option>
       </select>
     </div>
-    
     <div class="menu-actions">
-      <button class="apply-btn" onclick="applySliderChanges()">Применить</button>
+      <button class="apply-btn" onclick="applySliderChanges()" id="ctxApplyBtn">
+        <span>Применить</span>
+        <div class="btn-spinner-sm"></div>
+      </button>
       <button class="cancel-btn" onclick="closeSliderContextMenu()">Отмена</button>
     </div>
   </div>
@@ -1395,7 +1471,6 @@
       }
     }
 
-    // --- Контекстное меню ползунка ---
     let contextSliderBooking = null;
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -1407,6 +1482,12 @@
         if (m === '>') return '&gt;';
         return m;
       });
+    }
+
+    function setLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) btn.classList.add('loading');
+      else btn.classList.remove('loading');
     }
 
     function showLoad() { document.getElementById("loader").style.display = "flex"; }
@@ -1506,7 +1587,6 @@
     }
 
     async function sendPostAction(action, payload) {
-      showLoad();
       try {
         const body = JSON.stringify(Object.assign({ action: action }, payload));
         const response = await fetch(GAS_URL, {
@@ -1520,8 +1600,6 @@
       } catch (error) {
         console.error('POST request failed:', error);
         throw new Error(`Ошибка отправки: ${error.message || error}`);
-      } finally {
-        hideLoad();
       }
     }
 
@@ -1894,17 +1972,20 @@
       
       saveEmployeeGroups();
       
+      const btn = document.getElementById('saveEmployeeBtn');
+      setLoading(btn, true);
       try {
         await saveEmployeeGroupsToServer();
         await saveEmployeeColorToServer(newName, finalColor);
+        closeEditEmployeeModal();
+        refreshGroupHeaders();
+        renderAllSliders();
+        alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
       } catch (e) {
-        console.error('Error saving:', e);
+        alert('Ошибка сохранения: ' + e.message);
+      } finally {
+        setLoading(btn, false);
       }
-      
-      closeEditEmployeeModal();
-      refreshGroupHeaders();
-      renderAllSliders();
-      alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
     }
 
     async function saveEmployeeColorToServer(employeeName, color) {
@@ -2098,7 +2179,8 @@
       if (tempBookings.length === 0) { alert("Нет записей для сохранения"); return; }
       const eventType = document.getElementById("eventTypeSelect").value;
 
-      showLoad();
+      const btn = document.getElementById('submitBookBtn');
+      setLoading(btn, true);
       try {
         const allStations = getAllStationsData();
         const scheduleData = tempBookings.map(tb => {
@@ -2121,7 +2203,7 @@
           };
         }).filter(item => item !== null);
 
-        if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); hideLoad(); return; }
+        if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); return; }
 
         const payload = {
           schedule: scheduleData,
@@ -2145,8 +2227,9 @@
       } catch (e) {
         console.error("Error saving bookings:", e);
         alert("❌ Ошибка при сохранении: " + e.message);
+      } finally {
+        setLoading(btn, false);
       }
-      hideLoad();
     }
 
     // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
@@ -2396,6 +2479,8 @@
         sheetName: currentSheetName
       };
 
+      const btn = document.getElementById('ctxApplyBtn');
+      setLoading(btn, true);
       try {
         await sendPostAction('update', payload);
         renderAllSliders();
@@ -2404,6 +2489,8 @@
         alert('✅ Время и тип события успешно изменены');
       } catch (e) {
         alert('❌ Ошибка сохранения: ' + e.message);
+      } finally {
+        setLoading(btn, false);
       }
     }
 
@@ -2534,22 +2621,38 @@
       if (!editingBooking) return;
       let isBirthday = selectedEventType === 'birthday';
       let oldBooking = bookings.find(b => b.id === editingBooking.id);
-      if (oldBooking) {
-        oldBooking.type = isBirthday ? 'birthday' : 'regular';
-        oldBooking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
-        await saveToServer(oldBooking);
+      if (!oldBooking) return;
+      
+      oldBooking.type = isBirthday ? 'birthday' : 'regular';
+      oldBooking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
+      
+      const btn = document.getElementById('saveEventTypeBtn');
+      setLoading(btn, true);
+      try {
+        const payload = {
+          id: oldBooking.id,
+          stationName: stations[oldBooking.lane]?.name || `Станция ${oldBooking.lane+1}`,
+          start: oldBooking.start,
+          end: oldBooking.end,
+          comment: oldBooking.comment,
+          sheetName: currentSheetName
+        };
+        await sendPostAction('update', payload);
         renderAllSliders();
         updateCellsHighlight();
+        closeEditEventModal();
+        alert("Тип события обновлён");
+      } catch (e) {
+        alert('Ошибка: ' + e.message);
+      } finally {
+        setLoading(btn, false);
       }
-      closeEditEventModal();
-      alert("Тип события обновлён");
     }
 
     async function deleteBooking() {
       if (!currentBooking) return;
       if (!confirm("Удалить эту запись?")) return;
       
-      showLoad();
       try {
         const result = await sendPostAction('delete', { 
           id: currentBooking.id, 
@@ -2568,7 +2671,6 @@
       } catch (e) {
         alert("❌ Ошибка: " + e.message);
       }
-      hideLoad();
     }
 
     // ==================== РАБОТА С ЛИСТАМИ ====================
@@ -2577,19 +2679,15 @@
         alert("Укажите старое и новое имя листа");
         return false;
       }
-      
       if (oldName === newName) {
         alert("Имена совпадают");
         return true;
       }
       
-      showLoad();
+      const btn = document.getElementById('btnRename');
+      setLoading(btn, true);
       try {
-        const result = await sendPostAction('renameSheet', {
-          oldName: oldName,
-          newName: newName
-        });
-        
+        const result = await sendPostAction('renameSheet', { oldName, newName });
         if (result && result.success) {
           alert(result.message);
           await loadSheetsList();
@@ -2606,7 +2704,7 @@
         alert("❌ Ошибка: " + e.message);
         return false;
       } finally {
-        hideLoad();
+        setLoading(btn, false);
       }
     }
 
@@ -2615,17 +2713,14 @@
         alert("Не указано имя листа");
         return false;
       }
-      
       if (!confirm(`Удалить лист "${sheetName}"? Это действие необратимо!`)) {
         return false;
       }
       
-      showLoad();
+      const btn = document.getElementById('btnDelete');
+      setLoading(btn, true);
       try {
-        const result = await sendPostAction('deleteSheet', {
-          sheetName: sheetName
-        });
-        
+        const result = await sendPostAction('deleteSheet', { sheetName });
         if (result && result.success) {
           alert(result.message);
           await loadSheetsList();
@@ -2644,7 +2739,7 @@
         alert("❌ Ошибка: " + e.message);
         return false;
       } finally {
-        hideLoad();
+        setLoading(btn, false);
       }
     }
 
@@ -2677,7 +2772,8 @@
       const newSheetName = nameInput.value.trim();
       if (!newSheetName) { alert("Введите название нового листа"); return; }
 
-      showLoad();
+      const btn = document.getElementById('saveScheduleBtn');
+      setLoading(btn, true);
       try {
         const allStations = getAllStationsData();
         const payload = {
@@ -2716,8 +2812,9 @@
         }
       } catch (e) {
         alert("❌ Ошибка: " + e.message);
+      } finally {
+        setLoading(btn, false);
       }
-      hideLoad();
     }
 
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
