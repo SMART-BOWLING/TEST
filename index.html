@@ -1418,7 +1418,7 @@
 
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwu4xbskeN_ilq3NLGon0qeHIlHbTQeYFqsbIipW0hN3Dy5uFWPR1FoXg6nyejirtw/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyysWcmwWXEdf0xx8DKncY4Bfc5nx1-kc9hKKX9QmH9eDW5WgwU-3Ys_s9imWIRrZsr/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1651,7 +1651,6 @@
         const data = await jsonpRequest(url);
         if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
 
-        // Преобразуем данные из сервера в формат с индексами
         bookings = data.schedule ? data.schedule.map(b => {
           if (b.start === undefined || b.end === undefined) return null;
           let startKey = parseFloat(b.start);
@@ -2401,8 +2400,9 @@
         const optEnd = document.createElement('option');
         optEnd.value = index;
         optEnd.textContent = slot.label;
-        // В меню показываем ПОСЛЕДНИЙ занятый слот
-        if (index === booking.endSlotIdx) optEnd.selected = true;
+        // В меню показываем КОНЕЦ = последний занятый слот + 1 (следующий слот)
+        // Чтобы пользователь видел конечное время правильно
+        if (index === booking.endSlotIdx + 1) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
 
@@ -2445,7 +2445,7 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value); // Это последний занятый слот
+      const newEndIdx = parseInt(endSelect.value) - 1; // Так как в меню мы показываем endSlotIdx + 1
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
