@@ -1496,7 +1496,8 @@
 
     function fmtFromSlotIdx(startSlotIdx, endSlotIdx) {
       let s = slots[startSlotIdx];
-      let endIdx = (endSlotIdx !== null) ? endSlotIdx + 1 : startSlotIdx + 1;
+      // endIdx = последний занятый слот + 1 (чтобы показать конечное время)
+      let endIdx = endSlotIdx + 1;
       let e = slots[endIdx];
       if (!e) {
         let nextHour = Math.floor(s.key) + 1;
@@ -1648,11 +1649,13 @@
         const data = await jsonpRequest(url);
         if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
 
-        bookings = data.schedule ? data.schedule.map(b => {
-          if (b.start === undefined || b.end === undefined) return null;
+        // Группируем записи по ID и объединяем их в интервалы
+        const bookingsMap = {};
+        data.schedule.forEach(b => {
+          if (b.start === undefined || b.end === undefined) return;
           let startKey = parseFloat(b.start);
           let endKey = parseFloat(b.end);
-          if (isNaN(startKey) || isNaN(endKey)) return null;
+          if (isNaN(startKey) || isNaN(endKey)) return;
 
           let startSlotIdx = -1, endSlotIdx = -1;
           for (let i = 0; i < slots.length; i++) {
@@ -1670,22 +1673,27 @@
           if (endSlotIdx === -1 || endSlotIdx >= slots.length) endSlotIdx = slots.length - 1;
           if (endSlotIdx < startSlotIdx) endSlotIdx = startSlotIdx;
 
-          let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
-          let stationIdx = b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0);
-          return {
-            id: b.id || Date.now() + Math.random(),
-            lane: stationIdx,
-            start: startKey,
-            end: endKey,
-            startSlotIdx: startSlotIdx,
-            endSlotIdx: endSlotIdx,
-            name: b.name || '',
-            phone: b.phone || '',
-            comment: b.comment || '',
-            confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
-            type: isBirthday ? 'birthday' : 'regular'
-          };
-        }).filter(b => b !== null) : [];
+          const id = b.id || (b.start + '_' + b.stationIndex);
+          if (!bookingsMap[id]) {
+            bookingsMap[id] = {
+              id: id,
+              lane: b.stationIndex !== undefined ? b.stationIndex : (b.stationNumber ? b.stationNumber - 1 : 0),
+              startSlotIdx: startSlotIdx,
+              endSlotIdx: endSlotIdx,
+              name: b.name || '',
+              phone: b.phone || '',
+              comment: b.comment || '',
+              confirmed: b.confirmed === "Да" ? true : (b.confirmed === "Нет" ? false : null),
+              type: (b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ') ? 'birthday' : 'regular'
+            };
+          } else {
+            // Расширяем интервал
+            if (startSlotIdx < bookingsMap[id].startSlotIdx) bookingsMap[id].startSlotIdx = startSlotIdx;
+            if (endSlotIdx > bookingsMap[id].endSlotIdx) bookingsMap[id].endSlotIdx = endSlotIdx;
+          }
+        });
+
+        bookings = Object.values(bookingsMap);
 
         if (data.employeeGroups && data.employeeGroups.length > 0) {
           employeeGroups = data.employeeGroups;
@@ -2181,18 +2189,25 @@
           if (startTime === null || endTime === null) return null;
           const isBirthday = eventType === 'birthday';
           const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
-          return {
-            sheetName: currentSheetName,
-            stationNumber: tb.lane + 1,
-            stationName: stationName,
-            start: startTime,
-            end: endTime,
-            name: '',
-            phone: '',
-            comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-            type: eventType
-          };
-        }).filter(item => item !== null);
+          // Создаем запись для каждого слота
+          const items = [];
+          let currentTime = startTime;
+          while (currentTime < endTime) {
+            items.push({
+              sheetName: currentSheetName,
+              stationNumber: tb.lane + 1,
+              stationName: stationName,
+              start: currentTime,
+              end: currentTime + 0.5,
+              name: '',
+              phone: '',
+              comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+              type: eventType
+            });
+            currentTime += 0.5;
+          }
+          return items;
+        }).flat().filter(item => item !== null);
 
         if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); return; }
 
@@ -2472,24 +2487,9 @@
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
       
-      // Вычисляем ключи для сервера
-      booking.start = slots[newStartIdx].key;
-      // end = следующий слот после последнего занятого
-      booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
-      booking.type = isBirthday ? 'birthday' : 'regular';
-      booking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
-
+      // Сохраняем для отправки на сервер - создаем массив слотов
       const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
-
-      const payload = {
-        id: booking.id,
-        stationName: stationName,
-        start: booking.start,
-        end: booking.end,
-        comment: booking.comment,
-        sheetName: currentSheetName
-      };
-
+      
       // Закрываем меню сразу
       closeSliderContextMenu();
 
@@ -2499,9 +2499,37 @@
       }
 
       try {
-        await sendPostAction('update', payload);
-        renderAllSliders();
-        updateCellsHighlight();
+        // Создаем записи для каждого слота
+        const scheduleItems = [];
+        let currentTime = slots[newStartIdx].key;
+        const endTime = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
+        
+        while (currentTime < endTime) {
+          scheduleItems.push({
+            stationNumber: booking.lane + 1,
+            stationName: stationName,
+            start: currentTime,
+            end: currentTime + 0.5,
+            comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+            type: newType
+          });
+          currentTime += 0.5;
+        }
+        
+        // Отправляем на сервер
+        for (const item of scheduleItems) {
+          await sendPostAction('addSchedule', {
+            schedule: [item],
+            sheetName: currentSheetName
+          });
+        }
+        
+        // Обновляем локальные данные
+        booking.type = isBirthday ? 'birthday' : 'regular';
+        booking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
+        
+        // Перезагружаем данные с сервера
+        await loadFromServer(currentSheetName);
         alert('✅ Время и тип события успешно изменены');
       } catch (e) {
         alert('❌ Ошибка сохранения: ' + e.message);
@@ -2648,17 +2676,39 @@
       const btn = document.getElementById('saveEventTypeBtn');
       setLoading(btn, true);
       try {
-        const payload = {
-          id: oldBooking.id,
-          stationName: stations[oldBooking.lane]?.name || `Станция ${oldBooking.lane+1}`,
-          start: oldBooking.start,
-          end: oldBooking.end,
-          comment: oldBooking.comment,
-          sheetName: currentSheetName
-        };
-        await sendPostAction('update', payload);
-        renderAllSliders();
-        updateCellsHighlight();
+        // Пересоздаем записи на сервере
+        const stationName = stations[oldBooking.lane]?.name || `Станция ${oldBooking.lane+1}`;
+        const scheduleItems = [];
+        let currentTime = slots[oldBooking.startSlotIdx].key;
+        const endTime = slots[oldBooking.endSlotIdx + 1]?.key || (slots[oldBooking.endSlotIdx].key + 0.5);
+        
+        while (currentTime < endTime) {
+          scheduleItems.push({
+            stationNumber: oldBooking.lane + 1,
+            stationName: stationName,
+            start: currentTime,
+            end: currentTime + 0.5,
+            comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
+            type: selectedEventType
+          });
+          currentTime += 0.5;
+        }
+        
+        // Сначала удаляем старые записи
+        await sendPostAction('delete', { 
+          id: oldBooking.id, 
+          sheetName: currentSheetName 
+        });
+        
+        // Сохраняем новые
+        for (const item of scheduleItems) {
+          await sendPostAction('addSchedule', {
+            schedule: [item],
+            sheetName: currentSheetName
+          });
+        }
+        
+        await loadFromServer(currentSheetName);
         closeEditEventModal();
         alert("Тип события обновлён");
       } catch (e) {
@@ -2679,10 +2729,8 @@
         });
         
         if (result && result.success) {
-          bookings = bookings.filter(b => b.id !== currentBooking.id);
+          await loadFromServer(currentSheetName);
           closeInfoModal();
-          renderAllSliders();
-          updateCellsHighlight();
           alert("✅ Запись удалена");
         } else {
           alert("❌ Ошибка удаления: " + (result?.message || "Неизвестная ошибка"));
@@ -2795,20 +2843,32 @@
       setLoading(btn, true);
       try {
         const allStations = getAllStationsData();
+        // Создаем расписание для каждого слота
+        const scheduleItems = [];
+        for (const b of bookings) {
+          const stationName = stations[b.lane]?.name || `Станция ${b.lane+1}`;
+          let currentTime = slots[b.startSlotIdx].key;
+          const endTime = slots[b.endSlotIdx + 1]?.key || (slots[b.endSlotIdx].key + 0.5);
+          while (currentTime < endTime) {
+            scheduleItems.push({
+              stationNumber: b.lane + 1,
+              stationName: stationName,
+              start: currentTime,
+              end: currentTime + 0.5,
+              name: b.name || '',
+              phone: b.phone || '',
+              comment: b.comment || '',
+              type: b.type || 'regular'
+            });
+            currentTime += 0.5;
+          }
+        }
+        
         const payload = {
           action: 'saveSchedule',
           sheetName: currentSheetName,
           newSheetName: newSheetName,
-          schedule: bookings.map(b => ({
-            stationNumber: b.lane + 1,
-            stationName: stations[b.lane]?.name || `Станция ${b.lane+1}`,
-            start: b.start,
-            end: b.end,
-            name: b.name || '',
-            phone: b.phone || '',
-            comment: b.comment || '',
-            type: b.type || 'regular'
-          })),
+          schedule: scheduleItems,
           allStations: allStations,
           employeeGroups: employeeGroups.map(g => ({
             name: g.name,
