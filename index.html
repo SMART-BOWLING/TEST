@@ -2439,7 +2439,7 @@
         const optEnd = document.createElement('option');
         optEnd.value = index;
         optEnd.textContent = slot.label;
-        // Правильно: конечное время = endSlotIdx (последний занятый слот)
+        // КОНЕЦ = последний занятый слот (endSlotIdx)
         if (index === booking.endSlotIdx) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
@@ -2484,7 +2484,7 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value);
+      const newEndIdx = parseInt(endSelect.value); // Это последний занятый слот
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
@@ -2505,9 +2505,13 @@
       const newType = typeSelect.value;
       const isBirthday = newType === 'birthday';
 
+      // Сохраняем индексы
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
+      
+      // Вычисляем ключи для сервера
       booking.start = slots[newStartIdx].key;
+      // end = следующий слот после последнего занятого
       booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
       booking.type = isBirthday ? 'birthday' : 'regular';
       booking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
