@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
+    /* ===== ВСЕ СТИЛИ ТЕ ЖЕ, ЧТО И В ПРЕДЫДУЩЕЙ ВЕРСИИ ===== */
     * {
       margin: 0;
       padding: 0;
@@ -1417,13 +1418,6 @@
       return null;
     }
 
-    function getEmployeeGroupIdForLane(lane) {
-      for (let group of employeeGroups) {
-        if (group.stations && group.stations.includes(lane)) return group.id;
-      }
-      return null;
-    }
-
     // ==================== РАБОТА С ЛОКАЛЬНЫМ ХРАНИЛИЩЕМ ====================
     function saveEmployeeGroups() {
       try {
@@ -1579,7 +1573,6 @@
           };
         }).filter(b => b !== null) : [];
 
-        // Загружаем группы сотрудников с сервера
         if (data.employeeGroups) {
           employeeGroups = data.employeeGroups;
           nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
@@ -2128,15 +2121,9 @@
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
       if (!container) return;
-      // Сохраняем текущее состояние загрузки ползунков
-      const loadingSliders = new Map();
-      container.querySelectorAll('.slider.loading').forEach(el => {
-        const key = el.dataset.bookingKey || el.querySelector('.sl-time')?.textContent || '';
-        if (key) loadingSliders.set(key, true);
-      });
-      
       container.innerHTML = "";
 
+      // Группируем записи по станции и объединяем пересекающиеся интервалы
       const allItems = [...bookings, ...tempBookings.map(t => ({ ...t, isTemp: true }))];
       const groupedByLane = {};
       allItems.forEach(item => {
@@ -2160,11 +2147,12 @@
               confirmed: item.confirmed,
               type: item.type || 'regular',
               comment: item.comment || '',
-              id: item.id || Date.now() + Math.random()
+              id: item.id
             };
           } else {
             const nextStart = item.startSlotIdx;
             const currentEnd = currentGroup.endSlotIdx;
+            // Если интервалы пересекаются или касаются, объединяем
             if (nextStart <= currentEnd + 1) {
               currentGroup.endSlotIdx = Math.max(currentGroup.endSlotIdx, item.endSlotIdx);
               currentGroup.items.push(item);
@@ -2183,7 +2171,7 @@
                 confirmed: item.confirmed,
                 type: item.type || 'regular',
                 comment: item.comment || '',
-                id: item.id || Date.now() + Math.random()
+                id: item.id
               };
             }
           }
@@ -2217,12 +2205,7 @@
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
-        // Сохраняем ключ для восстановления состояния загрузки
-        const sliderKey = `${group.lane}_${startIdx}_${endIdx}`;
-        slider.dataset.bookingKey = sliderKey;
-        if (loadingSliders.has(sliderKey)) {
-          slider.classList.add('loading');
-        }
+        slider.dataset.groupId = group.id || Date.now() + Math.random();
 
         let groupColor = null;
         for (const g of employeeGroups) {
@@ -2363,6 +2346,7 @@
       const newType = typeSelect.value;
       const isBirthday = newType === 'birthday';
 
+      // Сохраняем изменения локально
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
       booking.start = slots[newStartIdx].key;
@@ -2375,15 +2359,11 @@
       // Закрываем меню
       closeSliderContextMenu();
 
-      // Показываем спинер на ползунке
-      if (activeSliderElement) {
-        activeSliderElement.classList.add('loading');
-      }
-
-      // Мгновенно обновляем отображение
+      // Перерисовываем только нужный ползунок (все ползунки на этой станции)
       renderAllSliders();
       updateCellsHighlight();
 
+      // Отправляем на сервер в фоне
       try {
         const payload = {
           id: booking.id,
@@ -2399,12 +2379,6 @@
         alert('❌ Ошибка синхронизации с сервером: ' + e.message);
         // Откатываем изменения
         await loadFromServer(currentSheetName);
-      } finally {
-        // Убираем спинер
-        if (activeSliderElement) {
-          activeSliderElement.classList.remove('loading');
-        }
-        activeSliderElement = null;
       }
     }
 
