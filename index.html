@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
+    /* СТИЛИ ТЕ ЖЕ, ЧТО И В ПРЕДЫДУЩЕЙ ВЕРСИИ */
     * {
       margin: 0;
       padding: 0;
@@ -181,7 +182,6 @@
       background: var(--accent-blue);
       color: white;
       border: 0.5px solid var(--accent-blue);
-      position: relative;
     }
 
     .btn-ctrl i {
@@ -1572,14 +1572,17 @@
           };
         }).filter(b => b !== null) : [];
 
+        // ВАЖНО: Всегда загружаем группы сотрудников с сервера, игнорируя кеш
         if (data.employeeGroups && data.employeeGroups.length > 0) {
           employeeGroups = data.employeeGroups;
           nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
-          saveEmployeeGroups();
+          saveEmployeeGroups(); // Обновляем кеш
         } else {
-          const loaded = loadEmployeeGroups();
-          if (!loaded) employeeGroups = [];
+          // Если с сервера пришли пустые группы, очищаем локальные
+          employeeGroups = [];
+          saveEmployeeGroups(); // Очищаем кеш
         }
+        
         refreshGroupHeaders();
         renderAllSliders();
         updateCellsHighlight();
@@ -1594,9 +1597,9 @@
       const selector = document.getElementById('sheetSelector');
       currentSheetName = selector.value;
       if (currentSheetName) {
+        // При смене листа ОБЯЗАТЕЛЬНО загружаем свежие данные с сервера
         loadFromServer(currentSheetName);
         clearTempSelections();
-        resetEmployeeGroups();
       }
     }
 
@@ -1848,23 +1851,15 @@
       
       saveEmployeeGroups();
       
-      // Закрываем модалку
       closeEditEmployeeModal();
       
-      // Обновляем отображение мгновенно
       refreshGroupHeaders();
       renderAllSliders();
       
-      // Отправляем на сервер в фоне
       try {
         await saveEmployeeGroupsToServer();
         await saveEmployeeColorToServer(newName, finalColor);
-        // Показываем уведомление об успехе
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-        notification.textContent = `✅ Сотрудник "${oldName}" обновлён на "${newName}"`;
-        document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+        showNotification(`✅ Сотрудник "${oldName}" обновлён на "${newName}"`, 'success');
       } catch (e) {
         alert('Ошибка синхронизации с сервером: ' + e.message);
       }
@@ -1888,17 +1883,10 @@
       
       try {
         await saveEmployeeGroupsToServer();
+        showNotification(`✅ Сотрудник "${group.name}" отвязан от станций`, 'success');
       } catch (e) {
         alert("Ошибка синхронизации с сервером: " + e.message);
       }
-    }
-
-    function resetEmployeeGroups() {
-      employeeGroups = [];
-      selectedLanesForAssign = [];
-      if (assignModeEnabled) toggleAssignMode();
-      saveEmployeeGroups();
-      refreshGroupHeaders();
     }
 
     // ==================== НАЗНАЧЕНИЕ СОТРУДНИКОВ ====================
@@ -1981,17 +1969,11 @@
       hideAssignBar();
       saveEmployeeGroups();
       
-      // Обновляем отображение мгновенно
       refreshGroupHeaders();
       
-      // Отправляем на сервер в фоне
       try {
         await saveEmployeeGroupsToServer();
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-        notification.textContent = `✅ Сотрудник "${name}" привязан к станциям`;
-        document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+        showNotification(`✅ Сотрудник "${name}" привязан к станциям`, 'success');
       } catch (e) {
         alert("Ошибка синхронизации с сервером: " + e.message);
       }
@@ -2117,20 +2099,14 @@
           }))
         };
 
-        // Отправляем на сервер
         const result = await sendPostAction('addSchedule', payload);
         
-        // Очищаем временные записи и обновляем отображение
         clearTempSelections();
         await loadFromServer(currentSheetName);
         closeBookModal();
         
         if (result && result.success !== false) {
-          const notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-          notification.textContent = `✅ Записи сохранены! (${result.savedCount || scheduleData.length} ячеек)`;
-          document.body.appendChild(notification);
-          setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+          showNotification(`✅ Записи сохранены! (${result.savedCount || scheduleData.length} ячеек)`, 'success');
         } else {
           alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
         }
@@ -2366,7 +2342,6 @@
       const newType = typeSelect.value;
       const isBirthday = newType === 'birthday';
 
-      // Мгновенно обновляем данные
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
       booking.start = slots[newStartIdx].key;
@@ -2376,14 +2351,11 @@
 
       const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
 
-      // Закрываем меню
       closeSliderContextMenu();
 
-      // Обновляем отображение мгновенно
       renderAllSliders();
       updateCellsHighlight();
 
-      // Отправляем на сервер в фоне
       try {
         const payload = {
           id: booking.id,
@@ -2394,15 +2366,9 @@
           sheetName: currentSheetName
         };
         await sendPostAction('update', payload);
-        
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-        notification.textContent = '✅ Время и тип события успешно изменены';
-        document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+        showNotification('✅ Время и тип события успешно изменены', 'success');
       } catch (e) {
         alert('❌ Ошибка синхронизации с сервером: ' + e.message);
-        // Возвращаем назад, если ошибка
         await loadFromServer(currentSheetName);
       }
     }
@@ -2461,7 +2427,6 @@
         } else {
           const newBooking = { id: nextTempId++, lane: lane, startSlotIdx: startIdx, endSlotIdx: endIdx, type: 'regular' };
           tempBookings.push(newBooking);
-          renderAllSliders();
         }
         renderInlineTempCards();
         renderAllSliders();
@@ -2555,12 +2520,7 @@
         };
         await sendPostAction('update', payload);
         closeEditEventModal();
-        
-        const notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-        notification.textContent = '✅ Тип события обновлён';
-        document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+        showNotification('✅ Тип события обновлён', 'success');
       } catch (e) {
         alert('Ошибка: ' + e.message);
       } finally {
@@ -2584,12 +2544,7 @@
           closeInfoModal();
           renderAllSliders();
           updateCellsHighlight();
-          
-          const notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-          notification.textContent = '✅ Запись удалена';
-          document.body.appendChild(notification);
-          setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+          showNotification('✅ Запись удалена', 'success');
         } else {
           alert("❌ Ошибка удаления: " + (result?.message || "Неизвестная ошибка"));
         }
@@ -2617,12 +2572,7 @@
           selector.value = newName;
           currentSheetName = newName;
           await loadFromServer(currentSheetName);
-          
-          const notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-          notification.textContent = `✅ Лист переименован на "${newName}"`;
-          document.body.appendChild(notification);
-          setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+          showNotification(`✅ Лист переименован на "${newName}"`, 'success');
           return true;
         } else {
           alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
@@ -2653,12 +2603,7 @@
             currentSheetName = selector.options[0].value;
             await loadFromServer(currentSheetName);
           }
-          
-          const notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-          notification.textContent = `✅ Лист "${sheetName}" удален`;
-          document.body.appendChild(notification);
-          setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+          showNotification(`✅ Лист "${sheetName}" удален`, 'success');
           return true;
         } else {
           alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
@@ -2746,12 +2691,7 @@
           selector.value = newSheetName;
           currentSheetName = newSheetName;
           await loadFromServer(currentSheetName);
-          
-          const notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 24px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.5s;';
-          notification.textContent = `✅ Расписание сохранено как "${newSheetName}"`;
-          document.body.appendChild(notification);
-          setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 500); }, 2000);
+          showNotification(`✅ Расписание сохранено как "${newSheetName}"`, 'success');
         } else {
           alert("❌ Ошибка: " + (result?.message || "Неизвестная ошибка"));
         }
@@ -2761,6 +2701,34 @@
         btn.disabled = false;
         btn.textContent = 'Сохранить как новый лист';
       }
+    }
+
+    // ==================== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ УВЕДОМЛЕНИЙ ====================
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      const bgColor = type === 'success' ? '#4CAF50' : '#f44336';
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${bgColor};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: opacity 0.5s;
+        max-width: 90vw;
+        text-align: center;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => { 
+        notification.style.opacity = '0'; 
+        setTimeout(() => notification.remove(), 500); 
+      }, 3000);
     }
 
     // ==================== ИНИЦИАЛИЗАЦИЯ ====================
