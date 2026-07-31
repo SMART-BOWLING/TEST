@@ -399,6 +399,29 @@
       transition: all 0.2s;
     }
 
+    /* Локальный спинер для строки сотрудника */
+    .employee-spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(59, 110, 143, 0.3);
+      border-top: 2px solid var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .employee-spinner.active {
+      display: inline-block;
+    }
+
+    .divider-label.loading .employee-spinner {
+      display: inline-block;
+    }
+    .divider-label.loading .fa-user-circle {
+      opacity: 0.3;
+    }
+
     #tableDesktop tbody td.slot {
       background: #ffffff;
       border-bottom: 0.5px solid var(--border-subtle);
@@ -565,6 +588,7 @@
       pointer-events: auto;
     }
 
+    /* Спинер на ползунке */
     .slider .slider-spinner {
       display: none;
       width: 18px;
@@ -1418,7 +1442,7 @@
 
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzCPBWSjb3mijecK3KXbUbBRnkMvQaTZQ8BCyMAKWPRv4lyqAA7ZASyVaIhDGNXNmr9/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzz4tMR7gkIlk7LHicXrp86rCsxgxGuorzLk7duBo4uFS83DXa_YBcbWHtFhpVG7NwU/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1457,6 +1481,7 @@
     }
 
     let contextSliderBooking = null;
+    let activeSliderElement = null;
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -1481,6 +1506,14 @@
       else sliderElement.classList.remove('loading');
     }
 
+    function setEmployeeLoading(groupId, loading) {
+      const divider = document.querySelector(`.divider-label[data-group-id="${groupId}"]`);
+      if (divider) {
+        if (loading) divider.classList.add('loading');
+        else divider.classList.remove('loading');
+      }
+    }
+
     function showLoad() { document.getElementById("loader").style.display = "flex"; }
     function hideLoad() { document.getElementById("loader").style.display = "none"; }
 
@@ -1494,11 +1527,8 @@
       return row.cells[slotIdx + 1];
     }
 
-    // Функция для отображения времени на ползунке
-    // startSlotIdx - индекс первого слота, endSlotIdx - индекс последнего слота
     function fmtFromSlotIdx(startSlotIdx, endSlotIdx) {
       let s = slots[startSlotIdx];
-      // Для отображения конечного времени берем следующий слот после последнего
       let endIdx = endSlotIdx + 1;
       let e = slots[endIdx];
       if (!e) {
@@ -1531,6 +1561,13 @@
     function getEmployeeForLane(lane) {
       for (let group of employeeGroups) {
         if (group.stations && group.stations.includes(lane)) return group.name;
+      }
+      return null;
+    }
+
+    function getEmployeeGroupIdForLane(lane) {
+      for (let group of employeeGroups) {
+        if (group.stations && group.stations.includes(lane)) return group.id;
       }
       return null;
     }
@@ -1866,12 +1903,13 @@
               dtd.style.borderLeft = `3px solid ${color}`;
               dtd.style.padding = '6px 0';
               dtd.innerHTML = `
-                <div class="divider-label" style="color:${color};">
+                <div class="divider-label" data-group-id="${group.id}" style="color:${color};">
                   <button class="divider-edit-before" onclick="event.stopPropagation(); openEditEmployeeModal(${group.id})" title="Редактировать сотрудника">
                     <i class="fas fa-pen"></i>
                   </button>
                   <span style="display: flex; align-items: center; gap: 6px;">
                     <i class="fas fa-user-circle"></i> ${escapeHtml(group.name)}
+                    <div class="employee-spinner"></div>
                   </span>
                 </div>
               `;
@@ -1966,19 +2004,23 @@
       
       saveEmployeeGroups();
       
-      const btn = document.getElementById('saveEmployeeBtn');
-      setLoading(btn, true);
+      // Закрываем модалку сразу
+      closeEditEmployeeModal();
+      
+      // Показываем спинер на строке сотрудника
+      setEmployeeLoading(editingEmployeeGroupId, true);
+      
       try {
         await saveEmployeeGroupsToServer();
         await saveEmployeeColorToServer(newName, finalColor);
-        closeEditEmployeeModal();
         refreshGroupHeaders();
         renderAllSliders();
         alert(`Сотрудник "${oldName}" обновлён на "${newName}"`);
       } catch (e) {
         alert('Ошибка сохранения: ' + e.message);
       } finally {
-        setLoading(btn, false);
+        setEmployeeLoading(editingEmployeeGroupId, false);
+        editingEmployeeGroupId = null;
       }
     }
 
@@ -1993,10 +2035,19 @@
       const group = employeeGroups.find(g => g.id === groupId);
       if (!group) return;
       if (!confirm(`Убрать привязку сотрудника "${group.name}" к станциям?`)) return;
-      employeeGroups = employeeGroups.filter(g => g.id !== groupId);
-      saveEmployeeGroups();
-      refreshGroupHeaders();
-      try { await saveEmployeeGroupsToServer(); } catch (e) { alert("Ошибка при сохранении: " + e.message); }
+      
+      setEmployeeLoading(groupId, true);
+      
+      try {
+        employeeGroups = employeeGroups.filter(g => g.id !== groupId);
+        saveEmployeeGroups();
+        await saveEmployeeGroupsToServer();
+        refreshGroupHeaders();
+      } catch (e) {
+        alert("Ошибка при сохранении: " + e.message);
+      } finally {
+        setEmployeeLoading(groupId, false);
+      }
     }
 
     function resetEmployeeGroups() {
@@ -2086,13 +2137,18 @@
       updateAssignSelectionHighlight();
       hideAssignBar();
       saveEmployeeGroups();
-      refreshGroupHeaders();
-
+      
+      // Показываем спинер на новом сотруднике
+      setEmployeeLoading(newGroup.id, true);
+      
       try {
         await saveEmployeeGroupsToServer();
+        refreshGroupHeaders();
         alert(`Сотрудник "${name}" привязан к станциям`);
       } catch (e) {
         alert("Ошибка при сохранении: " + e.message);
+      } finally {
+        setEmployeeLoading(newGroup.id, false);
       }
     }
 
@@ -2175,6 +2231,15 @@
 
       const btn = document.getElementById('submitBookBtn');
       setLoading(btn, true);
+      
+      // Сохраняем ссылки на ползунки-заглушки, которые будем показывать
+      const tempSliders = [];
+      for (const tb of tempBookings) {
+        // Создаем временный ползунок с спинером
+        const tempSlider = createTempSlider(tb);
+        tempSliders.push(tempSlider);
+      }
+      
       try {
         const allStations = getAllStationsData();
         const scheduleData = [];
@@ -2228,7 +2293,55 @@
         alert("❌ Ошибка при сохранении: " + e.message);
       } finally {
         setLoading(btn, false);
+        // Удаляем временные ползунки
+        for (const ts of tempSliders) {
+          if (ts && ts.parentNode) ts.parentNode.removeChild(ts);
+        }
       }
+    }
+
+    // Функция для создания временного ползунка с спинером
+    function createTempSlider(tb) {
+      const container = document.getElementById("slidersLayer");
+      if (!container) return null;
+      
+      const row = getRowByLane(tb.lane);
+      if (!row) return null;
+      const sc = row.cells[tb.startSlotIdx + 1];
+      const ec = row.cells[tb.endSlotIdx + 1];
+      if (!sc || !ec) return null;
+      
+      const containerRect = container.getBoundingClientRect();
+      const scRect = sc.getBoundingClientRect();
+      const ecRect = ec.getBoundingClientRect();
+      const rowRect = row.getBoundingClientRect();
+      
+      const slider = document.createElement("div");
+      slider.className = "slider temp loading";
+      slider.style.cssText = `
+        left: ${scRect.left - containerRect.left + 1}px;
+        top: ${rowRect.top - containerRect.top + 1}px;
+        width: ${ecRect.right - scRect.left - 2}px;
+        height: ${rowRect.height - 2}px;
+        background: rgba(59, 110, 143, 0.7);
+        border: 1px solid #c9b16b;
+        pointer-events: none;
+      `;
+      
+      const timeDiv = document.createElement("div");
+      timeDiv.className = "sl-time";
+      timeDiv.textContent = "⏳ Сохранение...";
+      timeDiv.style.color = '#ffffff';
+      timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
+      slider.appendChild(timeDiv);
+      
+      const spinner = document.createElement("div");
+      spinner.className = "slider-spinner";
+      spinner.style.display = 'block';
+      slider.appendChild(spinner);
+      
+      container.appendChild(slider);
+      return slider;
     }
 
     // ==================== ОТРИСОВКА СЛАЙДЕРОВ ====================
@@ -2342,7 +2455,6 @@
         if (group.type === 'birthday') {
           timeDiv.textContent = "🎂 ДР";
         } else {
-          // Отображаем время на ползунке: начало - конец
           const startSlot = slots[startIdx];
           const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
           timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
@@ -2374,9 +2486,7 @@
       }
     }
 
-    // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА (ВРЕМЯ + ТИП) ====================
-    let activeSliderElement = null;
-
+    // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА ====================
     function openSliderContextMenu(x, y, booking, sliderElement) {
       contextSliderBooking = booking;
       activeSliderElement = sliderElement;
@@ -2389,7 +2499,6 @@
       startSelect.innerHTML = '';
       endSelect.innerHTML = '';
 
-      // Заполняем селекты
       slots.forEach((slot, index) => {
         const optStart = document.createElement('option');
         optStart.value = index;
@@ -2400,8 +2509,6 @@
         const optEnd = document.createElement('option');
         optEnd.value = index;
         optEnd.textContent = slot.label;
-        // В меню показываем КОНЕЦ = последний занятый слот + 1 (следующий слот)
-        // Чтобы пользователь видел конечное время правильно
         if (index === booking.endSlotIdx + 1) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
@@ -2434,7 +2541,6 @@
     function closeSliderContextMenu() {
       document.getElementById('sliderContextMenu').classList.remove('open');
       contextSliderBooking = null;
-      activeSliderElement = null;
     }
 
     async function applySliderChanges() {
@@ -2445,7 +2551,7 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
-      const newEndIdx = parseInt(endSelect.value) - 1; // Так как в меню мы показываем endSlotIdx + 1
+      const newEndIdx = parseInt(endSelect.value) - 1;
 
       if (newStartIdx >= newEndIdx) {
         alert('❌ Начало должно быть раньше конца');
@@ -2466,13 +2572,9 @@
       const newType = typeSelect.value;
       const isBirthday = newType === 'birthday';
 
-      // Сохраняем индексы
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
-      
-      // Вычисляем ключи для сервера
       booking.start = slots[newStartIdx].key;
-      // end = следующий слот после последнего занятого
       booking.end = slots[newEndIdx + 1]?.key || (slots[newEndIdx].key + 0.5);
       booking.type = isBirthday ? 'birthday' : 'regular';
       booking.comment = isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '';
@@ -2498,7 +2600,6 @@
 
       try {
         await sendPostAction('update', payload);
-        // Перезагружаем данные с сервера, чтобы получить обновленные интервалы
         await loadFromServer(currentSheetName);
         alert('✅ Время и тип события успешно изменены');
       } catch (e) {
@@ -2565,6 +2666,14 @@
         } else {
           const newBooking = { id: nextTempId++, lane: lane, startSlotIdx: startIdx, endSlotIdx: endIdx, type: 'regular' };
           tempBookings.push(newBooking);
+          // Показываем новый ползунок сразу с спинером
+          renderAllSliders();
+          // Находим последний созданный ползунок и добавляем ему спинер
+          const sliders = document.querySelectorAll('#slidersLayer .slider.temp');
+          if (sliders.length > 0) {
+            const lastSlider = sliders[sliders.length - 1];
+            setSliderLoading(lastSlider, true);
+          }
         }
         renderInlineTempCards();
         renderAllSliders();
