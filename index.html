@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    /* ВСЕ СТИЛИ ТЕ ЖЕ (опущены для краткости) */
+    /* ВСЕ СТИЛИ ТЕ ЖЕ (опущены для краткости, но в реальном коде должны быть полные стили) */
     * {
       margin: 0;
       padding: 0;
@@ -1324,7 +1324,7 @@
       }
     }
 
-    // ==================== ЗАГРУЗКА ДАННЫХ (ИСПРАВЛЕННАЯ) ====================
+    // ==================== ЗАГРУЗКА ДАННЫХ ====================
     async function loadStations() {
       try {
         const url = `${GAS_URL}?action=getStations`;
@@ -1371,7 +1371,7 @@
       }
     }
 
-    // ГЛАВНАЯ ФУНКЦИЯ ЗАГРУЗКИ - ИСПРАВЛЕННАЯ
+    // === ГЛАВНОЕ ИСПРАВЛЕНИЕ: загрузка данных с правильным сопоставлением ===
     async function loadFromServer(sheetName) {
       showLoad();
       try {
@@ -1379,16 +1379,17 @@
         const data = await jsonpRequest(url);
         if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
 
-        // СОЗДАЕМ КАРТУ СООТВЕТСТВИЯ ИМЯ СТАНЦИИ -> ИНДЕКС
+        // 1. Создаем карту: имя станции -> индекс в массиве stations
         const stationNameToIndex = {};
         stations.forEach((s, idx) => {
           const normalizedName = normalizeStationName(s.name);
           stationNameToIndex[normalizedName] = idx;
         });
 
-        console.log('=== СООТВЕТСТВИЕ СТАНЦИЙ ===');
+        console.log('=== КАРТА СТАНЦИЙ ===');
         console.log(stationNameToIndex);
 
+        // 2. Преобразуем данные из Google Sheets
         bookings = data.schedule ? data.schedule.map(b => {
           if (b.start === undefined || b.end === undefined) return null;
           let startKey = parseFloat(b.start);
@@ -1413,41 +1414,41 @@
 
           let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
           
-          // === ГЛАВНОЕ ИСПРАВЛЕНИЕ: Ищем станцию по ИМЕНИ ===
+          // === ГЛАВНОЕ: определяем индекс станции по ИМЕНИ ===
           let stationIdx = -1;
           
-          // 1. Сначала пытаемся найти по имени станции (самый надежный способ)
+          // 1. По имени станции (самый надежный способ)
           if (b.stationName) {
             const normalizedName = normalizeStationName(b.stationName);
             stationIdx = stationNameToIndex[normalizedName];
             if (stationIdx !== undefined) {
-              console.log(`Найдена станция по имени: "${b.stationName}" -> индекс ${stationIdx}`);
+              console.log(`✅ Найдена станция по имени: "${b.stationName}" -> индекс ${stationIdx}`);
             } else {
-              console.warn(`Станция не найдена по имени: "${b.stationName}"`);
+              console.warn(`⚠️ Станция НЕ найдена по имени: "${b.stationName}"`);
             }
           }
           
-          // 2. Если не нашли по имени, пробуем по номеру
+          // 2. По номеру станции (если не нашли по имени)
           if (stationIdx === -1 && b.stationNumber !== undefined) {
             stationIdx = b.stationNumber - 1;
-            console.log(`Используем номер станции: ${b.stationNumber} -> индекс ${stationIdx}`);
+            console.log(`📌 Используем номер станции: ${b.stationNumber} -> индекс ${stationIdx}`);
           }
           
-          // 3. Если все еще не нашли, пробуем по stationIndex
+          // 3. По stationIndex (если не нашли по имени и номеру)
           if (stationIdx === -1 && b.stationIndex !== undefined) {
             stationIdx = b.stationIndex;
-            console.log(`Используем stationIndex: ${b.stationIndex}`);
+            console.log(`📌 Используем stationIndex: ${b.stationIndex}`);
           }
           
-          // Проверяем, что индекс валидный
+          // Если станция не найдена - пропускаем запись
           if (stationIdx === -1 || stationIdx >= stations.length) {
-            console.error('СТАНЦИЯ НЕ НАЙДЕНА!', b);
+            console.error(`❌ СТАНЦИЯ НЕ НАЙДЕНА!`, b);
             return null;
           }
 
           return {
             id: b.id || Date.now() + Math.random(),
-            lane: stationIdx,  // Используем правильный индекс
+            lane: stationIdx,
             start: startKey,
             end: endKey,
             startSlotIdx: startSlotIdx,
@@ -1466,7 +1467,7 @@
           console.log(`ID: ${b.id}, lane: ${b.lane} -> станция: "${stationName}", время: ${fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx)}`);
         });
 
-        // ЗАГРУЗКА ГРУПП СОТРУДНИКОВ
+        // 3. Загружаем группы сотрудников
         if (data.employeeGroups && data.employeeGroups.length > 0) {
           employeeGroups = data.employeeGroups.map(g => {
             const stationIndices = (g.stations || []).map(num => {
@@ -2093,14 +2094,14 @@
         // === ВАЖНО: используем group.lane для поиска правильной строки ===
         let row = getRowByLane(group.lane);
         if (!row) {
-          console.warn(`Строка для lane ${group.lane} не найдена`);
+          console.warn(`⚠️ Строка для lane ${group.lane} не найдена`);
           continue;
         }
         
         let sc = row.cells[startIdx + 1];
         let ec = row.cells[endIdx + 1];
         if (!sc || !ec) {
-          console.warn(`Ячейки для lane ${group.lane} не найдены`);
+          console.warn(`⚠️ Ячейки для lane ${group.lane} не найдены`);
           continue;
         }
 
@@ -2172,7 +2173,8 @@
         slider.appendChild(dragHandle);
         container.appendChild(slider);
         
-        console.log(`✅ Ползунок создан для lane ${group.lane} (${stations[group.lane]?.name})`);
+        const stationName = stations[group.lane]?.name || 'НЕИЗВЕСТНО';
+        console.log(`✅ Ползунок создан для lane ${group.lane} (станция: "${stationName}")`);
       }
     }
 
