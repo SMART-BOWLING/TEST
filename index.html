@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    /* СТИЛИ ТЕ ЖЕ (опущены для краткости, но в реальном коде должны быть полные стили) */
+    /* ВСЕ СТИЛИ ТЕ ЖЕ (опущены для краткости) */
     * {
       margin: 0;
       padding: 0;
@@ -1230,6 +1230,11 @@
       return `${s.label}–${e.label}`;
     }
 
+    function normalizeStationName(name) {
+      if (!name) return '';
+      return name.toString().trim().replace(/\s+/g, ' ');
+    }
+
     function hasConflict(lane, startSlotIdx, endSlotIdx, excludeId = null) {
       return bookings.some(b => {
         if (excludeId !== null && b.id === excludeId) return false;
@@ -1319,7 +1324,7 @@
       }
     }
 
-    // ==================== ЗАГРУЗКА ДАННЫХ ====================
+    // ==================== ЗАГРУЗКА ДАННЫХ (ИСПРАВЛЕННАЯ) ====================
     async function loadStations() {
       try {
         const url = `${GAS_URL}?action=getStations`;
@@ -1366,6 +1371,7 @@
       }
     }
 
+    // ГЛАВНАЯ ФУНКЦИЯ ЗАГРУЗКИ - ИСПРАВЛЕННАЯ
     async function loadFromServer(sheetName) {
       showLoad();
       try {
@@ -1373,11 +1379,15 @@
         const data = await jsonpRequest(url);
         if (!data || !data.success) throw new Error(data?.message || "Ошибка загрузки данных");
 
-        // ИСПРАВЛЕНО: правильное сопоставление станций по имени
+        // СОЗДАЕМ КАРТУ СООТВЕТСТВИЯ ИМЯ СТАНЦИИ -> ИНДЕКС
         const stationNameToIndex = {};
         stations.forEach((s, idx) => {
-          stationNameToIndex[normalizeStationName(s.name)] = idx;
+          const normalizedName = normalizeStationName(s.name);
+          stationNameToIndex[normalizedName] = idx;
         });
+
+        console.log('=== СООТВЕТСТВИЕ СТАНЦИЙ ===');
+        console.log(stationNameToIndex);
 
         bookings = data.schedule ? data.schedule.map(b => {
           if (b.start === undefined || b.end === undefined) return null;
@@ -1403,28 +1413,41 @@
 
           let isBirthday = b.comment && b.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ';
           
-          // ИСПРАВЛЕНО: используем имя станции для поиска индекса
+          // === ГЛАВНОЕ ИСПРАВЛЕНИЕ: Ищем станцию по ИМЕНИ ===
           let stationIdx = -1;
-          if (b.stationIndex !== undefined) {
-            stationIdx = b.stationIndex;
-          } else if (b.stationName) {
+          
+          // 1. Сначала пытаемся найти по имени станции (самый надежный способ)
+          if (b.stationName) {
             const normalizedName = normalizeStationName(b.stationName);
             stationIdx = stationNameToIndex[normalizedName];
-            if (stationIdx === undefined) {
-              // Если не нашли по имени, пробуем по номеру
-              if (b.stationNumber) {
-                stationIdx = b.stationNumber - 1;
-              }
+            if (stationIdx !== undefined) {
+              console.log(`Найдена станция по имени: "${b.stationName}" -> индекс ${stationIdx}`);
+            } else {
+              console.warn(`Станция не найдена по имени: "${b.stationName}"`);
             }
-          } else if (b.stationNumber) {
-            stationIdx = b.stationNumber - 1;
           }
           
-          if (stationIdx === -1 || stationIdx >= stations.length) return null;
+          // 2. Если не нашли по имени, пробуем по номеру
+          if (stationIdx === -1 && b.stationNumber !== undefined) {
+            stationIdx = b.stationNumber - 1;
+            console.log(`Используем номер станции: ${b.stationNumber} -> индекс ${stationIdx}`);
+          }
+          
+          // 3. Если все еще не нашли, пробуем по stationIndex
+          if (stationIdx === -1 && b.stationIndex !== undefined) {
+            stationIdx = b.stationIndex;
+            console.log(`Используем stationIndex: ${b.stationIndex}`);
+          }
+          
+          // Проверяем, что индекс валидный
+          if (stationIdx === -1 || stationIdx >= stations.length) {
+            console.error('СТАНЦИЯ НЕ НАЙДЕНА!', b);
+            return null;
+          }
 
           return {
             id: b.id || Date.now() + Math.random(),
-            lane: stationIdx,
+            lane: stationIdx,  // Используем правильный индекс
             start: startKey,
             end: endKey,
             startSlotIdx: startSlotIdx,
@@ -1437,10 +1460,15 @@
           };
         }).filter(b => b !== null) : [];
 
-        // ИСПРАВЛЕНО: правильное сопоставление групп сотрудников
+        console.log('=== ЗАГРУЖЕННЫЕ ЗАПИСИ ===');
+        bookings.forEach(b => {
+          const stationName = stations[b.lane]?.name || 'НЕИЗВЕСТНО';
+          console.log(`ID: ${b.id}, lane: ${b.lane} -> станция: "${stationName}", время: ${fmtFromSlotIdx(b.startSlotIdx, b.endSlotIdx)}`);
+        });
+
+        // ЗАГРУЗКА ГРУПП СОТРУДНИКОВ
         if (data.employeeGroups && data.employeeGroups.length > 0) {
           employeeGroups = data.employeeGroups.map(g => {
-            // Преобразуем номера станций в индексы
             const stationIndices = (g.stations || []).map(num => {
               const idx = num - 1;
               if (idx >= 0 && idx < stations.length) return idx;
@@ -1468,11 +1496,6 @@
         alert("Ошибка загрузки: " + e.message);
       }
       hideLoad();
-    }
-
-    function normalizeStationName(name) {
-      if (!name) return '';
-      return name.toString().trim().replace(/\s+/g, ' ');
     }
 
     function onSheetChange() {
@@ -2066,11 +2089,20 @@
       for (const group of mergedItems) {
         let startIdx = group.startSlotIdx, endIdx = group.endSlotIdx;
         if (startIdx === undefined || endIdx === undefined) continue;
+        
+        // === ВАЖНО: используем group.lane для поиска правильной строки ===
         let row = getRowByLane(group.lane);
-        if (!row) continue;
+        if (!row) {
+          console.warn(`Строка для lane ${group.lane} не найдена`);
+          continue;
+        }
+        
         let sc = row.cells[startIdx + 1];
         let ec = row.cells[endIdx + 1];
-        if (!sc || !ec) continue;
+        if (!sc || !ec) {
+          console.warn(`Ячейки для lane ${group.lane} не найдены`);
+          continue;
+        }
 
         const containerRect = container.getBoundingClientRect();
         const scRect = sc.getBoundingClientRect();
@@ -2086,6 +2118,7 @@
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
+        slider.dataset.lane = group.lane;
         slider.dataset.groupId = group.id || Date.now() + Math.random();
 
         let groupColor = null;
@@ -2138,6 +2171,8 @@
         dragHandle.className = "drag-handle";
         slider.appendChild(dragHandle);
         container.appendChild(slider);
+        
+        console.log(`✅ Ползунок создан для lane ${group.lane} (${stations[group.lane]?.name})`);
       }
     }
 
