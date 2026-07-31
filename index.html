@@ -7,7 +7,6 @@
   <link rel="icon" type="image/png" href="https://res.cloudinary.com/dplmdnxvk/image/upload/v1785084364/uoozegmcoycvqkbxdtok.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    /* СТИЛИ ТЕ ЖЕ, ЧТО И В ПРЕДЫДУЩЕЙ ВЕРСИИ */
     * {
       margin: 0;
       padding: 0;
@@ -1354,6 +1353,7 @@
     }
 
     let contextSliderBooking = null;
+    let activeSliderElement = null;
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
     function escapeHtml(str) {
@@ -1413,6 +1413,13 @@
     function getEmployeeForLane(lane) {
       for (let group of employeeGroups) {
         if (group.stations && group.stations.includes(lane)) return group.name;
+      }
+      return null;
+    }
+
+    function getEmployeeGroupIdForLane(lane) {
+      for (let group of employeeGroups) {
+        if (group.stations && group.stations.includes(lane)) return group.id;
       }
       return null;
     }
@@ -1572,15 +1579,14 @@
           };
         }).filter(b => b !== null) : [];
 
-        // ВАЖНО: Всегда загружаем группы сотрудников с сервера, игнорируя кеш
-        if (data.employeeGroups && data.employeeGroups.length > 0) {
+        // Загружаем группы сотрудников с сервера
+        if (data.employeeGroups) {
           employeeGroups = data.employeeGroups;
           nextGroupId = Math.max(...employeeGroups.map(g => g.id)) + 1;
-          saveEmployeeGroups(); // Обновляем кеш
+          saveEmployeeGroups();
         } else {
-          // Если с сервера пришли пустые группы, очищаем локальные
           employeeGroups = [];
-          saveEmployeeGroups(); // Очищаем кеш
+          saveEmployeeGroups();
         }
         
         refreshGroupHeaders();
@@ -1597,7 +1603,6 @@
       const selector = document.getElementById('sheetSelector');
       currentSheetName = selector.value;
       if (currentSheetName) {
-        // При смене листа ОБЯЗАТЕЛЬНО загружаем свежие данные с сервера
         loadFromServer(currentSheetName);
         clearTempSelections();
       }
@@ -2123,6 +2128,13 @@
     function renderAllSliders() {
       let container = document.getElementById("slidersLayer");
       if (!container) return;
+      // Сохраняем текущее состояние загрузки ползунков
+      const loadingSliders = new Map();
+      container.querySelectorAll('.slider.loading').forEach(el => {
+        const key = el.dataset.bookingKey || el.querySelector('.sl-time')?.textContent || '';
+        if (key) loadingSliders.set(key, true);
+      });
+      
       container.innerHTML = "";
 
       const allItems = [...bookings, ...tempBookings.map(t => ({ ...t, isTemp: true }))];
@@ -2147,7 +2159,8 @@
               isTemp: item.isTemp || false,
               confirmed: item.confirmed,
               type: item.type || 'regular',
-              comment: item.comment || ''
+              comment: item.comment || '',
+              id: item.id || Date.now() + Math.random()
             };
           } else {
             const nextStart = item.startSlotIdx;
@@ -2169,7 +2182,8 @@
                 isTemp: item.isTemp || false,
                 confirmed: item.confirmed,
                 type: item.type || 'regular',
-                comment: item.comment || ''
+                comment: item.comment || '',
+                id: item.id || Date.now() + Math.random()
               };
             }
           }
@@ -2203,6 +2217,12 @@
 
         let slider = document.createElement("div");
         slider.className = `slider ${status}`;
+        // Сохраняем ключ для восстановления состояния загрузки
+        const sliderKey = `${group.lane}_${startIdx}_${endIdx}`;
+        slider.dataset.bookingKey = sliderKey;
+        if (loadingSliders.has(sliderKey)) {
+          slider.classList.add('loading');
+        }
 
         let groupColor = null;
         for (const g of employeeGroups) {
@@ -2246,7 +2266,7 @@
           }
           if (group.items && group.items.length > 0) {
             const booking = group.items[0];
-            openSliderContextMenu(e.clientX, e.clientY, booking);
+            openSliderContextMenu(e.clientX, e.clientY, booking, slider);
           }
         });
 
@@ -2258,8 +2278,9 @@
     }
 
     // ==================== КОНТЕКСТНОЕ МЕНЮ ДЛЯ СЛАЙДЕРА ====================
-    function openSliderContextMenu(x, y, booking) {
+    function openSliderContextMenu(x, y, booking, sliderElement) {
       contextSliderBooking = booking;
+      activeSliderElement = sliderElement;
 
       const menu = document.getElementById('sliderContextMenu');
       const startSelect = document.getElementById('ctxStartSelect');
@@ -2351,8 +2372,15 @@
 
       const stationName = stations[booking.lane]?.name || `Станция ${booking.lane+1}`;
 
+      // Закрываем меню
       closeSliderContextMenu();
 
+      // Показываем спинер на ползунке
+      if (activeSliderElement) {
+        activeSliderElement.classList.add('loading');
+      }
+
+      // Мгновенно обновляем отображение
       renderAllSliders();
       updateCellsHighlight();
 
@@ -2369,7 +2397,14 @@
         showNotification('✅ Время и тип события успешно изменены', 'success');
       } catch (e) {
         alert('❌ Ошибка синхронизации с сервером: ' + e.message);
+        // Откатываем изменения
         await loadFromServer(currentSheetName);
+      } finally {
+        // Убираем спинер
+        if (activeSliderElement) {
+          activeSliderElement.classList.remove('loading');
+        }
+        activeSliderElement = null;
       }
     }
 
