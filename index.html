@@ -2452,9 +2452,6 @@
         if (group.type === 'birthday') {
           timeDiv.textContent = "🎂 ДР";
         } else {
-          const startSlot = slots[startIdx];
-          const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
-          // Используем fmtFromSlotIdx для единообразного форматирования
           const timeStr = fmtFromSlotIdx(startIdx, endIdx);
           timeDiv.textContent = timeStr;
         }
@@ -2493,26 +2490,31 @@
       startSelect.innerHTML = '';
       endSelect.innerHTML = '';
 
+      // Заполняем список начала
       slots.forEach((slot, index) => {
         const optStart = document.createElement('option');
         optStart.value = index;
         optStart.textContent = slot.label;
         if (index === booking.startSlotIdx) optStart.selected = true;
         startSelect.appendChild(optStart);
+      });
 
+      // Заполняем список конца - ПРАВИЛЬНО показываем endSlotIdx + 1
+      slots.forEach((slot, index) => {
         const optEnd = document.createElement('option');
         optEnd.value = index;
         optEnd.textContent = slot.label;
+        // ВЫБИРАЕМ endSlotIdx + 1 (следующий слот после окончания)
         if (index === booking.endSlotIdx + 1) optEnd.selected = true;
         endSelect.appendChild(optEnd);
       });
 
-      // Функция для обновления доступных опций конца
       function updateEndOptions() {
         const startVal = parseInt(startSelect.value);
         Array.from(endSelect.options).forEach(opt => {
           opt.disabled = parseInt(opt.value) <= startVal;
         });
+        // Если выбранное значение конца меньше или равно началу, сдвигаем на 1
         if (parseInt(endSelect.value) <= startVal) {
           endSelect.value = startVal + 1;
         }
@@ -2523,12 +2525,10 @@
       const isBirthday = booking.type === 'birthday' || (booking.comment && booking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       typeSelect.value = isBirthday ? 'birthday' : 'regular';
 
-      // Позиционируем меню
       menu.style.left = Math.min(x, window.innerWidth - 280) + 'px';
       menu.style.top = Math.min(y, window.innerHeight - 320) + 'px';
       menu.classList.add('open');
       
-      // Применяем ограничения сразу
       updateEndOptions();
     }
 
@@ -2545,6 +2545,8 @@
       const typeSelect = document.getElementById('ctxTypeSelect');
 
       const newStartIdx = parseInt(startSelect.value);
+      // ПРАВИЛЬНО: endSelect.value - это слот КОНЦА (следующий после последнего занятого)
+      // Поэтому endSlotIdx = endSelect.value - 1
       const newEndIdx = parseInt(endSelect.value) - 1;
 
       if (newStartIdx >= newEndIdx) {
