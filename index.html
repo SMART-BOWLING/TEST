@@ -2454,18 +2454,9 @@
         } else {
           const startSlot = slots[startIdx];
           const endSlot = slots[endIdx + 1] || { label: `${Math.floor(slots[endIdx].key) + 1}:00` };
-          const duration = endIdx - startIdx + 1;
-          if (duration >= 2) {
-            const startHour = startSlot.hour;
-            const endHour = endSlot.hour + (endSlot.minute === 30 ? 0.5 : 0);
-            if (endSlot.minute === 30) {
-              timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:30`;
-            } else {
-              timeDiv.textContent = `${startHour}:00-${Math.floor(endHour)}:00`;
-            }
-          } else {
-            timeDiv.textContent = `${startSlot.label}–${endSlot.label}`;
-          }
+          // Используем fmtFromSlotIdx для единообразного форматирования
+          const timeStr = fmtFromSlotIdx(startIdx, endIdx);
+          timeDiv.textContent = timeStr;
         }
         timeDiv.style.color = '#ffffff';
         timeDiv.style.textShadow = '0 1px 3px rgba(0,0,0,0.3)';
@@ -2516,24 +2507,29 @@
         endSelect.appendChild(optEnd);
       });
 
-      startSelect.onchange = function() {
-        const startVal = parseInt(this.value);
+      // Функция для обновления доступных опций конца
+      function updateEndOptions() {
+        const startVal = parseInt(startSelect.value);
         Array.from(endSelect.options).forEach(opt => {
           opt.disabled = parseInt(opt.value) <= startVal;
         });
         if (parseInt(endSelect.value) <= startVal) {
           endSelect.value = startVal + 1;
         }
-      };
+      }
+
+      startSelect.onchange = updateEndOptions;
       
       const isBirthday = booking.type === 'birthday' || (booking.comment && booking.comment.toUpperCase() === 'ДЕНЬ РОЖДЕНИЯ');
       typeSelect.value = isBirthday ? 'birthday' : 'regular';
 
+      // Позиционируем меню
       menu.style.left = Math.min(x, window.innerWidth - 280) + 'px';
       menu.style.top = Math.min(y, window.innerHeight - 320) + 'px';
       menu.classList.add('open');
       
-      startSelect.onchange();
+      // Применяем ограничения сразу
+      updateEndOptions();
     }
 
     function closeSliderContextMenu() {
