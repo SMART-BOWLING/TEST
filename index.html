@@ -1447,7 +1447,7 @@
   <div id="assignBar" class="assign-bar" style="display: none;"></div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz6t8rXFgp6PXA04c__btOZ_L1M8tMeAHj28Kz1mquW7T_KrGft3nZ6meBF3QkjsWz0/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz74eYNdyznIMDysAllN1cPhT1E3tAcYcDAgYqUHdmNAhWby7LVj34CZEN8EaiHRo-7/exec";
 
     let stations = [];
     let currentSheetName = '';
@@ -2499,6 +2499,14 @@
       const newType = typeSelect.value;
       const isBirthday = newType === 'birthday';
 
+      // Сохраняем старые значения для отката
+      const oldStart = booking.start;
+      const oldEnd = booking.end;
+      const oldComment = booking.comment;
+      const oldStartIdx = booking.startSlotIdx;
+      const oldEndIdx = booking.endSlotIdx;
+
+      // Обновляем локальный объект
       booking.startSlotIdx = newStartIdx;
       booking.endSlotIdx = newEndIdx;
       booking.start = slots[newStartIdx].key;
@@ -2517,14 +2525,38 @@
         sheetName: currentSheetName
       };
 
+      console.log('📤 Отправляем на сервер:', payload);
+
       setButtonLoading('ctxApplyBtn', true);
       try {
-        await sendPostAction('update', payload);
-        renderAllSliders();
-        updateCellsHighlight();
-        closeSliderContextMenu();
-        alert('✅ Время и тип события успешно изменены');
+        const result = await sendPostAction('update', payload);
+        console.log('📥 Ответ сервера:', result);
+        
+        if (result && result.success) {
+          // Перезагружаем данные с сервера
+          await loadFromServer(currentSheetName);
+          renderAllSliders();
+          updateCellsHighlight();
+          closeSliderContextMenu();
+          alert('✅ Время и тип события успешно изменены');
+        } else {
+          // Откатываем изменения
+          booking.start = oldStart;
+          booking.end = oldEnd;
+          booking.comment = oldComment;
+          booking.startSlotIdx = oldStartIdx;
+          booking.endSlotIdx = oldEndIdx;
+          renderAllSliders();
+          alert('❌ Ошибка сохранения: ' + (result?.message || 'Неизвестная ошибка'));
+        }
       } catch (e) {
+        // Откатываем изменения
+        booking.start = oldStart;
+        booking.end = oldEnd;
+        booking.comment = oldComment;
+        booking.startSlotIdx = oldStartIdx;
+        booking.endSlotIdx = oldEndIdx;
+        renderAllSliders();
         alert('❌ Ошибка сохранения: ' + e.message);
       } finally {
         setButtonLoading('ctxApplyBtn', false);
