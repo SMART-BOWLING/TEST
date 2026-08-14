@@ -1487,7 +1487,7 @@
 
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxCBIZIYK2o2xfKnSVirNeNfhYDLQyWlub4yWyqTwTL6vt_RXCyp5K7XBaPnF4xanjb/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzXT-aOgUNVgSHOMoZ7KJwQoDLMAe90pXicspx42f-Shot8_NKQmoagHfTWiW4S23Pt/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1740,18 +1740,6 @@
         document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
       } finally {
         setSelectLoading(false);
-      }
-    }
-
-    // ==================== ПОЛУЧЕНИЕ ИНФОРМАЦИИ О ЛИСТЕ ====================
-    async function getSheetInfo() {
-      try {
-        const url = `${GAS_URL}?action=getSheetInfo&sheetName=${encodeURIComponent(currentSheetName)}`;
-        const data = await jsonpRequest(url);
-        return data;
-      } catch (e) {
-        console.error('Error getting sheet info:', e);
-        return null;
       }
     }
 
@@ -2298,12 +2286,9 @@
       setButtonLoading('btnSubmitBooking', true);
       try {
         const allStations = getAllStationsData();
+        const timestamp = Date.now();
         
-        // Получаем номер следующей строки в таблице
-        const sheetInfo = await getSheetInfo();
-        let nextRow = sheetInfo && sheetInfo.success ? sheetInfo.nextRow : 1;
-        
-        const scheduleData = tempBookings.map(tb => {
+        const scheduleData = tempBookings.map((tb, index) => {
           const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
           const endSlotIdx = tb.endSlotIdx + 1;
           const endTime = slots[endSlotIdx] ? slots[endSlotIdx].key : (slots[tb.endSlotIdx] ? slots[tb.endSlotIdx].key + 0.5 : null);
@@ -2311,9 +2296,8 @@
           const isBirthday = eventType === 'birthday';
           const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
           
-          // Генерируем ID в формате r{номер_строки}_{время_начала}
-          const rowNum = nextRow++;
-          const bookingId = `r${rowNum}_${startTime}`;
+          // Генерируем уникальный ID на основе timestamp и индекса
+          const bookingId = `b_${timestamp}_${index}`;
           
           return {
             sheetName: currentSheetName,
@@ -2331,6 +2315,8 @@
 
         if (scheduleData.length === 0) { alert("Нет корректных записей для сохранения"); return; }
 
+        console.log('📤 Отправляем на сервер:', scheduleData);
+
         const payload = {
           schedule: scheduleData,
           allStations: allStations,
@@ -2342,6 +2328,8 @@
         };
 
         const result = await sendPostAction('addSchedule', payload);
+        console.log('📥 Ответ сервера:', result);
+        
         if (result && result.success !== false) {
           clearTempSelections();
           await loadFromServer(currentSheetName);
