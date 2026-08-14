@@ -1487,7 +1487,7 @@
 
   <script>
     // ==================== КОНФИГУРАЦИЯ ====================
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyqIi0Pv5HPQDmtR8rCOg10-XZx8Q5s-Aj-7-4_Y3CtzMiTNd6kUUSJ1JRQggV5t4fe/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxCBIZIYK2o2xfKnSVirNeNfhYDLQyWlub4yWyqTwTL6vt_RXCyp5K7XBaPnF4xanjb/exec";
 
     // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
     let stations = [];
@@ -1740,6 +1740,18 @@
         document.getElementById('sheetSelector').innerHTML = '<option value="">Ошибка загрузки</option>';
       } finally {
         setSelectLoading(false);
+      }
+    }
+
+    // ==================== ПОЛУЧЕНИЕ ИНФОРМАЦИИ О ЛИСТЕ ====================
+    async function getSheetInfo() {
+      try {
+        const url = `${GAS_URL}?action=getSheetInfo&sheetName=${encodeURIComponent(currentSheetName)}`;
+        const data = await jsonpRequest(url);
+        return data;
+      } catch (e) {
+        console.error('Error getting sheet info:', e);
+        return null;
       }
     }
 
@@ -2286,6 +2298,11 @@
       setButtonLoading('btnSubmitBooking', true);
       try {
         const allStations = getAllStationsData();
+        
+        // Получаем номер следующей строки в таблице
+        const sheetInfo = await getSheetInfo();
+        let nextRow = sheetInfo && sheetInfo.success ? sheetInfo.nextRow : 1;
+        
         const scheduleData = tempBookings.map(tb => {
           const startTime = slots[tb.startSlotIdx] ? slots[tb.startSlotIdx].key : null;
           const endSlotIdx = tb.endSlotIdx + 1;
@@ -2293,6 +2310,11 @@
           if (startTime === null || endTime === null) return null;
           const isBirthday = eventType === 'birthday';
           const stationName = stations[tb.lane]?.name || `Станция ${tb.lane+1}`;
+          
+          // Генерируем ID в формате r{номер_строки}_{время_начала}
+          const rowNum = nextRow++;
+          const bookingId = `r${rowNum}_${startTime}`;
+          
           return {
             sheetName: currentSheetName,
             stationNumber: tb.lane + 1,
@@ -2302,7 +2324,8 @@
             name: '',
             phone: '',
             comment: isBirthday ? 'ДЕНЬ РОЖДЕНИЯ' : '',
-            type: eventType
+            type: eventType,
+            id: bookingId
           };
         }).filter(item => item !== null);
 
