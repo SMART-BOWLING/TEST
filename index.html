@@ -3,449 +3,383 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<title>Управление светом</title>
+<title>Light Control — Minimal</title>
 <style>
 :root{
   color-scheme:dark;
-  font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
-  background:#080b12;color:#f5f7fc;
-  -webkit-tap-highlight-color:transparent;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#07090f;
+  --card:#0f131d;
+  --card2:#101622;
+  --line:#ffffff14;
+  --text:#f4f7ff;
+  --muted:#8b94aa;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{
-  height:100%;
   margin:0;
+  width:100%;
+  height:100%;
   overflow:hidden;
-  overscroll-behavior:none;
   touch-action:manipulation;
-  -webkit-user-select:none;
-  user-select:none;
+  overscroll-behavior:none;
 }
 body{
   background:
-    radial-gradient(circle at 17% 6%,#222849 0,transparent 35%),
-    radial-gradient(circle at 94% 78%,#272036 0,transparent 34%),
-    #080b12;
-  padding:clamp(10px,2.2vh,28px) clamp(10px,2vw,24px);
-  display:flex;align-items:center;justify-content:center;
+    radial-gradient(circle at 20% 10%,#27305555 0,transparent 38%),
+    radial-gradient(circle at 90% 90%,#31224d44 0,transparent 32%),
+    var(--bg);
+  color:var(--text);
 }
-.shell{
-  width:min(1020px,100%);
-  height:100%;
+.app{
+  height:100dvh;
+  height:100svh;
+  padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom)) 10px;
   display:flex;
-  flex-direction:column;
+  align-items:stretch;
 }
-
 .grid{
+  flex:1;
   display:grid;
   grid-template-columns:1fr 1fr;
-  grid-template-rows:1fr;
-  gap:clamp(10px,1.4vw,20px);
-  flex:1;
+  gap:10px;
   min-height:0;
-  min-width:0;
 }
-
-.panel{
-  position:relative;isolation:isolate;overflow:hidden;
-  border:1px solid #ffffff20;border-radius:clamp(20px,3vh,32px);
-  background:linear-gradient(145deg,#ffffff13,#ffffff04 55%,#ffffff09);
-  box-shadow:0 20px 70px #0007,inset 0 1px #ffffff1a;
-  padding:clamp(14px,2vh,24px);
-  --glow:#ffc37e;
-  transition:border-color .3s, box-shadow .3s;
+.card{
+  --accent:#ffc58a;
+  position:relative;
+  min-width:0;
+  min-height:0;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:linear-gradient(160deg,#151b28dd,#0d111add 58%,#0b0e16);
+  box-shadow:0 18px 40px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.06);
+  padding:12px 12px 10px;
   display:flex;
   flex-direction:column;
-  gap:clamp(8px,1.4vh,16px);
-  min-height:0;
-  min-width:0;
+  overflow:hidden;
+  isolation:isolate;
 }
-.panel.secondary{--glow:#b4a4ff}
-.panel:before{
-  content:"";position:absolute;width:280px;height:280px;top:10%;left:50%;
-  transform:translateX(-50%);background:var(--glow);opacity:.12;filter:blur(85px);
-  z-index:-1;pointer-events:none;transition:opacity .3s;
+.card::before{
+  content:"";
+  position:absolute;
+  inset:auto 12% 38% 12%;
+  height:34%;
+  background:var(--accent);
+  opacity:.14;
+  filter:blur(58px);
+  z-index:-1;
+  transition:opacity .25s;
 }
-.panel.off:before{opacity:0}
-
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none}
-.room{display:flex;align-items:center;gap:clamp(8px,1.2vh,12px);min-width:0}
-.symbol{
+.card.secondary{--accent:#b9a7ff}
+.card.off::before{opacity:.03}
+.top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:6px;
+}
+.title-wrap{display:flex;align-items:center;gap:8px;min-width:0}
+.icon{
+  width:30px;height:30px;flex:none;
   display:grid;place-items:center;
-  width:clamp(34px,5vh,44px);height:clamp(34px,5vh,44px);
-  border-radius:clamp(11px,1.6vh,15px);
-  background:#ffffff13;border:1px solid #ffffff12;
-  font-size:clamp(16px,2.4vh,22px);flex:none;
-  transition:background .3s;
+  border-radius:11px;
+  background:#ffffff0b;
+  border:1px solid #ffffff10;
+  color:var(--accent);
+  font-size:16px;
 }
-.panel:not(.off) .symbol{background:color-mix(in srgb,var(--glow),transparent 82%)}
+.title{min-width:0}
 .name{
-  font-size:clamp(13px,2vh,17px);font-weight:740;letter-spacing:-.03em;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .sub{
-  font-size:clamp(9px,1.3vh,11px);color:#8b96ac;margin-top:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:10px;
+  color:var(--muted);
+  margin-top:1px;
 }
-.sub b{color:#c9d2e3;font-weight:600}
-
 .toggle{
-  width:clamp(44px,6.4vh,56px);height:clamp(25px,3.7vh,32px);
-  border-radius:20px;background:#2d3444;border:1px solid #ffffff1a;
-  padding:3px;cursor:pointer;transition:.2s;flex:none;position:relative;
-}
-.toggle i{
-  display:block;
-  width:clamp(17px,2.5vh,22px);height:clamp(17px,2.5vh,22px);
-  border-radius:50%;background:#828ca2;
+  width:42px;height:24px;border-radius:999px;border:1px solid #ffffff15;
+  background:#2a3142;position:relative;flex:none;cursor:pointer;
   transition:.2s;
 }
-.toggle.on{background:var(--glow);box-shadow:0 0 22px color-mix(in srgb,var(--glow),transparent 65%)}
-.toggle.on i{
-  transform:translateX(calc(clamp(44px,6.4vh,56px) - clamp(17px,2.5vh,22px) - 8px));
-  background:#191b23;
+.toggle::before{
+  content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;
+  background:#8892a8;transition:.2s;
 }
-.toggle:focus-visible{outline:2px solid white;outline-offset:4px}
-
-/* Диск */
+.toggle.on{
+  background:var(--accent);
+  box-shadow:0 0 16px color-mix(in srgb,var(--accent),transparent 68%);
+}
+.toggle.on::before{transform:translateX(18px);background:#161b26}
 .dial-wrap{
   flex:1;
   min-height:0;
-  min-width:0;
   display:grid;
   place-items:center;
-  padding-top:clamp(4px,1vh,16px);
-  overflow:hidden;
+  padding:2px 0 6px;
 }
 .dial{
-  /* Размер ограничен ТОЛЬКО контейнером dial-wrap, без vh —
-     поэтому круг всегда влезает в свободное место и не заходит под ползунок. */
-  width:min(100%, 260px);
-  height:min(100%, 260px);
-  max-width:100%;
-  max-height:100%;
+  width:min(100%,43vw);
+  max-width:182px;
+  min-width:138px;
   aspect-ratio:1;
-  position:relative;border-radius:50%;
-  --start:135deg;
-  --arc:0deg;
-  background:conic-gradient(
-    from var(--start),
-    var(--glow) 0deg,
-    var(--glow) var(--arc),
-    #293043 var(--arc),
-    #293043 270deg,
-    transparent 270deg,
-    transparent 360deg
-  );
-  display:grid;place-items:center;cursor:pointer;touch-action:none;
-  filter:drop-shadow(0 0 23px color-mix(in srgb,var(--glow),transparent 83%));
-  outline:none;user-select:none;
-  transition:filter .3s;
+  position:relative;
+  touch-action:none;
+  outline:none;
 }
-.dial.dragging{cursor:grabbing;filter:drop-shadow(0 0 30px color-mix(in srgb,var(--glow),transparent 70%))}
-.dial:focus-visible{outline:2px solid white;outline-offset:6px}
-.dial:before{
-  content:"";position:absolute;inset:8%;
-  background:linear-gradient(145deg,#1c2230,#0e121b);border-radius:50%;
-  box-shadow:inset 0 5px 15px #0008,0 0 0 1px #ffffff12;
+.dial svg{width:100%;height:100%;display:block;overflow:visible}
+.track{fill:none;stroke:#293041;stroke-width:10;stroke-linecap:round}
+.progress{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;filter:drop-shadow(0 0 9px var(--accent))}
+.thumb{fill:#fff;stroke:var(--accent);stroke-width:4.5;filter:drop-shadow(0 0 8px var(--accent))}
+.inner{
+  position:absolute;inset:19%;border-radius:50%;
+  background:linear-gradient(150deg,#171d2b,#0d121b);
+  border:1px solid #ffffff10;
+  box-shadow:inset 0 8px 22px rgba(0,0,0,.34);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
 }
-.dial-center{z-index:1;text-align:center;pointer-events:none;line-height:1}
-.percent{
-  font-size:clamp(28px,8vh,60px);font-weight:700;letter-spacing:-.09em;line-height:1;
+.value{font-size:clamp(26px,8.5vw,42px);font-weight:800;letter-spacing:-.08em;line-height:1}
+.value span{font-size:.42em;vertical-align:super;color:#9aa4b8;margin-left:2px}
+.caption{font-size:9px;font-weight:700;letter-spacing:.18em;color:#7f8aa1;margin-top:4px}
+.bottom{flex:none}
+.temp-head{
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  margin-bottom:8px;
 }
-.percent span{font-size:.42em;vertical-align:top;margin-left:3px;color:#a7afc0;letter-spacing:0}
-.dial-label{
-  color:#929cb0;font-size:clamp(8px,1.2vh,11px);margin-top:clamp(4px,0.8vh,10px);
-  letter-spacing:.2em;text-transform:uppercase;font-weight:800;
+.temp-head span{font-size:9px;color:#7f8aa1;letter-spacing:.12em;font-weight:700}
+.temp-head b{font-size:11px;font-weight:700}
+.range{
+  appearance:none;width:100%;margin:0;height:10px;border-radius:999px;
+  background:linear-gradient(90deg,#ff955a,#ffd49c 34%,#fff1de 55%,#bbdfff 76%,#79b1ff);
+  border:1px solid #ffffff2e;
 }
-
-.temperature{
-  flex:none;
-  border:1px solid #ffffff16;background:#080e1780;
-  border-radius:clamp(14px,2.4vh,22px);
-  padding:clamp(8px,1.4vh,16px) clamp(10px,1.6vw,18px);
-  transition:opacity .3s;
+.range::-webkit-slider-thumb{
+  appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid #171d29;
+  box-shadow:0 0 0 2px #ffffffbb,0 4px 10px rgba(0,0,0,.5);
 }
-.temp-top{
-  display:flex;justify-content:space-between;align-items:center;gap:8px;
-  font-size:clamp(9px,1.3vh,12px);color:#97a2b8;
+.range::-moz-range-thumb{
+  width:12px;height:12px;border-radius:50%;background:#fff;border:4px solid #171d29;
+  box-shadow:0 0 0 2px #ffffffbb,0 4px 10px rgba(0,0,0,.5);
 }
-.temp-top strong{
-  font-size:clamp(10px,1.4vh,13px);color:#fff;font-weight:650;
-  display:flex;align-items:center;gap:6px;
+.ends{display:flex;justify-content:space-between;margin-top:7px;color:#7f8aa1;font-size:9px}
+.mini-note{
+  height:48px;display:grid;place-items:center;color:#7f8aa1;font-size:10px;letter-spacing:.08em;
+  border-top:1px solid #ffffff0f;margin-top:2px;
 }
-.temp-dot{width:8px;height:8px;border-radius:50%;background:#ffc18a;box-shadow:0 0 12px currentColor;color:#ffc18a;flex:none}
-.temp-range{
-  width:100%;
-  margin:clamp(8px,1.4vh,16px) 0 clamp(6px,1vh,12px);
-  appearance:none;
-  height:clamp(8px,1.6vh,14px);border-radius:50px;
-  background:linear-gradient(90deg,#ff8a47,#ffbb79 28%,#fff1d8 54%,#b9d8ff 75%,#75baff);
-  cursor:pointer;border:1px solid #ffffff50;
-}
-.temp-range:focus-visible{outline:2px solid white;outline-offset:4px}
-.temp-range::-webkit-slider-thumb{
-  appearance:none;
-  width:clamp(18px,2.8vh,28px);height:clamp(18px,2.8vh,28px);
-  border:5px solid #141924;
-  box-shadow:0 0 0 2px white,0 4px 12px #0009;
-  background:white;border-radius:50%;
-}
-.temp-range::-moz-range-thumb{
-  width:clamp(14px,2.2vh,20px);height:clamp(14px,2.2vh,20px);
-  border:5px solid #141924;box-shadow:0 0 0 2px white;
-  background:white;border-radius:50%;
-}
-.endpoints{
-  display:flex;justify-content:space-between;color:#8995aa;
-  font-size:clamp(8px,1.2vh,11px);
-}
-
-.panel.off .dial{filter:grayscale(1) brightness(.55)}
-.panel.off .temperature{opacity:.45}
-.panel.off .dial,.panel.off .temperature{pointer-events:none}
-.panel.off .toggle{pointer-events:auto}
-
-@media (max-width:720px){
-  .grid{
-    grid-template-columns:1fr;
-    grid-template-rows:1fr 1fr;
-  }
-  .panel{padding:clamp(12px,1.8vh,18px)}
-  .temperature{padding:clamp(8px,1.2vh,14px) clamp(10px,3vw,16px)}
-}
-@media (prefers-reduced-motion:reduce){
-  *{transition:none!important;animation:none!important}
+.card.off .dial-wrap,.card.off .bottom{opacity:.34;filter:grayscale(1);pointer-events:none}
+@media (max-width:380px){
+  .card{padding:10px 10px 8px;border-radius:21px}
+  .dial{width:min(100%,41vw);min-width:126px}
+  .name{font-size:11px}
+  .sub{font-size:9px}
 }
 </style>
 </head>
 <body>
-<main class="shell">
+<div class="app">
   <section class="grid">
-    <article class="panel" data-light="main">
-      <div class="panel-head">
-        <div class="room">
-          <div class="symbol">☼</div>
-          <div>
-            <div class="name">Основной свет</div>
-            <div class="sub" data-status>Вкл · <b data-status-pct>72%</b></div>
+    <article class="card" data-name="main" data-value="72">
+      <div class="top">
+        <div class="title-wrap">
+          <div class="icon">☼</div>
+          <div class="title">
+            <div class="name">Основной</div>
+            <div class="sub">Вкл · <span class="status-value">72%</span></div>
           </div>
         </div>
-        <button class="toggle on" type="button"
-                aria-label="Выключить основной свет" aria-pressed="true"><i></i></button>
+        <button class="toggle on" type="button" aria-label="Переключить основной свет" aria-pressed="true"></button>
       </div>
 
       <div class="dial-wrap">
-        <div class="dial" role="slider" tabindex="0"
-             aria-label="Яркость основного света"
-             aria-valuemin="0" aria-valuemax="100" aria-valuenow="72"
-             aria-valuetext="72 процента">
-          <div class="dial-center">
-            <div class="percent" aria-hidden="true">72<span>%</span></div>
-            <div class="dial-label">Яркость</div>
+        <div class="dial" role="slider" tabindex="0" aria-label="Яркость основного света" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+          <svg viewBox="0 0 240 240" aria-hidden="true">
+            <path class="track"></path>
+            <path class="progress"></path>
+            <circle class="thumb" r="7"></circle>
+          </svg>
+          <div class="inner">
+            <div class="value">72<span>%</span></div>
+            <div class="caption">ЯРКОСТЬ</div>
           </div>
         </div>
       </div>
 
-      <div class="temperature">
-        <div class="temp-top">
-          <span>ТЕМПЕРАТУРА СВЕТА</span>
-          <strong><span class="temp-dot" aria-hidden="true"></span><span class="kelvin">3800 K</span></strong>
-        </div>
-        <input class="temp-range" aria-label="Температура основного света"
-               type="range" min="2700" max="6500" step="100" value="3800">
-        <div class="endpoints"><span>☀ Тёплый</span><span>Холодный ❄</span></div>
+      <div class="bottom">
+        <div class="temp-head"><span>ТЕМПЕРАТУРА</span><b class="kelvin">3800 K</b></div>
+        <input class="range" type="range" min="2700" max="6500" step="100" value="3800" aria-label="Температура света">
+        <div class="ends"><span>Тёплый</span><span>Холодный</span></div>
       </div>
     </article>
 
-    <article class="panel secondary" data-light="accent">
-      <div class="panel-head">
-        <div class="room">
-          <div class="symbol">✦</div>
-          <div>
-            <div class="name">Дополнительный свет</div>
-            <div class="sub" data-status>Вкл · <b data-status-pct>45%</b></div>
+    <article class="card secondary" data-name="accent" data-value="45">
+      <div class="top">
+        <div class="title-wrap">
+          <div class="icon">✦</div>
+          <div class="title">
+            <div class="name">Доп.</div>
+            <div class="sub">Вкл · <span class="status-value">45%</span></div>
           </div>
         </div>
-        <button class="toggle on" type="button"
-                aria-label="Выключить дополнительный свет" aria-pressed="true"><i></i></button>
+        <button class="toggle on" type="button" aria-label="Переключить дополнительный свет" aria-pressed="true"></button>
       </div>
 
       <div class="dial-wrap">
-        <div class="dial" role="slider" tabindex="0"
-             aria-label="Яркость дополнительного света"
-             aria-valuemin="0" aria-valuemax="100" aria-valuenow="45"
-             aria-valuetext="45 процентов">
-          <div class="dial-center">
-            <div class="percent" aria-hidden="true">45<span>%</span></div>
-            <div class="dial-label">Яркость</div>
+        <div class="dial" role="slider" tabindex="0" aria-label="Яркость дополнительного света" aria-valuemin="0" aria-valuemax="100" aria-valuenow="45">
+          <svg viewBox="0 0 240 240" aria-hidden="true">
+            <path class="track"></path>
+            <path class="progress"></path>
+            <circle class="thumb" r="7"></circle>
+          </svg>
+          <div class="inner">
+            <div class="value">45<span>%</span></div>
+            <div class="caption">ЯРКОСТЬ</div>
           </div>
         </div>
+      </div>
+
+      <div class="bottom">
+        <div class="mini-note">Только яркость</div>
       </div>
     </article>
   </section>
-</main>
+</div>
 
 <script>
 (() => {
   'use strict';
 
-  const ARC_START = 135;
-  const ARC_SPAN  = 270;
+  const CENTER = 120;
+  const RADIUS = 90;
+  const START = 135;
+  const SPAN = 270;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  function pluralPct(n) {
-    const n10 = n % 10, n100 = n % 100;
-    if (n10 === 1 && n100 !== 11) return n + ' процент';
-    if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return n + ' процента';
-    return n + ' процентов';
-  }
+  const point = deg => ({
+    x: CENTER + RADIUS * Math.sin(deg * Math.PI / 180),
+    y: CENTER - RADIUS * Math.cos(deg * Math.PI / 180)
+  });
 
-  function angleToValue(x, y, dial, current) {
-    const r = dial.getBoundingClientRect();
-    const dx = x - (r.left + r.width / 2);
-    const dy = y - (r.top + r.height / 2);
-    const angle = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
-    const delta = (angle - ARC_START + 360) % 360;
-    if (delta > ARC_SPAN) return current;
-    return clamp(Math.round(delta / ARC_SPAN * 100), 0, 100);
-  }
+  const arcPath = (a, b) => {
+    const p = point(a);
+    const q = point(b);
+    return `M ${p.x} ${p.y} A ${RADIUS} ${RADIUS} 0 ${b - a > 180 ? 1 : 0} 1 ${q.x} ${q.y}`;
+  };
 
-  for (const panel of document.querySelectorAll('.panel')) {
-    const dial      = panel.querySelector('.dial');
-    const number    = panel.querySelector('.percent');
-    const toggle    = panel.querySelector('.toggle');
-    const temp      = panel.querySelector('.temp-range');
-    const kelvin    = panel.querySelector('.kelvin');
-    const tempDot   = panel.querySelector('.temp-dot');
-    const statusEl  = panel.querySelector('[data-status]');
+  for (const card of document.querySelectorAll('.card')) {
+    const dial = card.querySelector('.dial');
+    const track = dial.querySelector('.track');
+    const progress = dial.querySelector('.progress');
+    const thumb = dial.querySelector('.thumb');
+    const valueEl = card.querySelector('.value');
+    const statusValue = card.querySelector('.status-value');
+    const toggle = card.querySelector('.toggle');
+    const range = card.querySelector('.range');
+    const kelvin = card.querySelector('.kelvin');
 
-    let last = clamp(Number(dial.getAttribute('aria-valuenow')) || 0, 0, 100);
+    let value = clamp(Number(card.dataset.value) || 0, 0, 100);
+    let on = true;
     let dragging = false;
 
-    const updateStatusPct = () => {
-      const pct = statusEl?.querySelector('[data-status-pct]');
-      if (pct) pct.textContent = last + '%';
+    track.setAttribute('d', arcPath(START, START + SPAN));
+
+    const render = () => {
+      const angle = START + SPAN * value / 100;
+      const p = point(angle);
+      progress.setAttribute('d', value === 0 ? `M ${point(START).x} ${point(START).y}` : arcPath(START, angle));
+      thumb.setAttribute('cx', p.x);
+      thumb.setAttribute('cy', p.y);
+      valueEl.innerHTML = `${value}<span>%</span>`;
+      statusValue.textContent = `${value}%`;
+      dial.setAttribute('aria-valuenow', String(value));
+      dial.setAttribute('aria-disabled', String(!on));
     };
 
-    const set = (v, animate = false) => {
-      last = clamp(Math.round(v), 0, 100);
-      if (!animate) dial.style.transition = 'none';
-      dial.style.setProperty('--arc', (last * ARC_SPAN / 100) + 'deg');
-      if (!animate) {
-        void dial.offsetWidth;
-        dial.style.transition = '';
+    const pointerToValue = (e) => {
+      const r = dial.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width * 240 - CENTER;
+      const y = (e.clientY - r.top) / r.height * 240 - CENTER;
+      const angle = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
+      const delta = (angle - START + 360) % 360;
+      if (delta > SPAN) {
+        return ((360 - delta) < (delta - SPAN)) ? 0 : 100;
       }
-      dial.setAttribute('aria-valuenow', String(last));
-      dial.setAttribute('aria-valuetext', pluralPct(last));
-      number.innerHTML = last + '<span>%</span>';
-      updateStatusPct();
+      return clamp(Math.round(delta / SPAN * 100), 0, 100);
     };
 
-    set(last);
-    dial.setAttribute('aria-disabled', String(panel.classList.contains('off')));
-
-    const endDrag = (pointerId) => {
-      if (!dragging) return;
-      dragging = false;
-      dial.classList.remove('dragging');
-      if (pointerId != null) {
-        try { dial.releasePointerCapture(pointerId); } catch {}
-      }
-    };
-
-    const onDown = (e) => {
-      if (panel.classList.contains('off')) return;
-      e.preventDefault();
+    dial.addEventListener('pointerdown', (e) => {
+      if (!on) return;
       dragging = true;
-      dial.classList.add('dragging');
       dial.setPointerCapture(e.pointerId);
-      set(angleToValue(e.clientX, e.clientY, dial, last), true);
-    };
-
-    const onMove = (e) => {
-      if (!dragging) return;
-      e.preventDefault();
-      set(angleToValue(e.clientX, e.clientY, dial, last), true);
-    };
-
-    const onUp = (e) => endDrag(e?.pointerId);
-
-    dial.addEventListener('pointerdown', onDown);
-    dial.addEventListener('pointermove', onMove);
-    dial.addEventListener('pointerup', onUp);
-    dial.addEventListener('pointercancel', onUp);
-    dial.addEventListener('lostpointercapture', () => endDrag(null));
-    window.addEventListener('blur', () => endDrag(null));
-
-    dial.addEventListener('dblclick', (e) => {
-      if (panel.classList.contains('off')) return;
-      e.preventDefault();
-      set(50, true);
+      render(value = pointerToValue(e));
     });
 
-    dial.addEventListener('wheel', (e) => {
-      if (panel.classList.contains('off')) return;
-      e.preventDefault();
-      const step = e.shiftKey ? 10 : 1;
-      set(last + (e.deltaY < 0 ? step : -step), true);
-    }, { passive: false });
+    dial.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      render(value = pointerToValue(e));
+    });
+
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      dial.addEventListener(type, () => dragging = false);
+    }
 
     dial.addEventListener('keydown', (e) => {
-      if (panel.classList.contains('off')) return;
-      let next = last, handled = true;
+      if (!on) return;
+      let next = value;
+      let handled = true;
       switch (e.key) {
-        case 'ArrowUp': case 'ArrowRight': next = last + 1; break;
-        case 'ArrowDown': case 'ArrowLeft': next = last - 1; break;
-        case 'PageUp': next = last + 10; break;
-        case 'PageDown': next = last - 10; break;
+        case 'ArrowUp':
+        case 'ArrowRight': next += 1; break;
+        case 'ArrowDown':
+        case 'ArrowLeft': next -= 1; break;
+        case 'PageUp': next += 10; break;
+        case 'PageDown': next -= 10; break;
         case 'Home': next = 0; break;
         case 'End': next = 100; break;
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-          next = last * 10 + Number(e.key);
-          if (next > 100) next = Number(e.key) * 10;
-          break;
         default: handled = false;
       }
       if (!handled) return;
       e.preventDefault();
-      set(next, true);
+      render(value = clamp(next, 0, 100));
     });
 
     toggle.addEventListener('click', () => {
-      const on = !toggle.classList.contains('on');
+      on = !on;
       toggle.classList.toggle('on', on);
       toggle.setAttribute('aria-pressed', String(on));
-      panel.classList.toggle('off', !on);
-      dial.setAttribute('aria-disabled', String(!on));
-      if (temp) temp.disabled = !on;
-
-      const roomName = panel.dataset.light === 'main' ? 'основной свет' : 'дополнительный свет';
-      toggle.setAttribute('aria-label', (on ? 'Выключить ' : 'Включить ') + roomName);
-
-      if (statusEl) {
-        if (on) {
-          statusEl.innerHTML = 'Вкл · <b data-status-pct>' + last + '%</b>';
-        } else {
-          statusEl.textContent = 'Выкл';
-        }
-      }
+      card.classList.toggle('off', !on);
+      if (range) range.disabled = !on;
+      render();
     });
 
-    if (temp) {
-      const sync = () => {
-        const k = Number(temp.value);
-        if (kelvin) kelvin.textContent = k + ' K';
-        const hue = k < 4000 ? '#ffc18a' : k < 5300 ? '#ffe2ba' : '#9cd0ff';
-        panel.style.setProperty('--glow', hue);
-        if (tempDot) { tempDot.style.background = hue; tempDot.style.color = hue; }
+    if (range && kelvin) {
+      const mix = (a, b, t) => {
+        const x = parseInt(a.slice(1), 16);
+        const y = parseInt(b.slice(1), 16);
+        const c = [16, 8, 0].map(s => Math.round(((x >> s) & 255) * (1 - t) + ((y >> s) & 255) * t));
+        return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
       };
-      temp.addEventListener('input', sync);
-      sync();
+      const syncTemp = () => {
+        const k = Number(range.value);
+        kelvin.textContent = `${k} K`;
+        let color;
+        if (k < 4000) color = mix('#ff9d62', '#ffd8aa', (k - 2700) / 1300);
+        else color = mix('#ffd8aa', '#9ec9ff', (k - 4000) / 2500);
+        card.style.setProperty('--accent', color);
+      };
+      range.addEventListener('input', syncTemp);
+      syncTemp();
     }
+
+    render();
   }
 })();
 </script>
 </body>
 </html>
+
