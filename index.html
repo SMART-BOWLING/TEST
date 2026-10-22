@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Управление светом</title>
 <style>
 :root{
@@ -12,31 +12,59 @@
   -webkit-tap-highlight-color:transparent;
 }
 *{box-sizing:border-box}
+html,body{
+  height:100%;
+  margin:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+}
 body{
-  margin:0;min-height:100vh;
   background:
     radial-gradient(circle at 17% 6%,#222849 0,transparent 35%),
     radial-gradient(circle at 94% 78%,#272036 0,transparent 34%),
     #080b12;
-  padding:clamp(16px,4vw,48px) clamp(10px,3vw,18px);
+  padding:clamp(10px,2.2vh,28px) clamp(10px,2vw,24px);
   display:flex;align-items:center;justify-content:center;
 }
-.shell{width:min(1020px,100%)}
-.top{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:22px}
-.top h1{margin:0;font-size:clamp(24px,4vw,38px);letter-spacing:-.055em;font-weight:730}
-.status{display:flex;align-items:center;gap:9px;color:#9daac1;font-size:12px;white-space:nowrap}
-.status:before{content:"";height:7px;width:7px;background:#6afaaf;border-radius:50%;box-shadow:0 0 15px #6afaaf}
+.shell{
+  width:min(1020px,100%);
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(10px,1.6vh,20px);
+}
+.top{display:flex;align-items:end;justify-content:space-between;gap:16px;flex:none}
+.top h1{
+  margin:0;
+  font-size:clamp(20px,min(4vw,4vh),34px);
+  letter-spacing:-.055em;
+  font-weight:730;
+}
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:clamp(10px,1.4vw,20px);
+  flex:1;
+  min-height:0;
+}
 
 .panel{
   position:relative;isolation:isolate;overflow:hidden;
-  min-height:480px;border:1px solid #ffffff20;border-radius:32px;
+  border:1px solid #ffffff20;border-radius:clamp(20px,3vh,32px);
   background:linear-gradient(145deg,#ffffff13,#ffffff04 55%,#ffffff09);
   box-shadow:0 20px 70px #0007,inset 0 1px #ffffff1a;
-  padding:clamp(18px,3vw,27px);
+  padding:clamp(14px,2vh,24px);
   --glow:#ffc37e;
   transition:border-color .3s, box-shadow .3s;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(8px,1.4vh,16px);
+  min-height:0;
+  min-width:0;
 }
 .panel.secondary{--glow:#b4a4ff}
 .panel:before{
@@ -46,36 +74,61 @@ body{
 }
 .panel.off:before{opacity:0}
 
-.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.room{display:flex;align-items:center;gap:12px;min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none}
+.room{display:flex;align-items:center;gap:clamp(8px,1.2vh,12px);min-width:0}
 .symbol{
-  display:grid;place-items:center;width:44px;height:44px;border-radius:15px;
-  background:#ffffff13;border:1px solid #ffffff12;font-size:22px;flex:none;
+  display:grid;place-items:center;
+  width:clamp(34px,5vh,44px);height:clamp(34px,5vh,44px);
+  border-radius:clamp(11px,1.6vh,15px);
+  background:#ffffff13;border:1px solid #ffffff12;
+  font-size:clamp(16px,2.4vh,22px);flex:none;
   transition:background .3s;
 }
 .panel:not(.off) .symbol{background:color-mix(in srgb,var(--glow),transparent 82%)}
-.name{font-size:17px;font-weight:740;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sub{font-size:11px;color:#8b96ac;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name{
+  font-size:clamp(13px,2vh,17px);font-weight:740;letter-spacing:-.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.sub{
+  font-size:clamp(9px,1.3vh,11px);color:#8b96ac;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .sub b{color:#c9d2e3;font-weight:600}
 
 .toggle{
-  width:56px;height:32px;border-radius:20px;background:#2d3444;border:1px solid #ffffff1a;
-  padding:4px;cursor:pointer;transition:.2s;flex:none;position:relative;
+  width:clamp(44px,6.4vh,56px);height:clamp(25px,3.7vh,32px);
+  border-radius:20px;background:#2d3444;border:1px solid #ffffff1a;
+  padding:3px;cursor:pointer;transition:.2s;flex:none;position:relative;
 }
 .toggle i{
-  display:block;width:22px;height:22px;border-radius:50%;background:#828ca2;
+  display:block;
+  width:clamp(17px,2.5vh,22px);height:clamp(17px,2.5vh,22px);
+  border-radius:50%;background:#828ca2;
   transition:.2s;
 }
 .toggle.on{background:var(--glow);box-shadow:0 0 22px color-mix(in srgb,var(--glow),transparent 65%)}
-.toggle.on i{transform:translateX(24px);background:#191b23}
+.toggle.on i{
+  transform:translateX(calc(clamp(44px,6.4vh,56px) - clamp(17px,2.5vh,22px) - 8px));
+  background:#191b23;
+}
 .toggle:focus-visible{outline:2px solid white;outline-offset:4px}
 
-/* Диск без шарика */
-.dial-wrap{display:grid;place-items:center;padding-top:24px}
+/* Диск */
+.dial-wrap{
+  flex:1;
+  display:grid;
+  place-items:center;
+  min-height:0;
+  padding-top:clamp(4px,1vh,16px);
+}
 .dial{
-  width:min(260px,72vw);aspect-ratio:1;position:relative;border-radius:50%;
-  --start:135deg;   /* 0% — слева внизу */
-  --arc:0deg;       /* заливка */
+  height:min(100%, 260px);
+  width:auto;
+  aspect-ratio:1;
+  max-width:100%;
+  position:relative;border-radius:50%;
+  --start:135deg;
+  --arc:0deg;
   background:conic-gradient(
     from var(--start),
     var(--glow) 0deg,
@@ -93,59 +146,76 @@ body{
 .dial.dragging{cursor:grabbing;filter:drop-shadow(0 0 30px color-mix(in srgb,var(--glow),transparent 70%))}
 .dial:focus-visible{outline:2px solid white;outline-offset:6px}
 .dial:before{
-  content:"";position:absolute;inset:15px;
+  content:"";position:absolute;inset:8%;
   background:linear-gradient(145deg,#1c2230,#0e121b);border-radius:50%;
   box-shadow:inset 0 5px 15px #0008,0 0 0 1px #ffffff12;
 }
 .dial-center{z-index:1;text-align:center;pointer-events:none;line-height:1}
-.percent{font-size:clamp(44px,9vw,64px);font-weight:700;letter-spacing:-.09em;line-height:1}
+.percent{
+  font-size:clamp(28px,9vh,60px);font-weight:700;letter-spacing:-.09em;line-height:1;
+}
 .percent span{font-size:.42em;vertical-align:top;margin-left:3px;color:#a7afc0;letter-spacing:0}
 .dial-label{
-  color:#929cb0;font-size:11px;margin-top:10px;letter-spacing:.2em;
-  text-transform:uppercase;font-weight:800;
+  color:#929cb0;font-size:clamp(8px,1.2vh,11px);margin-top:clamp(4px,0.8vh,10px);
+  letter-spacing:.2em;text-transform:uppercase;font-weight:800;
 }
 
 .temperature{
-  margin-top:20px;border:1px solid #ffffff16;background:#080e1780;
-  border-radius:22px;padding:17px 19px 19px;transition:opacity .3s;
+  flex:none;
+  border:1px solid #ffffff16;background:#080e1780;
+  border-radius:clamp(14px,2.4vh,22px);
+  padding:clamp(8px,1.4vh,16px) clamp(10px,1.6vw,18px);
+  transition:opacity .3s;
 }
-.temp-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#97a2b8}
-.temp-top strong{font-size:13px;color:#fff;font-weight:650;display:flex;align-items:center;gap:8px}
-.temp-dot{width:10px;height:10px;border-radius:50%;background:#ffc18a;box-shadow:0 0 12px currentColor;color:#ffc18a}
+.temp-top{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:clamp(9px,1.3vh,12px);color:#97a2b8;
+}
+.temp-top strong{
+  font-size:clamp(10px,1.4vh,13px);color:#fff;font-weight:650;
+  display:flex;align-items:center;gap:6px;
+}
+.temp-dot{width:8px;height:8px;border-radius:50%;background:#ffc18a;box-shadow:0 0 12px currentColor;color:#ffc18a;flex:none}
 .temp-range{
-  width:100%;margin:20px 0 12px;appearance:none;height:14px;border-radius:50px;
+  width:100%;
+  margin:clamp(8px,1.4vh,16px) 0 clamp(6px,1vh,12px);
+  appearance:none;
+  height:clamp(8px,1.6vh,14px);border-radius:50px;
   background:linear-gradient(90deg,#ff8a47,#ffbb79 28%,#fff1d8 54%,#b9d8ff 75%,#75baff);
   cursor:pointer;border:1px solid #ffffff50;
 }
 .temp-range:focus-visible{outline:2px solid white;outline-offset:4px}
 .temp-range::-webkit-slider-thumb{
-  appearance:none;width:30px;height:30px;border:6px solid #141924;
-  box-shadow:0 0 0 2px white,0 4px 12px #0009;background:white;border-radius:50%;
-}
-.temp-range::-moz-range-thumb{
-  width:18px;height:18px;border:6px solid #141924;box-shadow:0 0 0 2px white;
+  appearance:none;
+  width:clamp(18px,2.8vh,28px);height:clamp(18px,2.8vh,28px);
+  border:5px solid #141924;
+  box-shadow:0 0 0 2px white,0 4px 12px #0009;
   background:white;border-radius:50%;
 }
-.endpoints{display:flex;justify-content:space-between;color:#8995aa;font-size:11px}
+.temp-range::-moz-range-thumb{
+  width:clamp(14px,2.2vh,20px);height:clamp(14px,2.2vh,20px);
+  border:5px solid #141924;box-shadow:0 0 0 2px white;
+  background:white;border-radius:50%;
+}
+.endpoints{
+  display:flex;justify-content:space-between;color:#8995aa;
+  font-size:clamp(8px,1.2vh,11px);
+}
 
 .panel.off .dial{filter:grayscale(1) brightness(.55)}
 .panel.off .temperature{opacity:.45}
 .panel.off .dial,.panel.off .temperature{pointer-events:none}
 .panel.off .toggle{pointer-events:auto}
 
+/* Мобильный: одна колонка, обе панели в экране */
 @media (max-width:720px){
-  body{align-items:flex-start;padding:16px 10px 30px}
-  .top{align-items:flex-start;margin-bottom:14px}
-  .grid{grid-template-columns:1fr;gap:14px}
-  .panel{min-height:0;border-radius:26px}
-  .dial-wrap{padding-top:18px}
-  .toggle{width:52px;height:30px}
-  .toggle.on i{transform:translateX(20px)}
-}
-@media (max-height:740px) and (min-width:721px){
-  .panel{min-height:430px}
-  .dial-wrap{padding-top:14px}
-  .temperature{margin-top:14px}
+  .shell{gap:clamp(8px,1.4vh,14px)}
+  .grid{
+    grid-template-columns:1fr;
+    grid-template-rows:1fr 1fr;
+  }
+  .panel{padding:clamp(12px,1.8vh,18px)}
+  .temperature{padding:clamp(8px,1.2vh,14px) clamp(10px,3vw,16px)}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
@@ -227,14 +297,10 @@ body{
 (() => {
   'use strict';
 
-  // 0° = «12 часов», по часовой. Сектор 270°:
-  // 0%   — 135° (слева внизу)
-  // 100% —  45° (справа внизу)
   const ARC_START = 135;
   const ARC_SPAN  = 270;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // Правильное склонение: 1 процент, 2 процента, 5 процентов
   function pluralPct(n) {
     const n10 = n % 10, n100 = n % 100;
     if (n10 === 1 && n100 !== 11) return n + ' процент';
@@ -248,7 +314,7 @@ body{
     const dy = y - (r.top + r.height / 2);
     const angle = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     const delta = (angle - ARC_START + 360) % 360;
-    if (delta > ARC_SPAN) return current; // нижняя мёртвая зона
+    if (delta > ARC_SPAN) return current;
     return clamp(Math.round(delta / ARC_SPAN * 100), 0, 100);
   }
 
@@ -264,7 +330,6 @@ body{
     let last = clamp(Number(dial.getAttribute('aria-valuenow')) || 0, 0, 100);
     let dragging = false;
 
-    // Хелпер: обновить процент в статусе (перезапрашивает <b>, т.к. innerHTML пересоздаёт его)
     const updateStatusPct = () => {
       const pct = statusEl?.querySelector('[data-status-pct]');
       if (pct) pct.textContent = last + '%';
@@ -281,7 +346,7 @@ body{
       dial.setAttribute('aria-valuenow', String(last));
       dial.setAttribute('aria-valuetext', pluralPct(last));
       number.innerHTML = last + '<span>%</span>';
-      updateStatusPct(); // всегда перезапрашиваем <b>
+      updateStatusPct();
     };
 
     set(last);
@@ -303,7 +368,6 @@ body{
       dragging = true;
       dial.classList.add('dragging');
       dial.setPointerCapture(e.pointerId);
-      document.body.style.overflow = 'hidden';
       set(angleToValue(e.clientX, e.clientY, dial, last), true);
     };
 
@@ -319,10 +383,7 @@ body{
     dial.addEventListener('pointermove', onMove);
     dial.addEventListener('pointerup', onUp);
     dial.addEventListener('pointercancel', onUp);
-    // убрали pointerleave — он ломал drag при выходе за пределы
     dial.addEventListener('lostpointercapture', () => endDrag(null));
-
-    // страховка — если окно потеряло фокус во время drag
     window.addEventListener('blur', () => endDrag(null));
 
     dial.addEventListener('dblclick', (e) => {
