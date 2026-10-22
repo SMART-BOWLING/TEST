@@ -51,8 +51,8 @@ body{
 }
 .ambient-accent{
   background:
-    radial-gradient(circle at 78% 72%, rgba(185,167,255,.72) 0, rgba(185,167,255,.26) 20%, rgba(185,167,255,0) 44%),
-    radial-gradient(circle at 88% 14%, rgba(158,201,255,.34) 0, rgba(158,201,255,0) 34%);
+    radial-gradient(circle at 78% 72%, rgba(255,183,102,.72) 0, rgba(255,183,102,.26) 20%, rgba(185,167,255,0) 44%),
+    radial-gradient(circle at 88% 14%, rgba(255,218,162,.34) 0, rgba(158,201,255,0) 34%);
   opacity:calc(var(--accent-level) * .9);
   filter:blur(18px);
 }
@@ -87,7 +87,7 @@ body{
   border-radius:24px;
   background:linear-gradient(160deg,#151b28dd,#0d111add 58%,#0b0e16);
   box-shadow:0 18px 40px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.06);
-  padding:12px 12px 10px;
+  padding:10px 11px 6px;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -104,7 +104,7 @@ body{
   z-index:-1;
   transition:opacity .25s;
 }
-.card.secondary{--accent:#b9a7ff}
+.card.secondary{--accent:#ffbf79}
 .card.off::before{opacity:.03}
 .top{
   display:flex;
@@ -154,12 +154,12 @@ body{
   min-height:0;
   display:grid;
   place-items:center;
-  padding:2px 0 6px;
+  padding:0;
   container-type:size;
 }
 .dial{
-  width:min(100%, 33svh, 270px);
-  width:min(100cqw, 100cqh, 270px);
+  width:min(100%, 43svh, 370px);
+  width:min(100cqw, 100cqh, 370px);
   min-width:0;
   aspect-ratio:1;
   position:relative;
@@ -212,11 +212,8 @@ body{
   box-shadow:0 0 0 2px #ffffffbb,0 4px 10px rgba(0,0,0,.5);
 }
 .ends{display:flex;justify-content:space-between;margin-top:7px;color:#7f8aa1;font-size:9px}
-.mini-note{
-  height:38px;display:grid;place-items:center;color:#7f8aa1;font-size:10px;letter-spacing:.08em;
-  border-top:1px solid #ffffff0f;margin-top:2px;
-}
-.card[data-name="main"] .dial-wrap{align-content:start;padding-top:0}.card[data-name="main"] .dial{width:min(100%, 31svh, 244px);width:min(100cqw, 100cqh, 244px)}
+.mini-note{display:none}
+.card[data-name="main"] .dial-wrap{padding:0}.card[data-name="main"] .dial{width:min(100%, 43svh, 370px);width:min(100cqw, 100cqh, 370px)}
 .card.off .dial-wrap,.card.off .bottom{opacity:.34;filter:grayscale(1);pointer-events:none}
 @media (max-width:380px){
   .card{padding:10px 10px 8px;border-radius:21px}
@@ -226,6 +223,7 @@ body{
   .temp-arc-head span{font-size:7px}
   .temp-arc-head b{font-size:10px}
 }
+@media (max-height:650px){.card{padding:7px 10px 4px}.top{margin-bottom:2px}.grid{gap:7px}.icon{height:26px;width:26px}}
 </style>
 </head>
 <body>
@@ -279,7 +277,7 @@ body{
         </div>
       </div>
 
-      <div class="bottom"></div>
+
     </article>
 
     <article class="card secondary" data-name="accent" data-value="45">
@@ -308,9 +306,7 @@ body{
         </div>
       </div>
 
-      <div class="bottom">
-        <div class="mini-note"></div>
-      </div>
+
     </article>
   </section>
 </div>
@@ -325,7 +321,7 @@ body{
   const SPAN = 270;
   const TEMP_CENTER_X = 120;
   const TEMP_CENTER_Y = 120;
-  const TEMP_RADIUS = 114;
+  const TEMP_RADIUS = 121;
   const TEMP_START = 228;
   const TEMP_SPAN = 84;
   const TEMP_MIN = 2700;
@@ -495,11 +491,22 @@ body{
         const segments = 64;
         for (let i = 0; i < segments; i++) {
           const a = TEMP_START + TEMP_SPAN * i / segments;
-          const b = TEMP_START + TEMP_SPAN * (i + 1) / segments + .12;
+          const b = TEMP_START + TEMP_SPAN * (i + 1) / segments + (i === segments - 1 ? 0 : .12);
           const path = document.createElementNS(NS, 'path');
           path.setAttribute('d', tempArcPath(a, b));
           path.setAttribute('stroke', colorForKelvin(TEMP_MIN + (TEMP_MAX - TEMP_MIN) * (i + .5) / segments));
           tempSpectrum.appendChild(path);
+        }
+        // Round only the two endpoints. The middle stays smooth, without lumps at joins.
+        for (const [a, k] of [[TEMP_START, TEMP_MIN], [TEMP_START + TEMP_SPAN, TEMP_MAX]]) {
+          const p = tempPoint(a);
+          const cap = document.createElementNS(NS, 'circle');
+          cap.setAttribute('cx', p.x);
+          cap.setAttribute('cy', p.y);
+          cap.setAttribute('r', '4');
+          cap.setAttribute('fill', colorForKelvin(k));
+          cap.setAttribute('pointer-events', 'none');
+          tempSpectrum.appendChild(cap);
         }
       }
 
@@ -600,3 +607,4 @@ body{
 </script>
 </body>
 </html>
+
