@@ -39,9 +39,11 @@ body{
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr;
   gap:clamp(10px,1.4vw,20px);
   flex:1;
   min-height:0;
+  min-width:0;
 }
 
 .panel{
@@ -108,15 +110,20 @@ body{
 /* Диск */
 .dial-wrap{
   flex:1;
+  min-height:0;
+  min-width:0;
   display:grid;
   place-items:center;
-  min-height:0;
   padding-top:clamp(4px,1vh,16px);
+  overflow:hidden; /* страховка: диск не вылезает из панели */
 }
 .dial{
-  /* Размер — единый для всех дисков: ограничен и по высоте, и по ширине панели,
-     поэтому оба круга всегда одинаковые. */
+  /* Одинаковый размер для обоих дисков.
+     Ограничен: шириной контейнера, высотой контейнера и жёстким капом. */
   width:min(100%, 52vh, 260px);
+  height:min(100%, 52vh, 260px);
+  max-width:100%;
+  max-height:100%;
   aspect-ratio:1;
   position:relative;border-radius:50%;
   --start:135deg;
@@ -199,7 +206,7 @@ body{
 .panel.off .dial,.panel.off .temperature{pointer-events:none}
 .panel.off .toggle{pointer-events:auto}
 
-/* Мобильный: одна колонка, обе панели в экране */
+/* Мобильный: одна колонка, обе панели делят экран поровну, без скролла */
 @media (max-width:720px){
   .grid{
     grid-template-columns:1fr;
@@ -343,7 +350,6 @@ body{
       if (!dragging) return;
       dragging = false;
       dial.classList.remove('dragging');
-      document.body.style.overflow = '';
       if (pointerId != null) {
         try { dial.releasePointerCapture(pointerId); } catch {}
       }
