@@ -181,6 +181,16 @@ body{
 .value{font-size:clamp(26px,8.5vw,42px);font-weight:800;letter-spacing:-.08em;line-height:1}
 .value span{font-size:.42em;vertical-align:super;color:#9aa4b8;margin-left:2px}
 .caption{font-size:9px;font-weight:700;letter-spacing:.18em;color:#7f8aa1;margin-top:4px}
+.temp-arc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 2px 4px}
+.temp-arc-head span{font-size:8px;font-weight:700;letter-spacing:.14em;color:#7f8aa1}
+.temp-arc-head b{font-size:11px;font-weight:700;letter-spacing:.02em;flex:none}
+.dial .temp-overlay{position:absolute;inset:0;pointer-events:none}
+.dial .temp-hit{position:absolute;inset:0;touch-action:none;outline:none;background:transparent;border:0;padding:0;appearance:none;pointer-events:none}
+.dial .temp-hit svg{width:100%;height:100%;display:block;overflow:visible}
+.temp-track{fill:none;stroke:#293041;stroke-width:7;stroke-linecap:round;opacity:.7}
+.temp-progress{display:none}
+.temp-spectrum path{fill:none;stroke-width:8;stroke-linecap:butt}
+.temp-thumb{fill:#ffd7aa;stroke:#fff;stroke-width:3;pointer-events:auto;cursor:grab;filter:drop-shadow(0 0 8px #ffd7aa)}
 .bottom{flex:none}
 .temp-head{
   display:flex;justify-content:space-between;align-items:center;gap:6px;
@@ -206,12 +216,15 @@ body{
   height:38px;display:grid;place-items:center;color:#7f8aa1;font-size:10px;letter-spacing:.08em;
   border-top:1px solid #ffffff0f;margin-top:2px;
 }
+.card[data-name="main"] .dial-wrap{align-content:start;padding-top:0}.card[data-name="main"] .dial{width:min(100%, 31svh, 244px);width:min(100cqw, 100cqh, 244px)}
 .card.off .dial-wrap,.card.off .bottom{opacity:.34;filter:grayscale(1);pointer-events:none}
 @media (max-width:380px){
   .card{padding:10px 10px 8px;border-radius:21px}
   .name{font-size:11px}
   .sub{font-size:9px}
   .temp-head span,.ends,.caption{font-size:8px}
+  .temp-arc-head span{font-size:7px}
+  .temp-arc-head b{font-size:10px}
 }
 </style>
 </head>
@@ -221,12 +234,12 @@ body{
 <div class="darkness"></div>
 <div class="app">
   <section class="grid">
-    <article class="card" data-name="main" data-value="72">
+    <article class="card" data-name="main" data-value="72" data-temp="3800">
       <div class="top">
         <div class="title-wrap">
           <div class="icon">☼</div>
           <div class="title">
-            <div class="name">Основной</div>
+            <div class="name">Гостинная</div>
             <div class="sub">Вкл · <span class="status-value">72%</span></div>
           </div>
         </div>
@@ -234,12 +247,31 @@ body{
       </div>
 
       <div class="dial-wrap">
-        <div class="dial" role="slider" tabindex="0" aria-label="Яркость основного света" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+        
+
+        <div class="dial main-dial" role="slider" tabindex="0" aria-label="Яркость основного света" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
           <svg viewBox="0 0 240 240" aria-hidden="true">
             <path class="track"></path>
             <path class="progress"></path>
             <circle class="thumb" r="7"></circle>
           </svg>
+
+          <div class="temp-hit" role="slider" tabindex="0" aria-label="Оттенок света в гостинной" aria-valuemin="2700" aria-valuemax="6500" aria-valuenow="3800">
+            <svg viewBox="0 0 240 240" aria-hidden="true">
+              <defs>
+                <linearGradient id="tempGrad" x1="12%" y1="50%" x2="88%" y2="50%">
+                  <stop offset="0%" stop-color="#ff955a"></stop>
+                  <stop offset="45%" stop-color="#ffe1bf"></stop>
+                  <stop offset="100%" stop-color="#86bcff"></stop>
+                </linearGradient>
+              </defs>
+              <path class="temp-track"></path>
+              <g class="temp-spectrum"></g>
+              <path class="temp-progress"></path>
+              <circle class="temp-thumb" r="7"></circle>
+            </svg>
+          </div>
+
           <div class="inner">
             <div class="value">72<span>%</span></div>
             <div class="caption">ЯРКОСТЬ</div>
@@ -247,11 +279,7 @@ body{
         </div>
       </div>
 
-      <div class="bottom">
-        <div class="temp-head"><span>ТЕМПЕРАТУРА</span><b class="kelvin">3800 K</b></div>
-        <input class="range" type="range" min="2700" max="6500" step="100" value="3800" aria-label="Температура света">
-        <div class="ends"><span>Тёплый</span><span>Холодный</span></div>
-      </div>
+      <div class="bottom"></div>
     </article>
 
     <article class="card secondary" data-name="accent" data-value="45">
@@ -259,7 +287,7 @@ body{
         <div class="title-wrap">
           <div class="icon">✦</div>
           <div class="title">
-            <div class="name">Доп.</div>
+            <div class="name">Спальня</div>
             <div class="sub">Вкл · <span class="status-value">45%</span></div>
           </div>
         </div>
@@ -281,7 +309,7 @@ body{
       </div>
 
       <div class="bottom">
-        <div class="mini-note">Только яркость</div>
+        <div class="mini-note"></div>
       </div>
     </article>
   </section>
@@ -295,6 +323,13 @@ body{
   const RADIUS = 90;
   const START = 135;
   const SPAN = 270;
+  const TEMP_CENTER_X = 120;
+  const TEMP_CENTER_Y = 120;
+  const TEMP_RADIUS = 114;
+  const TEMP_START = 228;
+  const TEMP_SPAN = 84;
+  const TEMP_MIN = 2700;
+  const TEMP_MAX = 6500;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   const point = deg => ({
@@ -308,6 +343,17 @@ body{
     return `M ${p.x} ${p.y} A ${RADIUS} ${RADIUS} 0 ${b - a > 180 ? 1 : 0} 1 ${q.x} ${q.y}`;
   };
 
+  const tempPoint = deg => ({
+    x: TEMP_CENTER_X + TEMP_RADIUS * Math.sin(deg * Math.PI / 180),
+    y: TEMP_CENTER_Y - TEMP_RADIUS * Math.cos(deg * Math.PI / 180)
+  });
+
+  const tempArcPath = (a, b) => {
+    const p = tempPoint(a);
+    const q = tempPoint(b);
+    return `M ${p.x} ${p.y} A ${TEMP_RADIUS} ${TEMP_RADIUS} 0 ${b - a > 180 ? 1 : 0} 1 ${q.x} ${q.y}`;
+  };
+
   for (const card of document.querySelectorAll('.card')) {
     const dial = card.querySelector('.dial');
     const track = dial.querySelector('.track');
@@ -318,12 +364,19 @@ body{
     const toggle = card.querySelector('.toggle');
     const range = card.querySelector('.range');
     const kelvin = card.querySelector('.kelvin');
+    const tempArc = card.querySelector('.temp-hit');
+    const tempTrack = card.querySelector('.temp-track');
+    const tempProgress = card.querySelector('.temp-progress');
+    const tempThumb = card.querySelector('.temp-thumb');
+    const tempSpectrum = card.querySelector('.temp-spectrum');
 
     let value = clamp(Number(card.dataset.value) || 0, 0, 100);
     let on = true;
     let dragging = false;
+    let tempK = clamp(Number(card.dataset.temp) || 3800, TEMP_MIN, TEMP_MAX);
 
     track.setAttribute('d', arcPath(START, START + SPAN));
+    if (tempTrack) tempTrack.setAttribute('d', tempArcPath(TEMP_START, TEMP_START + TEMP_SPAN));
 
     const render = () => {
       const angle = START + SPAN * value / 100;
@@ -357,20 +410,41 @@ body{
       return clamp(Math.round(delta / SPAN * 100), 0, 100);
     };
 
+    // Сдвиг яркости разрешён только после захвата белого маркера.
+    let activePointerId = null;
+    const isOnThumb = (e) => {
+      const r = dial.getBoundingClientRect();
+      const p = point(START + SPAN * value / 100);
+      const thumbX = r.left + (p.x / 240) * r.width;
+      const thumbY = r.top + (p.y / 240) * r.height;
+      // Удобная область касания для пальца вокруг видимого маркера.
+      const tolerance = e.pointerType === 'touch' ? 25 : 15;
+      return Math.hypot(e.clientX - thumbX, e.clientY - thumbY) <= tolerance;
+    };
+
     dial.addEventListener('pointerdown', (e) => {
-      if (!on) return;
+      if (!on || dragging || !isOnThumb(e)) return;
+      e.preventDefault();
       dragging = true;
+      activePointerId = e.pointerId;
       dial.setPointerCapture(e.pointerId);
-      render(value = pointerToValue(e));
+      // Не меняем значение при касании: только когда пользователь ведёт маркер.
     });
 
     dial.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
+      if (!dragging || e.pointerId !== activePointerId) return;
+      e.preventDefault();
       render(value = pointerToValue(e));
     });
 
+    const stopDrag = (e) => {
+      if (e.pointerId !== activePointerId) return;
+      dragging = false;
+      activePointerId = null;
+      if (dial.hasPointerCapture(e.pointerId)) dial.releasePointerCapture(e.pointerId);
+    };
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-      dial.addEventListener(type, () => dragging = false);
+      dial.addEventListener(type, stopDrag);
     }
 
     dial.addEventListener('keydown', (e) => {
@@ -399,31 +473,125 @@ body{
       toggle.setAttribute('aria-pressed', String(on));
       card.classList.toggle('off', !on);
       if (range) range.disabled = !on;
+      if (tempArc) tempArc.setAttribute('aria-disabled', String(!on));
       render();
     });
 
-    if (range && kelvin) {
+    if (tempArc && tempTrack && tempProgress && tempThumb) {
       const mix = (a, b, t) => {
         const x = parseInt(a.slice(1), 16);
         const y = parseInt(b.slice(1), 16);
         const c = [16, 8, 0].map(s => Math.round(((x >> s) & 255) * (1 - t) + ((y >> s) & 255) * t));
         return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
       };
-      const syncTemp = () => {
-        const k = Number(range.value);
-        kelvin.textContent = `${k} K`;
-        let color;
-        if (k < 4000) color = mix('#ff9d62', '#ffd8aa', (k - 2700) / 1300);
-        else color = mix('#ffd8aa', '#9ec9ff', (k - 4000) / 2500);
+
+      const colorForKelvin = k => k < 4000
+        ? mix('#ff9855', '#ffe4bd', (k - 2700) / 1300)
+        : mix('#ffe4bd', '#8dbfff', (k - 4000) / 2500);
+
+      // A real color spectrum all along the curved track, not a flat-colored progress line.
+      if (tempSpectrum) {
+        const NS = 'http://www.w3.org/2000/svg';
+        const segments = 64;
+        for (let i = 0; i < segments; i++) {
+          const a = TEMP_START + TEMP_SPAN * i / segments;
+          const b = TEMP_START + TEMP_SPAN * (i + 1) / segments + .12;
+          const path = document.createElementNS(NS, 'path');
+          path.setAttribute('d', tempArcPath(a, b));
+          path.setAttribute('stroke', colorForKelvin(TEMP_MIN + (TEMP_MAX - TEMP_MIN) * (i + .5) / segments));
+          tempSpectrum.appendChild(path);
+        }
+      }
+
+      const renderTemp = () => {
+        const norm = (tempK - TEMP_MIN) / (TEMP_MAX - TEMP_MIN);
+        const angle = TEMP_START + TEMP_SPAN * norm;
+        const p = tempPoint(angle);
+        tempProgress.setAttribute('d', norm === 0 ? `M ${tempPoint(TEMP_START).x} ${tempPoint(TEMP_START).y}` : tempArcPath(TEMP_START, angle));
+        tempThumb.setAttribute('cx', p.x);
+        tempThumb.setAttribute('cy', p.y);
+        tempArc.setAttribute('aria-valuenow', String(tempK));
+
+
+        const color = colorForKelvin(tempK);
         card.style.setProperty('--accent', color);
+        tempThumb.style.fill = color;
+        tempThumb.style.filter = `drop-shadow(0 0 9px ${color})`;
         if (card.dataset.name === 'main') {
           document.querySelector('.ambient-main').style.background = `
             radial-gradient(circle at 24% 18%, ${color}ee 0, ${color}77 18%, transparent 42%),
             radial-gradient(circle at 50% 45%, rgba(255,245,232,.24) 0, rgba(255,245,232,0) 52%)`;
         }
       };
-      range.addEventListener('input', syncTemp);
-      syncTemp();
+
+      const tempPointerToValue = (e) => {
+        const r = tempArc.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width * 240 - TEMP_CENTER_X;
+        const y = (e.clientY - r.top) / r.height * 240 - TEMP_CENTER_Y;
+        const angle = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
+        let extended = angle < 180 ? angle + 360 : angle;
+        extended = clamp(extended, TEMP_START, TEMP_START + TEMP_SPAN);
+        const norm = (extended - TEMP_START) / TEMP_SPAN;
+        return Math.round((TEMP_MIN + norm * (TEMP_MAX - TEMP_MIN)) / 100) * 100;
+      };
+
+      let tempDragging = false;
+      let tempPointerId = null;
+      const isOnTempThumb = (e) => {
+        const r = tempArc.getBoundingClientRect();
+        const norm = (tempK - TEMP_MIN) / (TEMP_MAX - TEMP_MIN);
+        const p = tempPoint(TEMP_START + TEMP_SPAN * norm);
+        const thumbX = r.left + (p.x / 240) * r.width;
+        const thumbY = r.top + (p.y / 240) * r.height;
+        const tolerance = e.pointerType === 'touch' ? 24 : 14;
+        return Math.hypot(e.clientX - thumbX, e.clientY - thumbY) <= tolerance;
+      };
+
+      tempArc.addEventListener('pointerdown', (e) => {
+        if (!on || tempDragging || !isOnTempThumb(e)) return;
+        e.preventDefault();
+        tempDragging = true;
+        tempPointerId = e.pointerId;
+        tempArc.setPointerCapture(e.pointerId);
+      });
+
+      tempArc.addEventListener('pointermove', (e) => {
+        if (!tempDragging || e.pointerId !== tempPointerId) return;
+        e.preventDefault();
+        tempK = clamp(tempPointerToValue(e), TEMP_MIN, TEMP_MAX);
+        renderTemp();
+      });
+
+      const stopTempDrag = (e) => {
+        if (e.pointerId !== tempPointerId) return;
+        tempDragging = false;
+        tempPointerId = null;
+        if (tempArc.hasPointerCapture(e.pointerId)) tempArc.releasePointerCapture(e.pointerId);
+      };
+      for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+        tempArc.addEventListener(type, stopTempDrag);
+      }
+
+      tempArc.addEventListener('keydown', (e) => {
+        if (!on) return;
+        let next = tempK;
+        let handled = true;
+        switch (e.key) {
+          case 'ArrowLeft':
+          case 'ArrowDown': next -= 100; break;
+          case 'ArrowRight':
+          case 'ArrowUp': next += 100; break;
+          case 'Home': next = TEMP_MIN; break;
+          case 'End': next = TEMP_MAX; break;
+          default: handled = false;
+        }
+        if (!handled) return;
+        e.preventDefault();
+        tempK = clamp(next, TEMP_MIN, TEMP_MAX);
+        renderTemp();
+      });
+
+      renderTemp();
     }
 
     render();
